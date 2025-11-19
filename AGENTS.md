@@ -25,19 +25,21 @@ This is the official website for **Project Bluefin**, a next-generation Linux wo
 
 1. **Install dependencies** (takes ~6 seconds):
    ```bash
-   npm install
+   npm install --include=dev
    ```
+   - **CRITICAL:** Must use `--include=dev` flag to install devDependencies (@vitejs/plugin-vue, vite, etc.)
+   - Without devDependencies, the dev server will fail with "Cannot find package '@vitejs/plugin-vue'" error
    - Uses npm as primary package manager (Bun lockfile also present but npm preferred)
    - May show deprecation warning for @types/marked (safe to ignore)
 
-2. **Build the project** (takes ~3 seconds):
+2. **Build the project** (takes ~2 seconds):
    ```bash
    npm run build
    ```
    - **NEVER CANCEL**: Set timeout to 60+ seconds minimum
    - Outputs to `./dist/` directory
    - TypeScript compilation with vue-tsc followed by Vite build
-   - May show Sass @import deprecation warning (safe to ignore, still works)
+   - Build completes quickly but always allow adequate timeout for slower systems
 
 3. **Development server** (starts in ~1 second):
    ```bash
@@ -45,7 +47,9 @@ This is the official website for **Project Bluefin**, a next-generation Linux wo
    ```
    - Runs on http://localhost:5173/
    - Hot reload enabled
-   - **NEVER CANCEL**: Use background mode and stop when needed
+   - **Run in async mode** to keep server alive between commands
+   - Server may die if run in detached mode without proper process management
+   - To expose to network: `npm run dev -- --host 0.0.0.0`
 
 4. **Preview production build** (starts immediately):
    ```bash
@@ -81,9 +85,9 @@ npx prettier --check src/ --config .prettierrc
 # Fix formatting issues  
 npx prettier --write src/ --config .prettierrc
 ```
-- **Note**: Prettier will show "quote-props" warning (suggest "quoteProps") but still works correctly
+- Prettier configuration in `.prettierrc` includes: tabWidth: 2, singleQuote: false, semi: false, quote-props: "consistent"
 - Always run formatting before committing changes
-- First run may install prettier@3.6.2 automatically
+- First run may install prettier automatically
 
 **ESLint** - Configured but dependencies not installed:
 - .eslintrc extends @antfu but @antfu packages not in package.json
@@ -93,25 +97,24 @@ npx prettier --write src/ --config .prettierrc
 
 ## Common Commands and Timing
 
-- `npm install`: ~6 seconds (may show @types/marked deprecation warning)
-- `npm run build`: ~3 seconds (**NEVER CANCEL**, timeout: 60+ seconds, may show Sass deprecation warning)
-- `npm run dev`: ~1 second to start
+- `npm install --include=dev`: ~6 seconds (REQUIRED to install devDependencies)
+- `npm run build`: ~2 seconds (**NEVER CANCEL**, timeout: 60+ seconds minimum)
+- `npm run dev`: ~1 second to start (use async mode to keep alive)
 - `npm run preview`: Instant start
 - `npx prettier --check src/`: ~3-5 seconds (may install prettier first run)
-- `npx prettier --write src/`: ~3-5 seconds
 
-**CRITICAL**: All build commands complete quickly (~3-6 seconds), but ALWAYS set 60+ second timeouts to account for slower systems or first-run installations.
+**CRITICAL**: Always use `npm install --include=dev` to ensure @vitejs/plugin-vue and other dev dependencies are installed.
 
 ## Technology Stack
 
 ### Frontend Framework
 - **Vue 3** with Composition API (`<script setup>` syntax preferred)
 - **TypeScript** for type safety
-- **Vite** for build tooling and development server
+- **Vite 7.1.12** for build tooling and development server
 - **Vue i18n** for internationalization (12 languages supported: de-DE, en-US, eo, fr-FR, ja-JP, nl-NL, pt-BR, ru-RU, sk-SK, vi-VN, zh-HK, zh-TW)
 
 ### Styling
-- **TailwindCSS 4.1.12** for utility-first CSS framework with new Vite plugin integration
+- **TailwindCSS 4.1.16** with @tailwindcss/vite plugin
 - **SCSS** for custom styling with mixins and helpers
 - **Custom SCSS mixins** located in `src/style/setup/_mixins.scss`
 - **Responsive design** patterns for mobile, tablet, and desktop
@@ -122,6 +125,7 @@ npx prettier --write src/ --config .prettierrc
 - **@vueuse/core** and **@vueuse/components** for Vue utilities and composables
 - **@iframe-resizer** packages for responsive iframe embedding
 - **sass** for SCSS compilation
+- **js-yaml** for YAML parsing
 
 ## Repository Structure
 
@@ -129,25 +133,29 @@ npx prettier --write src/ --config .prettierrc
 ```
 /
 ├── .github/workflows/         # CI/CD pipelines
-│   ├── deploy.yml            # GitHub Pages deployment
-│   └── pagespeed.yml         # Performance monitoring
+│   ├── deploy.yml            # GitHub Pages deployment (on push to main, releases)
+│   ├── images.yml            # Image optimization workflow
+│   └── update-stream-versions.yml  # Version update automation
 ├── public/                   # Static assets
 │   ├── characters/           # Character artwork (.webp)
 │   ├── brands/              # Brand logos (.svg, .png)
 │   ├── evening/             # Background images
-│   └── favicons/            # Site icons
+│   ├── favicons/            # Site icons
+│   └── testing.html         # Testing page (also built to dist/public/)
 ├── src/
-│   ├── components/          # Vue components
-│   │   ├── scenes/         # Major page sections
-│   │   ├── sections/       # Smaller reusable sections
-│   │   └── common/         # Shared components
-│   ├── locales/            # i18n translation files (JSON)
+│   ├── components/          # Vue components (21 total)
+│   │   ├── scenes/         # Major page sections (4 components)
+│   │   ├── sections/       # Smaller reusable sections (6 components)
+│   │   └── common/         # Shared components (3 components)
+│   ├── locales/            # i18n translation files (12 JSON files)
 │   ├── style/              # SCSS styling
+│   │   ├── setup/          # Mixins, variables, fonts, reset
+│   │   └── app/            # Component-specific styles
 │   ├── content.ts          # Main content constants
 │   ├── composables.ts      # Vue composables
 │   └── main.ts            # App entry point
 ├── package.json            # Dependencies and scripts
-├── vite.config.ts         # Vite configuration
+├── vite.config.ts         # Vite configuration (multi-page: index.html + testing.html)
 ├── tailwind.config.js     # TailwindCSS configuration
 ├── tsconfig.json          # TypeScript configuration
 └── .prettierrc           # Code formatting rules
@@ -214,10 +222,10 @@ const isVisible = ref(false)
 - Utility components: descriptive names (e.g., `PageLoading.vue`, `Navigation.vue`)
 
 #### Existing Components Reference
-**Scenes:** `SceneLanding.vue`, `SceneDevelopers.vue`, `SceneGamers.vue`
-**Sections:** Various section components in `/components/sections/`
-**Common:** `Navigation.vue`, `PageLoading.vue`, `FaqItem.vue`, `ImagePicker.vue`
-**Utilities:** `RssFeed.vue`, `SceneVisibilityChecker.vue`, `TextArrow.vue`
+**Scenes (4):** `SceneLanding.vue`, `SceneDevelopers.vue`, `SceneGamers.vue`, `SceneUsers.vue`
+**Sections (6):** `SectionFooter.vue`, `SectionMission.vue`, `SectionNews.vue`, `SectionPicker.vue`, `SectionQuestions.vue`, `SectionVideo.vue`, `ParallaxWrapper.vue`
+**Common (3):** `SceneContent.vue`, `SceneVisibilityChecker.vue`, `TextArrow.vue`
+**Root Components (7):** `Navigation.vue`, `TopNavbar.vue`, `PageLoading.vue`, `FaqItem.vue`, `ImagePicker.vue`, `ImageChooser.vue`, `RssFeed.vue`
 
 ## Content Management
 
@@ -281,12 +289,19 @@ Common mixins available for use:
 ## Development Workflows
 
 ### Making Changes
-1. **Start development server:** `npm run dev`
+1. **Start development server:** `npm run dev` (use async mode)
 2. **Make your changes** to Vue components, TypeScript, or SCSS files
 3. **Test functionality manually** in browser (http://localhost:5173/)
 4. **Format code:** `npx prettier --write src/`
 5. **Build to verify:** `npm run build`
 6. **Test production build:** `npm run preview`
+
+### Troubleshooting Dev Server
+- **"Cannot find package '@vitejs/plugin-vue'":** Run `npm install --include=dev`
+- **Server dies immediately:** Run in async mode, not detached mode
+- **Port 5173 in use:** Server will automatically use port 5174
+- **Cannot connect from browser:** Ensure server is running with `ps aux | grep vite`
+- **Need network access:** Use `npm run dev -- --host 0.0.0.0`
 
 ### Adding New Components
 1. **Create component** in appropriate directory (`scenes/`, `sections/`, or `common/`)
@@ -303,23 +318,24 @@ Common mixins available for use:
 
 ### Troubleshooting
 - **Build failures:** Check TypeScript errors in terminal output
-- **Sass deprecation warnings:** Expected and safe to ignore (@import rules deprecated)
-- **@types/marked deprecation:** Expected and safe to ignore (marked provides own types)
-- **Prettier quote-props warning:** Expected and safe to ignore (suggests "quoteProps" but "quote-props" works)
+- **Dev server won't start:** Ensure `npm install --include=dev` was run
+- **Server process dies:** Use async mode instead of detached mode
 - **Missing images:** Verify paths relative to `public/` directory
 - **Translation issues:** Ensure locale keys exist in all 12 language files
 - **Styling problems:** Check for SCSS syntax errors or missing Tailwind classes
 - **ESLint errors:** Use Prettier instead (ESLint setup incomplete)
+- **Port conflicts:** Vite will auto-select next available port (5174, 5175, etc.)
 
 ## CI/CD Pipeline
 
 **GitHub Actions workflows:**
-- **deploy.yml:** Builds and deploys to GitHub Pages on push to main
-- **pagespeed.yml:** Monitors site performance daily
+- **deploy.yml:** Builds and deploys to GitHub Pages on push to main, releases, and manual trigger
+- **images.yml:** Image optimization workflow
+- **update-stream-versions.yml:** Automated version updates
 
 **Deployment process:**
-1. Code pushed to main branch
-2. GitHub Actions runs `npm install` and `npm run build`
+1. Code pushed to main branch or release published
+2. GitHub Actions runs Node.js 24 with `npm install` and `npm run build`
 3. Built files from `./dist/` deployed to GitHub Pages
 4. Live site updates at https://projectbluefin.io/
 
@@ -335,27 +351,27 @@ Common mixins available for use:
 
 ### Essential Commands
 ```bash
-npm install           # Install dependencies (~6s, may show deprecation warning)
-npm run dev          # Start dev server (~1s)
-npm run build        # Build for production (~3s, may show Sass warning)
-npm run preview      # Preview production build
-npx prettier --write src/  # Format code (~3-5s, may install prettier first)
+npm install --include=dev  # Install all dependencies including dev (~6s)
+npm run dev               # Start dev server (~1s, use async mode)
+npm run build             # Build for production (~2s)
+npm run preview           # Preview production build
+npx prettier --write src/ # Format code (~3-5s)
 ```
 
 **CRITICAL REMINDERS:**
-- ⏱️ **NEVER CANCEL builds** - Always set 60+ second timeouts
+- ⏱️ **ALWAYS use `--include=dev`** when installing dependencies
+- 🚀 **Run dev server in async mode** to keep it alive
 - 🧪 **ALWAYS test manually** after making changes
 - 📱 **Test responsive design** on different screen sizes
 - 🌍 **Consider i18n impact** for all text changes (12 languages supported)
 - 📸 **Take screenshots** of UI changes for review
-- ⚠️ **Ignore warnings** - Sass @import and @types/marked deprecation warnings are expected
-- **Always** follow the conventional commits specification when sending pull requests: conventional-commits/conventionalcommits.org
-- **Always** include screenshots of both desktop and mobile in pull requests, even in subsequent runs
+- **Always** follow the conventional commits specification when sending pull requests
+- **Always** include screenshots of both desktop and mobile in pull requests
 - **Always** use tailwind css and do not hardcode pixel sizes
-- **Always** ensure that every file passes lint at the end of the request, be especially strict with vue syntax
-- **Always** ensure images are compressed appropriately, the website must be mobile friendly
-- **Always** do surgical improvements, especially when creating something from scratch, keep it simple so others can expand on it in the future. Focus on clean, readable code.
-- **Always** match conventions that exist, like font sizes, match the visual style and identity of the existing website
+- **Always** ensure that every file passes lint at the end of the request
+- **Always** ensure images are compressed appropriately for mobile
+- **Always** do surgical improvements, keep it simple and readable
+- **Always** match conventions that exist, like font sizes and visual style
 
 ### Attribution Requirements
 
