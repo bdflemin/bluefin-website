@@ -70,7 +70,7 @@ const releases = [
     title: "Bluefin",
     subtitle: "For Everyone",
     description:
-      "A modern desktop with a relaxed update cadence. Pick this if you're not sure.",
+      "A modern desktop at the leading edge. Pick this if you're not sure.",
     image: "./characters/leaping.webp",
     supportedArch: ["x86"],
     recommended: true
