@@ -98,7 +98,7 @@
   </body>
   <footer>
     <script type="text/javascript">
-      const ignoredContributors = ['github-actions[bot]', 'dependabot[bot]', 'pull[bot]', 'renovate[bot]', 'blacksmith-sh[bot]', 'ubot-7274[bot' ];
+      const ignoredContributors = ['github-actions[bot]', 'dependabot[bot]', 'pull[bot]', 'renovate[bot]', 'blacksmith-sh[bot]', 'ubot-7274[bot]'];
 
       /**
        * Lightly modified from:
@@ -176,7 +176,8 @@
           data.forEach(function(contributor) {
             var contributorLogin = contributor['login']
             if(!ignoredContributors.includes(contributorLogin)) {
-              document.getElementById('contributor-container').innerHTML += '<div class="github-profile-badge" data-user="' + contributorLogin + '"></div';
+              // Properly close the div tag
+              document.getElementById('contributor-container').innerHTML += '<div class="github-profile-badge" data-user="' + contributorLogin + '"></div>';
             }
           });
 
