@@ -69,13 +69,13 @@ const { t } = useI18n<MessageSchema>({
               <div>
                 <div class="icon-wrap">
                   <img
-                    src="/brands/devpod.svg"
-                    alt="Devpod logo blur"
+                    src="/brands/cncf.svg"
+                    alt="CNCF logo blur"
                     loading="lazy"
                   />
                   <img
-                    src="/brands/devpod.svg"
-                    alt="Devpod logo"
+                    src="/brands/cncf.svg"
+                    alt="CNCF logo"
                     loading="lazy"
                   />
                 </div>
