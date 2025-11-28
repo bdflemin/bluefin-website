@@ -101,7 +101,7 @@ const { t } = useI18n<MessageSchema>({
       margin-bottom: 10px;
 
       strong {
-        font-size: 1.2rem;
+        font-size: 2rem;
         font-weight: 400;
         text-transform: uppercase;
         color: var(--color-text-light);
