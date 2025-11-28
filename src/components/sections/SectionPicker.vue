@@ -24,7 +24,10 @@ p :deep(a) {
 <template>
   <section id="scene-picker" class="section-wrap">
     <div class="container">
-      <div>
+      <div class="picker-header">
+        <div class="picker-tag">
+          <strong>{{ t("TryBluefin.Tag") }}</strong>
+        </div>
         <h2>{{ t("TryBluefin.Title") }}</h2>
         <p v-html="marked.parse(t('TryBluefin.Description'))" />
       </div>
