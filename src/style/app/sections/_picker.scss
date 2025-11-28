@@ -10,6 +10,8 @@
   }
 
   .picker-header {
+    max-width: 800px;
+
     .picker-tag {
       margin-bottom: 10px;
 
@@ -36,6 +38,10 @@
     font-size: 1.6rem;
     line-height: 1.6em;
     color: var(--color-text-light);
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   p p {

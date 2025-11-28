@@ -11,17 +11,20 @@ const { t } = useI18n<MessageSchema>({
 </script>
 
 <style scoped>
-.picker-header {
-  max-width: 800px;
-  margin: 0 auto;
+.picker-card {
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 40px;
 
-  .picker-tag,
-  h2 {
-    text-align: left;
-  }
-
-  p {
-    text-align: center;
+  .card-content {
+    p {
+      font-size: 1.6rem;
+      line-height: 1.6em;
+      color: var(--color-text-light);
+      margin: 0;
+    }
   }
 }
 
@@ -43,8 +46,14 @@ p :deep(a) {
           <strong>{{ t("TryBluefin.Tag") }}</strong>
         </div>
         <h2>{{ t("TryBluefin.Title") }}</h2>
-        <p v-html="marked.parse(t('TryBluefin.Description'))" />
       </div>
+      
+      <div class="picker-card">
+        <div class="card-content">
+          <p v-html="marked.parse(t('TryBluefin.Description'))" />
+        </div>
+      </div>
+
       <ImageChooser />
     </div>
     <SceneVisibilityChecker name="#scene-picker" />

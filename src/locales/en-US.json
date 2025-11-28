@@ -68,41 +68,6 @@
     }
   },
   "NewsTitle": "News",
-  "Faq": {
-    "Tag": "Unsure?",
-    "Title": "FAQ",
-    "Text": "If your questions remain unanswered, \nyou can find us [in GitHub Discussions](https://community.projectbluefin.io) and check out [docs.projectbluefin.io](https://docs.projectbluefin.io)",
-    "QuestionsArray": {
-      "0": {
-        "question": "What is this exactly? Why did you make a Linux distribution?",
-        "answer": "Bluefin utilizes bootc's OCI container features to compose and build an OS image. This process is overseen by a well-structured community that is committed to automation and sustainability. The end result is crowd sourced best practices so users don't have to start from scratch to get going. We use the term \"custom image\" to describe this approach. It's like having someone install, configure, and maintain a polished setup for you. \n\n It's akin to your geeky friend helping you set up your computer, except we do it together as a community to help each other. \n\n[Bootable Containers](https://bootc-dev.github.io/bootc/)"
-      },
-      "1": {
-        "question": "How does this differ from other desktops?",
-        "answer": "Bluefin is a next generation desktop that purposely behaves like a consumer device instead of a traditional distribution. We remove choice paralysis for users by presenting one well curated Flathub store, Homebrew, and minimize the use of system packaging. \n\n For developers we concentrate on a pure cloud-native developer workflow via devcontainers.  \n\nOr use any OCI container as your user space. \n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "Where can I find more details on the features?",
-        "answer": "You can find detailed information in our GitHub repository. \n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Bluefin Documentation](https://docs.projectbluefin.io) [Developer Documentation](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "Why dinosaurs?",
-        "answer": "Bluefin is a Deinonychus antirrhopus, a theropod dinosaur whose name means \"terrible claw\". Discovered in the 1960s, she revolutionized our understanding of dinosaurs. Before Deinonychus, dinosaurs were often seen as slow, dim-witted creatures. However, she shattered these misconceptions, offering insight into the dynamic world of hot-blooded, rapidly evolving animals that were masters of their domain. We aim for our desktop to embody a similar nimbleness. Power and adaptability. \n\n [Deinonychus](https://en.wikipedia.org/wiki/Deinonychus)"
-      },
-      "4": {
-        "question": "How do you plan on making the project sustainable?",
-        "answer": "The project is purposely written in bash and Python in order to allow easy entry. We are just copying files around, it's Linux. Since this model scales, we feel that organizations that get value from this project would contribute some of their time to helping maintain it. It's mostly feature complete and it attracts automation minded system administrators. Any one can contribute and get value back by automating operating system maintenance via a community. Or just donate to GitHub Sponsors to help pay for the builders and to sponsor more paleoart. \n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "What if I want to use KDE?",
-        "answer": "Aurora is similar to Bluefin but uses KDE instead. We hope that Bluefin and Aurora act as inspiration for others to build their own communities around user experiences. Also check out Bazzite if you want an enthusiast-grade gaming experience, similar to SteamOS. Birds of a feather are stronger together. \n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "I'm not interested in a desktop, can I just get the dinosaurs?",
-        "answer": "Bluefin was brought to life by Jacob Schnurr and Andy Frazer. The artwork is free for you to use. It represents the delicate balance of life and is there to remind us that open source is an ecosystem that needs to be sustained. The software we make has an effect on the world: Bluefin might be put together by technology nerds, but it took two humans to show us the importance of the creativity of the human mind. \n\n [Wallpapers and Dinosaurs](https://docs.projectbluefin.io/dinosaurs) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
-    }
-  },
   "Community": {
     "Tag": "Our",
     "Title": "Community",
