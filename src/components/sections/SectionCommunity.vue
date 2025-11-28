@@ -36,6 +36,12 @@ const { t } = useI18n<MessageSchema>({
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.DiscordButton") }}</span>
               </a>
+              <a class="community-button" href="https://github.com/ublue-os/bluefin/discussions" target="_blank">
+                <span class="button-icon">
+                  <i class="fas fa-comments" aria-hidden="true"></i>
+                </span>
+                <span class="button-label">{{ t("Community.Documentation.DiscussionsButton") }}</span>
+              </a>
             </div>
           </div>
         </div>

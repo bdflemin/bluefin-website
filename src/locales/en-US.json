@@ -108,7 +108,8 @@
       "Title": "Documentation",
       "Description": "Looking for support? View our documentation site for up-to-date guides on installation, general use, and troubleshooting.",
       "Button": "View Documentation",
-      "DiscordButton": "Join our Discord"
+      "DiscordButton": "Join our Discord",
+      "DiscussionsButton": "GitHub Discussions"
     },
     "Contribute": {
       "Title": "Contribute",
