@@ -117,9 +117,9 @@ const { t } = useI18n<MessageSchema>({
         <SectionMission />
         <SectionVideo />
         <SectionBazaar />
-        <SectionNews />
         <SectionPicker />
         <SectionCommunity />
+        <SectionNews />
         <SectionFooter />
         <Navigation />
       </div>
