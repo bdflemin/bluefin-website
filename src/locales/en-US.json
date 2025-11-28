@@ -131,6 +131,18 @@
     "ProjectTitle": "Project Bluefin is Built With",
     "References": "All artwork built by humans.\n\n- Website - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)\n- Logos and Wallpapers - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n - Image Editing - [Chandeleer](https://ko-fi.com/chandeleer) & [Delphic Melody](https://github.com/delphicmelody/)\n  - Bluefin Illustrative Wallpaper - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- Translations - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager) and [Tsu-gu](https://github.com/Tsu-gu) \n- Special Thanks - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), [Wayne Witzel](https://github.com/wwitzel3), and [Marco Ceppi](https://github.com/marcoceppi)"
   },
+  "Bazaar": {
+    "Header": {
+      "Text1": "Run your favorite",
+      "Word1": "applications",
+      "Word2": "containers",
+      "Word3": "everything"
+    },
+    "Description": "Bluefin utilizes the <a href=\"https://github.com/kolunmi/bazaar\" target=\"_blank\">Bazaar</a> app store, allowing for easy installation and management of all your favorite applications from Flathub <strong>and a curated list of apps we think you'll love</strong>.",
+    "Additional": "Additionally, <strong>Bluefin brings <a href=\"https://docs.brew.sh/Homebrew-on-Linux\" target=\"_blank\">Brew</a> and the tools and techniques created by the cloud native community to your desktop.</strong> Built in container support means packages for <em>any</em> Linux distribution can be installed and used as if they were native applications. The included <a href=\"https://gitlab.gnome.org/chergert/ptyxis\" target=\"_blank\" alt=\"Ptyxis terminal (Pronounced Ticksus)\">Ptyxis terminal</a> and <a href=\"https://flathub.org/apps/com.ranfdev.DistroShelf\" target=\"_blank\">DistroShelf</a> provide first-class access to your Distrobox containers, letting you focus on what matters - your software.<br><br>Running a game, a development environment, a container for your Jellyfin server, or a utility only available on the Arch User Repository? You can rest assured it works here. <strong>Bluefin is developed on Bluefin.</strong>",
+    "Button1": "View apps on Flathub",
+    "Button2": "Software Management Guide"
+  },
   "Navbar": {
     "ForYou": "For You",
     "ForDevs": "For Devs",
