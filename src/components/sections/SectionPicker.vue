@@ -13,6 +13,8 @@ const { t } = useI18n<MessageSchema>({
 <style scoped>
 .picker-header {
   max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 p :deep(a) {

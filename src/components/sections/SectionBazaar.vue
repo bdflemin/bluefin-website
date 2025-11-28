@@ -92,12 +92,13 @@ const { t } = useI18n<MessageSchema>({
 
 .bazaar-main {
   display: flex;
+  justify-content: center;
   margin-bottom: 40px;
 }
 
 .bazaar-description {
   max-width: 800px;
-  text-align: left;
+  text-align: center;
 
   p {
     font-size: 1.8rem;
@@ -140,8 +141,8 @@ const { t } = useI18n<MessageSchema>({
 
 .bazaar-additional {
   max-width: 800px;
-  margin-bottom: 40px;
-  text-align: left;
+  margin: 0 auto 40px;
+  text-align: center;
 
   p {
     font-size: 1.6rem;
