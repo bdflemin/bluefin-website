@@ -1,4 +1,4 @@
-name: Sync Bluefin CountMe Chart # See: https://github.com/ublue-os/countme
+name: Sync Bluefin Growth Chart # See: https://github.com/ublue-os/countme
 
 on:
   schedule:
@@ -15,19 +15,19 @@ jobs:
       - name: Checkout Repository # Needed to find the public/assets subdirectory
         uses: actions/checkout@v4
 
-      - name: Download Bluefin CountMe SVG # Downloads the current updated Bluefin chart (updates daily)
+      - name: Download Bluefin Growth Chart # Downloads the current updated Bluefin chart (updates daily)
         run: | # All `sed` commands are used to change the color of the chart to dark (so we don't blind our users with a light chart)
-            curl https://raw.githubusercontent.com/ublue-os/countme/refs/heads/main/growth_bluefins.svg --output public/assets/growth_bluefins.svg
+            curl https://raw.githubusercontent.com/ublue-os/countme/refs/heads/main/growth_bluefins.svg --output src/assets/svg/growth_bluefins.svg
             sed -i 's/#ffffff/#0c1016/g' public/assets/growth_bluefins.svg
             sed -i 's/#cccccc/#272727/g' public/assets/growth_bluefins.svg
             sed -i 's/#616161/#bdbdbd/g' public/assets/growth_bluefins.svg
             sed -i 's/#77aadd/#4285f4/g' public/assets/growth_bluefins.svg
-            sed -i 's/id="text_16">/id="text_16" style="fill: #bdbdbd">/' public/assets/growth_bluefins.svg
+            sed -i 's/id="text_16">/id="text_16" style="fill: #bdbdbd">/' src/assets/svg/growth_bluefins.svg
         working-directory: ${{ github.workspace }}
 
       - name: Write SVG to Repository # Updates file if there's actually a difference from the old one
         uses: test-room-7/action-update-file@v2
         with:
-          commit-msg: "chore: update Bluefin countme chart"
+          commit-msg: "chore: update Bluefin growth chart"
           file-path: public/assets/growth_bluefins.svg
           github-token: ${{ secrets.GITHUB_TOKEN }}
