@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
-import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
+import type { MessageSchema } from '../../locales/schema'
+import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Holidaysaurus from '../../assets/img/Holidaysaurus.webp'
 // Re-implement after December
-//import { LangLandingBluefinImageURLs } from "../../content"
-import { i18n } from "../../locales/schema"
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+// import { LangLandingBluefinImageURLs } from "../../content"
+import { i18n } from '../../locales/schema'
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
 function scrollToUsers() {
   document.querySelector('#scene-users')?.scrollIntoView({ behavior: 'smooth' })
@@ -89,11 +89,11 @@ const { t } = useI18n<MessageSchema>({
             </select>
           </div>
         </div>
-            <img
-            class="sm:h-full sm:w-full object-contain my-3 w-1/2 h-1/2"
-            :src="Holidaysaurus"
-            alt="Bluefin"
-            />
+        <img
+          class="sm:h-full sm:w-full object-contain my-3 w-1/2 h-1/2"
+          :src="Holidaysaurus"
+          alt="Bluefin"
+        >
       </div>
     </div>
     <SceneVisibilityChecker name="null" />

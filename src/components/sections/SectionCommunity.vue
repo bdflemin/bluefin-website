@@ -2,9 +2,8 @@
 import type { MessageSchema } from '../../locales/schema'
 import { useI18n } from 'vue-i18n'
 
-import { useI18n } from "vue-i18n"
-import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
-import type { MessageSchema } from "../../locales/schema"
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
+
 const { t } = useI18n<MessageSchema>({
   useScope: 'global'
 })
