@@ -1,4 +1,13 @@
 {
+  "TopBar": {
+    "Docs": "Documentation",
+    "AskBluefin": "Demander à Bluefin",
+    "Blog": "Blog",
+    "Changelog": "Changelog",
+    "Discussions": "Discussions",
+    "Feedback": "Retours",
+    "Store": "Magasin (US uniquement)"
+  },
   "Landing": {
     "Title": "La station de travail Linux de nouvelle génération, conçue pour la fiabilité, la performance et la durabilité.",
     "DiscoverButton": "Découvrir",
@@ -14,7 +23,11 @@
     "Box2": "Maintenance quasi nulle",
     "Box3": "Pilotes GPU inclus"
   },
-  "ParallaxQuote": "L’évolution est un processus de ramification et d’expansion constantes.",
+  "EvolutionQuote": {
+    "Quote": "L’évolution est un processus de ramification et d’expansion constantes.",
+    "Author": "Stephen Jay Gould",
+    "WikiLink": "https://fr.wikipedia.org/wiki/Stephen_Jay_Gould"
+  },
   "Devs": {
     "Tag": "Pour les",
     "Title": "Développeurs",
@@ -44,6 +57,10 @@
     "Tag": "Essayez",
     "Title": "Bluefin",
     "Description": "Choisissez le raptor idéal pour votre matériel et votre utilisation. L'équipe recommande [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter) pour créer votre support d'installation (Ventoy n'est pas pris en charge). Allez voir [la documentation](https://docs.projectbluefin.io) pour davantage d'informations.\n\n\nBluefin reçoit des mises à jour de sécurité régulières et est disponible en deux flux différents qui reflètent la fréquence des mises à jour :\n\n",
+    "LTS": {
+      "Subtitle": "Pour les professionnels et les ingénieurs en IA/ML",
+      "Description": "Une expérience de support à long terme sur une base de niveau entreprise."
+    },
     "Architecture": {
       "Question": "Sur quelle architecture allez-vous installer Bluefin? Les anciens systèmes basés sur le BIOS ne sont pas pris en charge.",
       "x86": "x86_64 (Standard pour la plupart des ordinateurs)",
@@ -60,7 +77,7 @@
     },
     "Download": {
       "Iso": "Télécharger l’ISO",
-      "Registry": "Voir les détails sur GitHub Container Registry",
+      "Registry": "Voir le Registry",
       "Checksum": "Vérifier (SHA256)",
       "DeveloperNote": "Consultez [Introduction à Bluefin DX](https://docs.projectbluefin.io/bluefin-dx).",
       "DollyChill": "Dolly se détend près de votre lien ISO",
