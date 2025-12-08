@@ -3,7 +3,7 @@
     "Docs": "Documentation",
     "AskBluefin": "Ask Bluefin",
     "Blog": "Blog",
-    "Changelog": "Changelog",
+    "Changelog": "Changelogs",
     "Discussions": "Discussions",
     "Feedback": "Feedback",
     "Store": "Store (US Only)"
@@ -155,7 +155,11 @@
       "IsoDownload": "Download the ISO",
       "Checksum": "Verify (SHA256)",
       "Registry": "View Registry",
-      "Documentation": "Check out the [Bluefin Documentation](https://docs.projectbluefin.io/), it takes about 15 minutes and includes an installation runbook - set yourself up for success, you are headed into a new world.<br/><br/>Can't find what you're looking for? Check [the full list of downloads](https://docs.projectbluefin.io/downloads/).<br/><br/>If you choose secure boot during installation, the password is <code>universalblue</code>.",
+      "Documentation": {
+        "Intro": "Check out the [Bluefin Documentation](https://docs.projectbluefin.io/), it takes about 15 minutes and includes an installation runbook - set yourself up for success, you are headed into a new world.",
+        "Downloads": "Can't find what you're looking for? Check [the full list of downloads](https://docs.projectbluefin.io/downloads/).",
+        "SecureBoot": "If you choose secure boot during installation, the password is \"universalblue\"."
+      },
       "ChooseRelease": "Choose a different release"
     }
   },

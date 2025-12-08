@@ -316,10 +316,9 @@ onMounted(() => {
 }
 
 .feed-source {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   text-align: center;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
 }
 
 .source-text {

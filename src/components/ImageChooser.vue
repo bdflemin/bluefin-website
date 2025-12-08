@@ -537,7 +537,9 @@ onMounted(() => {
       </div>
 
       <div class="documentation-note">
-        <p v-html="marked.parse(t('TryBluefin.Download.Documentation'))" />
+        <p v-html="marked.parse(t('TryBluefin.Download.Documentation.Intro'))" />
+        <p v-html="marked.parse(t('TryBluefin.Download.Documentation.Downloads'))" />
+        <p v-html="marked.parse(t('TryBluefin.Download.Documentation.SecureBoot'))" />
       </div>
 
       <button class="start-over-button" @click="reset">
