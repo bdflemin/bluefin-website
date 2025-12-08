@@ -23,7 +23,7 @@ const { t } = useI18n<MessageSchema>({
       <div class="img-wrap">
         <img
           :src="LangUsersBluefinImageURL"
-          :alt="t('Users.DinoAlt')"
+          :alt="t('Users.BluefinArtworkAlt')"
         >
       </div>
 
