@@ -29,16 +29,6 @@ Featuring automatic image-based updates and a simple graphical application store
 
 //
 //
-// Parallax quote
-//
-export const LangParallaxQuote = {
-  text: '“Evolution is a process of constant branching and expansion.”',
-  author: 'Stephen Jay Gould',
-  url: 'https://en.wikipedia.org/wiki/Stephen_Jay_Gould'
-}
-
-//
-//
 // Developers Section
 //
 export const LangDevsTag = 'For'
@@ -53,9 +43,9 @@ export const LangDevsBoxFour = 'Homebrew on-tap'
 export const LangDevsBoxFive = 'Podman Desktop'
 export const LangDevsBoxSix = 'JetBrains IDEs'
 export const LangDevsTowerImageURL = './characters/devs.webp'
-export const LangDevsAppendix = `The inclusion of a [container runtime](https://podman.io) unlocks your team\'s potential. Use the same tools that power modern internet infrastructure on your desktop. Bluefin knows how to ship to production. 
+export const LangDevsAppendix = `The inclusion of a [container runtime](https://podman.io) unlocks your team\'s potential. Use the same tools that power modern internet infrastructure on your desktop. Bluefin knows how to ship to production.
 
-We target Linux operators who don't use Linux on the desktop because it has failed them. So we're taking the Linux desktop through its cloud-native journey and building it as a community. 
+We target Linux operators who don't use Linux on the desktop because it has failed them. So we're taking the Linux desktop through its cloud-native journey and building it as a community.
 
 > Be the one who moves, not the one who is moved.
 > <cite>[Zavala][1]</cite>
@@ -101,49 +91,6 @@ export const LangAppendixYTVideo
 
 //
 //
-// Frequently asked questions
-//
-export const LangFaqTag = 'Unsure?'
-export const LangFaqTitle = 'FAQ'
-export const LangFaqText = `
-If your questions remain unanswered, 
-you can find us [on our Community forum](https://commmunity.projectbluefin.io) and check out [docs.projectbluefin.io](https://docs.projectbluefin.io).
-`
-export const LangFaqQuestions = [
-  {
-    question: 'Faq.QuestionsArray.0.question',
-    answer: 'Faq.QuestionsArray.0.answer',
-    open: true
-  },
-  {
-    question: 'Faq.QuestionsArray.1.question',
-    answer: 'Faq.QuestionsArray.1.answer'
-  },
-  {
-    question: 'Faq.QuestionsArray.2.question',
-    answer: 'Faq.QuestionsArray.2.answer',
-    open: true
-  },
-  {
-    question: 'Faq.QuestionsArray.3.question',
-    answer: 'Faq.QuestionsArray.3.answer'
-  },
-  {
-    question: 'Faq.QuestionsArray.4.question',
-    answer: 'Faq.QuestionsArray.4.answer'
-  },
-  {
-    question: 'Faq.QuestionsArray.5.question',
-    answer: 'Faq.QuestionsArray.5.answer'
-  },
-  {
-    question: 'Faq.QuestionsArray.6.question',
-    answer: 'Faq.QuestionsArray.6.answer'
-  }
-]
-
-//
-//
 // Footer content
 //
 export const LangFooterProjectTitle = 'Project Bluefin'
@@ -152,7 +99,7 @@ export const LangFooterProject
 export const LangFooterReferences = `All artwork built by humans.
 <br><br>
 - Website - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)
-- Logos and Wallpapers - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) 
+- Logos and Wallpapers - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)
 - Bluefin Illustrative Wallpaper - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)
 - Special Thanks - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), and [Marco Ceppi](https://github.com/marcoceppi)`
 

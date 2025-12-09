@@ -23,7 +23,8 @@ const { t } = useI18n<MessageSchema>({
 
       <div class="picker-card">
         <div class="card-content">
-          <p v-html="marked.parse(t('TryBluefin.Description'))" />
+          <p v-html="marked.parse(t('TryBluefin.Description.Choice'))" />
+          <p v-html="marked.parse(t('TryBluefin.Description.Updates'))" />
         </div>
       </div>
 

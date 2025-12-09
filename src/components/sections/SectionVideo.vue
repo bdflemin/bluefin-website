@@ -25,8 +25,9 @@ const { t } = useI18n<MessageSchema>({
       </div>
     </div>
 
-    <div class="container small">
-      <div class="content" v-html="marked.parse(t('Video.AppendixText'))" />
+    <div class="container moderate">
+      <div class="content" v-html="marked.parse(t('Video.Text.Passion'))" />
+      <div class="content" v-html="marked.parse(t('Video.Text.StateOfTheArt'))" />
     </div>
   </section>
 </template>

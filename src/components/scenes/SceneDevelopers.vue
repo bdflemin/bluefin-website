@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import type { MessageSchema } from '../../locales/schema'
-import { marked } from 'marked'
-import { useI18n } from 'vue-i18n'
-import { LangDevsAppendix, LangDevsTowerImageURL } from '../../content'
+  import type { MessageSchema } from '../../locales/schema'
+  import { marked } from 'marked'
+  import { useI18n } from 'vue-i18n'
+  import { LangDevsAppendix, LangDevsTowerImageURL } from '../../content'
 
-import SceneContent from '../common/SceneContent.vue'
-import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
+  import SceneContent from '../common/SceneContent.vue'
+  import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
+  import SceneQuote from '../common/SceneQuote.vue'
 
-const { t } = useI18n<MessageSchema>({
-  useScope: 'global'
-})
+  const { t } = useI18n<MessageSchema>({
+    useScope: 'global'
+  })
 </script>
 
 <template>
@@ -20,7 +21,7 @@ const { t } = useI18n<MessageSchema>({
           <img
             class="container"
             :src="LangDevsTowerImageURL"
-            :alt="t('ArtworkDescription')"
+            :alt="t('Devs.KarlArtworkAlt')"
           >
         </div>
         <div class="scene-arrow">
@@ -33,7 +34,7 @@ const { t } = useI18n<MessageSchema>({
         <SceneContent
           tag="Devs.Tag"
           title="Devs.Title"
-          text="Devs.Text"
+          text="Devs.Features"
         >
           <div class="brand-grid">
             <div class="brand-item">
@@ -122,12 +123,12 @@ const { t } = useI18n<MessageSchema>({
               <div>
                 <div class="icon-wrap">
                   <img
-                    src="/brands/jetbrains.png"
+                    src="/brands/jetbrains-icon.png"
                     alt="JetBrains logo blur"
                     loading="lazy"
                   >
                   <img
-                    src="/brands/jetbrains.png"
+                    src="/brands/jetbrains-icon.png"
                     alt="JetBrains logo"
                     loading="lazy"
                   >
@@ -137,9 +138,18 @@ const { t } = useI18n<MessageSchema>({
             </div>
           </div>
 
-          <div
+          <p
             v-if="LangDevsAppendix"
-            v-html="marked.parse(t('Devs.Appendix'))"
+            v-html="marked.parse(t('Devs.RuntimeContainers'))"
+          />
+          <p
+            v-if="LangDevsAppendix"
+            v-html="marked.parse(t('Devs.CNJourney'))"
+          />
+          <SceneQuote
+            quote="InitiativeQuote.Quote"
+            author="InitiativeQuote.Author"
+            link="InitiativeQuote.WikiLink"
           />
         </SceneContent>
       </div>

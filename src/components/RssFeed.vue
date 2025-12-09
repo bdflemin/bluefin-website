@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import type { MessageSchema } from './../locales/schema'
+import { useI18n } from 'vue-i18n'
 import { onMounted, ref } from 'vue'
+
+const { t } = useI18n<MessageSchema>({
+  useScope: 'global'
+})
 
 /**
  * RSS/Atom Feed Parser Component
@@ -178,7 +184,7 @@ onMounted(() => {
 <template>
   <div class="rss-feed">
     <div v-if="loading" class="loading">
-      <p>Loading blog posts...</p>
+      <p>{{ t("News.Loading") }}</p>
     </div>
 
     <div v-else-if="error" class="error">
@@ -186,7 +192,7 @@ onMounted(() => {
     </div>
 
     <div v-else-if="posts.length === 0" class="no-posts">
-      <p>No blog posts found.</p>
+      <p>{{ t("News.NoPosts") }}</p>
     </div>
 
     <div v-else class="posts-list">
@@ -217,7 +223,7 @@ onMounted(() => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            View all posts on the official blog →
+            {{ t("News.ViewAll") }}
           </a>
         </p>
       </div>
@@ -310,10 +316,9 @@ onMounted(() => {
 }
 
 .feed-source {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   text-align: center;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
 }
 
 .source-text {

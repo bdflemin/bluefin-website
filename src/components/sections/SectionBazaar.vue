@@ -12,10 +12,10 @@ const { t } = useI18n<MessageSchema>({
     <div class="container bazaar-content">
       <div class="bazaar-header">
         <div class="bazaar-tag">
-          <strong>{{ t("Bazaar.Header.Tag") }}</strong>
+          <strong>{{ t("Bazaar.Tag") }}</strong>
         </div>
         <h2 class="title-apps">
-          {{ t("Bazaar.Header.Title") }}
+          {{ t("Bazaar.Title") }}
         </h2>
       </div>
 
@@ -44,7 +44,7 @@ const { t } = useI18n<MessageSchema>({
 
       <div class="bazaar-buttons">
         <a class="bazaar-button" href="https://flathub.org/" target="_blank">
-          <span class="button-label">{{ t("Bazaar.Button1") }}</span>
+          <span class="button-label">{{ t("Bazaar.FlathubButton") }}</span>
         </a>
       </div>
     </div>

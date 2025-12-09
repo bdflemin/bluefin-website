@@ -12,7 +12,7 @@ const { t } = useI18n<MessageSchema>({
   <section id="scene-news" class="section-wrap">
     <div class="container moderate">
       <div>
-        <h2>{{ t("NewsTitle") }}</h2>
+        <h2>{{ t("News.Title") }}</h2>
       </div>
       <RssFeed
         feed-url="https://docs.projectbluefin.io/blog/atom.xml"

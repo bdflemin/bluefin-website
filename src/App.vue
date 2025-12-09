@@ -1,25 +1,23 @@
 <script setup lang="ts">
-import type { MessageSchema } from './locales/schema'
 import { onBeforeMount, provide, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import Navigation from './components/Navigation.vue'
+
 import PageLoading from './components/PageLoading.vue'
-import SceneDevelopers from './components/scenes/SceneDevelopers.vue'
+import TopNavbar from './components/TopNavbar.vue'
+import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
 import SceneLanding from './components/scenes/SceneLanding.vue'
 import SceneUsers from './components/scenes/SceneUsers.vue'
-import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
-import SectionBazaar from './components/sections/SectionBazaar.vue'
-import SectionCommunity from './components/sections/SectionCommunity.vue'
-import SectionFooter from './components/sections/SectionFooter.vue'
+import SceneDevelopers from './components/scenes/SceneDevelopers.vue'
 import SectionMission from './components/sections/SectionMission.vue'
-import SectionNews from './components/sections/SectionNews.vue'
-import SectionPicker from './components/sections/SectionPicker.vue'
 import SectionVideo from './components/sections/SectionVideo.vue'
-import TopNavbar from './components/TopNavbar.vue'
+import SectionBazaar from './components/sections/SectionBazaar.vue'
+import SectionPicker from './components/sections/SectionPicker.vue'
+import SectionCommunity from './components/sections/SectionCommunity.vue'
+import SectionNews from './components/sections/SectionNews.vue'
+import SectionFooter from './components/sections/SectionFooter.vue'
+import Navigation from './components/Navigation.vue'
 
 import { IS_TABLET } from './composables'
 
-import { LangParallaxQuote } from './content'
 import { i18n } from './locales/schema'
 
 const visibleSection = ref<string>('')
@@ -85,9 +83,6 @@ const currentLocale = urlParams.get('lang') || window.navigator.language
 if (i18n.global.availableLocales.includes(currentLocale)) {
   ;(i18n.global as any).locale = currentLocale
 }
-const { t } = useI18n<MessageSchema>({
-  useScope: 'global'
-})
 </script>
 
 <template>
@@ -98,20 +93,6 @@ const { t } = useI18n<MessageSchema>({
       <ParallaxWrapper>
         <SceneLanding />
         <SceneUsers />
-
-        <div class="scene-quote">
-          <blockquote>
-            <p>
-              {{ t("ParallaxQuote") }}
-              <cite>
-                <a :href="LangParallaxQuote.url" target="_blank">{{
-                  LangParallaxQuote.author
-                }}</a>
-              </cite>
-            </p>
-          </blockquote>
-        </div>
-
         <SceneDevelopers />
       </ParallaxWrapper>
       <SectionMission />

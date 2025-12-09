@@ -50,7 +50,7 @@ const { t } = useI18n<MessageSchema>({
     </div>
     <div>
       <div>
-        <div v-html="marked.parse(t(props.text) ?? '')" />
+        <p v-html="marked.parse(t(props.text) ?? '')" />
         <slot />
       </div>
     </div>
