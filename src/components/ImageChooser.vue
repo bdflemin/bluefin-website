@@ -338,7 +338,7 @@ onMounted(() => {
     >
       <div class="step-header">
         <button class="back-button" @click="reset">
-          ← {{ t('TryBluefin.Label.BackToReleases')}}
+          {{ t('TryBluefin.Label.BackToReleases')}}
         </button>
         <h3>{{ t("TryBluefin.Architecture.Question") }}</h3>
       </div>
@@ -368,7 +368,7 @@ onMounted(() => {
             }
           "
         >
-          ← {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back')}}
         </button>
         <h3>{{ t("TryBluefin.Kernel.Question") }}</h3>
       </div>
@@ -395,7 +395,7 @@ onMounted(() => {
             }
           "
         >
-          ← {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back')}}
         </button>
         <h3>{{ t("TryBluefin.Gpu.Question") }}</h3>
       </div>
@@ -431,7 +431,7 @@ onMounted(() => {
             }
           "
         >
-          ← {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back')}}
         </button>
         <h3>{{ t('TryBluefin.Selection.Ready') }}</h3>
       </div>
