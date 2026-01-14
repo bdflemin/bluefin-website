@@ -1,0 +1,219 @@
+{
+  "TopBar": {
+    "Docs": "문서",
+    "AskBluefin": "Bluefin에게 문의",
+    "Blog": "블로그",
+    "Changelog": "변경 로그",
+    "Discussions": "토론",
+    "Feedback": "피드백",
+    "Store": "스토어 (US 전용)"
+  },
+  "Landing": {
+    "Title": "신뢰성, 성능, 지속가능성을 위해 설계된 차세대 Linux 워크스테이션.",
+    "DiscoverButton": "둘러보기",
+    "TryOutButton": "체험하기"
+  },
+  "Users": {
+    "Tag": "For",
+    "Title": "You",
+    "Intro": "Bluefin은 컴퓨터를 위한 운영체제입니다. 두 세계의 장점을 모두 갖춘: 크롬북의 신뢰성과 사용 편의성, 그리고 GNOME 데스크톱의 강력함.",
+    "Box1": "Flathub 애플리케이션",
+    "Box2": "거의 무관리",
+    "Box3": "GPU 드라이버 포함",
+    "Features": "자동 이미지 기반 업데이트와 간단한 그래픽 애플리케이션 스토어를 특징으로 하는 Bluefin은 방해받지 않도록 설계되었습니다. 시스템 안정성을 희생하지 않고 원하는 것을 얻으세요. Linux 클라이언트가 진화했습니다. 차세대를 위한 깨끗한 시작입니다. 자세한 정보는 [발표 블로그 포스트](https://www.ypsidanger.com/announcing-project-bluefin/)와 [소개 문서](https://docs.projectbluefin.io)를 확인하세요.",
+    "BluefinArtworkAlt": "Linux의 미래를 바라보는 Bluefin - 왼쪽에 있는 것 같습니다"
+  },
+  "EvolutionQuote": {
+    "Quote": "진화는 끊임없는 분기와 확장의 과정이다.",
+    "Author": "Stephen Jay Gould",
+    "WikiLink": "https://en.wikipedia.org/wiki/Stephen_Jay_Gould"
+  },
+  "Devs": {
+    "Tag": "For",
+    "Title": "Developers",
+    "Features": "Bluefin은 장치를 강력한 워크스테이션으로 변환하는 선택적 \"개발자 모드\"를 제공합니다. 출발점에 따라 시작할 수 있는 컨테이너 중심 워크플로우를 제공하거나, 직접 가져올 수 있습니다. 전 세계에는 [1,560만 명의 클라우드 네이티브 개발자](https://www.cncf.io/announcements/2025/11/11/cncf-and-slashdata-survey-finds-cloud-native-ecosystem-surges-to-15-6m-developers/)가 있으며, 이러한 [업계 최고의 도구](https://landscape.cncf.io/)를 쉽게 활용할 수 있습니다.",
+    "BoxOne": "devcontainer가 포함된 Visual Studio Code",
+    "BoxTwo": "컨테이너 중심 터미널로 좋아하는 Linux 배포판과 작업",
+    "BoxThree": "Kubernetes를 포함한 CNCF의 최고 도구로 클라우드 네이티브 개발을 위해 설계됨",
+    "BoxFour": "기본 제공되는 Homebrew, Mac과 동일한 도구",
+    "BoxFive": "그래픽 컨테이너 관리를 위한 Podman Desktop",
+    "BoxSix": "한 번의 명령으로 JetBrains IDE 사용",
+    "RuntimeContainers": "[컨테이너 런타임](https://podman.io) 포함으로 팀의 잠재력을 발휘합니다. 현대 인터넷 인프라를 구동하는 동일한 도구를 데스크톱에서 사용하세요. Bluefin은 프로덕션에 배포하는 방법을 알고 있습니다.",
+    "CNJourney": "저희는 데스크톱에서 Linux를 사용하지 않는, Linux가 만족스럽지 못하다고 느끼는 운영자들을 대상으로 합니다. 따라서 Linux 데스크톱을 클라우드 네이티브 환경으로 전환하고 커뮤니티를 통해 이를 구축해 나가고 있습니다.",
+    "KarlArtworkAlt": "백로그 위에 우뚝 선 Karl",
+    "TowerJoke": "백로그를 <b>압도</b>하세요!"
+  },
+  "InitiativeQuote": {
+    "Quote": "움직이는 자가 되어라, 움직임을 당하는 자가 되지 말라.",
+    "Author": "Commander Zavala (Destiny)",
+    "WikiLink": "https://en.wikipedia.org/wiki/Lance_Reddick"
+  },
+  "Mission": {
+    "Tag": "우리의",
+    "Title": "미션",
+    "Text": {
+      "NewBreed": "Bluefin은 단순한 소프트웨어가 아닙니다. 그녀는 거대 기업들이 지배하는 생태계의 혹독함을 견디면서 가족을 보호하도록 적응한 새로운 종의 동물입니다.",
+      "Change": "우리는 데스크톱 경험이 변화해야 한다고 믿습니다. 기술은 로컬 컴퓨터, 즉 당신이 만지는 장치에서 시작되며, 이는 Linux 생태계의 나머지 부분만큼 필수적이어야 합니다.",
+      "CloudNative": "데스크톱에 클라우드 네이티브 패턴을 도입함으로써 차세대 오픈소스 기여자들을 위한 데스크톱 컴퓨팅에 대한 관심을 불러일으키기를 희망합니다. Bluefin은 당신이 가장 잘하는 일을 하기 위해 의존할 수 있는 도구가 되도록 설계되었습니다. 현재의 Linux 데스크톱은 우리를 그곳에 데려다주지 못했지만, 만들어진 것은 해체될 수 있다고 믿습니다. 더 나은 것을 만들어봅시다.",
+      "Sustainability": "Bluefin은 소프트웨어, 하드웨어, 그리고 사람을 포괄하는 지속가능성에 관한 것입니다."
+    },
+    "CleverGirl": "아니면 그녀가 가는 길에 우리를 해체할 수도 있습니다. 영리한 소녀.",
+    "BluefinChillAlt": "누워서 휴식을 취하는 Bluefin"
+  },
+  "SpreadQuote": {
+    "Quote": "빛을 퍼뜨리는 방법은 두 가지가 있다: 촛불이 되거나 그것을 반사하는 거울이 되는 것이다.",
+    "Author": "Edith Wharton",
+    "WikiLink": "https://en.wikipedia.org/wiki/Edith_Wharton"
+  },
+  "Video": {
+    "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
+    "Title": "Bluefin 소개",
+    "Text": {
+      "Passion": "Project Bluefin은 완성된 제품이 아닙니다. 더 신뢰할 수 있고 유지보수 가능한 Linux 데스크톱 경험을 추구하는 [클라우드 네이티브 열정가들](https://github.com/ublue-os/bluefin/graphs/contributors)이 유지하는 지속적인 열정 프로젝트입니다. [미해결 이슈](https://github.com/ublue-os/bluefin/issues)를 확인해보세요.",
+      "StateOfTheArt": "그녀는 최첨단을 대표합니다: 아름답고 독특한 생물. 불가피하게 도전에 직면할 세상을 위한 완벽한 포식자. 우리는 적응해야 합니다. **함께** 할 수 있습니다."
+    }
+  },
+  "Bazaar": {
+    "Tag": "좋아하는",
+    "Title": "애플리케이션 실행",
+    "Description": "Bluefin은 <a href=\"https://github.com/kolunmi/bazaar\" target=\"_blank\">Bazaar</a> 앱 스토어를 활용하여 <a href=\"https://flathub.org\" target=\"_blank\">Flathub</a>의 모든 좋아하는 애플리케이션과 우리가 좋아할 것이라고 생각하는 엄선된 앱 목록을 쉽게 설치하고 관리할 수 있습니다.",
+    "Additional": "또한 Bluefin은 <a href=\"https://docs.brew.sh/Homebrew-on-Linux\" target=\"_blank\">Homebrew</a>와 애플리케이션 컨테이너 워크플로우를 제공하여 모든 소프트웨어를 쉽게 실행할 수 있습니다. <br><br><strong>Bluefin은 Bluefin에서 개발됩니다.</strong>",
+    "FlathubButton": "Flathub에서 앱 보기"
+  },
+  "TryBluefin": {
+    "Tag": "TRY",
+    "Title": "Bluefin",
+    "Description": {
+      "Choice": "하드웨어와 사용 사례에 맞는 랩터를 선택하세요. 팀은 설치 미디어 생성을 위해 [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter)를 권장하며, Ventoy는 지원되지 않습니다. 자세한 정보는 [문서](https://docs.projectbluefin.io)를 확인하세요.",
+      "Updates": "Bluefin은 적시에 보안 업데이트를 받으며, 기능 업데이트를 얼마나 적극적으로 받는지를 반영하는 두 가지 다른 스트림으로 제공됩니다:"
+    },
+    "Label": {
+      "Base": "베이스",
+      "Gnome": "GNOME",
+      "Kernel": "커널",
+      "HWEKernel": "HWE 커널",
+      "Mesa": "MESA",
+      "Nvidia": "Nvidia",
+      "Recommended": "권장",
+      "Back": "뒤로",
+      "BackToReleases": "릴리스로 돌아가기"
+    },
+    "Lts": {
+      "Title": "Bluefin LTS",
+      "Subtitle": "전문가와 AI/ML 엔지니어를 위한",
+      "Description": "엔터프라이즈급 기반 위의 장기 지원 경험."
+    },
+    "Stable": {
+      "Title": "Bluefin",
+      "Subtitle": "모든 사람을 위한",
+      "Description": "최첨단의 현대적 데스크톱. 확실하지 않다면 이것을 선택하세요."
+    },
+    "Architecture": {
+      "Question": "Bluefin을 어떤 아키텍처에 설치하시겠습니까? 구형 BIOS 기반 시스템은 지원되지 않습니다",
+      "x86": "x86_64 (대부분의 컴퓨터 표준)",
+      "arm": "ARM64"
+    },
+    "Gpu": {
+      "Question": "주 그래픽 카드(GPU) 공급업체는 누구입니까? 구형 Nvidia 카드는 지원되지 않습니다",
+      "DefaultSelection": "주 GPU 공급업체 선택",
+      "AMDIntel": "AMD 또는 Intel",
+      "Nvidia": "Nvidia RTX 또는 GTX 16xx+ 시리즈"
+    },
+    "Kernel": {
+      "Question": "우선순위는 무엇입니까? 이 선택은 시스템 안정성과 최신 하드웨어 지원 사이의 균형을 맞춥니다. 나중에 변경할 수 있습니다:",
+      "Regular": "LTS Linux 커널: 가장 신뢰할 수 있는 옵션, 대부분의 컴퓨터에 적합합니다.",
+      "HWE": "최신 Linux 커널: 새로운 장치와 최신 기능을 위한 최선의 선택."
+    },
+    "Selection": {
+      "Ready": "다운로드 준비 완료!",
+      "YourSelection": "선택 사항 ...",
+      "Release": {
+        "Title": "릴리스",
+        "StableDesc": "모든 사람을 위한",
+        "GDXDesc": "개발자를 위한"
+      },
+      "Architecture": {
+        "Title": "아키텍처",
+        "X86Desc": "대부분의 컴퓨터 표준 (AMD 및 Intel)",
+        "ArmDesc": "ARM 기반 시스템용 (Apple Silicon, Raspberry Pi 등)"
+      },
+      "Kernel": {
+        "Title": "커널",
+        "Regular": "일반 LTS",
+        "RegularDesc": "안정적인 커널 업데이트, 백포트와 함께 6.12.0에 고정",
+        "HWE": "하드웨어 지원 (HWE)",
+        "HWEDesc": "더 나은 하드웨어 지원을 위한 정기 커널 업데이트"
+      },
+      "Gpu": {
+        "Title": "그래픽 카드 (GPU)",
+        "AMDIntelDesc": "통합 AMD 또는 Intel 그래픽",
+        "NvidiaDesc": "Nvidia RTX/GTX 16xx+ 시리즈, GTX 10xx 시리즈 이하는 지원되지 않음"
+      }
+    },
+    "Download": {
+      "IsoDescription": "설치 ISO",
+      "IsoDownload": "ISO 다운로드",
+      "Checksum": "검증 (SHA256)",
+      "Registry": "레지스트리 보기",
+      "Documentation": {
+        "Intro": "[Bluefin 문서](https://docs.projectbluefin.io)를 확인하세요. 약 15분이 소요되며 설치 가이드가 포함되어 있습니다 - 성공을 위해 준비하세요. 새로운 세계로 향하고 있습니다.",
+        "Downloads": "찾고 있는 것을 찾을 수 없나요? [전체 다운로드 목록](https://docs.projectbluefin.io/downloads/)을 확인하세요.",
+        "SecureBoot": "설치 중 보안 부팅을 선택하면 비밀번호는 \"universalblue\"입니다."
+      },
+      "ChooseRelease": "다른 릴리스 선택"
+    }
+  },
+  "Community": {
+    "Tag": "우리의",
+    "Title": "커뮤니티",
+    "Documentation": {
+      "Title": "문서",
+      "Description": "지원이 필요하신가요? 설치, 일반 사용 및 문제 해결에 대한 최신 가이드는 문서 사이트를 확인하세요.",
+      "Button": "문서 보기",
+      "DiscordButton": "Discord 참여",
+      "DiscussionsButton": "토론"
+    },
+    "Contribute": {
+      "Title": "기여",
+      "Description": "코드 기여, 버그 신고 또는 기능 요청을 통해 Bluefin 개발을 지원하세요. 금전적으로 기여하고 싶다면 개별 기여자를 후원할 수도 있습니다.",
+      "Button": "GitHub 방문",
+      "DonateButton": "기부"
+    }
+  },
+  "News": {
+    "Title": "뉴스",
+    "Loading": "블로그 포스트 로딩 중...",
+    "NoPosts": "블로그 포스트를 찾을 수 없습니다.",
+    "ViewAll": "공식 블로그에서 모든 포스트 보기"
+  },
+  "Flock": {
+    "Title": "우리 단체",
+    "Description": "Bluefin은 헌신적인 메인테이너와 기여자 그룹에 의해 구축됩니다.",
+    "AlumniTitle": "다음과 같은 회사 출신들이 참여",
+    "SponsorsTitle": "우리의 후원자"
+  },
+  "Footer": {
+    "PoweredBy": "제공",
+    "Project": {
+      "Title": "Project Bluefin 구축 도구",
+      "Ublue": "리눅스 데스크톱 환경을 혁신하기 위해 설계된 커뮤니티 툴킷입니다. 게임에 대한 열정으로 만들어졌습니다. 인디 클라우드 네이티브의 세계에 오신 것을 환영합니다."
+    },
+    "Credits": {
+      "Intro": "모든 아트워크는 사람이 제작했습니다.",
+      "Website": "웹사이트 - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)",
+      "Logos": "로고 및 배경화면 - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)",
+      "ImageEdit": "이미지 편집 - [Chandeleer](https://ko-fi.com/chandeleer) & [Delphic Melody](https://github.com/delphicmelody/)",
+      "Wallpapers": "Bluefin 일러스트 배경화면 - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)",
+      "Translations": "번역 - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager), [Tsu-gu](https://github.com/Tsu-gu) & [Mimolet](https://github.com/theMimolet), [chhanz](https://github.com/chhanz)",
+      "Thanks": "특별한 감사 - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), [Wayne Witzel](https://github.com/wwitzel3), & [Marco Ceppi](https://github.com/marcoceppi)"
+    },
+    "Copyright": "Copyright {date} © Project Bluefin and Universal Blue"
+  },
+  "Navbar": {
+    "ForYou": "당신을 위한",
+    "ForDevs": "개발자를 위한",
+    "OurMission": "우리의 미션",
+    "TryOut": "체험하기",
+    "Community": "커뮤니티"
+  }
+}
