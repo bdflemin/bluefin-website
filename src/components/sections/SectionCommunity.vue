@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../../locales/schema'
+import { IconFileOutline, IconForumOutline, IconGithub, IconHeartCircle, IconMessage } from '@iconify-prerendered/vue-mdi'
 import { useI18n } from 'vue-i18n'
 import BluefinGrowthChartSvg from '@/assets/svg/growth_bluefins.svg'
 
@@ -33,19 +34,19 @@ const { t } = useI18n<MessageSchema>({
             <div class="card-buttons">
               <a class="community-button" href="https://docs.projectbluefin.io" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-file" aria-hidden="true" />
+                  <IconFileOutline class="size-6" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.Button") }}</span>
               </a>
               <a class="community-button" href="https://discord.gg/WYCpGEM4sM" target="_blank">
                 <span class="button-icon">
-                  <i class="fab fa-discord" aria-hidden="true" />
+                  <IconMessage class="size-6" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.DiscordButton") }}</span>
               </a>
               <a class="community-button" href="https://github.com/ublue-os/bluefin/discussions" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-comments" aria-hidden="true" />
+                  <IconForumOutline class="size-6" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.DiscussionsButton") }}</span>
               </a>
@@ -60,13 +61,13 @@ const { t } = useI18n<MessageSchema>({
             <div class="card-buttons">
               <a class="community-button" href="https://github.com/ublue-os/bluefin" target="_blank">
                 <span class="button-icon">
-                  <i class="fab fa-github" aria-hidden="true" />
+                  <IconGithub class="size-6" />
                 </span>
                 <span class="button-label">{{ t("Community.Contribute.Button") }}</span>
               </a>
               <a class="community-button" href="https://docs.projectbluefin.io/donations" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-heart" aria-hidden="true" />
+                  <IconHeartCircle class="size-6" />
                 </span>
                 <span class="button-label">{{ t("Community.Contribute.DonateButton") }}</span>
               </a>
