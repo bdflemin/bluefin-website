@@ -9,7 +9,7 @@ export interface GPUResult {
   vendor: string | null
   renderer: string | null
   confidence: 'high' | 'none'
-  reason?: 'rfp-active' | 'software-renderer' | 'no-webgl' | 'no-debug-ext'
+  reason?: 'software-renderer' | 'no-webgl' | 'no-debug-ext'
 }
 
 export interface DetectionResult {
@@ -31,7 +31,7 @@ interface UAData {
 
 function detectGPU(): GPUResult {
   const canvas = document.createElement('canvas')
-  const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null
+  const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | WebGL2RenderingContext | null
   if (!gl) {
     return { vendor: null, renderer: null, confidence: 'none', reason: 'no-webgl' }
   }
@@ -84,10 +84,11 @@ async function detectArch(): Promise<Arch> {
   if (uaData?.getHighEntropyValues) {
     try {
       const hints = await uaData.getHighEntropyValues(['architecture'])
-      if (hints.architecture === 'arm') {
+      const arch = hints.architecture?.toLowerCase()
+      if (arch === 'arm' || arch === 'arm64' || arch === 'aarch64') {
         return 'arm64'
       }
-      if (hints.architecture === 'x86') {
+      if (arch === 'x86' || arch === 'x86_64' || arch === 'amd64') {
         return 'x86_64'
       }
     }

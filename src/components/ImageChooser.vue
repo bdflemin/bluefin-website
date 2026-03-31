@@ -430,90 +430,93 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Detection Button (shown when no release selected and not in mac intercept) -->
-    <div v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept" class="detection-row">
-      <button
-        class="detect-button"
-        :disabled="detectionRunning"
-        @click="detectHardware"
-      >
-        {{ detectionRunning ? t('TryBluefin.Detection.Detecting') : t('TryBluefin.Detection.Button') }}
-      </button>
-    </div>
-
-    <!-- Release Selection -->
-    <div v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept" class="release-selection">
-      <div class="release-grid">
-        <div
-          v-for="release in releases"
-          :key="release.id"
-          class="release-box"
-          :class="{ recommended: release.recommended }"
-          @click="selectRelease(release.id)"
+    <!-- Detection Button + Release Selection (hidden during intercepts and after release chosen) -->
+    <template v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept">
+      <!-- Detection Button -->
+      <div class="detection-row">
+        <button
+          class="detect-button"
+          :disabled="detectionRunning"
+          @click="detectHardware"
         >
+          {{ detectionRunning ? t('TryBluefin.Detection.Detecting') : t('TryBluefin.Detection.Button') }}
+        </button>
+      </div>
+
+      <!-- Release Selection -->
+      <div class="release-selection">
+        <div class="release-grid">
           <div
-            class="release-image"
-            :style="{ backgroundImage: `url(${release.image})` }"
+            v-for="release in releases"
+            :key="release.id"
+            class="release-box"
+            :class="{ recommended: release.recommended }"
+            @click="selectRelease(release.id)"
           >
-            <!-- Badges positioned in top right corner -->
-            <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended') }}</span>
+            <div
+              class="release-image"
+              :style="{ backgroundImage: `url(${release.image})` }"
+            >
+              <!-- Badges positioned in top right corner -->
+              <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended') }}</span>
 
-            <div class="release-overlay">
-              <div class="release-content">
-                <div class="release-header">
-                  <h3 class="release-title">
-                    {{ release.title }}
-                  </h3>
-                  <span class="release-subtitle">{{ release.subtitle }}</span>
-                </div>
-                <p class="release-description">
-                  {{ release.description }}
-                </p>
+              <div class="release-overlay">
+                <div class="release-content">
+                  <div class="release-header">
+                    <h3 class="release-title">
+                      {{ release.title }}
+                    </h3>
+                    <span class="release-subtitle">{{ release.subtitle }}</span>
+                  </div>
+                  <p class="release-description">
+                    {{ release.description }}
+                  </p>
 
-                <!-- Version Information -->
-                <div
-                  v-if="
-                    streamVersions
-                      && streamVersions[release.id as keyof StreamVersions]
-                  "
-                  class="version-info"
-                >
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Base') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].base
-                    }}</span>
-                  </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Gnome') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].gnome
-                    }}</span>
-                  </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Kernel') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].kernel
-                    }}</span>
-                  </div>
-                  <div v-if="release.id === 'lts'" class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.HWEKernel') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].hwe
-                    }}</span>
-                  </div>
+                  <!-- Version Information -->
+                  <div
+                    v-if="
+                      streamVersions
+                        && streamVersions[release.id as keyof StreamVersions]
+                    "
+                    class="version-info"
+                  >
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Base') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].base
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Gnome') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].gnome
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Kernel') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].kernel
+                      }}</span>
+                    </div>
+                    <div v-if="release.id === 'lts'" class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.HWEKernel') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].hwe
+                      }}</span>
+                    </div>
 
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Mesa') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].mesa
-                    }}</span>
-                  </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Nvidia') }}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].nvidia
-                    }}</span>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Mesa') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].mesa
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Nvidia') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].nvidia
+                      }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -521,7 +524,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- Architecture Selection -->
     <div
@@ -773,12 +776,14 @@ onMounted(() => {
         </h4>
         <ul class="preflight-list">
           <!-- Windows-only notes -->
-          <li v-if="detection && detection.os === 'windows'" class="preflight-item preflight-item--windows">
-            {{ t('TryBluefin.Preflight.Bitlocker') }}
-          </li>
-          <li v-if="detection && detection.os === 'windows'" class="preflight-item preflight-item--windows">
-            {{ t('TryBluefin.Preflight.FastStartup') }}
-          </li>
+          <template v-if="detection?.os === 'windows'">
+            <li class="preflight-item preflight-item--windows">
+              {{ t('TryBluefin.Preflight.Bitlocker') }}
+            </li>
+            <li class="preflight-item preflight-item--windows">
+              {{ t('TryBluefin.Preflight.FastStartup') }}
+            </li>
+          </template>
           <!-- Always shown -->
           <li class="preflight-item">
             {{ t('TryBluefin.Preflight.SecureBoot') }}
