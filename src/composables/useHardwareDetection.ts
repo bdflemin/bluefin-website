@@ -19,16 +19,6 @@ export interface DetectionResult {
   gpu: GPUResult
 }
 
-// Ambient interface for navigator.userAgentData (not in TS standard lib)
-interface UADataHighEntropy {
-  architecture?: string
-  platform?: string
-}
-interface UAData {
-  platform?: string
-  getHighEntropyValues?: (hints: string[]) => Promise<UADataHighEntropy>
-}
-
 function detectGPU(): GPUResult {
   const canvas = document.createElement('canvas')
   const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | WebGL2RenderingContext | null
@@ -59,7 +49,7 @@ function detectGPU(): GPUResult {
 }
 
 function detectOS(): OS {
-  const uaData = (navigator as Navigator & { userAgentData?: UAData }).userAgentData
+  const uaData = navigator.userAgentData
   if (uaData?.platform) {
     const p = uaData.platform
     if (p === 'Windows') {
@@ -86,7 +76,7 @@ function detectOS(): OS {
 }
 
 async function detectArch(): Promise<Arch> {
-  const uaData = (navigator as Navigator & { userAgentData?: UAData }).userAgentData
+  const uaData = navigator.userAgentData
   if (uaData?.getHighEntropyValues) {
     try {
       const hints = await uaData.getHighEntropyValues(['architecture'])
