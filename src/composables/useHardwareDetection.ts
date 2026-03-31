@@ -161,10 +161,22 @@ export function extractGPUName(renderer: string): string {
 
 export async function runDetection(): Promise<DetectionResult> {
   // All async work completes before state is returned (atomic update)
-  const [gpu, os, arch] = await Promise.all([
+  const [gpu, os, archRaw] = await Promise.all([
     Promise.resolve(detectGPU()),
     Promise.resolve(detectOS()),
     detectArch(),
   ])
+
+  // Safari and Firefox on Apple Silicon report "Intel Mac OS X" in the UA and
+  // have no Client Hints support, so detectArch() returns 'x86_64' even on M1/M2/M3.
+  // The WebGL renderer string reliably identifies Apple Silicon GPUs — use it as a
+  // fallback to correct the arch when the UA/Client Hints signal is wrong.
+  let arch = archRaw
+  if (os === 'mac' && arch === 'x86_64' && gpu.confidence === 'high' && gpu.renderer) {
+    if (/Apple\s+M\d/i.test(gpu.renderer) || /Apple GPU/i.test(gpu.renderer)) {
+      arch = 'arm64'
+    }
+  }
+
   return { state: 'done', os, arch, gpu }
 }
