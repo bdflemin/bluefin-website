@@ -11,12 +11,12 @@ const { t } = useI18n<MessageSchema>({
  * RSS/Atom Feed Parser Component
  *
  * This component fetches and displays RSS/Atom feeds with graceful fallback.
- * It attempts direct fetch first, then uses a CORS proxy if needed.
- * Falls back to mock data if all network attempts fail.
+ * It attempts a direct fetch first. If the feed server does not send CORS headers
+ * that allow this origin, the request will fail and the component shows mock data.
  *
- * Production Note: The target site (docs.projectbluefin.io) should ideally
- * add CORS headers to allow direct access, or this component can use a
- * simple CORS proxy service.
+ * Production Note: The target site (docs.projectbluefin.io) should add CORS headers
+ * (Access-Control-Allow-Origin: *) to allow direct access. A third-party CORS proxy
+ * is explicitly NOT used — it would introduce a reliability and privacy risk.
  */
 
 interface BlogPost {
@@ -123,32 +123,17 @@ async function fetchFeed() {
     loading.value = true
     error.value = null
 
-    // Try to fetch the real feed first
+    // Try to fetch the real feed directly.
+    // If the feed server lacks CORS headers, this will fail — fall through to mock data.
     try {
-      // Try direct fetch first
-      let response = await fetch(props.feedUrl, {
+      const response = await fetch(props.feedUrl, {
         mode: 'cors',
         headers: {
           Accept: 'application/atom+xml, application/xml, text/xml'
         }
       })
 
-      // If direct fetch fails due to CORS, try with a simple proxy
-      if (!response.ok && response.status !== 200) {
-        console.warn('Direct fetch failed, trying with CORS proxy...')
-        // Use a simple CORS proxy for production if direct access fails
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(props.feedUrl)}`
-        response = await fetch(proxyUrl)
-
-        if (response.ok) {
-          const data = await response.json()
-          const parsedPosts = parseAtomFeed(data.contents)
-          const limit = props.perPage || parsedPosts.length
-          posts.value = parsedPosts.slice(0, limit)
-          return
-        }
-      }
-      else if (response.ok) {
+      if (response.ok) {
         const xmlText = await response.text()
         const parsedPosts = parseAtomFeed(xmlText)
         const limit = props.perPage || parsedPosts.length
@@ -161,8 +146,8 @@ async function fetchFeed() {
     catch (fetchError) {
       console.warn('Failed to fetch live feed, using fallback:', fetchError)
 
-      // If the feed is not accessible (CORS, network issues, etc.), use mock data
-      // This ensures the UI still works during development and provides a fallback
+      // If the feed is not accessible (CORS, network issues, etc.), use mock data.
+      // This ensures the UI still works during development and provides a fallback.
       const limit = props.perPage || mockPosts.length
       posts.value = mockPosts.slice(0, limit)
     }
