@@ -3,13 +3,13 @@ import type { Component } from 'vue'
 import {
   IconAutorenew,
   IconChip,
-  IconCodeBraces,
   IconDatabase,
   IconDocker,
   IconKubernetes,
   IconMagnifyScan,
   IconMonitorMultiple,
   IconPowerCycle,
+  IconRobotExcited,
   IconServerNetwork,
   IconShieldCheck,
   IconVpn,
@@ -54,7 +54,8 @@ const tierLabel: Record<CncfTier, string> = {
 interface ClientCard {
   name: string
   href: string
-  icon: Component
+  icon?: Component
+  logo?: string
   desc: string
   org: string
   orgLabel: string
@@ -64,7 +65,7 @@ const clients: ClientCard[] = [
   {
     name: 'Goose',
     href: 'https://github.com/aaif-goose/goose',
-    icon: IconCodeBraces,
+    logo: 'goose.svg',
     desc: 'Open Source AI agent, your "terminal" to your local AI network.',
     org: 'aaif',
     orgLabel: 'Agentic AI Foundation',
@@ -72,7 +73,7 @@ const clients: ClientCard[] = [
   {
     name: 'linux-mcp-server',
     href: 'https://github.com/ublue-os/linux-mcp-server',
-    icon: IconServerNetwork,
+    logo: 'rhel-lightspeed.svg',
     desc: 'MCP server for Linux system diagnostics — OS, processes, services, logs, network',
     org: 'ublue',
     orgLabel: 'RHEL Lightspeed',
@@ -120,7 +121,7 @@ const clients: ClientCard[] = [
       <div class="section-divider" />
       <div class="features-header">
         <div class="icon-wrap">
-          <IconCodeBraces />
+          <IconRobotExcited />
         </div>
         <span class="brand-title">Agent Endpoints</span>
       </div>
@@ -140,7 +141,13 @@ const clients: ClientCard[] = [
         >
           <div class="app-card-top">
             <div class="app-icon">
-              <component :is="card.icon" />
+              <img
+                v-if="card.logo"
+                :src="`${baseUrl}brands/${card.logo}`"
+                :alt="card.name"
+                class="lightspeed-logo"
+              >
+              <component :is="card.icon" v-else />
             </div>
             <span class="app-badge" :class="`org-${card.org}`">{{ card.orgLabel }}</span>
           </div>
@@ -340,6 +347,15 @@ const clients: ClientCard[] = [
     margin: 16px 0;
   }
 
+  .lightspeed-logo {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    opacity: 0.8;
+    filter: brightness(0) invert(1);
+  }
+
   .lightspeed-row {
     display: flex;
     align-items: center;
@@ -355,7 +371,6 @@ const clients: ClientCard[] = [
       width: auto;
       opacity: 0.7;
       flex-shrink: 0;
-      filter: brightness(0) invert(1);
     }
 
     .lightspeed-text {
