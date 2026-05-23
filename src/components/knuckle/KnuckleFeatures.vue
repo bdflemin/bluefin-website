@@ -469,6 +469,25 @@ const clients: ClientCard[] = [
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
 
+    .app-card-top {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 3px;
+
+      .app-icon {
+        order: 2;
+      }
+
+      .app-badge {
+        order: 1;
+        align-self: flex-end;
+        white-space: normal;
+        text-align: right;
+        margin-bottom: 4px;
+      }
+    }
+
     :deep(.brand-item-row) {
       grid-template-columns: 1fr !important;
 
