@@ -18,7 +18,7 @@
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/dakota-versions.json')
@@ -27,51 +27,69 @@ const SBOM_URL = 'https://docs.projectbluefin.io/data/sbom-attestations.json'
 const FDSDK_BST_URL
   = `${GITHUB_API}/repos/projectbluefin/dakota/contents/elements/freedesktop-sdk.bst`
 
+export function applySbomVersions(current, sbom, generatedAt = new Date().toISOString()) {
+  const next = structuredClone(current)
+  const stream = sbom?.streams?.['dakota-latest']
+  const releases = stream?.releases ?? {}
+  const latest = Object.values(releases)[0]
+
+  if (!latest) {
+    return next
+  }
+
+  const pv = latest.packageVersions ?? {}
+  const all = pv.allPackages ?? {}
+  const assign = (key, val) => {
+    if (val) {
+      next.packages[key] = val
+    }
+  }
+
+  assign('kernel', pv.kernel)
+  assign('gnome', pv.gnome)
+  assign('mesa', pv.mesa)
+  assign('systemd', pv.systemd)
+  assign('podman', pv.podman)
+  assign('pipewire', pv.pipewire)
+  assign('flatpak', pv.flatpak)
+  assign('bootc', all.bootc)
+
+  const nvStream = sbom?.streams?.['dakota-nvidia-latest']
+  const nvReleases = nvStream?.releases ?? {}
+  const nvLatest = Object.values(nvReleases)[0]
+  assign('nvidia', nvLatest?.packageVersions?.nvidia)
+
+  next.generatedAt = generatedAt
+  return next
+}
+
+export function decodeGitHubContent(content, encoding) {
+  return encoding === 'base64' ? Buffer.from(content, 'base64').toString() : content
+}
+
+export function extractFreedesktopSdkVersion(raw) {
+  return raw.match(/ref:\s*freedesktop-sdk-([\d.]+)/)?.[1] ?? null
+}
+
+function isMainModule() {
+  return process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href
+}
+
 async function main() {
   const headers = {
     'User-Agent': 'bluefin-website-updater',
     ...(process.env.GITHUB_TOKEN ? { Authorization: `token ${process.env.GITHUB_TOKEN}` } : {}),
   }
 
-  const current = JSON.parse(fs.readFileSync(OUT, 'utf8'))
+  let current = JSON.parse(fs.readFileSync(OUT, 'utf8'))
 
-  // --- 1. SBOM-driven versions ---
   try {
     const sbomRes = await fetch(SBOM_URL)
     if (sbomRes.ok) {
-      const sbom = await sbomRes.json()
-      const stream = sbom?.streams?.['dakota-latest']
-      const releases = stream?.releases ?? {}
-      const latest = Object.values(releases)[0]
-      if (latest) {
-        const pv = latest.packageVersions ?? {}
-        const all = pv.allPackages ?? {}
-        // Top-level packageVersions fields
-        const assign = (key, val) => {
-          if (val) {
-            current.packages[key] = val
-          }
-        }
-        assign('kernel', pv.kernel)
-        assign('gnome', pv.gnome)
-        assign('mesa', pv.mesa)
-        assign('systemd', pv.systemd)
-        assign('podman', pv.podman)
-        assign('pipewire', pv.pipewire)
-        assign('flatpak', pv.flatpak)
-        // bootc lives in allPackages
-        assign('bootc', all.bootc)
-        current.generatedAt = new Date().toISOString()
-        console.info('[dakota-versions] SBOM versions updated')
-
-        // nvidia from dakota-nvidia-latest stream
-        const nvStream = sbom?.streams?.['dakota-nvidia-latest']
-        const nvReleases = nvStream?.releases ?? {}
-        const nvLatest = Object.values(nvReleases)[0]
-        if (nvLatest) {
-          assign('nvidia', nvLatest.packageVersions?.nvidia)
-          console.info(`[dakota-versions] nvidia → ${nvLatest.packageVersions?.nvidia}`)
-        }
+      current = applySbomVersions(current, await sbomRes.json())
+      console.info('[dakota-versions] SBOM versions updated')
+      if (current.packages.nvidia) {
+        console.info(`[dakota-versions] nvidia → ${current.packages.nvidia}`)
       }
     }
     else {
@@ -82,19 +100,14 @@ async function main() {
     console.warn('[dakota-versions] SBOM fetch failed:', e.message)
   }
 
-  // --- 2. freedesktop-sdk from upstream dakota .bst (not in SBOM) ---
   try {
     const bstRes = await fetch(FDSDK_BST_URL, { headers })
     if (bstRes.ok) {
       const { content, encoding } = await bstRes.json()
-      const raw = encoding === 'base64'
-        ? Buffer.from(content, 'base64').toString()
-        : content
-      // ref: freedesktop-sdk-25.08.10-0-g...
-      const match = raw.match(/ref:\s*freedesktop-sdk-([\d.]+)/)
-      if (match) {
-        current.packages['freedesktop-sdk'] = match[1]
-        console.info(`[dakota-versions] freedesktop-sdk → ${match[1]}`)
+      const version = extractFreedesktopSdkVersion(decodeGitHubContent(content, encoding))
+      if (version) {
+        current.packages['freedesktop-sdk'] = version
+        console.info(`[dakota-versions] freedesktop-sdk → ${version}`)
       }
     }
     else {
@@ -109,7 +122,9 @@ async function main() {
   console.info('[dakota-versions] wrote', OUT)
 }
 
-main().catch((e) => {
-  console.error('[dakota-versions] error:', e.message)
-  process.exit(0)
-})
+if (isMainModule()) {
+  main().catch((e) => {
+    console.error('[dakota-versions] error:', e.message)
+    process.exit(0)
+  })
+}

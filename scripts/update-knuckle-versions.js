@@ -16,7 +16,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/knuckle-versions.json')
@@ -29,7 +29,7 @@ const headers = {
   ...(process.env.GITHUB_TOKEN ? { Authorization: `token ${process.env.GITHUB_TOKEN}` } : {}),
 }
 
-async function fetchText(url) {
+export async function fetchText(url) {
   const res = await fetch(url, { headers, redirect: 'follow' })
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} from ${url}`)
@@ -37,7 +37,7 @@ async function fetchText(url) {
   return res.text()
 }
 
-async function fetchJSON(url) {
+export async function fetchJSON(url) {
   const res = await fetch(url, { headers, redirect: 'follow' })
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} from ${url}`)
@@ -45,7 +45,7 @@ async function fetchJSON(url) {
   return res.json()
 }
 
-function parseVersionTxt(body) {
+export function parseVersionTxt(body) {
   const result = {}
   for (const line of body.split('\n')) {
     const parts = line.trim().split('=')
@@ -63,7 +63,7 @@ function parseVersionTxt(body) {
   return result
 }
 
-function parseSBOM(doc) {
+export function parseSBOM(doc) {
   const result = {}
   for (const pkg of (doc.packages ?? [])) {
     switch (pkg.name) {
@@ -84,7 +84,7 @@ function parseSBOM(doc) {
   return result
 }
 
-function extractVersion(line, prefix) {
+export function extractVersion(line, prefix) {
   const after = line.slice(prefix.length)
   const colonIdx = after.indexOf('::')
   return colonIdx >= 0 ? after.slice(0, colonIdx) : after
@@ -98,7 +98,7 @@ const NVIDIA_BRANCHES = [
   { id: '535-open', label: 'Long-Term Support' },
 ]
 
-function extractNvidiaVersion(contents) {
+export function extractNvidiaVersion(contents) {
   const match = contents.match(/libcuda\.so\.(\d+\.\d+\.\d+)/)
   return match ? match[1] : null
 }
@@ -122,7 +122,7 @@ async function fetchNvidiaDrivers() {
   return drivers.length > 0 ? drivers : null
 }
 
-function parseSysext(body) {
+export function parseSysext(body) {
   const result = {}
   for (const raw of body.split('\n')) {
     const line = raw.trim()
@@ -205,6 +205,10 @@ async function fetchChannel(channel, existing) {
   return stream
 }
 
+function isMainModule() {
+  return process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href
+}
+
 async function main() {
   const current = JSON.parse(fs.readFileSync(OUT, 'utf8'))
   const existingStreams = current.streams ?? {}
@@ -240,7 +244,9 @@ async function main() {
   console.info('[knuckle-versions] wrote', OUT)
 }
 
-main().catch((e) => {
-  console.error('[knuckle-versions] fatal:', e.message)
-  process.exit(1)
-})
+if (isMainModule()) {
+  main().catch((e) => {
+    console.error('[knuckle-versions] fatal:', e.message)
+    process.exit(1)
+  })
+}
