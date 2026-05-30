@@ -609,4 +609,25 @@ onMounted(async () => {
     flex: 1;
   }
 }
+
+@media (max-width: 640px) {
+  .streams-widget {
+    .dl-label,
+    .arch-row,
+    .dl-btn,
+    .verify-link,
+    .info-only,
+    .state-row {
+      display: none;
+    }
+  }
+  .dl-panel {
+    padding: 12px;
+    gap: 0;
+    background: none;
+  }
+  .gh-link {
+    margin: 0;
+  }
+}
 </style>
