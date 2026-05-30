@@ -25,14 +25,14 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dump as dumpYaml } from 'js-yaml'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/stream-versions.yml')
 const SBOM_URL = 'https://docs.projectbluefin.io/data/sbom-attestations.json'
 
-function latestPv(streams, name) {
+export function latestPv(streams, name) {
   const stream = streams[name]
   if (!stream) {
     console.warn(`[stream-versions] stream "${name}" not found in SBOM`)
@@ -48,35 +48,23 @@ function latestPv(streams, name) {
   return releases[keys[0]]?.packageVersions ?? {}
 }
 
-async function main() {
-  const res = await fetch(SBOM_URL)
-  if (!res.ok) {
-    throw new Error(`SBOM fetch failed: ${res.status} ${res.statusText}`)
-  }
-
-  const sbom = await res.json()
-  const streams = sbom.streams ?? {}
-
+export function buildStreamVersionData(streams) {
   const stable = latestPv(streams, 'bluefin-stable')
   const stableNvidia = latestPv(streams, 'bluefin-nvidia-open-stable')
   const lts = latestPv(streams, 'bluefin-lts')
   const ltsHwe = latestPv(streams, 'bluefin-lts-hwe')
   const ltsNvidia = latestPv(streams, 'bluefin-gdx-lts')
 
-  // Derive base OS name from fedora field, fall back to hardcoded known values
-  const stableBase = stable.fedora ? `Fedora ${stable.fedora.replace(/^F/, '')}` : 'Fedora 44'
-  const ltsBase = 'CentOS Stream 10'
-
-  const data = {
+  return {
     stable: {
-      base: stableBase,
+      base: stable.fedora ? `Fedora ${stable.fedora.replace(/^F/, '')}` : 'Fedora 44',
       kernel: stable.kernel ?? 'unknown',
       gnome: stable.gnome ?? 'unknown',
       mesa: stable.mesa ?? 'unknown',
       nvidia: stableNvidia.nvidia ?? 'unknown',
     },
     lts: {
-      base: ltsBase,
+      base: 'CentOS Stream 10',
       kernel: lts.kernel ?? 'unknown',
       gnome: lts.gnome ?? 'unknown',
       mesa: lts.mesa ?? 'unknown',
@@ -84,9 +72,10 @@ async function main() {
       nvidia: ltsNvidia.nvidia ?? 'unknown',
     },
   }
+}
 
-  const today = new Date().toISOString().split('T')[0]
-  const header = [
+export function createHeader(today = new Date().toISOString().split('T')[0]) {
+  return [
     '# Stream version information for Bluefin releases',
     '# Source: docs.projectbluefin.io/data/sbom-attestations.json',
     '#         (cosign-verified OCI SBOM attestations from ghcr.io/ublue-os)',
@@ -94,10 +83,24 @@ async function main() {
     '',
     '',
   ].join('\n')
+}
+
+function isMainModule() {
+  return process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href
+}
+
+async function main() {
+  const res = await fetch(SBOM_URL)
+  if (!res.ok) {
+    throw new Error(`SBOM fetch failed: ${res.status} ${res.statusText}`)
+  }
+
+  const sbom = await res.json()
+  const data = buildStreamVersionData(sbom.streams ?? {})
 
   fs.writeFileSync(
     OUT,
-    header + dumpYaml(data, { lineWidth: -1, quotingType: '"', forceQuotes: true }),
+    createHeader() + dumpYaml(data, { lineWidth: -1, quotingType: '"', forceQuotes: true }),
   )
 
   console.info('[stream-versions] wrote', OUT)
@@ -105,7 +108,9 @@ async function main() {
   console.info('lts:', data.lts)
 }
 
-main().catch((e) => {
-  console.error('[stream-versions] fatal:', e.message)
-  process.exit(1)
-})
+if (isMainModule()) {
+  main().catch((e) => {
+    console.error('[stream-versions] fatal:', e.message)
+    process.exit(1)
+  })
+}

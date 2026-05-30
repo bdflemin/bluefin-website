@@ -1,48 +1,58 @@
-# Development
+# projectbluefin/website
 
-This website is built with [Vite](https://vitejs.dev/) and [Vue](https://vuejs.org/). npm is the primary package manager; `just` is optional to simplify common commands.
+The marketing website for [Project Bluefin](https://projectbluefin.io) — a collection of landing pages built with [Vite](https://vitejs.dev/) and [Vue 3](https://vuejs.org/).
+
+## What's in this repo
+
+| Directory | Live at | Purpose |
+|-----------|---------|---------|
+| `bluespeed/` | [projectbluefin.io](https://projectbluefin.io) | Main Bluefin landing page |
+| `dakota/` | [projectbluefin.io/dakota](https://projectbluefin.io/dakota) | Dakota variant landing page |
+| `knuckle/` | [projectbluefin.io/knuckle](https://projectbluefin.io/knuckle) | Knuckle bare-metal installer page |
+
+For user-facing documentation, see [docs.projectbluefin.io](https://docs.projectbluefin.io).
+
+## Quick start
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Node.js](https://nodejs.org/) v18 or higher
 - [npm](https://www.npmjs.com/)
-- Optional: [just](https://github.com/casey/just) (for simplified commands)
+- Optional: [just](https://github.com/casey/just) (`brew install just` or `cargo install just`)
 
-### Getting Started
-
-First, install the dependencies:
+### Setup
 
 ```bash
+git clone https://github.com/projectbluefin/website
+cd website
 npm install
 ```
 
-Then, you can use `just` to run the common commands:
+### Dev server
 
--   `just build`: Build for production
--   `just serve`: Preview the production build locally
+```bash
+npm run dev        # Start development server with hot reload
+npm run build      # Build for production
+npm run preview    # Preview production build locally
+```
 
-<details>
-<summary>Don't have `just`? Use npm</summary>
+With `just`:
 
--   `npm run dev`: Run the development server
--   `npm run build`: Build for production
--   `npm run preview`: Preview the production build locally
--   `npm run lint`: Lint the project
--   `npm run lint:fix`: Lint and fix all possible errors
--   `npm run typecheck`: Typechecks the project with `vue-tsc`
+```bash
+just build    # Build for production
+just serve    # Preview the production build locally
+```
 
-### Formatting
+### Linting and formatting
 
-The project utilizes the [@antfu/eslint-config](https://github.com/antfu/eslint-config) to standardize formatting. This means that we solely utilize ESLint to lint and format the project.
+Uses [`@antfu/eslint-config`](https://github.com/antfu/eslint-config) for both linting and formatting. Run before every PR:
 
-Since the `@antfu/eslint-config` doesn't support formatting for CSS files, we have to utilize an external formatter (in this case prettier) under `eslint-plugin-format` to actually format the files.
-
-Please ensure that you format your code before submitting a PR!
-
-</details>
+```bash
+npm run lint        # Check for lint errors
+npm run lint:fix    # Auto-fix lint errors
+npm run typecheck   # Type-check with vue-tsc
+```
 
 ## Contributing
 
-If you want to add another language to this website, add a json file to [src/locales](src/locales) with your language file named following [Navigator.language](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language) and it should be good to go!
-
-Your new language will follow the schema from `enUS`, so make sure the fields and everything are the same. Some fields may contain markdown support or HTML support, that really depends and there is just no way I can document this here.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide — including the PR workflow, i18n instructions, and linting requirements.
