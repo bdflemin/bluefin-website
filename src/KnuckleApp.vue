@@ -339,13 +339,13 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   border-radius: 7px;
   font-size: 1.25rem;
   font-weight: 700;
-  background: rgba(var(--color-blue-rgb), 0.9);
+  background: var(--color-bg);
   color: white;
   text-decoration: none;
   transition: background 0.15s;
 
   &:hover {
-    background: rgba(var(--color-blue-rgb), 1);
+    background: var(--color-bg-light);
   }
   svg {
     width: 1.5rem;
