@@ -2,6 +2,10 @@
 # This file configures the GitHub Copilot coding agent environment
 # to preinstall tools and dependencies for faster development workflows.
 #
+# Automatic Copilot code review is managed separately by repository rulesets.
+# It is disabled because GitHub's generated review workflow was self-cancelling
+# on pushes to main.
+#
 # This is the Bluefin website - a Vue 3 + TypeScript + Vite project
 # Primary tools: npm, Node.js 22, vue-tsc, vite, ESLint
 # Build process: npm install -> npm run build (vue-tsc + vite)

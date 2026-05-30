@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { MessageSchema } from './../locales/schema'
+import type { BlogPost } from '../utils/feedParser'
+import { parseAtomFeed } from '../utils/feedParser'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -24,71 +26,9 @@ const { t } = useI18n<MessageSchema>({
  * is explicitly NOT used — it would introduce a reliability and privacy risk.
  */
 
-interface BlogPost {
-  title: string
-  link: string
-  description: string
-  pubDate: string
-  formattedDate: string
-}
-
 const posts = ref<BlogPost[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-function parseAtomFeed(xmlText: string): BlogPost[] {
-  const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
-
-  // Check for parsing errors
-  const parserError = xmlDoc.querySelector('parsererror')
-  if (parserError) {
-    throw new Error('Failed to parse XML feed')
-  }
-
-  const entries = xmlDoc.querySelectorAll('entry')
-  const parsedPosts: BlogPost[] = []
-
-  entries.forEach((entry) => {
-    const title = entry.querySelector('title')?.textContent || 'Untitled'
-    const link = entry.querySelector('link')?.getAttribute('href') || '#'
-    const summary
-      = entry.querySelector('summary')?.textContent
-        || entry.querySelector('content')?.textContent
-        || ''
-    const published
-      = entry.querySelector('published')?.textContent
-        || entry.querySelector('updated')?.textContent
-        || ''
-
-    // Format the date
-    let formattedDate = ''
-    if (published) {
-      try {
-        const date = new Date(published)
-        formattedDate = date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })
-      }
-      catch (e) {
-        console.error(e)
-        formattedDate = published
-      }
-    }
-
-    parsedPosts.push({
-      title,
-      link,
-      description: summary,
-      pubDate: published,
-      formattedDate
-    })
-  })
-
-  return parsedPosts
-}
 
 // Mock data for testing when the real feed is not accessible
 const mockPosts: BlogPost[] = [

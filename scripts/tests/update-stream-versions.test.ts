@@ -1,0 +1,121 @@
+import { describe, expect, it, vi } from 'vitest'
+import { buildStreamVersionData, createHeader, latestPv } from '../update-stream-versions.js'
+
+describe('update-stream-versions helpers', () => {
+  it('returns package versions for the latest release in a stream', () => {
+    expect(latestPv({
+      'bluefin-stable': {
+        releases: {
+          latest: {
+            packageVersions: {
+              fedora: 'F42',
+              kernel: '6.13.0',
+            },
+          },
+        },
+      },
+    }, 'bluefin-stable')).toEqual({
+      fedora: 'F42',
+      kernel: '6.13.0',
+    })
+  })
+
+  it('builds the public stream versions document from SBOM streams', () => {
+    expect(buildStreamVersionData({
+      'bluefin-stable': {
+        releases: {
+          latest: {
+            packageVersions: {
+              fedora: 'F42',
+              kernel: '6.13.0',
+              gnome: '48.1',
+              mesa: '25.0.1',
+            },
+          },
+        },
+      },
+      'bluefin-nvidia-open-stable': {
+        releases: {
+          latest: {
+            packageVersions: {
+              nvidia: '570.124.06',
+            },
+          },
+        },
+      },
+      'bluefin-lts': {
+        releases: {
+          latest: {
+            packageVersions: {
+              kernel: '6.12.0',
+              gnome: '47.5',
+              mesa: '24.3.4',
+            },
+          },
+        },
+      },
+      'bluefin-lts-hwe': {
+        releases: {
+          latest: {
+            packageVersions: {
+              kernel: '6.14.0',
+            },
+          },
+        },
+      },
+      'bluefin-gdx-lts': {
+        releases: {
+          latest: {
+            packageVersions: {
+              nvidia: '550.90.07',
+            },
+          },
+        },
+      },
+    })).toEqual({
+      stable: {
+        base: 'Fedora 42',
+        kernel: '6.13.0',
+        gnome: '48.1',
+        mesa: '25.0.1',
+        nvidia: '570.124.06',
+      },
+      lts: {
+        base: 'CentOS Stream 10',
+        kernel: '6.12.0',
+        gnome: '47.5',
+        mesa: '24.3.4',
+        hwe: '6.14.0',
+        nvidia: '550.90.07',
+      },
+    })
+  })
+
+  it('falls back to defaults when streams are missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect(buildStreamVersionData({})).toEqual({
+      stable: {
+        base: 'Fedora 44',
+        kernel: 'unknown',
+        gnome: 'unknown',
+        mesa: 'unknown',
+        nvidia: 'unknown',
+      },
+      lts: {
+        base: 'CentOS Stream 10',
+        kernel: 'unknown',
+        gnome: 'unknown',
+        mesa: 'unknown',
+        hwe: 'unknown',
+        nvidia: 'unknown',
+      },
+    })
+
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it('creates the generated header with a stable date', () => {
+    expect(createHeader('2025-02-14')).toContain('# Last updated: 2025-02-14')
+  })
+})
