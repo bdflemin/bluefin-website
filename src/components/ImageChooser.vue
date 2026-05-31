@@ -143,7 +143,8 @@ function selectArchitecture(arch: string) {
     imageName.value.gpu = undefined
     showGpuStep.value = false
     showDownload.value = true
-  } else {
+  }
+  else {
     showGpuStep.value = true
   }
 }
@@ -418,11 +419,13 @@ onMounted(() => {
                 imageName.arch = undefined
                 imageName.gpu = undefined
                 showDownload = false
-              } else if (imageName.stream === 'lts' && imageName.gpu === 'amd') {
+              }
+              else if (imageName.stream === 'lts' && imageName.gpu === 'amd') {
                 showKernelStep = true
                 imageName.kernel = undefined
                 showDownload = false
-              } else {
+              }
+              else {
                 showGpuStep = true
                 imageName.gpu = undefined
                 imageName.kernel = undefined

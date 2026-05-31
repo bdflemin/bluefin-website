@@ -8,26 +8,26 @@ export interface BlogPost {
 
 interface XmlNodeLike {
   textContent?: string | null
-  getAttribute?(name: string): string | null
-  getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike>
+  getAttribute?: (name: string) => string | null
+  getElementsByTagName: (tagName: string) => ArrayLike<XmlNodeLike>
 }
 
 export interface XmlParser {
-  parseFromString(xml: string, mimeType: string): {
+  parseFromString: (xml: string, mimeType: string) => {
     documentElement?: { nodeName?: string }
-    getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike>
+    getElementsByTagName: (tagName: string) => ArrayLike<XmlNodeLike>
   }
 }
 
-function getFirstElement(parent: { getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike> }, tagName: string) {
+function getFirstElement(parent: { getElementsByTagName: (tagName: string) => ArrayLike<XmlNodeLike> }, tagName: string) {
   return parent.getElementsByTagName(tagName)[0] ?? null
 }
 
-function getTextContent(parent: { getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike> }, tagName: string) {
+function getTextContent(parent: { getElementsByTagName: (tagName: string) => ArrayLike<XmlNodeLike> }, tagName: string) {
   return getFirstElement(parent, tagName)?.textContent?.trim() ?? ''
 }
 
-function getAttribute(parent: { getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike> }, tagName: string, name: string) {
+function getAttribute(parent: { getElementsByTagName: (tagName: string) => ArrayLike<XmlNodeLike> }, tagName: string, name: string) {
   return getFirstElement(parent, tagName)?.getAttribute?.(name) ?? ''
 }
 
