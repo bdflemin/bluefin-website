@@ -48,7 +48,7 @@ const rightNavLinks: NavLink[] = [
 
 const mobileNavLinks = [...leftNavLinks, ...rightNavLinks]
 
-const closeMenu = () => {
+function closeMenu() {
   menuOpen.value = false
 }
 </script>
