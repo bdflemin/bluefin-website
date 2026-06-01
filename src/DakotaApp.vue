@@ -194,4 +194,16 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   flex: 1;
   min-width: 0;
 }
+
+.video-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+
+  iframe {
+    width: 100%;
+    height: 100%;
+  }
+}
 </style>
