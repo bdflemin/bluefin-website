@@ -19,10 +19,6 @@ onMounted(() => {
       Dakota
     </h1>
 
-    <p class="hero-tagline">
-      The Final Form. Bluefin Perfected.
-    </p>
-
     <p class="hero-desc">
       Dakota is a <a href="https://freedesktop-sdk.io" target="_blank" rel="noopener noreferrer">Freedesktop.org</a> and <a href="https://os.gnome.org" target="_blank" rel="noopener noreferrer">GNOME OS</a> image designed from the ground up to be the most modern raptor in the pack. The familiar Bluefin desktop and developer experience, in a whole new streamlined package. Built from the best OS tech from the <a href="https://cncf.io" target="_blank" rel="noopener noreferrer">CNCF</a>, <a href="https://www.apache.org" target="_blank" rel="noopener noreferrer">Apache Foundation</a>, and the <a href="https://uapi-group.org" target="_blank" rel="noopener noreferrer">UAPI Group</a>. Do not run, you'll only die tired.
     </p>
@@ -91,14 +87,6 @@ onMounted(() => {
   line-height: 1;
   padding-top: 0;
   padding-left: 0;
-}
-
-.hero-tagline {
-  font-size: 1.6rem;
-  font-weight: 400;
-  color: var(--color-text-light);
-  margin: 0 0 12px 0;
-  line-height: 1.6;
 }
 
 .hero-desc {
