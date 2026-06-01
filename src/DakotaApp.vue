@@ -197,15 +197,16 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   justify-content: center;
   gap: 8px;
   height: 36px;
+  min-width: 180px;
   line-height: 36px;
   padding: 0 20px;
-  margin: 16px 64px 0;
+  margin: 16px;
   border-radius: 18px;
   font-size: 1.4rem;
   font-weight: 700;
   background: var(--color-bg);
   color: var(--color-text-light);
-  border: 2px solid var(--color-bg);
+  border: 1px solid rgb(var(--color-blue-rgb), 0.3);
   text-decoration: none;
   cursor: pointer;
   transition: all 0.15s ease;
