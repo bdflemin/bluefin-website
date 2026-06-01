@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import type { DakotaVersions } from '../../composables'
 import { computed, onMounted, ref } from 'vue'
+import { getDakotaVersions } from '../../composables'
 
-interface DakotaVersions {
-  generatedAt: string
-  packages: Record<string, string>
-}
+const props = defineProps<{
+  keys?: string[]
+}>()
 
 const LABELS: Record<string, string> = {
   'kernel': 'Kernel',
@@ -12,7 +13,7 @@ const LABELS: Record<string, string> = {
   'freedesktop-sdk': 'Freedesktop SDK',
   'mesa': 'Mesa',
   'bootc': 'bootc',
-  'nvidia': 'Nvidia',
+  'nvidia': 'NVIDIA',
   'systemd': 'systemd',
   'podman': 'Podman',
   'pipewire': 'PipeWire',
@@ -26,11 +27,7 @@ const versions = ref<DakotaVersions | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/dakota-versions.json')
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`)
-    }
-    versions.value = await res.json()
+    versions.value = await getDakotaVersions()
   }
   catch (e) {
     if (import.meta.env.DEV) {
@@ -44,6 +41,7 @@ const chips = computed(() => {
     return []
   }
   return Object.entries(versions.value.packages)
+    .filter(([key]) => !props.keys || props.keys.includes(key))
     .filter(([, v]) => v)
     .map(([key, value]) => ({ label: LABELS[key] ?? key, value, isFeature: FEATURE_KEYS.has(key) }))
 })
@@ -80,6 +78,8 @@ const chips = computed(() => {
   overflow: hidden;
   font-size: 1.2rem;
   line-height: 1;
+  background: rgba(var(--color-bg-rgb), 0.45);
+  backdrop-filter: blur(8px);
 
   &.chip-feature {
     border-color: rgba(var(--color-green-rgb, 80, 200, 120), 0.5);

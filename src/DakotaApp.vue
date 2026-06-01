@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { IconGithubCircle } from '@iconify-prerendered/vue-mdi'
 import { onBeforeMount, provide, ref } from 'vue'
-import DakotaDownloadCard from './components/dakota/DakotaDownloadCard.vue'
 import DakotaHighlights from './components/dakota/DakotaHighlights.vue'
 import DakotaScene from './components/dakota/DakotaScene.vue'
-import DakotaVersionChips from './components/dakota/DakotaVersionChips.vue'
+import DakotaVersionCard from './components/dakota/DakotaVersionCard.vue'
 import PageLoading from './components/PageLoading.vue'
 import TopNavbar from './components/TopNavbar.vue'
 import { setLocale } from './composables/useLocale'
@@ -37,23 +37,50 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     <TopNavbar v-show="!isLoading" />
 
     <div v-show="!isLoading" class="dakota-layout">
-      <!-- Left: text on top, raptor below -->
+      <!-- Left: text, video, highlights -->
       <div class="col-left">
-        <DakotaScene>
-          <DakotaVersionChips />
-        </DakotaScene>
-        <img
-          class="raptor"
-          src="/characters/dakota.webp"
-          alt="Dakotaraptor"
-          fetchpriority="high"
-        >
+        <DakotaScene />
+        <div class="video-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/v18c8ipK02A"
+            title="Dakota"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          />
+        </div>
+        <div class="release-links">
+          <span>Read the announcements:</span>
+          <div class="release-link-item">
+            <a
+              href="https://docs.projectbluefin.io/blog/making-our-own-fate/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Alpha 2 Release →</a>
+            <a
+              href="https://docs.projectbluefin.io/blog/dakota-alpha-1/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Alpha 1 Release →</a>
+          </div>
+        </div>
+        <DakotaHighlights />
       </div>
 
-      <!-- Right: features + download -->
-      <div class="col-features">
-        <DakotaHighlights />
-        <DakotaDownloadCard />
+      <!-- Right: version card + secondary chips -->
+      <div class="col-right">
+        <div class="col-right-sticky">
+          <DakotaVersionCard />
+          <a
+            class="github-btn"
+            href="https://github.com/projectbluefin/dakota"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <IconGithubCircle />
+            View on GitHub
+          </a>
+        </div>
       </div>
     </div>
   </main>
@@ -61,38 +88,126 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
 <style scoped lang="scss">
 .dakota-page {
-  min-height: 100vh;
-  overflow-y: auto;
+  position: relative;
   background-image: url('/evening/night-sky.webp');
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 600px;
+    background: linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0.7), transparent);
+    z-index: 0;
+    pointer-events: none;
+  }
 }
 
 .dakota-layout {
+  position: relative;
+  z-index: 1;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   box-sizing: border-box;
-  padding: 48px 60px 40px;
-  gap: 40px;
+  padding: 32px 32px 48px;
+  gap: 32px;
 
-  // Keep the fullscreen feel on wide landscape without clipping tall content
-  @media (min-aspect-ratio: 16/10) and (min-width: 1024px) {
-    min-height: calc(100vh - 60px);
+  @media (min-width: 840px) {
+    flex-direction: row;
+    padding: 60px 60px 40px;
+    gap: 40px;
   }
 
-  // Tablet portrait / narrow desktop: stack columns
-  @media (max-aspect-ratio: 16/10), (max-width: 1023px) {
-    flex-direction: column;
-    padding: 32px 32px 48px;
-    gap: 32px;
-  }
-
-  // Phone
   @media (max-width: 600px) {
     padding: 24px 16px 48px;
     gap: 24px;
+  }
+}
+
+.col-right {
+  min-width: 0;
+
+  @media (min-width: 840px) {
+    width: 35%;
+    flex: none;
+  }
+}
+
+.col-right-sticky {
+  @media (min-width: 840px) {
+    position: sticky;
+    top: 22vh;
+  }
+}
+
+.release-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  span {
+    color: var(--color-text-light);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.release-link-item {
+  a {
+    font-weight: 600;
+    text-decoration: none;
+    background: rgb(var(--color-bg-rgb), 0.5);
+    color: var(--color-text-light);
+    height: 36px;
+    line-height: 36px;
+    padding: 8px 18px;
+    border-radius: 18px;
+    margin: 0 4px 0 4px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--color-blue);
+    }
+  }
+}
+
+.github-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  min-width: 180px;
+  line-height: 36px;
+  padding: 0 20px;
+  margin: 16px;
+  border-radius: 18px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: var(--color-bg);
+  color: var(--color-text-light);
+  border: 1px solid rgb(var(--color-blue-rgb), 0.3);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--color-blue);
+    border-color: var(--color-blue);
   }
 }
 
@@ -100,64 +215,20 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 24px;
   flex: 1;
   min-width: 0;
-
-  // Medium: text box and raptor side by side
-  @media (min-width: 640px) and ((max-aspect-ratio: 16/10) or (max-width: 1023px)) {
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 32px;
-  }
-
-  .raptor {
-    height: 30vh;
-    width: auto;
-    transform: scaleX(-1);
-    filter: drop-shadow(0 20px 60px rgba(var(--color-blue-rgb), 0.2));
-    margin-top: 24px;
-
-    // Medium: no top margin, sits beside text
-    @media (min-width: 640px) and ((max-aspect-ratio: 16/10) or (max-width: 1023px)) {
-      margin-top: 0;
-      flex-shrink: 0;
-    }
-
-    @media (max-aspect-ratio: 16/10), (max-width: 1023px) {
-      height: 20vh;
-      align-self: center;
-    }
-
-    @media (max-width: 600px) {
-      height: 15vh;
-    }
-  }
 }
 
-.col-features {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: visible;
-  background: rgba(var(--color-bg-rgb), 0.55);
-  backdrop-filter: blur(8px);
+.video-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 12px;
-  padding: 28px 32px;
+  overflow: hidden;
 
-  @media (max-aspect-ratio: 16/10), (max-width: 1023px) {
+  iframe {
     width: 100%;
-    box-sizing: border-box;
-  }
-
-  @media (max-width: 600px) {
-    padding: 20px 20px;
-  }
-
-  @media (max-width: 500px) {
-    padding: 20px 16px;
+    height: 100%;
   }
 }
 </style>
