@@ -162,7 +162,7 @@ function backToCard() {
                 title="Verify checksum"
               >
                 <IconCheckCircleOutline />
-                Verify
+                <span class="btn-label">Verify</span>
               </a>
             </div>
           </div>
@@ -342,6 +342,7 @@ function backToCard() {
 /* ── Download View ── */
 
 .download-view {
+  container-type: inline-size;
   min-height: 400px;
   box-sizing: border-box;
   display: flex;
@@ -354,6 +355,18 @@ function backToCard() {
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
+}
+
+@container (max-width: 380px) {
+  .btn-label {
+    display: none;
+  }
+
+  .entry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
 }
 
 .entries-wrapper {

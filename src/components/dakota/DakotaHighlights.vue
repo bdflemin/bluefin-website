@@ -159,7 +159,7 @@ import {
   }
 }
 
-@media (min-width: 957px) {
+@media (min-width: 840px) {
   .dakota-highlights {
     :deep(.brand-gnome) {
       display: flex;
@@ -181,7 +181,11 @@ import {
   }
 }
 
-@media (max-width: 956px) {
+@media (max-width: 839px) {
+  .brand-grid {
+    margin-top: 0;
+  }
+
   .dakota-highlights {
     :deep(.brand-grid) {
       grid-template-columns: 1fr !important;
