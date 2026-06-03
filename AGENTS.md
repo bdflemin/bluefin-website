@@ -378,7 +378,7 @@ Common mixins available for use:
 - **Missing images:** Verify paths relative to `public/` directory
 - **Translation issues:** Ensure locale keys exist in all 13 language files (de-DE, en-US, eo, fr-FR, ja-JP, ko-KR, nl-NL, pt-BR, ru-RU, sk-SK, vi-VN, zh-HK, zh-TW)
 - **Styling problems:** Check for SCSS syntax errors or missing Tailwind classes
-- **ESLint errors:** Use Prettier instead (ESLint setup incomplete)
+- **ESLint errors:** Run `npx eslint --fix` or review `eslint.config.js` for the configured @antfu/eslint-config rules
 - **Port conflicts:** Vite will auto-select next available port (5174, 5175, etc.)
 
 ## CI/CD Pipeline

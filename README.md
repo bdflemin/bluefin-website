@@ -13,7 +13,7 @@ This website is built with [Vite](https://vitejs.dev/) and [Vue](https://vuejs.o
 First, install the dependencies:
 
 ```bash
-npm install
+npm install --include=dev
 ```
 
 Then, you can use `just` to run the common commands:
