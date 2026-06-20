@@ -18,7 +18,6 @@ interface DownloadEntry {
 const BASE = 'https://projectbluefin.dev'
 
 const versions = ref<DakotaVersions | null>(null)
-const showDownloads = ref(false)
 
 const cardImageStyle = computed(() => ({
   backgroundImage: `url(${import.meta.env.BASE_URL}characters/dakota.webp)`,
@@ -26,8 +25,7 @@ const cardImageStyle = computed(() => ({
 
 // ponytail: static fallback keeps downloads working if JSON fetch fails
 const FALLBACK_ISOS = [
-  { label: 'AMD / Intel', filename: 'dakota-live-alpha2.iso' },
-  { label: 'NVIDIA', filename: 'dakota-nvidia-live-alpha2.iso' },
+  { label: 'Download ISO', filename: 'dakota-live-alpha4.iso' },
 ]
 
 const entries = computed<DownloadEntry[]>(() => {
@@ -71,28 +69,12 @@ onMounted(async () => {
     }
   }
 })
-
-function openDownloads() {
-  showDownloads.value = true
-}
-
-function backToCard() {
-  showDownloads.value = false
-}
 </script>
 
 <template>
   <div class="dakota-version-card">
-    <!-- Card view (character art + version info) -->
-    <div
-      v-if="!showDownloads"
-      class="card-box"
-      role="button"
-      tabindex="0"
-      @click="openDownloads"
-      @keydown.enter.prevent="openDownloads"
-      @keydown.space.prevent="openDownloads"
-    >
+    <!-- Raptor card -->
+    <div class="card-box">
       <div class="alpha-badge">
         <span class="alpha-badge-title">⚠️ Alpha.</span>
         <span class="alpha-badge-sub">Take appropriate precautions.</span>
@@ -102,17 +84,10 @@ function backToCard() {
         :style="cardImageStyle"
       >
         <div class="card-overlay">
-          <div class="card-header">
-            <h3 class="card-title">
-              Dakota
-            </h3>
-          </div>
-
           <p class="card-description">
             The Final Form. Bluefin Perfected.
           </p>
 
-          <!-- Version Information -->
           <div v-if="versionRows.length" class="version-info">
             <div
               v-for="row in versionRows"
@@ -123,55 +98,42 @@ function backToCard() {
               <span class="version-value">{{ row.value }}</span>
             </div>
           </div>
-
-          <div class="click-hint">
-            Click to download ↓
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- Download view -->
-    <div v-else class="download-view">
-      <div class="entries-wrapper">
-        <DakotaVersionChips
-          class="secondary-chips"
-          :keys="['systemd', 'podman', 'pipewire', 'flatpak', 'baseline']"
-        />
-        <div class="download-entries">
-          <div
-            v-for="entry in entries"
-            :key="entry.label"
-            class="download-entry"
-          >
-            <div class="entry-header">
-              <span class="entry-label">{{ entry.label }}</span>
-              <span class="entry-filename">{{ entry.isoFilename }}</span>
-            </div>
-            <div class="entry-buttons">
-              <a
-                class="btn filled entry-dl"
-                :href="entry.isoUrl"
-              >
-                <IconDownload />
-                Download ISO
-              </a>
-              <a
-                class="btn entry-checksum"
-                :href="entry.checksumUrl"
-                title="Verify checksum"
-              >
-                <IconCheckCircleOutline />
-                <span class="btn-label">Verify</span>
-              </a>
-            </div>
+    <!-- Downloads (always visible below card) -->
+    <div class="download-section">
+      <DakotaVersionChips
+        class="secondary-chips"
+        :keys="['systemd', 'podman', 'pipewire', 'flatpak', 'baseline']"
+      />
+      <div class="download-entries">
+        <div
+          v-for="entry in entries"
+          :key="entry.label"
+          class="download-entry"
+        >
+          <div class="entry-buttons">
+            <a
+              class="btn filled entry-dl"
+              :href="entry.isoUrl"
+            >
+              <IconDownload />
+              {{ entry.label }}
+            </a>
+            <a
+              class="btn entry-checksum"
+              :href="entry.checksumUrl"
+              title="Verify checksum"
+            >
+              <IconCheckCircleOutline />
+              <span class="btn-label">Verify</span>
+            </a>
           </div>
+          <span class="entry-filename">{{ entry.isoFilename }}</span>
         </div>
       </div>
-
-      <button class="back-button" @click="backToCard">
-        ← Back
-      </button>
     </div>
   </div>
 </template>
@@ -179,28 +141,21 @@ function backToCard() {
 <style scoped lang="scss">
 .dakota-version-card {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-/* ── Card View ── */
+/* ── Card ── */
 
 .card-box {
   position: relative;
   height: 400px;
   border-radius: 12px;
   overflow: hidden;
-  cursor: pointer;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
   border: 2px solid rgba(var(--color-blue-rgb), 0.25);
   background: #1f2937;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    border-color: rgba(var(--color-blue-rgb), 0.5);
-  }
 }
 
 .card-image {
@@ -224,25 +179,6 @@ function backToCard() {
   border-radius: 12px;
 }
 
-.card-header {
-  margin-bottom: 0.5rem;
-}
-
-.card-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.card-subtitle {
-  font-size: 1.5rem;
-  opacity: 0.9;
-  display: block;
-  margin-bottom: 0.5rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
 .card-description {
   font-size: 1.5rem;
   line-height: 1.4;
@@ -252,7 +188,6 @@ function backToCard() {
   text-align: center;
 }
 
-/* Version rows */
 .version-info {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
@@ -320,68 +255,25 @@ function backToCard() {
   }
 }
 
-.click-hint {
-  margin-top: 0.75rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  text-align: center;
-  color: rgba(147, 197, 253, 0.8);
-  animation: pulse-hint 2s ease-in-out infinite;
-}
+/* ── Download Section ── */
 
-@keyframes pulse-hint {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ── Download View ── */
-
-.download-view {
+.download-section {
   container-type: inline-size;
-  min-height: 400px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   background: rgba(31, 41, 55, 0.6);
   backdrop-filter: blur(8px);
   border: 2px solid rgba(var(--color-blue-rgb), 0.25);
   border-radius: 12px;
   padding: 1.25rem;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-@container (max-width: 380px) {
-  .btn-label {
-    display: none;
-  }
-
-  .entry-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-}
-
-.entries-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 .secondary-chips {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 16px;
 }
 
 .download-entries {
@@ -395,7 +287,7 @@ function backToCard() {
 .download-entry {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 0;
 }
 
@@ -404,30 +296,18 @@ function backToCard() {
   padding-top: 16px;
 }
 
-.entry-header {
+.entry-buttons {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: row;
   gap: 8px;
-}
-
-.entry-label {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-text-light);
+  width: 100%;
 }
 
 .entry-filename {
   font-size: 1.1rem;
   font-family: 'Courier New', monospace;
   color: var(--color-text);
-}
-
-.entry-buttons {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  width: 100%;
+  text-align: center;
 }
 
 .entry-dl {
@@ -454,37 +334,15 @@ function backToCard() {
   max-width: 160px;
 }
 
-.back-button {
-  display: block;
-  margin-top: auto;
-  margin-bottom: 0;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: rgba(147, 197, 253, 0.8);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: rgba(147, 197, 253, 1);
+@container (max-width: 380px) {
+  .btn-label {
+    display: none;
   }
 }
 
 /* ── Responsive ── */
 
 @media (max-width: 500px) {
-  .card-title {
-    font-size: 1.7rem;
-  }
-
-  .card-subtitle {
-    font-size: 1.3rem;
-  }
-
   .card-description {
     font-size: 1.3rem;
   }
@@ -497,7 +355,7 @@ function backToCard() {
     font-size: 1.35rem;
   }
 
-  .download-view {
+  .download-section {
     padding: 1rem;
   }
 }
