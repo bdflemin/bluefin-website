@@ -34,7 +34,9 @@ const { t } = useI18n<MessageSchema>({
   </section>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../../style/setup/fonts';
+
 .picker-card {
   padding: 40px;
   background: rgba(255, 255, 255, 0.02);
@@ -53,7 +55,7 @@ const { t } = useI18n<MessageSchema>({
 }
 
 p :deep(a) {
-  @include font(700);
+  @include fonts.font(700);
   color: var(--color-blue-light);
 
   &:hover {

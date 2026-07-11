@@ -9,7 +9,7 @@
  *   node src/tests/navbar-visual.mjs
  */
 
-import { chromium } from '/var/home/jorge/src/documentation/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright'
 
 const URL = 'http://localhost:5173/'
 const SCREENSHOT = '/tmp/nav-test-result.png'

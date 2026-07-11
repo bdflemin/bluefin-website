@@ -31,10 +31,17 @@ export default defineConfig({
         server: resolve(__dirname, 'server/index.html'),
       },
       output: {
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-i18n'],
-          'ui-icons': ['@iconify-prerendered/vue-mdi'],
-          'utils': ['marked', 'js-yaml', '@vueuse/core', '@vueuse/components'],
+        manualChunks: (id: string) => {
+          if (['vue', 'vue-i18n'].some(mod => id.includes(`/node_modules/${mod}`))) {
+            return 'vue-vendor'
+          }
+          if (id.includes('/node_modules/@iconify-prerendered/vue-mdi')) {
+            return 'ui-icons'
+          }
+          if (['marked', 'js-yaml', '@vueuse/core', '@vueuse/components'].some(mod => id.includes(`/node_modules/${mod}`))) {
+            return 'utils'
+          }
+          return undefined
         }
       }
     }
