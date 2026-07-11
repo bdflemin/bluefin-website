@@ -519,7 +519,7 @@ onBeforeUnmount(() => {
                 href="https://store.projectbluefin.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="qr-btn red"
+                class="qr-btn blue"
               >
                 Go to Store &rarr;
               </a>
@@ -596,7 +596,7 @@ onBeforeUnmount(() => {
   z-index: 999;
   background-color: rgba(16, 21, 31, 0.95);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.3);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
 
@@ -622,7 +622,7 @@ onBeforeUnmount(() => {
     height: 40px;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(var(--color-blue-rgb), 0.4);
     background-color: #000;
     flex-shrink: 0;
 
@@ -643,7 +643,7 @@ onBeforeUnmount(() => {
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #ef4444;
+    color: var(--color-blue);
     line-height: 1;
   }
 
@@ -674,7 +674,7 @@ onBeforeUnmount(() => {
   }
 
   .mini-play-btn {
-    background-color: #ef4444;
+    background-color: var(--color-blue);
     color: #ffffff;
     font-size: 1.1rem;
     font-weight: 700;
@@ -685,7 +685,7 @@ onBeforeUnmount(() => {
     transition: background-color 0.2s;
 
     &:hover {
-      background-color: #dc2626;
+      background-color: var(--color-blue-light);
     }
   }
 
@@ -711,7 +711,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 32px;
   padding: 40px 0;
-  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.2);
 
   @media (min-width: 768px) {
     flex-direction: row;
@@ -731,8 +731,8 @@ onBeforeUnmount(() => {
 
   .hero-tag {
     display: inline-block;
-    border: 1px solid #ef4444;
-    color: #ef4444;
+    border: 1px solid var(--color-blue-light);
+    color: var(--color-blue-light);
     font-size: 1.1rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -755,7 +755,7 @@ onBeforeUnmount(() => {
     }
 
     .accent {
-      color: #ef4444;
+      color: var(--color-blue);
     }
   }
 
@@ -777,7 +777,7 @@ onBeforeUnmount(() => {
   .hero-soundtrack-card {
     width: 100%;
     background-color: #10151f;
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(var(--color-blue-rgb), 0.4);
     border-radius: 16px;
     padding: 24px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
@@ -803,7 +803,7 @@ onBeforeUnmount(() => {
     height: 48px;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(var(--color-blue-rgb), 0.3);
     flex-shrink: 0;
 
     img {
@@ -821,7 +821,7 @@ onBeforeUnmount(() => {
     display: block;
     font-size: 0.8rem;
     font-weight: 800;
-    color: #ef4444;
+    color: var(--color-blue);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -863,7 +863,7 @@ onBeforeUnmount(() => {
   }
 
   .play-btn {
-    background-color: #ef4444;
+    background-color: var(--color-blue);
     color: #ffffff;
     font-weight: 700;
     font-size: 1.2rem;
@@ -874,10 +874,10 @@ onBeforeUnmount(() => {
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--color-blue-rgb), 0.4);
 
     &:hover {
-      background-color: #dc2626;
+      background-color: var(--color-blue-light);
       transform: scale(1.05);
     }
   }
@@ -931,7 +931,7 @@ onBeforeUnmount(() => {
     transition: all 0.2s;
 
     &.active {
-      background-color: #ef4444;
+      background-color: var(--color-blue);
       color: #ffffff;
     }
 
@@ -949,7 +949,7 @@ onBeforeUnmount(() => {
   max-width: 640px;
   margin: 0 auto;
   background-color: #10151f;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(var(--color-blue-rgb), 0.3);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
@@ -994,7 +994,7 @@ onBeforeUnmount(() => {
       position: absolute;
       inset: 0;
       opacity: 0.08;
-      background-image: radial-gradient(#ef4444 1px, transparent 1px);
+      background-image: radial-gradient(var(--color-blue) 1px, transparent 1px);
       background-size: 16px 16px;
       pointer-events: none;
     }
@@ -1013,18 +1013,18 @@ onBeforeUnmount(() => {
       width: 60px;
       height: 60px;
       border-radius: 8px;
-      border: 1px solid rgba(239, 68, 68, 0.5);
+      border: 1px solid rgba(var(--color-blue-rgb), 0.5);
       background-color: rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ef4444;
+      color: var(--color-blue);
     }
 
     .placeholder-tag {
       font-size: 1.1rem;
       font-weight: 800;
-      color: #ef4444;
+      color: var(--color-blue);
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
@@ -1040,7 +1040,7 @@ onBeforeUnmount(() => {
     .placeholder-divider {
       width: 80px;
       height: 2px;
-      background: linear-gradient(to right, transparent, #ef4444, transparent);
+      background: linear-gradient(to right, transparent, var(--color-blue), transparent);
     }
 
     .placeholder-desc {
@@ -1083,8 +1083,8 @@ onBeforeUnmount(() => {
 
     &:hover {
       background-color: #000;
-      color: #ef4444;
-      border-color: #ef4444;
+      color: var(--color-blue-light);
+      border-color: var(--color-blue-light);
     }
 
     &.prev {
@@ -1118,7 +1118,7 @@ onBeforeUnmount(() => {
 
     &:hover:not(:disabled) {
       color: #ffffff;
-      border-color: #ef4444;
+      border-color: var(--color-blue-light);
     }
 
     &:disabled {
@@ -1150,7 +1150,7 @@ onBeforeUnmount(() => {
 
       &:focus {
         outline: none;
-        border-color: #ef4444;
+        border-color: var(--color-blue-light);
       }
     }
   }
@@ -1167,7 +1167,7 @@ onBeforeUnmount(() => {
 
   .scroll-page-card {
     background-color: #10151f;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(var(--color-blue-rgb), 0.2);
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -1202,7 +1202,7 @@ onBeforeUnmount(() => {
     box-shadow 0.3s;
 
   &:hover {
-    border-color: rgba(239, 68, 68, 0.4);
+    border-color: rgba(var(--color-blue-rgb), 0.4);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   }
 
@@ -1219,7 +1219,7 @@ onBeforeUnmount(() => {
   }
 
   &:hover .quote-symbol {
-    color: rgba(239, 68, 68, 0.1);
+    color: rgba(var(--color-blue-rgb), 0.1);
   }
 
   .quote-text {
@@ -1257,7 +1257,7 @@ onBeforeUnmount(() => {
   .meta-context {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #ef4444;
+    color: var(--color-blue);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -1357,10 +1357,10 @@ onBeforeUnmount(() => {
     text-decoration: none;
     transition: background-color 0.2s;
 
-    &.red {
-      background-color: #ef4444;
+    &.blue {
+      background-color: var(--color-blue);
       &:hover {
-        background-color: #dc2626;
+        background-color: var(--color-blue-light);
       }
     }
 
