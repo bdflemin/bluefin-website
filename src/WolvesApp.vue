@@ -272,10 +272,12 @@ watch(readingMode, async (mode) => {
   }
   await nextTick()
   if (mode === 'flip') {
+    scrollResizeObserver?.disconnect()
     setupFlipResizeObserver()
     renderFlipPage()
   }
   else {
+    flipResizeObserver?.disconnect()
     setupScrollResizeObserver()
     renderAllScrollPages()
   }
@@ -485,6 +487,8 @@ onBeforeUnmount(() => {
                 v-show="!pdfLoading && !pdfError"
                 ref="flipCanvas"
                 class="pdf-page-canvas"
+                role="img"
+                :aria-label="`Comic page ${currentPageIndex + 1} of ${totalPages}`"
               />
             </div>
 
@@ -574,6 +578,8 @@ onBeforeUnmount(() => {
                   <canvas
                     :ref="(el) => setScrollCanvasRef(el as Element | null, n - 1)"
                     class="pdf-page-canvas"
+                    role="img"
+                    :aria-label="`Page ${n} of ${totalPages}`"
                   />
                 </div>
               </div>

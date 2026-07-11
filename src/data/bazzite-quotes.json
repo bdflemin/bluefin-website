@@ -1,26 +1,464 @@
 [
   {
-    "quote": "Bazzite is the absolute best gaming OS I have ever used. Everything just works, out of the box, and performance is stunning on both PC and handheld.",
-    "attribution": "GamingEnthusiast99",
-    "context": "Bluefin Discord #bazzite-chat",
-    "date": "2026-05-15"
+    "quote": "Hey ya'll! I'm funding a comic book about the struggles of being an oss maintainer - and it has metal and dinosaurs and shit in it. If I've invited you here it's because you've had some impact on Bluefin so far, I am missing a bunch but I don't want to keep this secret too long. I paired with an arthouse that is going to make a set of comics. They're based out of Ibiza, all local. I had to explain to them what they want so in some of these there is some AI placeholder stuff that will get removed. Then entire point of the story is to talk about the struggles of AI and all that shit. \n\nExcept there will be dinosaurs and Kyle's a galactic overlord and stuff. I think it'll be baller. (Oh and we're going to to try to play it live at KubeCon.) lol.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-05"
   },
   {
-    "quote": "I wiped my main gaming rig and installed Bazzite. No regrets. It breathes new life into older hardware while extracting maximum performance.",
-    "attribution": "LinuxGamerPro",
-    "context": "Bluefin Discord #bazzite-showcase",
-    "date": "2026-06-01"
+    "quote": "In a world of overwhelming automation, they are the light!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-09"
   },
   {
-    "quote": "The seamless integration with Steam Deck and other handheld controllers is masterclass level. The Universal Blue team is doing incredible work here.",
-    "attribution": "HandheldMaster",
-    "context": "Bluefin Discord #general",
+    "quote": "Our Childhood’s End. Open Source fights back!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-09"
+  },
+  {
+    "quote": "Our future’s end. Their beginning.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-09"
+  },
+  {
+    "quote": "Subtitle options so far:",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "tldr, the entire thing is LOTR so focusing on a small teaser first, one comic cover, issue 1, sets the tone, etc.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-04"
+  },
+  {
+    "quote": "ok sorted it, we're back in business but much smaller scale and sooner",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-04"
+  },
+  {
+    "quote": "I punted with the comic artists",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-03"
+  },
+  {
+    "quote": "fyi I'm icing this for a while, I want to do it right and it's still a hot mess",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-03"
+  },
+  {
+    "quote": "where it's not actually lego because they'll sue us lol",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-01"
+  },
+  {
+    "quote": "we are so doing a lego issue someday",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-01"
+  },
+  {
+    "quote": "some of her work",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-01"
+  },
+  {
+    "quote": "she plays D&D and will help me with the lore, etc.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-01"
+  },
+  {
+    "quote": "Man dude ... we got so lucky on the artist",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-01"
+  },
+  {
+    "quote": "going to start lore gathering",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-30"
+  },
+  {
+    "quote": "people are doing their own interpretations of \"the scene",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-30"
+  },
+  {
+    "quote": "the new ujust has a better progress meter",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-11"
+  },
+  {
+    "quote": "yeah it's an issue in ptyxis",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-11"
+  },
+  {
+    "quote": "why are you troubleshooting it's a ptyxis bug it's not your fault",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-11"
+  },
+  {
+    "quote": "this looks like a terminal bug",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-11"
+  },
+  {
+    "quote": "someone made a video",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-10"
+  },
+  {
+    "quote": "I miss the razor1911 nfo bling",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-09"
+  },
+  {
+    "quote": "we need to give the terminal art a onceover",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-09"
+  },
+  {
+    "quote": "I can feel this fresh dakota build I'm so close",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "Whoever recommended The Heavy in here last time thank you lol",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "We cheat with nvidia and the new iso",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "we can put things livecd only we might as well put that stuff on there",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "oh well lol don't do all that we'll just add it lol",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "oh I wonder if you can just use a bluefin livecd",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-07-08"
+  },
+  {
+    "quote": "Some thoughts on Bazaar's awesome new feature for having markdown page sections in the store itself: https://hachyderm.io/@jorge/116820454371399908 - feel free to discuss!\n\nAlso looking for volunteers to map out the world's most epic developer experience in one awesome markdown page for bazaar. This one has to be human made, no agents on this one.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-27"
+  },
+  {
+    "quote": "> Sir, the new Dakoraptors ...  it's too late, as expected they are decimating our forces. We must withdraw!\n\nThanks everyone for your patience, but we have nice shiny ISOs, a culmination of work from bketelsen and james. It's shaping up to be quite nice. Try it and tell a friend!\n\n\nhttps://github.com/ublue-os/bluefin/discussions/4771",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-18"
+  },
+  {
+    "quote": "From the Ubuntu Summit! https://www.youtube.com/watch?v=1EkaitzSFFw",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-17"
+  },
+  {
+    "quote": "Our report for last month is out. An incredible 17 new contributors! Though some of you are dupes. Thanks everyone for your help!\n\n https://docs.projectbluefin.io/reports/2026/05/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
     "date": "2026-06-10"
   },
   {
-    "quote": "Bazzite is exactly what a modern gaming OS should be: immutable, auto-updating, and with near-zero overhead. Simply gorgeous.",
-    "attribution": "DeckRaptor",
-    "context": "Bluefin Discord #bazzite-chat",
-    "date": "2026-07-02"
+    "quote": "Dakota Alpha 3 is out! And thanks to the magic of the Bluefin amazingness factory we have a new installer for you to check out.\n\nOne ISO covers NVida and non-Nvidia, you will only ever need to burn one ISO stick ever again. Come give it a shot and check out all the other awesome features James put into this thing. We're especially looking for people with Windows VMs to help us test this wallpaper import feature. \n\nhttps://github.com/ublue-os/bluefin/discussions/4754\n\nThis new installer will also pave the way for the new images, featuring new rechunked goodness for download efficiency and all the awesome things coming in bootc. Enjoy!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-09"
+  },
+  {
+    "quote": "Welp, we cooked, and a new chicken came out. Feel free to ask questions!\n\nhttps://www.youtube.com/watch?v=HdzLbJOfR3o\n\nHere's the rebase instructions if you wanna try these! https://github.com/ublue-os/bluefin/discussions/4751",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-07"
+  },
+  {
+    "quote": "There's tons of evidence out there, projects having AI conversations. Here's ours! https://github.com/ublue-os/bluefin/discussions/4724",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-01"
+  },
+  {
+    "quote": "Here's the rundown on knuckle, if you're into it, join their discord!\n\nhttps://docs.projectbluefin.io/blog/introducing-knuckle/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-29"
+  },
+  {
+    "quote": "The original title of this is \"Making Our Own Fate: Why GNOME and KDE need operating systems\" at the Linux app summit but I like this new title better.\n\nNew User? Welcome to the Linux Desktop. New Gamer? Good, here's how you help.Flathub is central to the app experience on SteamOS, Bazzite, and every gamer on Linux. Open Gaming Collective is a place where gamers can organize their contributions to Linux. You can contribute to Linux in a way that helps everyone!\n\nhttps://www.youtube.com/watch?v=Sv1dbcZGTro",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-22"
+  },
+  {
+    "quote": "Alright everyone. Part 4 of our week of release news. We saved the coolest bit for last. Tell a friend and try Dakotaraptor today! Contributors, testers, issue filers, breakers of computers. Everyone has a place. We should run the raptors are coming ...\n\nhttps://docs.projectbluefin.io/blog/making-our-own-fate/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-13"
+  },
+  {
+    "quote": "Need one more round of testing on the Dakota alpha ISOs: https://projectbluefin.dev/dakota-live-alpha2.iso and https://projectbluefin.dev/dakota-nvidia-live-alpha2.iso Thanks!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-13"
+  },
+  {
+    "quote": "And a little surprise for you! https://docs.projectbluefin.io/blog/the-dinosaur-and-the-hummingbird/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-12"
+  },
+  {
+    "quote": "Part 2 is today! https://docs.projectbluefin.io/blog/bluefin-spring-2026-2/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-12"
+  },
+  {
+    "quote": "Steel yourselves! Welcome Guardians, F44 is here. And we have a special announcement coming up for Fedora tomorrow. As well as 2 more days of posts. Come join us! Help spread the work, I'm to old to social media lol.\n\nhttps://docs.projectbluefin.io/blog/bluefin-spring-2026/ (ISOs need another 5 minutes)",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-11"
+  },
+  {
+    "quote": "Release day is near! I need a bunch of desktop screenshots to include in the blog post. Please post them in the <#1428520219617263666> channel, and leave your name so I can credit you. The release blog will have plenty of stock screenshots, so I'm looking for your best. Battlestation pics also welcome (and encouraged!). \n\nI am thinking we should show off as many of our wallpapers as possible in one post, so if you see someone with one dino wallpaper, choose another one. All wallpapers welcome of course!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-05"
+  },
+  {
+    "quote": "The monthly report for April is out! https://docs.projectbluefin.io/reports/2026/04/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-01"
+  },
+  {
+    "quote": "Alright nerds, here's Alpha 1. Thanks to everyone for helping out. Go forth and conquer.\n\nhttps://docs.projectbluefin.io/blog/dakota-alpha-1/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-04-19"
+  },
+  {
+    "quote": "It's time .... Dakotaraptor's getting closer, and we have a test ISO. Talk to your local raptor specialist today! Join us in the dakota channel if you want to help out. Lots of low hanging fruit and opportunities to help out - the loop is now complete we can start to daily this and this raptor is going places.\n\nhttps://www.youtube.com/watch?v=Ejte0F12tRQ\n\nThanks to everyone who has been working on this!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-04-09"
+  },
+  {
+    "quote": "We've been cooking some website and docs improvements over the past few days, feel free to find broken things and let us know!\n\nhttps://github.com/ublue-os/bluefin/discussions/4386",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-03-31"
+  },
+  {
+    "quote": "Alright! We've got some goodies for you today! First of all I'm smoked, after KubeCon + CloudNativeCon EU in Amsterdam. This was the largest open source conference of all time, with 13,500+ attendees! And you can believe that the bootc folks at the Project Pavilion were swamped! bootc also had a well attended ContribFest, and amazing talk by Joseph Marrero Corchado and Colin Walters on the Pavilion Stage. \n\nBoth SUSE and Canonical are now keenly aware of what the bootcrew is doing, I think it's an opportunity to get people working on these images. I also met with Jon Saeger, the engineering manager at Canonical who is pushing Ubuntu in bold new directions. Both Joseph and I are hoping to speak at a future Ubuntu Summit about this tech. Ubuntu 26.04 is going to be very, very, good. And once that lands they have 2 years of hard pushing before the next one, so I am expecting aggressive improvements across the board. \n\nAnd now thanks to  we have a modern desktop in Bluefin LTS as a good place to start: \n\nhttps://docs.projectbluefin.io/blog/2026/03/27/bluefin-lts-gnome-49-50/\n\nLastly, we're spinning up for F44, hoping to land beta branches right after I post this. I'll be asking for a lot of reviews this week so if you're looking to contribute and send PRs, now's the time. Once our production Bluefin's are done with their spring updates we can really start to focus on dakotaraptor. So if you wanna work on that check out what  and  are working on in the dakota dev channel.\n\nAnd one final goodie, the age of super huge multigig updates is coming to an end, with multiple pieces landing in upstream soonish that will make downloading updates much more pleasant. We'll keep you up to date!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-03-28"
+  },
+  {
+    "quote": "Got a poor friend on Windows or Mac? Give the gift of dinosaurs: https://docs.projectbluefin.io/blog/bluefin-cli-mac-wsl/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-03-13"
+  },
+  {
+    "quote": "Quick [SCALE 23x](https://www.socallinuxexpo.org/scale/23x) update. This is a good \"home conference\" for us since we usually meet with folks from Bazzite and other projects. There where three bootc talks - mostly things we already have here. It was encouraging to see the focus on the user and contributor metrics in each talk and to get the shoutouts from the folks at Red Hat!\n\nThis was also my first time seeing all of the Open Gaming Collective (OGC) folks in one place - this is going to be a great thing for Linux gaming and all of those folks have a great plan on moving forward. \n\nOn the Bluefin side I focused on sticker dispersal and showing demos. The troubleshooting stack on my laptop (goose + linux-mcp-server + bring-your-own-llm) was working very well - I was very surprised to learn that my personal laptop needed some fixes, so the demos were real! Considering people's reactions I feel that pushing for an alpha this spring with a goal of GA in the fall makes sense. Check [the draft docs here](https://docs.projectbluefin.io/troubleshooting/) for more info, and drop into <#1395583611985727499> if you wanna help out! \n\nSyncing with Kyle was fruitful, I had started prototyping OCI flatpaks with zstd:chunked and partial pulls, which ublue has enabled in the distroboxes - KubeCon is in a few weeks so I'll have plenty of things to ask upstream, so expect a meatier update next month or so.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-03-08"
+  },
+  {
+    "quote": "Guardians,\n\nWe say goodbye to Fossil February: https://docs.projectbluefin.io/reports/2026/02\n\nWelcome to all the New Lights this month, if you see them in chat show them the love! Each month I'll work on the report so that we can really dial it in, if you have any feedback let us know! Enjoy!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-03-01"
+  },
+  {
+    "quote": "Greetings! I'm in the process of adding torrents for all the ISOs but it's tough to test with no seeders. If you got the time today here they are: <https://github.com/projectbluefin/iso/releases/tag/26.02.1>\n\nWe need confirmation that a) The right ISO was downloaded and works, and then b) We need to see how the DLs perform when there's more people invovled. Thanks!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-02-28"
+  },
+  {
+    "quote": "If anyone is coming to the Southern California Linux Expo (SCaLE) in two weekends please let me know so I can give you some Bluefin stickers! And if you're in the area here's what you need to know! \n\nhttps://www.socallinuxexpo.org/scale/23x",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-02-25"
+  },
+  {
+    "quote": "The homebrew folks are running a survey, it's only a few questions and didn't take me long to fill out. Enjoy! \n\nhttps://x.com/MacHomebrew/status/2022242752491315406\nhttps://docs.google.com/forms/d/e/1FAIpQLSeeNd7T0Zj9zOl8Y2MP1YITPk_qNUIP5knfCqSmOH2oB2O_UQ/viewform",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-02-13"
+  },
+  {
+    "quote": "Greetings from the New York Times! I was in NYC today celebrating 10 years of the CNCF. (The entire thing runs on cloud native and linux!)",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-02-13"
+  },
+  {
+    "quote": "Happy Sunday! Some of you have been tracking our new automated reports. These are a way for us to keep track of what's going on across the project: \n\nhttps://docs.projectbluefin.io/blog/automated-reports-changelogs\n\nAnd check them out at https://docs.projectbluefin.io/reports - thanks!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-02-01"
+  },
+  {
+    "quote": "Got a shiny new thing for you New Lights that want to start helping out. We're starting with some ISO testing. I've pushed fresh ones that need testing. Note, this is NOT for Bluefin LTS/GDX testing, those will come later. Enjoy!\n\nhttps://github.com/ublue-os/bluefin/discussions/4073",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-01-19"
+  },
+  {
+    "quote": "I was doing some homelab reorg and pulled out an old nuc and went through the install process. This thing we've all built together really is smoooth! Thank you so much for hanging out with us. \n\nWe're looking for folks who want to start their OSS journey to work on some low hanging fruit. https://docs.projectbluefin.io/downloads-testing\n\nWe need to freshen ISOs so we need people banging on these. Just follow the instructions on the page and fire up your VMs! When enough people give us enough feedback we'll freshen ISOs. These will update regularly, at least monthly, so if you're installing on a new machine you can always get the freshest one here. Our new ISO process is super smooth so once we get the goahead from ya'll once we move to this we don't have to deal with ISOs for a while.",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-01-15"
+  },
+  {
+    "quote": "Congrats to  for getting his first contribution in `bootc`! Keep on rocking ya'll!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-01-06"
+  },
+  {
+    "quote": "And here's the video summary! Smash that like and subscribe button!\n\nhttps://www.youtube.com/watch?v=I4RbjGwj6is",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-31"
+  },
+  {
+    "quote": "Whew, that took a while. Thank you for joining us in 2025! And an extra special thanks to those of you who have been with us for longer. Here's our 2025 end of the year wrap up, and where we're planning on going for 2026:\n\nhttps://docs.projectbluefin.io/blog/bluefin-2025/\n\nEnjoy and feel free to ask questions!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-30"
+  },
+  {
+    "quote": "Some small changes happening in this week's build: https://docs.projectbluefin.io/blog/upcoming-homebrew-cli-changes\n\nExpect a much larger update at the end of next week that will cover where we've been in 2025 and where we plan to go in 2026!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-27"
+  },
+  {
+    "quote": "Also hope you all have a safe and happy holidays!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-27"
+  },
+  {
+    "quote": "Quick announcement before the holidays, when dx mode is on we now include the docker model plugin. We've actually been shipping this for a while, but here's the blog post, enjoy! https://www.docker.com/blog/docker-model-runner-universal-blue/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-22"
+  },
+  {
+    "quote": "Happy Holidays folks! https://docs.projectbluefin.io/blog/huntress-holiday-wallpapers/",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-14"
+  },
+  {
+    "quote": "This KubeCon in Atlanta I sat down with Michael Tunnell to talk about all of this stuff, enjoy! https://www.youtube.com/watch?v=K6-GMTq2T7s",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-06"
+  },
+  {
+    "quote": "Ahmed kicks off the announcements channel, enjoy! And show him the love for working on this! Doing this upstream helps every single homebrew user, no matter the distro they use. That's our style!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2025-12-04"
+  },
+  {
+    "quote": "is this recorded?",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-19"
+  },
+  {
+    "quote": "dunno, it's a new world",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-06"
+  },
+  {
+    "quote": "Oh I missed dakota!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-05"
+  },
+  {
+    "quote": "can you post thumbs of the server website stuff you did? We already said we're making it so it's not secret so might as well brag about this dino!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-06-05"
+  },
+  {
+    "quote": "I have a machine that will only ever run ubuntu 22.04, it's just stuck there, the only OS that works on it. Hardware sucks, shrug",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-08"
+  },
+  {
+    "quote": "we have the dinos in brew they work on all linuxes!",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-08"
+  },
+  {
+    "quote": "it will be epic",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-06"
+  },
+  {
+    "quote": "we got your wallpaper in the release notes this time",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-06"
+  },
+  {
+    "quote": "Cosmic on top of the FreeDesktop SDK,",
+    "attribution": "John Bazzite",
+    "context": "Bluefin Discord Teaser Dispatch",
+    "date": "2026-05-04"
   }
 ]
