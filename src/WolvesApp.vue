@@ -283,10 +283,19 @@ watch(readingMode, async (mode) => {
   }
 })
 
+// Bazzite Quote cycling state
+const currentQuoteIndex = ref(0)
+let quoteTimer: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
   window.addEventListener('keydown', handleKeyDown)
   loadComicPdf()
+
+  // Start quote auto-cycling interval (9 seconds)
+  quoteTimer = setInterval(() => {
+    currentQuoteIndex.value = (currentQuoteIndex.value + 1) % bazziteQuotes.length
+  }, 9000)
 })
 
 onBeforeUnmount(() => {
@@ -297,6 +306,12 @@ onBeforeUnmount(() => {
   renderTasks.forEach(task => task.cancel())
   renderTasks.clear()
   pdfDocument?.destroy()
+
+  // Clear quote auto-cycling interval to prevent memory leaks
+  if (quoteTimer) {
+    clearInterval(quoteTimer)
+    quoteTimer = null
+  }
 })
 </script>
 
@@ -604,33 +619,33 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="quotes-grid">
-          <div
-            v-for="(item, idx) in bazziteQuotes"
-            :key="idx"
-            class="quote-card"
-          >
-            <!-- Decorative quote icon -->
-            <div class="quote-symbol">
-              &ldquo;
-            </div>
-
-            <!-- Quote Text -->
-            <p class="quote-text">
-              "{{ item.quote }}"
-            </p>
-
-            <!-- Citation Metadata -->
-            <div class="quote-meta">
-              <div class="meta-top">
-                <span>@{{ item.attribution }}</span>
-                <span class="meta-date">{{ item.date }}</span>
+        <div class="quotes-single-wrap">
+          <Transition name="quote-fade">
+            <div
+              :key="currentQuoteIndex"
+              class="quote-card"
+            >
+              <!-- Decorative quote icon -->
+              <div class="quote-symbol">
+                &ldquo;
               </div>
-              <div class="meta-context">
-                {{ item.context }}
+
+              <!-- Quote Text -->
+              <p class="quote-text">
+                "{{ bazziteQuotes[currentQuoteIndex].quote }}"
+              </p>
+
+              <!-- Citation Metadata -->
+              <div class="quote-meta">
+                <div class="meta-top">
+                  <span>John Bazzite</span>
+                </div>
+                <div class="meta-context">
+                  Bluefin Discord Teaser Dispatch
+                </div>
               </div>
             </div>
-          </div>
+          </Transition>
         </div>
 
         <!-- Discord hook commentary -->
@@ -1465,14 +1480,11 @@ onBeforeUnmount(() => {
 }
 
 // Bazzite Quotes Section
-.quotes-grid {
-  display: grid;
-  grid-template-cols: 1fr;
-  gap: 24px;
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.quotes-single-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .quote-card {
@@ -1485,6 +1497,8 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 24px;
   position: relative;
+  width: 100%;
+  max-width: 640px;
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
@@ -1549,6 +1563,26 @@ onBeforeUnmount(() => {
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
+}
+
+/* Quote transition effects */
+.quote-fade-enter-active,
+.quote-fade-leave-active {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.quote-fade-leave-active {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+}
+
+.quote-fade-enter-from,
+.quote-fade-leave-to {
+  opacity: 0;
 }
 
 .quotes-footnote {
