@@ -22,7 +22,7 @@ import bazziteQuotes from './data/bazzite-quotes.json'
 
 // PDF.js is injected dynamically from CDNJS (see loadPdfJs()) and attaches itself
 // to `window.pdfjsLib`. It ships no first-party types, so we treat it as `any`.
-const PDF_URL = 'https://download.projectbluefin.io/color-with-bluefin.pdf'
+const PDF_URL = `${import.meta.env.BASE_URL}color-with-bluefin.pdf`
 const PDFJS_SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
 const PDFJS_SCRIPT_INTEGRITY = 'sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ=='
 const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
