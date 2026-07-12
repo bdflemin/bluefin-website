@@ -401,7 +401,7 @@ watch(() => props.playing, (newPlaying) => {
   else if (!newPlaying && status.value === 'playing') {
     pausePlayback()
   }
-})
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   stopProgressTimer()
