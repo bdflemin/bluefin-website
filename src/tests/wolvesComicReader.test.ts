@@ -127,12 +127,13 @@ describe('wolvesComicReader', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
     await wrapper.vm.$nextTick()
 
+    const len = (wrapper.vm as any).mixedPhotos.length
     expect((wrapper.vm as any).currentBeat).toBe(24)
-    expect((wrapper.vm as any).activeFlickrIndex).toBe(0)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(3 % len)
 
     await wrapper.setProps({ playlistCurrentTime: 18 })
     expect((wrapper.vm as any).currentBeat).toBe(36)
-    expect((wrapper.vm as any).activeFlickrIndex).toBe(1)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(4 % len)
   })
 
   it('hides manual navigation buttons in Live Gallery Mode (trackIndex > 0)', async () => {
@@ -187,14 +188,15 @@ describe('wolvesComicReader', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
     await wrapper.vm.$nextTick()
 
-    expect((wrapper.vm as any).activePhotoIndex).toBe(0)
+    const len = (wrapper.vm as any).mixedPhotos.length
+    expect((wrapper.vm as any).activePhotoIndex).toBe(0 % len)
     expect((wrapper.vm as any).previousPhotoIndex).toBeNull()
 
     await wrapper.setProps({ playlistCurrentTime: 18 })
     await wrapper.vm.$nextTick()
 
-    expect((wrapper.vm as any).activePhotoIndex).toBe(1)
-    expect((wrapper.vm as any).previousPhotoIndex).toBe(0)
+    expect((wrapper.vm as any).activePhotoIndex).toBe((4 % len))
+    expect((wrapper.vm as any).previousPhotoIndex).toBe(0 % len)
     expect((wrapper.vm as any).isPhotoTransitioning).toBe(true)
 
     const layer = wrapper.find('.flickr-photo-layer.fading-out')

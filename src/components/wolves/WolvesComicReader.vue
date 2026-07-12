@@ -83,12 +83,67 @@ const currentBeat = computed(() => {
   return Math.floor(props.playlistCurrentTime * (bpm / 60))
 })
 
+const mixedPhotos = computed(() => {
+  // 1. Local Showcase and Story wallpapers (isPeople = false)
+  const localShowcase = wallpapers.filter((wp) => {
+    const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
+    return !isPeople
+  }).map(wp => ({
+    id: wp.name,
+    isLocal: true,
+    path: wp.name,
+    title: wp.title,
+    type: wp.type,
+    dayName: wp.dayName,
+    nightName: wp.nightName
+  }))
+
+  // 2. Local People wallpapers (isPeople = true)
+  const localPeople = wallpapers.filter((wp) => {
+    const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
+    return isPeople
+  }).map(wp => ({
+    id: wp.name,
+    isLocal: true,
+    path: wp.name,
+    title: wp.title,
+    type: wp.type,
+    dayName: wp.dayName,
+    nightName: wp.nightName
+  }))
+
+  // 3. Flickr Remote People photos
+  const remotePeople = flickrPhotos.value.map(p => ({
+    id: p.id,
+    isLocal: false,
+    path: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
+    title: p.title,
+    type: 'single' as const,
+    dayName: undefined,
+    nightName: undefined
+  }))
+
+  // 4. Combine and apply random-offset bias scores
+  // Showcase gets score range [0.0, 0.4] (strongly biased to start)
+  // People (local and remote) get score range [0.3, 1.0] (biased to end)
+  const scored = [
+    ...localShowcase.map(p => ({ p, score: Math.random() * 0.4 })),
+    ...localPeople.map(p => ({ p, score: 0.3 + Math.random() * 0.7 })),
+    ...remotePeople.map(p => ({ p, score: 0.3 + Math.random() * 0.7 }))
+  ]
+
+  // Sort strictly by score
+  scored.sort((a, b) => a.score - b.score)
+
+  return scored.map(x => x.p)
+})
+
 const activeFlickrIndex = computed(() => {
-  if (flickrPhotos.value.length === 0 || !currentTrack.value) {
+  if (mixedPhotos.value.length === 0 || !currentTrack.value) {
     return 0
   }
   const phraseBeats = currentTrack.value.phraseBeats || 32
-  return Math.floor(currentBeat.value / phraseBeats) % flickrPhotos.value.length
+  return Math.floor(currentBeat.value / phraseBeats) % mixedPhotos.value.length
 })
 
 watch(activeFlickrIndex, (newVal, oldVal) => {
@@ -113,11 +168,17 @@ watch(activeFlickrIndex, (newVal, oldVal) => {
   }
 }, { immediate: true })
 
-function getFlickrPhotoUrl(photo: { server: string, id: string, secret: string } | null | undefined) {
+function getFlickrPhotoUrl(photo: any) {
   if (!photo) {
     return ''
   }
-  return `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`
+  if (photo.isLocal) {
+    if (photo.type === 'daynight') {
+      return `${baseUrl}img/wallpapers/${duskIsNight.value ? photo.nightName : photo.dayName}`
+    }
+    return `${baseUrl}img/wallpapers/${photo.path}`
+  }
+  return photo.path
 }
 
 // Active chapter ───────────────────────────────────────────────────────────
@@ -433,14 +494,14 @@ onBeforeUnmount(() => {
           <div v-if="props.trackIndex && props.trackIndex > 0" class="flickr-gallery-wrapper">
             <!-- Previous Photo (fading out) -->
             <div
-              v-if="previousPhotoIndex !== null && flickrPhotos[previousPhotoIndex]"
+              v-if="previousPhotoIndex !== null && mixedPhotos[previousPhotoIndex]"
               class="flickr-photo-layer fading-out"
               :style="{ animationDuration: `${currentTrack?.fadeDuration ?? 1500}ms` }"
             >
               <img
-                :src="getFlickrPhotoUrl(flickrPhotos[previousPhotoIndex])"
+                :src="getFlickrPhotoUrl(mixedPhotos[previousPhotoIndex])"
                 class="flickr-img"
-                :alt="flickrPhotos[previousPhotoIndex]?.title"
+                :alt="mixedPhotos[previousPhotoIndex]?.title"
               >
             </div>
 
@@ -451,16 +512,16 @@ onBeforeUnmount(() => {
               :style="{ animationDuration: `${currentTrack?.fadeDuration ?? 1500}ms` }"
             >
               <img
-                v-if="flickrPhotos[activePhotoIndex]"
-                :src="getFlickrPhotoUrl(flickrPhotos[activePhotoIndex])"
+                v-if="mixedPhotos[activePhotoIndex]"
+                :src="getFlickrPhotoUrl(mixedPhotos[activePhotoIndex])"
                 class="flickr-img"
-                :alt="flickrPhotos[activePhotoIndex]?.title"
+                :alt="mixedPhotos[activePhotoIndex]?.title"
               >
             </div>
 
             <!-- Sleek photo caption -->
-            <div v-if="flickrPhotos[activePhotoIndex]" class="flickr-caption font-mono">
-              <span class="caption-label text-cyan">CNCF STREAM //</span> {{ flickrPhotos[activePhotoIndex].title }}
+            <div v-if="mixedPhotos[activePhotoIndex]" class="flickr-caption font-mono">
+              <span class="caption-label text-cyan">CNCF STREAM //</span> {{ mixedPhotos[activePhotoIndex].title }}
             </div>
           </div>
 
