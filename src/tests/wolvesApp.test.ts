@@ -8,7 +8,7 @@ vi.mock('../components/TopNavbar.vue', () => ({
 
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
-    props: ['chapters', 'autoplay', 'fastPacing'],
+    props: ['chapters', 'autoplay', 'pacingMode'],
     emits: ['update:page'],
     template: '<button class="comic-reader" @click="$emit(`update:page`, 8)">WolvesComicReader</button>',
   },
@@ -60,7 +60,7 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.lore-chapter').text()).toBe('none')
   })
 
-  it('activates fast pacing when first song progress passes 3:21 (201s)', async () => {
+  it('activates fast pacing when first song progress passes 3:21 (201s) and hyper pacing at 4:17 (257s)', async () => {
     const wrapper = mount(WolvesApp)
 
     await wrapper.find('.experience-cta-btn').trigger('click')
@@ -68,11 +68,16 @@ describe('wolvesApp.vue', () => {
     const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
     const reader = wrapper.findComponent({ name: 'WolvesComicReader' })
 
-    expect(reader.props('fastPacing')).toBeFalsy()
+    expect(reader.props('pacingMode')).toBe('normal')
 
     // Emit progress event
     await soundtrack.vm.$emit('progress', { currentTime: 205, duration: 300, playlistIndex: 0 })
 
-    expect(reader.props('fastPacing')).toBe(true)
+    expect(reader.props('pacingMode')).toBe('fast')
+
+    // Emit progress event past 257 seconds
+    await soundtrack.vm.$emit('progress', { currentTime: 260, duration: 300, playlistIndex: 0 })
+
+    expect(reader.props('pacingMode')).toBe('hyper')
   })
 })

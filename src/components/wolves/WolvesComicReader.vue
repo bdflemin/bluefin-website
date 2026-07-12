@@ -18,7 +18,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 const props = defineProps<{
   chapters: WolvesChapter[]
   autoplay?: boolean
-  fastPacing?: boolean
+  pacingMode?: 'normal' | 'fast' | 'hyper'
 }>()
 
 const emit = defineEmits<{
@@ -269,7 +269,13 @@ let autoplayTimer: ReturnType<typeof setInterval> | null = null
 const localAutoplay = ref(false)
 
 const autoplayInterval = computed(() => {
-  return props.fastPacing ? 2000 : 10000
+  if (props.pacingMode === 'hyper') {
+    return 1000
+  }
+  if (props.pacingMode === 'fast') {
+    return 2000
+  }
+  return 10000
 })
 
 function stopAutoplayTimer() {
