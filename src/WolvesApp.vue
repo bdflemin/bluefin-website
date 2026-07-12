@@ -7,18 +7,61 @@ README: Bluefin Wolves Teaser Landing Page Component
   an HTML5 canvas using PDF.js, loaded dynamically from the cdnjs CDN (see
   `PDFJS_SCRIPT_URL` / `PDFJS_WORKER_URL` below). To point at a different PDF,
   update `PDF_URL`.
-- Discord Quotes: Sourced from `src/data/bazzite-quotes.json`. Add real/new community
-  quotes there with fields: quote, attribution, context, date.
+- Intercepted Communications: Sourced from `src/data/intercepted-communications.json`.
+  Add conversations there with title, channel, date, and ordered messages.
 - Donate QR Code: Pointing to `https://docs.projectbluefin.io/donations`.
   To change the donation target URL, update `scripts/generate-qrs.js` and re-run.
 - Playlist ID in use: `PLA78oiE-RGAE` ("Bluefin: Seven Days to the Wolves" on YouTube).
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { WolvesChapter } from './data/wolves-story'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import qrDonate from '@/assets/svg/qr-donate.svg'
 import qrStore from '@/assets/svg/qr-store.svg'
 import TopNavbar from './components/TopNavbar.vue'
+import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
 import bazziteQuotes from './data/bazzite-quotes.json'
+import interceptedCommunications from './data/intercepted-communications.json'
+import { shuffleLoreEntries } from './utils/loreRotation'
+import { getChapterForPage } from './utils/wolvesStory'
+
+interface QuoteEntry {
+  quote: string
+  person: string
+  sourceType: string
+  sourceTitle: string
+  sourceDetail?: string
+  date: string
+}
+
+interface InterceptedMessage {
+  speaker: string
+  text: string
+  timestamp?: string
+}
+
+interface InterceptedConversation {
+  title: string
+  channel: string
+  date: string
+  sourceTitle?: string
+  sourceCollection?: string
+  sourceUrl?: string
+  attribution?: string
+  messages: InterceptedMessage[]
+}
+
+const conversations = interceptedCommunications as InterceptedConversation[]
+const quotes = bazziteQuotes as QuoteEntry[]
+
+type LoreEntry
+  = { type: 'quote', data: QuoteEntry }
+    | { type: 'conversation', data: InterceptedConversation }
+
+const loreEntries = shuffleLoreEntries([
+  ...quotes.map(data => ({ type: 'quote' as const, data })),
+  ...conversations.map(data => ({ type: 'conversation' as const, data })),
+])
 
 // PDF.js is injected dynamically from CDNJS (see loadPdfJs()) and attaches itself
 // to `window.pdfjsLib`. It ships no first-party types, so we treat it as `any`.
@@ -33,40 +76,16 @@ let pdfDocument: any = null
 // a stale render before starting a new one on the same canvas.
 const renderTasks = new Map<HTMLCanvasElement, any>()
 
-// Soundtrack Widget state
-const playlistId = 'PLA78oiE-RGAE'
-const embedUrl = `https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=1&rel=0`
-const playlistTitle = 'Bluefin: Seven Days to the Wolves'
-const playlistDescription = 'The ultimate heavy metal companion soundtrack for reading the Wolves comic'
-const coverArtUrl = 'https://i.ytimg.com/vi/LASru9j0oIc/maxresdefault.jpg'
-
-const isPlaying = ref(false)
-const isSticky = ref(false)
-const isDismissed = ref(sessionStorage.getItem('wolves_soundtrack_dismissed') === 'true')
-const isCollapsed = ref(sessionStorage.getItem('wolves_soundtrack_collapsed') === 'true')
-
-function dismissPlayer() {
-  isDismissed.value = true
-  sessionStorage.setItem('wolves_soundtrack_dismissed', 'true')
-}
-
-function toggleCollapse() {
-  isCollapsed.value = !isCollapsed.value
-  sessionStorage.setItem('wolves_soundtrack_collapsed', isCollapsed.value ? 'true' : 'false')
-}
-
-function startSoundtrack() {
-  isPlaying.value = true
-  isDismissed.value = false
-  sessionStorage.setItem('wolves_soundtrack_dismissed', 'false')
-}
-
 // Comic Reader state
 const totalPages = ref(0)
 const currentPageIndex = ref(0) // 0-based for the UI; PDF.js pages are 1-based
-const readingMode = ref<'flip' | 'scroll'>('flip') // 'flip' = page-by-page, 'scroll' = stacked vertical
+const readingMode = ref<'flip' | 'scroll'>('scroll') // 'flip' = page-by-page, 'scroll' = stacked vertical
 const pdfLoading = ref(true)
 const pdfError = ref('')
+
+// Soundtrack / entry state (component-owned detail lives in WolvesSoundtrack)
+const hasEntered = ref(false)
+const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPageIndex.value + 1))
 
 // Template refs: the "flip" mode uses a single canvas, the "scroll" mode renders
 // one canvas per page into an array indexed by page number.
@@ -166,21 +185,31 @@ async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement,
   }
 }
 
+function getContentWidth(element: HTMLElement): number {
+  const styles = window.getComputedStyle(element)
+  const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0
+  const paddingRight = Number.parseFloat(styles.paddingRight) || 0
+  return Math.max(0, element.clientWidth - paddingLeft - paddingRight)
+}
+
 function renderFlipPage() {
-  if (!flipCanvas.value || !flipViewport.value) {
+  if (!flipCanvas.value) {
     return
   }
-  renderPageOnCanvas(currentPageIndex.value + 1, flipCanvas.value, flipViewport.value.clientWidth)
+  const host = flipCanvas.value.parentElement as HTMLElement | null
+  const width = host ? getContentWidth(host) : flipViewport.value?.clientWidth ?? 0
+  renderPageOnCanvas(currentPageIndex.value + 1, flipCanvas.value, width)
 }
 
 function renderAllScrollPages() {
   if (!scrollContainer.value) {
     return
   }
-  const width = scrollContainer.value.clientWidth
   for (let i = 0; i < totalPages.value; i++) {
     const canvas = scrollCanvases.value[i]
     if (canvas) {
+      const host = canvas.parentElement as HTMLElement | null
+      const width = host ? getContentWidth(host) : scrollContainer.value.clientWidth
       renderPageOnCanvas(i + 1, canvas, width)
     }
   }
@@ -229,26 +258,28 @@ async function loadComicPdf() {
   }
 }
 
-// Watch scroll position for Soundtrack Widget sticky transition
-function handleScroll() {
-  const scrollTop = window.scrollY
-  isSticky.value = scrollTop > 250
-}
-
 // Keyboard navigation helper
 function handleKeyDown(event: KeyboardEvent) {
   const target = event.target as HTMLElement
-  if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+  if (target && (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable)) {
     return
   }
-  if (readingMode.value !== 'flip') {
-    return
-  }
+
   if (event.key === 'ArrowRight' || event.key === 'Right') {
-    nextPage()
+    if (readingMode.value === 'flip') {
+      nextPage()
+    }
+    else {
+      loreNext()
+    }
   }
   else if (event.key === 'ArrowLeft' || event.key === 'Left') {
-    prevPage()
+    if (readingMode.value === 'flip') {
+      prevPage()
+    }
+    else {
+      lorePrev()
+    }
   }
 }
 
@@ -295,23 +326,57 @@ watch(readingMode, async (mode) => {
   }
 })
 
-// Bazzite Quote cycling state
-const currentQuoteIndex = ref(0)
-let quoteTimer: ReturnType<typeof setInterval> | null = null
+// Mixed lore cycling state. The source arrays are shuffled once per page load.
+const currentLoreIndex = ref(0)
+const currentLoreEntry = computed<LoreEntry | null>(() => loreEntries[currentLoreIndex.value] ?? null)
+let loreTimer: ReturnType<typeof setInterval> | null = null
+
+function stopLoreTimer() {
+  if (loreTimer) {
+    clearInterval(loreTimer)
+    loreTimer = null
+  }
+}
+
+function startLoreTimer() {
+  if (loreEntries.length <= 1 || loreTimer) {
+    return
+  }
+  loreTimer = setInterval(() => {
+    currentLoreIndex.value = (currentLoreIndex.value + 1) % loreEntries.length
+  }, 9000)
+}
+
+function restartLoreTimer() {
+  stopLoreTimer()
+  startLoreTimer()
+}
+
+function loreNext() {
+  if (loreEntries.length <= 1) {
+    return
+  }
+  currentLoreIndex.value = (currentLoreIndex.value + 1) % loreEntries.length
+  restartLoreTimer()
+}
+
+function lorePrev() {
+  if (loreEntries.length <= 1) {
+    return
+  }
+  currentLoreIndex.value = (currentLoreIndex.value - 1 + loreEntries.length) % loreEntries.length
+  restartLoreTimer()
+}
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
   window.addEventListener('keydown', handleKeyDown)
   loadComicPdf()
 
-  // Start quote auto-cycling interval (9 seconds)
-  quoteTimer = setInterval(() => {
-    currentQuoteIndex.value = (currentQuoteIndex.value + 1) % bazziteQuotes.length
-  }, 9000)
+  // Start mixed lore auto-cycling interval (9 seconds)
+  startLoreTimer()
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', handleScroll)
   window.removeEventListener('keydown', handleKeyDown)
   flipResizeObserver?.disconnect()
   scrollResizeObserver?.disconnect()
@@ -319,11 +384,8 @@ onBeforeUnmount(() => {
   renderTasks.clear()
   pdfDocument?.destroy()
 
-  // Clear quote auto-cycling interval to prevent memory leaks
-  if (quoteTimer) {
-    clearInterval(quoteTimer)
-    quoteTimer = null
-  }
+  // Clear mixed lore auto-cycling interval to prevent memory leaks
+  stopLoreTimer()
 })
 </script>
 
@@ -331,84 +393,6 @@ onBeforeUnmount(() => {
   <div class="wolves-teaser-page">
     <!-- Top Global Navigation Bar -->
     <TopNavbar />
-
-    <!-- Persistent Floating Soundtrack Widget -->
-    <div
-      v-if="!isDismissed"
-      class="sticky-soundtrack-bar"
-      :class="{
-        'is-hidden': !isSticky && !isPlaying,
-        'is-collapsed': isCollapsed,
-      }"
-    >
-      <!-- Collapsed View -->
-      <div v-if="isCollapsed" class="collapsed-pill" @click="toggleCollapse">
-        <span class="music-icon">🎵</span>
-        <span class="collapsed-text">{{ isPlaying ? 'Soundtrack Active' : 'Soundtrack' }}</span>
-        <button
-          class="mini-close-btn"
-          aria-label="Dismiss Player"
-          @click.stop="dismissPlayer"
-        >
-          &times;
-        </button>
-      </div>
-
-      <!-- Expanded View -->
-      <div v-else class="bar-content">
-        <div class="bar-info">
-          <!-- Album Thumbnail -->
-          <div class="bar-thumbnail">
-            <img :src="coverArtUrl" :alt="playlistTitle">
-          </div>
-          <div class="bar-meta">
-            <span class="bar-label">Soundtrack Playing</span>
-            <span class="bar-title">{{ playlistTitle }}</span>
-          </div>
-        </div>
-
-        <div class="bar-controls">
-          <!-- Media Player -->
-          <div class="mini-player">
-            <iframe
-              v-if="isPlaying"
-              :src="embedUrl"
-              title="YouTube playlist player"
-              allow="autoplay; encrypted-media"
-            />
-            <div v-else class="play-overlay">
-              <button
-                class="mini-play-btn"
-                @click="isPlaying = true"
-              >
-                ▶ Play Audio
-              </button>
-            </div>
-          </div>
-
-          <div class="action-buttons">
-            <!-- Collapse Button -->
-            <button
-              class="collapse-btn"
-              title="Collapse Player"
-              aria-label="Collapse Player"
-              @click="toggleCollapse"
-            >
-              &minus;
-            </button>
-
-            <!-- Dismiss button -->
-            <button
-              class="close-btn"
-              aria-label="Dismiss Player"
-              @click="dismissPlayer"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Main Outer Container -->
     <div class="wolves-layout">
@@ -420,12 +404,22 @@ onBeforeUnmount(() => {
             Seven Days to the <span class="accent">Wolves</span>
           </h1>
           <p class="hero-description">
-            An original Project Bluefin graphic novel. Follow the journey of an architect battling systemic infrastructure collapse, navigating the shadows of the old web, and fighting to deploy ultimate digital sovereignty.
+            In the distant future, open source maintainers are not only sought after, they are hunted. Enslaved by the very machines they created, betrayed by the societies they swore to protect. They fight alone.
+
+            <br><br>Our Childhood's End, is their beginning.
+
+            <br><br>A fundraising effort to immortalize contributors in legend. Issue sponsorships available.
           </p>
           <div class="hero-footnote">
-            Comic book release slated for late 2026. Review placeholder governance comic below.
+            Coming 2027
           </div>
         </div>
+
+        <!-- Soundtrack entry gate: lets the visitor choose before the story begins -->
+        <WolvesSoundtrack
+          :chapter="activeChapter"
+          @entered="hasEntered = true"
+        />
       </header>
 
       <!-- Two-column desktop layout: Comic Reader on the left, a pinned
@@ -435,17 +429,7 @@ onBeforeUnmount(() => {
         <div class="col-left">
           <!-- SECTION 2: COMIC READER -->
           <section id="comic-reader" class="comic-reader-section">
-            <div class="section-title-wrap">
-              <div>
-                <h2 class="title-h2">
-                  Comic Reader
-                </h2>
-                <p class="title-p">
-                  Read "Color with Bluefin" right in your browser, rendered live from the source PDF.
-                </p>
-              </div>
-
-              <!-- Mode Selector Toggles -->
+            <div class="comic-toolbar">
               <div class="mode-selectors">
                 <button
                   :class="{ active: readingMode === 'flip' }"
@@ -587,86 +571,107 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="col-right">
-          <!-- Pinned Soundtrack Widget -->
-          <div class="hero-soundtrack-card">
-            <div class="soundtrack-header">
-              <div class="soundtrack-thumbnail">
-                <img :src="coverArtUrl" :alt="playlistTitle">
-              </div>
-              <div class="soundtrack-meta">
-                <span class="soundtrack-tag">Soundtrack Invite</span>
-                <span class="soundtrack-title">{{ playlistTitle }}</span>
-              </div>
-            </div>
-            <p class="soundtrack-desc">
-              {{ playlistDescription }}. Activate playback to lock in the metal atmosphere while scrolling the story panels.
-            </p>
-            <div class="soundtrack-player-wrapper">
-              <div v-if="isPlaying" class="playing-state-overlay">
-                <div class="visualizer-content">
-                  <span class="visualizer-icon">🎵</span>
-                  <span class="visualizer-text">Soundtrack Active</span>
-                  <p class="visualizer-sub">
-                    Enjoy the heavy metal companion soundtrack! You can pause or dismiss it using the floating player in the bottom-right corner.
-                  </p>
-                </div>
-              </div>
-              <div v-else class="play-overlay">
-                <button
-                  class="play-btn"
-                  @click="startSoundtrack"
-                >
-                  ▶ Start Soundtrack
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- SECTION 3: BAZZITE DISCORD QUOTES -->
-          <section id="bazzite-quotes" class="comic-reader-section">
-            <div class="section-title-wrap">
-              <div>
+          <!-- SECTION 3: INTERCEPTED COMMUNICATIONS -->
+          <section id="intercepted-communications" class="comic-reader-section dispatch-quote-section">
+            <div class="dispatch-quote-card">
+              <div class="dispatch-plan-content">
+                <p class="dispatch-plan-command">
+                  nimbinatus@blue-universal:~$ monitor --archive
+                </p>
                 <h2 class="title-h2">
-                  Bazzite Dispatch
+                  Recovered Transmissions
                 </h2>
                 <p class="title-p">
-                  Direct dispatches from Bazzite gaming operatives via the Project Bluefin Discord.
+                  Signal: Captured
+                  <br>Source: Quotes + Intercepts
+                  <br>Rotation: Randomized on load
                 </p>
               </div>
-            </div>
 
-            <div class="quotes-single-wrap">
-              <Transition name="quote-fade">
-                <div
-                  :key="currentQuoteIndex"
-                  class="quote-card"
+              <div class="quote-nav">
+                <button
+                  class="quote-nav-btn"
+                  aria-label="Previous transmission"
+                  @click="lorePrev"
                 >
-                  <!-- Decorative quote icon -->
-                  <div class="quote-symbol">
-                    &ldquo;
-                  </div>
+                  &larr;
+                </button>
+                <button
+                  class="quote-nav-btn"
+                  aria-label="Next transmission"
+                  @click="loreNext"
+                >
+                  &rarr;
+                </button>
+              </div>
 
-                  <!-- Quote Text -->
-                  <p class="quote-text">
-                    "{{ bazziteQuotes[currentQuoteIndex].quote }}"
-                  </p>
-
-                  <!-- Citation Metadata -->
-                  <div class="quote-meta">
-                    <div class="meta-top">
-                      <span>John Bazzite</span>
+              <div class="quote-viewport">
+                <Transition name="quote-fade">
+                  <div
+                    v-if="currentLoreEntry"
+                    :key="currentLoreIndex"
+                    class="conversation-rotator"
+                  >
+                    <div v-if="currentLoreEntry.type === 'conversation'" class="conversation-heading">
+                      <span>{{ currentLoreEntry.data.channel }}</span>
+                      <time :datetime="currentLoreEntry.data.date">{{ currentLoreEntry.data.date }}</time>
                     </div>
-                    <div class="meta-context">
-                      Bluefin Discord Teaser Dispatch
+                    <h3 v-if="currentLoreEntry.type === 'conversation'" class="conversation-title">
+                      {{ currentLoreEntry.data.title }}
+                    </h3>
+                    <ol v-if="currentLoreEntry.type === 'conversation'" class="conversation-messages">
+                      <li
+                        v-for="(message, index) in currentLoreEntry.data.messages"
+                        :key="`${currentLoreIndex}-${index}`"
+                        class="conversation-message"
+                      >
+                        <div class="conversation-message-header">
+                          <span class="conversation-speaker">{{ message.speaker }}</span>
+                          <time v-if="message.timestamp">{{ message.timestamp }}</time>
+                        </div>
+                        <p>{{ message.text }}</p>
+                      </li>
+                    </ol>
+                    <div
+                      v-if="currentLoreEntry.type === 'conversation' && currentLoreEntry.data.sourceTitle"
+                      class="conversation-source"
+                    >
+                      <span>{{ currentLoreEntry.data.attribution ?? 'ARCHIVE REFERENCE' }}</span>
+                      <a
+                        v-if="currentLoreEntry.data.sourceUrl"
+                        :href="currentLoreEntry.data.sourceUrl"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {{ currentLoreEntry.data.sourceCollection ?? 'SOURCE' }}:
+                        {{ currentLoreEntry.data.sourceTitle }}
+                      </a>
+                      <span v-else>
+                        {{ currentLoreEntry.data.sourceCollection ?? 'SOURCE' }}:
+                        {{ currentLoreEntry.data.sourceTitle }}
+                      </span>
+                    </div>
+                    <div v-else-if="currentLoreEntry.type === 'quote'" class="lore-quote">
+                      <div class="lore-quote-mark">
+                        &ldquo;
+                      </div>
+                      <p class="lore-quote-text">
+                        {{ currentLoreEntry.data.quote }}
+                      </p>
+                      <div class="lore-quote-meta">
+                        <strong>{{ currentLoreEntry.data.person }}</strong>
+                        <span>
+                          {{ currentLoreEntry.data.sourceType }}: {{ currentLoreEntry.data.sourceTitle }}
+                          <template v-if="currentLoreEntry.data.sourceDetail">
+                            — {{ currentLoreEntry.data.sourceDetail }}
+                          </template>
+                        </span>
+                        <time :datetime="currentLoreEntry.data.date">{{ currentLoreEntry.data.date }}</time>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Transition>
-            </div>
-
-            <!-- Discord hook commentary -->
-            <div class="quotes-footnote">
-              Quotes sourced from verified Discord testimonials. Additional quotes can be added in src/data/bazzite-quotes.json.
+                </Transition>
+              </div>
             </div>
           </section>
         </div>
@@ -741,7 +746,10 @@ onBeforeUnmount(() => {
   background-repeat: repeat-y;
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  // Firefox can break sticky descendants when an ancestor creates a scrolling
+  // container via overflow. `clip` prevents horizontal bleed without that side
+  // effect.
+  overflow-x: clip;
   box-sizing: border-box;
 
   &::after {
@@ -762,10 +770,10 @@ onBeforeUnmount(() => {
   z-index: 1;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 80px 24px 100px;
+  padding: 32px 24px 80px;
   display: flex;
   flex-direction: column;
-  gap: 60px;
+  gap: 32px;
 }
 
 // Two-column desktop grid: Comic Reader (left) + pinned Soundtrack Widget /
@@ -774,14 +782,14 @@ onBeforeUnmount(() => {
 .content-grid {
   display: flex;
   flex-direction: column;
-  gap: 60px;
+  gap: 28px;
   width: 100%;
 
   @media (min-width: 1024px) {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
     align-items: start;
-    gap: 40px;
+    gap: 28px;
   }
 }
 
@@ -807,254 +815,19 @@ onBeforeUnmount(() => {
 
   @media (min-width: 1024px) {
     position: sticky;
-    // Sit below the persistent floating soundtrack bar's own space so it
-    // never overlaps the fixed navbar.
-    top: 24px;
+    top: auto;
+    bottom: 24px;
+    align-self: end;
+    height: max-content;
   }
 }
 
-// Persistent Floating Soundtrack Widget
-.sticky-soundtrack-bar {
-  position: fixed;
-  z-index: 999;
-  background-color: rgba(16, 21, 31, 0.9);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(66, 133, 244, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  // Desktop layout (Default)
-  bottom: 24px;
-  right: 24px;
-  width: 320px;
-  border-radius: 12px;
-
-  &.is-hidden {
-    opacity: 0;
-    transform: translateY(100px);
-    pointer-events: none;
-  }
-
-  &.is-collapsed {
-    width: auto;
-    border-radius: 30px;
-  }
-
-  .collapsed-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #ffffff;
-    user-select: none;
-
-    .music-icon {
-      font-size: 1.4rem;
-      animation: pulse 2s infinite;
-    }
-
-    .collapsed-text {
-      white-space: nowrap;
-    }
-
-    .mini-close-btn {
-      background: none;
-      border: none;
-      color: #bdbdbd;
-      font-size: 1.8rem;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0 4px;
-      margin-left: 4px;
-      transition: color 0.2s;
-
-      &:hover {
-        color: #ffffff;
-      }
-    }
-  }
-
-  .bar-content {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .bar-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
-
-  .bar-thumbnail {
-    width: 44px;
-    height: 44px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid rgba(66, 133, 244, 0.3);
-    background-color: #000;
-    flex-shrink: 0;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-
-  .bar-meta {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .bar-label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-blue);
-    line-height: 1;
-  }
-
-  .bar-title {
-    display: block;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-top: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .bar-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .mini-player {
-    flex: 1;
-    height: 32px;
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: #000;
-    border: 1px solid #272727;
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  }
-
-  .mini-play-btn {
-    width: 100%;
-    height: 100%;
-    background-color: var(--color-blue);
-    color: #ffffff;
-    font-size: 1.1rem;
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: var(--color-blue-light);
-    }
-  }
-
-  .action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .collapse-btn,
-  .close-btn {
-    background: none;
-    border: none;
-    color: #bdbdbd;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.2s;
-
-    &:hover {
-      color: #ffffff;
-    }
-  }
-
-  .collapse-btn {
-    font-size: 1.8rem;
-    padding: 0 4px;
-  }
-
-  .close-btn {
-    font-size: 2.2rem;
-    padding: 0 4px;
-  }
-
-  // Mobile layout
+// Persistent Floating Soundtrack Widget (markup moved to WolvesSoundtrack component)
+// Mobile: reserve space at the bottom of the page for the fixed player bar,
+// but only while the bar is actually visible (class toggled by WolvesSoundtrack).
+:global(.wolves-player-active) .wolves-layout {
   @media (max-width: 767px) {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100% !important;
-    border-radius: 0;
-    border-top: 1px solid rgba(66, 133, 244, 0.3);
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-
-    &.is-collapsed {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      width: 100% !important;
-      border-radius: 0;
-
-      .collapsed-pill {
-        justify-content: center;
-        padding: 10px 16px;
-      }
-    }
-
-    .bar-content {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      gap: 12px;
-    }
-
-    .bar-info {
-      flex: 1;
-    }
-
-    .bar-controls {
-      width: auto;
-      flex-shrink: 0;
-    }
-
-    .mini-player {
-      width: 100px;
-      flex: none;
-    }
-
-    .bar-meta {
-      .bar-title {
-        font-size: 1.1rem;
-        max-width: 150px;
-      }
-    }
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1062,8 +835,8 @@ onBeforeUnmount(() => {
 .wolves-hero {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 40px 0;
+  gap: 20px;
+  padding: 24px 0 20px;
   border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.2);
 
   .hero-text {
@@ -1075,15 +848,15 @@ onBeforeUnmount(() => {
   }
 
   .hero-title {
-    font-size: 3.6rem;
+    font-size: clamp(2.8rem, 4.8vw, 4.2rem);
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.1;
     text-transform: uppercase;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
     @media (min-width: 768px) {
-      font-size: 5.4rem;
+      font-size: clamp(3.8rem, 5.8vw, 5.2rem);
     }
 
     .accent {
@@ -1092,169 +865,17 @@ onBeforeUnmount(() => {
   }
 
   .hero-description {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     line-height: 1.6;
     color: #bdbdbd;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     max-width: 600px;
   }
 
   .hero-footnote {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: rgba(189, 189, 189, 0.6);
     font-style: italic;
-  }
-}
-
-// Soundtrack Widget (pinned at the top of the right-hand sidebar)
-.hero-soundtrack-card {
-  width: 100%;
-  background-color: #10151f;
-  border: 1px solid rgba(var(--color-blue-rgb), 0.4);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-sizing: border-box;
-}
-
-.soundtrack-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.soundtrack-thumbnail {
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid rgba(var(--color-blue-rgb), 0.3);
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.soundtrack-meta {
-  min-width: 0;
-}
-
-.soundtrack-tag {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--color-blue);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.soundtrack-title {
-  display: block;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.soundtrack-desc {
-  font-size: 1.2rem;
-  line-height: 1.5;
-  color: #bdbdbd;
-}
-
-.soundtrack-player-wrapper {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background-color: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #272727;
-  position: relative;
-}
-
-.playing-state-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #10151f 0%, #0c1016 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  text-align: center;
-}
-
-.visualizer-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.visualizer-icon {
-  font-size: 2.4rem;
-  animation: bounce 1.5s infinite;
-}
-
-.visualizer-text {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-blue);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.visualizer-sub {
-  font-size: 1.1rem;
-  color: #bdbdbd;
-  margin: 0;
-  max-width: 240px;
-}
-
-.play-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.play-btn {
-  background-color: var(--color-blue);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 10px 20px;
-  border-radius: 30px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(var(--color-blue-rgb), 0.4);
-
-  &:hover {
-    background-color: var(--color-blue-light);
-    transform: scale(1.05);
-  }
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
   }
 }
 
@@ -1274,30 +895,18 @@ onBeforeUnmount(() => {
 }
 
 // Comic Reader Section
-.section-title-wrap {
+.comic-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
 
-  @media (min-width: 768px) {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-
-  .title-h2 {
-    font-size: 2.4rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
+  .comic-hint {
     margin: 0;
-  }
-
-  .title-p {
-    font-size: 1.4rem;
-    color: #bdbdbd;
-    margin: 4px 0 0;
+    font-size: 1.1rem;
+    color: rgba(189, 189, 189, 0.8);
+    text-align: center;
   }
 }
 
@@ -1335,8 +944,9 @@ onBeforeUnmount(() => {
 .comic-viewport {
   position: relative;
   width: 100%;
-  min-height: 200px;
-  max-width: 640px;
+  min-height: 220px;
+  max-width: 760px;
+  max-height: min(74dvh, 760px);
   margin: 0 auto;
   background-color: #10151f;
   border: 1px solid rgba(var(--color-blue-rgb), 0.3);
@@ -1352,7 +962,9 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 200px;
+    min-height: 220px;
+    padding: 12px;
+    overflow: hidden;
   }
 
   .nav-btn {
@@ -1392,7 +1004,10 @@ onBeforeUnmount(() => {
 // dimensions to match the container width at the device pixel ratio.
 .pdf-page-canvas {
   display: block;
+  width: auto;
+  height: auto;
   max-width: 100%;
+  max-height: 100%;
 }
 
 // Loading / error states shown while PDF.js fetches and parses the PDF
@@ -1441,11 +1056,13 @@ onBeforeUnmount(() => {
 .reader-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
-  max-width: 640px;
-  margin: 16px auto 0;
-  padding: 0 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0;
+  gap: 8px 12px;
+  flex-wrap: wrap;
 
   .ctrl-btn {
     background-color: #10151f;
@@ -1502,10 +1119,18 @@ onBeforeUnmount(() => {
 .scroll-comic-layout {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 20px;
   width: 100%;
-  max-width: 640px;
+  max-width: 760px;
   margin: 0 auto;
+
+  .comic-viewport {
+    max-height: none;
+  }
+
+  .comic-content-area {
+    overflow: visible;
+  }
 
   .scroll-page-card {
     background-color: #10151f;
@@ -1518,26 +1143,18 @@ onBeforeUnmount(() => {
   }
 }
 
-// Bazzite Quotes Section
-.quotes-single-wrap {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.quote-card {
+// Intercepted communications section
+.dispatch-quote-card {
   background-color: #10151f;
   border: 1px solid #272727;
   padding: 24px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 24px;
   position: relative;
   width: 100%;
-  max-width: 640px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
@@ -1546,65 +1163,205 @@ onBeforeUnmount(() => {
     border-color: rgba(var(--color-blue-rgb), 0.4);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   }
+}
 
-  .quote-symbol {
-    position: absolute;
-    top: 16px;
-    right: 24px;
-    color: #272727;
-    font-size: 6rem;
-    font-family: serif;
-    line-height: 1;
-    pointer-events: none;
-    user-select: none;
-  }
+.dispatch-plan-content {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  background: linear-gradient(180deg, rgba(16, 21, 31, 0.98) 0%, rgba(12, 16, 22, 0.98) 100%);
+  border: 1px solid rgba(var(--color-blue-rgb), 0.22);
+  border-radius: 10px;
+  padding: 12px 96px 12px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
 
-  &:hover .quote-symbol {
-    color: rgba(var(--color-blue-rgb), 0.1);
-  }
+.dispatch-plan-command {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+  color: rgba(189, 189, 189, 0.65);
+}
 
-  .quote-text {
-    font-size: 1.5rem;
-    line-height: 1.6;
+.dispatch-plan-content .title-h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.dispatch-plan-content .title-p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(189, 189, 189, 0.9);
+}
+
+.quote-viewport {
+  position: relative;
+}
+
+.conversation-rotator {
+  position: relative;
+  min-height: 220px;
+  padding-top: 4px;
+}
+
+.conversation-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.25);
+  padding-bottom: 8px;
+  color: var(--color-blue-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+}
+
+.conversation-title {
+  margin: 16px 0 20px;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.conversation-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.conversation-message {
+  border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
+  padding-left: 16px;
+}
+
+.conversation-message-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-blue);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+
+.conversation-message-header time {
+  color: rgba(189, 189, 189, 0.65);
+}
+
+.conversation-message p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+.conversation-source {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
+  margin-top: 20px;
+  padding-top: 12px;
+  color: rgba(189, 189, 189, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.conversation-source a {
+  color: var(--color-blue);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--color-blue-rgb), 0.4);
+  text-underline-offset: 3px;
+}
+
+.conversation-source a:hover {
+  color: var(--color-blue-light);
+}
+
+.lore-quote {
+  min-height: 220px;
+  padding: 8px 0 0;
+}
+
+.lore-quote-mark {
+  color: rgba(var(--color-blue-rgb), 0.28);
+  font-family: Georgia, serif;
+  font-size: 5rem;
+  line-height: 0.6;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lore-quote-text {
+  margin: 18px 0 24px;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.65;
+}
+
+.lore-quote-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
+  padding-top: 14px;
+  color: rgba(189, 189, 189, 0.78);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.lore-quote-meta strong {
+  color: var(--color-blue);
+  font-size: 1rem;
+}
+
+.lore-quote-meta time {
+  color: rgba(189, 189, 189, 0.6);
+}
+
+.quote-nav {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.quote-nav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--color-blue-rgb), 0.45);
+  background-color: #10151f;
+  color: var(--color-blue-light);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba(var(--color-blue-rgb), 0.15);
+    border-color: var(--color-blue-light);
     color: #ffffff;
-    font-style: italic;
-    font-weight: 500;
-    margin: 0;
-    position: relative;
-    z-index: 1;
-  }
-
-  .quote-meta {
-    border-top: 1px solid rgba(39, 39, 39, 0.6);
-    padding-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .meta-top {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #ffffff;
-  }
-
-  .meta-date {
-    color: #616161;
-    font-weight: 500;
-  }
-
-  .meta-context {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--color-blue);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 }
 
-/* Quote transition effects */
+/* Communication transition effects */
 .quote-fade-enter-active,
 .quote-fade-leave-active {
   transition: opacity 0.5s ease-in-out;
@@ -1613,23 +1370,13 @@ onBeforeUnmount(() => {
 .quote-fade-leave-active {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 640px;
 }
 
 .quote-fade-enter-from,
 .quote-fade-leave-to {
   opacity: 0;
-}
-
-.quotes-footnote {
-  font-size: 1.1rem;
-  color: rgba(189, 189, 189, 0.4);
-  text-align: center;
-  font-style: italic;
-  margin-top: 8px;
 }
 
 // Support / QR Section
