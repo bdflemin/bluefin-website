@@ -50,6 +50,7 @@ interface MockPlayerRecord {
   destroy: ReturnType<typeof vi.fn>
   triggerReady: () => void
   triggerPlaylistItem: (index: number) => void
+  triggerError: () => void
 }
 
 let players: MockPlayerRecord[] = []
@@ -89,6 +90,10 @@ function installMockIframeApi() {
     triggerPlaylistItem(index: number) {
       this.playlistIndex = index
       this.config.events?.onPlaylistItem?.({ target: this })
+    }
+
+    triggerError() {
+      this.config.events?.onError?.({ target: this })
     }
   }
 
@@ -198,5 +203,34 @@ describe('wolves soundtrack', () => {
 
     expect(wrapper.text()).toContain('Ad-free playback requires YouTube Premium')
     expect(wrapper.get('a[aria-label="Open soundtrack in YouTube Music"]').attributes('href')).toContain('music.youtube.com')
+  })
+
+  it('retries with a replacement player after a player error', async () => {
+    const wrapper = mount(WolvesSoundtrack)
+
+    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+    await flushPromises()
+
+    resolveIframeApi()
+    await flushPromises()
+
+    const failedHost = wrapper.get('[data-testid="wolves-player-host"]').element
+    players[0].triggerError()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Playback could not initialize here.')
+
+    await wrapper.get('.soundtrack-action').trigger('click')
+    await flushPromises()
+
+    expect(players[0].destroy).toHaveBeenCalledTimes(1)
+    expect(players).toHaveLength(2)
+    expect(wrapper.get('[data-testid="wolves-player-host"]').element).not.toBe(failedHost)
+
+    players[1].triggerReady()
+    await flushPromises()
+
+    expect(players[1].playVideo).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('Persistent soundtrack playback is active for this session.')
   })
 })

@@ -54,6 +54,7 @@ const status = ref<PlayerStatus>('idle')
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
 const currentTrackIndex = ref(0)
 const playerHost = ref<HTMLElement | null>(null)
+const playerHostKey = ref(0)
 
 let player: YouTubePlayer | null = null
 let youtubeApiPromise: Promise<void> | null = null
@@ -263,9 +264,20 @@ function createPlayer() {
   })
 }
 
+async function resetFailedPlayer() {
+  player?.destroy?.()
+  player = null
+  playerHostKey.value += 1
+  await nextTick()
+}
+
 async function startSoundtrack() {
   if (status.value === 'loading') {
     return
+  }
+
+  if (status.value === 'error') {
+    await resetFailedPlayer()
   }
 
   status.value = 'loading'
@@ -378,6 +390,7 @@ onBeforeUnmount(() => {
 
       <div class="wolves-player-host-shell" aria-hidden="true">
         <div
+          :key="playerHostKey"
           ref="playerHost"
           data-testid="wolves-player-host"
           class="wolves-player-host"
