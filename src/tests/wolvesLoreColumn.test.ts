@@ -4,17 +4,18 @@ import { bazziteQuotes } from '../components/wolves/lore'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
 
 describe('wolvesLoreColumn.vue', () => {
-  it('renders a static accessible placeholder quote list', () => {
+  it('renders the static accessible placeholder quote list and QR section', () => {
     const wrapper = mount(WolvesLoreColumn)
     const items = wrapper.findAll('ol li')
 
     expect(wrapper.get('ol').attributes('aria-label')).toBe('Recovered transmissions')
     expect(items).toHaveLength(bazziteQuotes.length)
+    expect(bazziteQuotes).toHaveLength(5)
     expect(wrapper.text()).toContain(bazziteQuotes[0].quote)
     expect(wrapper.text()).toContain(bazziteQuotes[0].attribution)
     expect(wrapper.text()).toContain(bazziteQuotes[0].context as string)
     expect(wrapper.findAll('button')).toHaveLength(0)
-    expect(wrapper.find('.qr-grid').exists()).toBe(false)
+    expect(wrapper.find('.qr-grid').exists()).toBe(true)
     expect('person' in bazziteQuotes[0]).toBe(false)
     expect('sourceTitle' in bazziteQuotes[0]).toBe(false)
   })

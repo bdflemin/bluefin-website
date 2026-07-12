@@ -1,146 +1,137 @@
 <script setup lang="ts">
-const qrCards = [
-  {
-    title: 'Store',
-    description: 'Open the Bluefin store for merch and campaign support drops.',
-    href: 'https://store.projectbluefin.io',
-    imageSrc: `${import.meta.env.BASE_URL}assets/svg/qr-store.svg`,
-    imageAlt: 'Store QR code',
-  },
-  {
-    title: 'Donate to Project Bluefin',
-    description: 'Placeholder destination until the final Project Bluefin donation flow is approved.',
-    href: '#',
-    imageSrc: `${import.meta.env.BASE_URL}assets/svg/qr-donate.svg`,
-    imageAlt: 'Donate to Project Bluefin QR code',
-  },
-] as const
+import qrDonate from '@/assets/svg/qr-donate.svg'
+import qrStore from '@/assets/svg/qr-store.svg'
 </script>
 
 <template>
-  <section class="wolves-qr-codes" aria-label="Project Bluefin support links">
-    <header class="wolves-qr-header">
-      <p class="wolves-qr-kicker font-mono">
-        SUPPORT SIDEBAR // SCAN TARGETS
-      </p>
-      <h2 class="wolves-qr-title">
-        Store + Donate
-      </h2>
-    </header>
+  <section class="qr-grid" aria-label="Support Project Bluefin">
+    <article class="qr-card">
+      <h3 class="qr-title">
+        Store Access
+      </h3>
+      <div class="qr-image-box">
+        <img :src="qrStore" alt="QR code for the Project Bluefin store">
+      </div>
+      <div class="qr-action-wrap">
+        <a href="https://store.projectbluefin.io" target="_blank" rel="noopener noreferrer" class="qr-btn blue">
+          VISIT STORE
+        </a>
+        <span class="qr-domain">store.projectbluefin.io</span>
+      </div>
+    </article>
 
-    <div class="wolves-qr-grid">
-      <article v-for="card in qrCards" :key="card.title" class="wolves-qr-card">
-        <img :src="card.imageSrc" :alt="card.imageAlt" class="wolves-qr-image">
-        <div class="wolves-qr-copy">
-          <h3>{{ card.title }}</h3>
-          <p>{{ card.description }}</p>
-          <a
-            :href="card.href"
-            :aria-label="card.title"
-            :target="card.href.startsWith('http') ? '_blank' : undefined"
-            :rel="card.href.startsWith('http') ? 'noopener noreferrer' : undefined"
-            class="wolves-qr-link"
-          >
-            {{ card.href }}
-          </a>
-        </div>
-      </article>
-    </div>
+    <article class="qr-card">
+      <h3 class="qr-title">
+        Donate Funds
+      </h3>
+      <div class="qr-image-box">
+        <img :src="qrDonate" alt="QR code for Project Bluefin donations">
+      </div>
+      <div class="qr-action-wrap">
+        <a href="https://docs.projectbluefin.io/donations" target="_blank" rel="noopener noreferrer" class="qr-btn dark">
+          DONATE
+        </a>
+        <span class="qr-domain">docs.projectbluefin.io/donations</span>
+      </div>
+    </article>
   </section>
 </template>
 
 <style scoped lang="scss">
-.wolves-qr-codes {
+.qr-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  border: 1px solid rgba(66, 133, 244, 0.22);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(16, 21, 31, 0.98), rgba(9, 13, 22, 0.98));
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}
+  gap: 24px;
+  width: 100%;
 
-.wolves-qr-header {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.wolves-qr-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: #66b3ff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-}
-
-.wolves-qr-title {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #f8fafc;
-}
-
-.wolves-qr-grid {
-  display: grid;
-  gap: 14px;
-}
-
-.wolves-qr-card {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 14px;
-  background: rgba(9, 13, 22, 0.78);
-}
-
-.wolves-qr-image {
-  width: 96px;
-  height: 96px;
-  padding: 8px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.95);
-}
-
-.wolves-qr-copy {
-  display: grid;
-  gap: 8px;
-}
-
-.wolves-qr-copy h3,
-.wolves-qr-copy p {
-  margin: 0;
-}
-
-.wolves-qr-copy h3 {
-  font-size: 1rem;
-  color: #f8fafc;
-}
-
-.wolves-qr-copy p {
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: #cbd5e1;
-}
-
-.wolves-qr-link {
-  color: #7dd3fc;
-  font-weight: 600;
-  word-break: break-word;
-  text-decoration: none;
-}
-
-.wolves-qr-link:hover {
-  color: #bae6fd;
-}
-
-@media (max-width: 479px) {
-  .wolves-qr-card {
-    grid-template-columns: 1fr;
+  @media (min-width: 600px) {
+    flex-direction: row;
   }
+}
+
+.qr-card {
+  flex: 1;
+  background-color: #10151f;
+  border: 1px solid #272727;
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.qr-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+}
+
+.qr-image-box {
+  width: 192px;
+  height: 192px;
+  background-color: #0c1016;
+  border: 1px solid #272727;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.qr-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-action-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  align-items: center;
+}
+
+.qr-btn {
+  display: inline-block;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 24px;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.qr-btn.blue {
+  background-color: var(--color-blue);
+}
+
+.qr-btn.blue:hover {
+  background-color: var(--color-blue-light);
+}
+
+.qr-btn.dark {
+  background-color: #272727;
+}
+
+.qr-btn.dark:hover {
+  background-color: #1e1e1e;
+}
+
+.qr-domain {
+  font-size: 1.1rem;
+  color: #616161;
 }
 </style>
