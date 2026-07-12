@@ -45,6 +45,11 @@ const fallbackTrack: SoundtrackTrack = {
   youtubeVideoId: 'LASru9j0oIc',
 }
 
+const officialLyricsUrls: Readonly<Record<string, string>> = {
+  LASru9j0oIc: 'https://www.nightwish.com/songs/7-days-to-the-wolves',
+  rYkYLIYvI18: 'https://www.nightwish.com/songs/last-ride-of-the-day',
+}
+
 const status = ref<PlayerStatus>('idle')
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
 const currentTrackIndex = ref(0)
@@ -60,6 +65,7 @@ const currentTrack = computed(() => manifest.value?.tracks[currentTrackIndex.val
 const isStarted = computed(() => status.value !== 'idle')
 const isPlaying = computed(() => status.value === 'playing')
 const artworkUrl = computed(() => `${import.meta.env.BASE_URL}${currentTrack.value.artwork}`)
+const currentLyricsUrl = computed(() => officialLyricsUrls[currentTrack.value.youtubeVideoId])
 
 const actionLabel = computed(() => {
   switch (status.value) {
@@ -391,10 +397,31 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
+      <div class="soundtrack-lyrics-panel">
+        <span class="soundtrack-lyrics-label font-mono">OFFICIAL LYRICS</span>
+        <template v-if="currentLyricsUrl">
+          <p class="soundtrack-lyrics-copy">
+            Read <strong>{{ currentTrack.title }}</strong> on the artist's official site.
+          </p>
+          <a
+            :href="currentLyricsUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="soundtrack-link soundtrack-lyrics-link"
+            data-testid="official-lyrics-link"
+          >
+            Read official lyrics
+          </a>
+        </template>
+        <p v-else class="soundtrack-lyrics-copy">
+          Official lyrics unavailable for this track.
+        </p>
+      </div>
+
       <div
         class="wolves-player-host-shell"
-        :class="{ 'is-visible': isStarted }"
-        :aria-hidden="isStarted ? undefined : 'true'"
+        aria-hidden="true"
+        style="overflow: hidden;"
       >
         <div
           ref="playerHost"
@@ -599,41 +626,49 @@ onBeforeUnmount(() => {
   }
 }
 
+.soundtrack-lyrics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-top: 1px solid rgba(66, 133, 244, 0.22);
+  background: rgba(5, 8, 16, 0.68);
+}
+
+.soundtrack-lyrics-label {
+  color: #66b3ff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.soundtrack-lyrics-copy {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.soundtrack-lyrics-link {
+  align-self: flex-start;
+}
+
 .wolves-player-host-shell {
-  position: relative;
+  position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.2s ease;
-
-  &.is-visible {
-    width: 100%;
-    height: auto;
-    min-height: 220px;
-    aspect-ratio: 16 / 9;
-    overflow: visible;
-    opacity: 1;
-    border-top: 1px solid rgba(66, 133, 244, 0.22);
-    background: #050810;
-  }
+  pointer-events: none;
 }
 
 .wolves-player-host {
   width: 1px;
   height: 1px;
 
-  .wolves-player-host-shell.is-visible & {
-    width: 100%;
-    height: 100%;
-    min-height: 220px;
-  }
-
   > * {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: inherit;
+    width: 1px;
+    height: 1px;
     border: 0;
   }
 }
@@ -710,11 +745,6 @@ onBeforeUnmount(() => {
   .soundtrack-action {
     grid-column: 1 / -1;
     width: 100%;
-  }
-
-  .wolves-player-host-shell.is-visible,
-  .wolves-player-host-shell.is-visible .wolves-player-host {
-    min-height: 180px;
   }
 }
 </style>

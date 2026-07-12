@@ -182,9 +182,8 @@ describe('wolves soundtrack', () => {
     expect(players).toHaveLength(1)
   })
 
-  it('makes the persistent player host visible and accessible after soundtrack start', async () => {
+  it('keeps the YouTube player hidden and renders an official lyrics link for the active track', async () => {
     const wrapper = mount(WolvesSoundtrack, { attachTo: document.body })
-    const persistentHost = wrapper.get('[data-testid="wolves-player-host"]').element as HTMLElement
 
     await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
     await flushPromises()
@@ -196,22 +195,32 @@ describe('wolves soundtrack', () => {
 
     const playerShell = wrapper.get('.wolves-player-host-shell').element as HTMLElement
     const playerHost = wrapper.get('[data-testid="wolves-player-host"]').element as HTMLElement
+    const lyricsLink = wrapper.get('[data-testid="official-lyrics-link"]')
 
-    expect(playerHost).toBe(persistentHost)
     expect(playerHost.contains(players[0].mountedNode)).toBe(true)
-
-    expect(playerShell.getAttribute('aria-hidden')).toBeNull()
-
-    const shellStyle = window.getComputedStyle(playerShell)
-    const hostStyle = window.getComputedStyle(playerHost)
-
-    expect(shellStyle.width).not.toBe('1px')
-    expect(shellStyle.height).not.toBe('1px')
-    expect(shellStyle.overflow).not.toBe('hidden')
-    expect(hostStyle.width).not.toBe('1px')
-    expect(hostStyle.height).not.toBe('1px')
+    expect(playerShell.getAttribute('aria-hidden')).toBe('true')
+    expect(window.getComputedStyle(playerShell).overflow).toBe('hidden')
+    expect(lyricsLink.attributes('href')).toBe('https://www.nightwish.com/songs/7-days-to-the-wolves')
+    expect(lyricsLink.attributes('target')).toBe('_blank')
+    expect(lyricsLink.attributes('rel')).toBe('noopener noreferrer')
 
     wrapper.unmount()
+  })
+
+  it('shows the unavailable state instead of guessing a lyrics source', async () => {
+    const wrapper = mount(WolvesSoundtrack)
+
+    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+    players[0].triggerPlaylistItem(1)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Official lyrics unavailable')
+    expect(wrapper.find('[data-testid="official-lyrics-link"]').exists()).toBe(false)
   })
 
   it('updates the displayed track from playlist events instead of chapter props', async () => {
