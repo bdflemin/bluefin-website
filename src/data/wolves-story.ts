@@ -130,6 +130,14 @@ export const wolvesRelease: WolvesRelease = {
       body: 'HARBRINGER: You knew, the three of you always knew. Why didn\'t you stop me?\nSABOT-6: They will mourn neither of us. Finish it.',
     },
     {
+      id: 'committee-report-personal-transmission',
+      chapterId: 'awakening',
+      type: 'transmission',
+      publishedAt: '2326-01-01',
+      title: 'COMMITEE REPORT: Personal Transmission',
+      body: '[Redacted]: \nSPEAKER TWO: Replace this message with the reply.',
+    },
+    {
       id: 'john-bazzite-interview',
       chapterId: 'awakening',
       type: 'news',
