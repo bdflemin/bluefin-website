@@ -32,6 +32,8 @@ interface YouTubePlayer {
   getCurrentTime?: () => number
   getDuration?: () => number
   destroy?: () => void
+  nextVideo?: () => void
+  previousVideo?: () => void
 }
 
 interface YouTubeWindow extends Window {
@@ -419,6 +421,18 @@ function setPage(n: number) {
     emit('update:page', n)
   }
 }
+
+function nextTrack() {
+  if (player && typeof player.nextVideo === 'function') {
+    player.nextVideo()
+  }
+}
+
+function prevTrack() {
+  if (player && typeof player.previousVideo === 'function') {
+    player.previousVideo()
+  }
+}
 </script>
 
 <template>
@@ -483,12 +497,30 @@ function setPage(n: number) {
           </button>
           <button
             type="button"
+            class="soundtrack-skip-btn prev"
+            aria-label="Previous track"
+            :disabled="!isStarted"
+            @click="prevTrack"
+          >
+            |&lt;
+          </button>
+          <button
+            type="button"
             class="soundtrack-action"
             :aria-label="actionAriaLabel"
             :disabled="status === 'loading'"
             @click="handlePrimaryAction"
           >
             {{ actionLabel }}
+          </button>
+          <button
+            type="button"
+            class="soundtrack-skip-btn next"
+            aria-label="Next track"
+            :disabled="!isStarted"
+            @click="nextTrack"
+          >
+            &gt;|
           </button>
           <button
             type="button"
@@ -924,6 +956,34 @@ function setPage(n: number) {
     background-color: rgba(66, 133, 244, 0.15);
     border-color: #7dd3fc;
     color: #ffffff;
+  }
+}
+
+.soundtrack-skip-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(66, 133, 244, 0.45);
+  background-color: #10151f;
+  color: #66b3ff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(66, 133, 244, 0.15);
+    border-color: #7dd3fc;
+    color: #ffffff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
 

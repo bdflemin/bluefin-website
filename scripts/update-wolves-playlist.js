@@ -13,6 +13,15 @@ const MODULE_PATH = import.meta.url.startsWith('file:')
 const ROOT_DIR = MODULE_PATH ? resolve(dirname(MODULE_PATH), '..') : process.cwd()
 const PUBLIC_DIR = join(ROOT_DIR, 'public')
 
+const TEMPO_CONFIGS = {
+  'amKIngGUvCk': { bpm: 100, phraseBeats: 32, fadeDuration: 1500 },
+  '9skBT5TUqzo': { bpm: 168, phraseBeats: 48, fadeDuration: 1000 },
+  'Z--vLaXdlgk': { bpm: 86, phraseBeats: 24, fadeDuration: 2000 },
+  '5OFLFVC11Cg': { bpm: 95, phraseBeats: 16, fadeDuration: 800 },
+  'san94Q93IcY': { bpm: 124, phraseBeats: 32, fadeDuration: 1200 },
+  'rYkYLIYvI18': { bpm: 174, phraseBeats: 64, fadeDuration: 2500 },
+}
+
 function requireString(value, fieldName, index) {
   if (typeof value !== 'string' || value.length === 0) {
     throw new TypeError(`Malformed yt-dlp entry at index ${index}: expected non-empty ${fieldName}`)
@@ -90,6 +99,10 @@ function createManifest(tracks) {
     },
     tracks: tracks.map((track) => {
       const { thumbnailUrl: _thumbnailUrl, ...manifestTrack } = track
+      const tempo = TEMPO_CONFIGS[track.id]
+      if (tempo) {
+        return { ...manifestTrack, ...tempo }
+      }
       return manifestTrack
     }),
   }

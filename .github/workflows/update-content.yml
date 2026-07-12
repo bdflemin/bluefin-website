@@ -56,6 +56,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Update Flickr photos
+        run: node scripts/update-flickr-photos.js
+
       - name: Save live data to cache
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
@@ -63,6 +66,7 @@ jobs:
             public/stream-versions.yml
             public/dakota-versions.json
             public/knuckle-versions.json
+            public/flickr-photos.json
             src/assets/svg/growth_bluefins.svg
           key: website-live-data-${{ github.run_id }}
 

@@ -12,9 +12,11 @@ Emits
   chapter-change(id: string)       Chapter ID when the active chapter changes.
 -->
 <script setup lang="ts">
+import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 import type { WolvesChapter } from '@/data/wolves-story'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import { wallpapers } from './wallpapers-list'
 
 const props = defineProps<{
@@ -22,6 +24,8 @@ const props = defineProps<{
   autoplay?: boolean
   pacingMode?: 'normal' | 'fast' | 'hyper'
   page?: number
+  trackIndex?: number
+  playlistCurrentTime?: number
 }>()
 
 const emit = defineEmits<{
@@ -55,6 +59,66 @@ const shuffledWallpapers = ref<any[]>(shuffleWallpapers([...wallpapers]))
 const totalPages = ref(wallpapers.length + 1)
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
+
+const flickrPhotos = ref<{ id: string, server: string, secret: string, title: string }[]>([])
+const manifest = ref<WolvesSoundtrackManifest | null>(null)
+
+const activePhotoIndex = ref(0)
+const previousPhotoIndex = ref<number | null>(null)
+const isPhotoTransitioning = ref(false)
+let photoTransitionTimeout: ReturnType<typeof setTimeout> | null = null
+
+const currentTrack = computed<SoundtrackTrack | null>(() => {
+  if (!manifest.value || props.trackIndex === undefined) {
+    return null
+  }
+  return manifest.value.tracks[props.trackIndex] || null
+})
+
+const currentBeat = computed(() => {
+  const bpm = currentTrack.value?.bpm
+  if (!bpm || props.playlistCurrentTime === undefined) {
+    return 0
+  }
+  return Math.floor(props.playlistCurrentTime * (bpm / 60))
+})
+
+const activeFlickrIndex = computed(() => {
+  if (flickrPhotos.value.length === 0 || !currentTrack.value) {
+    return 0
+  }
+  const phraseBeats = currentTrack.value.phraseBeats || 32
+  return Math.floor(currentBeat.value / phraseBeats) % flickrPhotos.value.length
+})
+
+watch(activeFlickrIndex, (newVal, oldVal) => {
+  if (oldVal !== undefined && newVal !== oldVal) {
+    previousPhotoIndex.value = oldVal
+    activePhotoIndex.value = newVal
+    isPhotoTransitioning.value = true
+
+    if (photoTransitionTimeout) {
+      clearTimeout(photoTransitionTimeout)
+    }
+
+    const duration = currentTrack.value?.fadeDuration ?? 1500
+    photoTransitionTimeout = setTimeout(() => {
+      previousPhotoIndex.value = null
+      isPhotoTransitioning.value = false
+      photoTransitionTimeout = null
+    }, duration)
+  }
+  else {
+    activePhotoIndex.value = newVal
+  }
+}, { immediate: true })
+
+function getFlickrPhotoUrl(photo: { server: string, id: string, secret: string } | null | undefined) {
+  if (!photo) {
+    return ''
+  }
+  return `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`
+}
 
 // Active chapter ───────────────────────────────────────────────────────────
 const activeChapter = computed(() =>
@@ -321,12 +385,29 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 // Lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown)
   loadComicPdf()
   duskTimer = setInterval(() => {
     duskIsNight.value = !duskIsNight.value
   }, 6000) // Toggle dusk day/night state every 6 seconds for a soothing cycle
+
+  try {
+    manifest.value = await loadWolvesSoundtrack()
+  }
+  catch (err) {
+    console.error('[wolves] Failed to load wolves soundtrack manifest', err)
+  }
+
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}flickr-photos.json`)
+    if (response.ok) {
+      flickrPhotos.value = await response.json()
+    }
+  }
+  catch (err) {
+    console.error('[wolves] Failed to fetch Flickr photos list', err)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -348,58 +429,95 @@ onBeforeUnmount(() => {
     <div class="page-flip-comic-layout">
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
-          <div v-if="pdfLoading && page === 1" class="comic-status-wrap">
-            <div class="spinner" />
-            <p>Loading comic pages&hellip;</p>
+          <!-- Live Gallery Mode (Tracks 1-6) -->
+          <div v-if="props.trackIndex && props.trackIndex > 0" class="flickr-gallery-wrapper">
+            <!-- Previous Photo (fading out) -->
+            <div
+              v-if="previousPhotoIndex !== null && flickrPhotos[previousPhotoIndex]"
+              class="flickr-photo-layer fading-out"
+              :style="{ animationDuration: `${currentTrack?.fadeDuration ?? 1500}ms` }"
+            >
+              <img
+                :src="getFlickrPhotoUrl(flickrPhotos[previousPhotoIndex])"
+                class="flickr-img"
+                :alt="flickrPhotos[previousPhotoIndex]?.title"
+              >
+            </div>
+
+            <!-- Active Photo (fading in/visible) -->
+            <div
+              class="flickr-photo-layer"
+              :class="{ 'is-transitioning': isPhotoTransitioning }"
+              :style="{ animationDuration: `${currentTrack?.fadeDuration ?? 1500}ms` }"
+            >
+              <img
+                v-if="flickrPhotos[activePhotoIndex]"
+                :src="getFlickrPhotoUrl(flickrPhotos[activePhotoIndex])"
+                class="flickr-img"
+                :alt="flickrPhotos[activePhotoIndex]?.title"
+              >
+            </div>
+
+            <!-- Sleek photo caption -->
+            <div v-if="flickrPhotos[activePhotoIndex]" class="flickr-caption font-mono">
+              <span class="caption-label text-cyan">CNCF STREAM //</span> {{ flickrPhotos[activePhotoIndex].title }}
+            </div>
           </div>
-          <div v-else-if="pdfError && page === 1" class="comic-status-wrap is-error">
-            <p>{{ pdfError }}</p>
-            <button class="ctrl-btn" @click="loadComicPdf">
-              Retry
-            </button>
-          </div>
-          <canvas
-            v-show="!pdfLoading && !pdfError && page === 1"
-            ref="flipCanvas"
-            class="pdf-page-canvas"
-            role="img"
-            :aria-label="`Comic page ${page} of ${totalPages}`"
-          />
-          <!-- Wallpaper Pages (Pages 2-15) -->
-          <div v-if="page > 1" class="wallpaper-viewport-wrapper">
-            <template v-for="(wp, idx) in shuffledWallpapers" :key="idx">
-              <div v-if="page === idx + 2" class="wallpaper-display-card animate-fade">
-                <div v-if="wp.type === 'single'" class="wallpaper-container">
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wp.name}`"
-                    class="wallpaper-img"
-                    :alt="wp.title"
-                  >
+
+          <template v-else>
+            <div v-if="pdfLoading && page === 1" class="comic-status-wrap">
+              <div class="spinner" />
+              <p>Loading comic pages&hellip;</p>
+            </div>
+            <div v-else-if="pdfError && page === 1" class="comic-status-wrap is-error">
+              <p>{{ pdfError }}</p>
+              <button class="ctrl-btn" @click="loadComicPdf">
+                Retry
+              </button>
+            </div>
+            <canvas
+              v-show="!pdfLoading && !pdfError && page === 1"
+              ref="flipCanvas"
+              class="pdf-page-canvas"
+              role="img"
+              :aria-label="`Comic page ${page} of ${totalPages}`"
+            />
+            <!-- Wallpaper Pages (Pages 2-15) -->
+            <div v-if="page > 1" class="wallpaper-viewport-wrapper">
+              <template v-for="(wp, idx) in shuffledWallpapers" :key="idx">
+                <div v-if="page === idx + 2" class="wallpaper-display-card animate-fade">
+                  <div v-if="wp.type === 'single'" class="wallpaper-container">
+                    <img
+                      :src="`${baseUrl}img/wallpapers/${wp.name}`"
+                      class="wallpaper-img"
+                      :alt="wp.title"
+                    >
+                  </div>
+                  <div v-else-if="wp.type === 'daynight'" class="wallpaper-container daynight">
+                    <img
+                      :src="`${baseUrl}img/wallpapers/${wp.dayName}`"
+                      class="wallpaper-img"
+                      alt="Bluefin Dusk - Day"
+                    >
+                    <img
+                      :src="`${baseUrl}img/wallpapers/${wp.nightName}`"
+                      class="wallpaper-img night-overlay"
+                      :class="{ 'is-night': duskIsNight }"
+                      alt="Bluefin Dusk - Night"
+                    >
+                  </div>
+                  <!-- Decorative caption -->
+                  <div class="wallpaper-caption font-mono">
+                    <span class="caption-label text-cyan">BLUEFIN ARCHIVE //</span> {{ wp.title }}
+                  </div>
                 </div>
-                <div v-else-if="wp.type === 'daynight'" class="wallpaper-container daynight">
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wp.dayName}`"
-                    class="wallpaper-img"
-                    alt="Bluefin Dusk - Day"
-                  >
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wp.nightName}`"
-                    class="wallpaper-img night-overlay"
-                    :class="{ 'is-night': duskIsNight }"
-                    alt="Bluefin Dusk - Night"
-                  >
-                </div>
-                <!-- Decorative caption -->
-                <div class="wallpaper-caption font-mono">
-                  <span class="caption-label text-cyan">BLUEFIN ARCHIVE //</span> {{ wp.title }}
-                </div>
-              </div>
-            </template>
-          </div>
+              </template>
+            </div>
+          </template>
         </div>
 
         <button
-          v-show="!pdfLoading && !pdfError && page > 1"
+          v-show="!pdfLoading && !pdfError && page > 1 && (!props.trackIndex || props.trackIndex === 0)"
           class="nav-btn prev"
           aria-label="Previous page"
           @click="setPage(page - 1)"
@@ -408,7 +526,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          v-show="!pdfLoading && !pdfError && page < totalPages"
+          v-show="!pdfLoading && !pdfError && page < totalPages && (!props.trackIndex || props.trackIndex === 0)"
           class="nav-btn next"
           aria-label="Next page"
           @click="setPage(page + 1)"
@@ -774,6 +892,75 @@ onBeforeUnmount(() => {
   }
   to {
     opacity: 1;
+  }
+}
+
+// Flickr Immersive Slideshow
+.flickr-gallery-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.flickr-photo-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0c1016;
+  opacity: 1;
+
+  &.fading-out {
+    animation: fadeOutBuffer 1.5s ease-in-out forwards;
+    z-index: 1;
+  }
+
+  &.is-transitioning {
+    z-index: 2;
+    animation: fadeInBuffer 1.5s ease-in-out forwards;
+  }
+}
+
+.flickr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.flickr-caption {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(16, 21, 31, 0.85);
+  border: 1px solid rgba(66, 133, 244, 0.3);
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  z-index: 5;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .caption-label {
+    font-weight: bold;
   }
 }
 </style>

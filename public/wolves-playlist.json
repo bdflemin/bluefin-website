@@ -19,42 +19,60 @@
       "title": "Ghosts In The Mist",
       "artist": "Unleash The Archers",
       "youtubeVideoId": "amKIngGUvCk",
-      "artwork": "wolves-artwork/amKIngGUvCk.jpg"
+      "artwork": "wolves-artwork/amKIngGUvCk.jpg",
+      "bpm": 100,
+      "phraseBeats": 32,
+      "fadeDuration": 1500
     },
     {
       "id": "9skBT5TUqzo",
       "title": "Tonight We Must Be Warriors",
       "artist": "Avatar Metal",
       "youtubeVideoId": "9skBT5TUqzo",
-      "artwork": "wolves-artwork/9skBT5TUqzo.jpg"
+      "artwork": "wolves-artwork/9skBT5TUqzo.jpg",
+      "bpm": 168,
+      "phraseBeats": 48,
+      "fadeDuration": 1000
     },
     {
       "id": "Z--vLaXdlgk",
       "title": "Not Your Monster",
       "artist": "THE DARK ELEMENT Feat.Anette Olzon & Jani Liimatainen - Topic",
       "youtubeVideoId": "Z--vLaXdlgk",
-      "artwork": "wolves-artwork/Z--vLaXdlgk.jpg"
+      "artwork": "wolves-artwork/Z--vLaXdlgk.jpg",
+      "bpm": 86,
+      "phraseBeats": 24,
+      "fadeDuration": 2000
     },
     {
       "id": "5OFLFVC11Cg",
       "title": "End of You",
       "artist": "Poppy",
       "youtubeVideoId": "5OFLFVC11Cg",
-      "artwork": "wolves-artwork/5OFLFVC11Cg.jpg"
+      "artwork": "wolves-artwork/5OFLFVC11Cg.jpg",
+      "bpm": 95,
+      "phraseBeats": 16,
+      "fadeDuration": 800
     },
     {
       "id": "san94Q93IcY",
       "title": "Soulbound",
       "artist": "Unleash The Archers",
       "youtubeVideoId": "san94Q93IcY",
-      "artwork": "wolves-artwork/san94Q93IcY.jpg"
+      "artwork": "wolves-artwork/san94Q93IcY.jpg",
+      "bpm": 124,
+      "phraseBeats": 32,
+      "fadeDuration": 1200
     },
     {
       "id": "rYkYLIYvI18",
       "title": "Last Ride of the Day",
       "artist": "Nightwish",
       "youtubeVideoId": "rYkYLIYvI18",
-      "artwork": "wolves-artwork/rYkYLIYvI18.jpg"
+      "artwork": "wolves-artwork/rYkYLIYvI18.jpg",
+      "bpm": 174,
+      "phraseBeats": 64,
+      "fadeDuration": 2500
     }
   ]
 }

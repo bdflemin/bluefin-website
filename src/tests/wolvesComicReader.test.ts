@@ -29,6 +29,27 @@ describe('wolvesComicReader', () => {
       }
       return node
     })
+
+    const mockFetch = vi.fn((url: string) => {
+      if (url.includes('wolves-playlist.json')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          source: { provider: 'youtube', playlistId: '123' },
+          tracks: [
+            { id: 'track0', title: 'Cover Track', artist: 'Artist 0', youtubeVideoId: '1', bpm: 0 },
+            { id: 'track1', title: 'Active Track 1', artist: 'Artist 1', youtubeVideoId: '2', bpm: 120, phraseBeats: 8, fadeDuration: 1000 },
+          ]
+        })))
+      }
+      if (url.includes('flickr-photos.json')) {
+        return Promise.resolve(new Response(JSON.stringify([
+          { id: 'photo1', server: 'srv1', secret: 'sec1', title: 'CNCF Photo 1' },
+          { id: 'photo2', server: 'srv2', secret: 'sec2', title: 'CNCF Photo 2' },
+          { id: 'photo3', server: 'srv3', secret: 'sec3', title: 'CNCF Photo 3' },
+        ])))
+      }
+      return Promise.resolve(new Response(JSON.stringify({})))
+    })
+    vi.stubGlobal('fetch', mockFetch)
   })
 
   it('reports the active page and allows page turning', async () => {
@@ -92,5 +113,91 @@ describe('wolvesComicReader', () => {
     })
 
     expect(wrapper.props('pacingMode')).toBe('hyper')
+  })
+
+  it('computes activeFlickrIndex and currentBeat correctly based on playlistCurrentTime and track properties', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        chapters: [],
+        trackIndex: 1,
+        playlistCurrentTime: 12,
+      },
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+    await wrapper.vm.$nextTick()
+
+    expect((wrapper.vm as any).currentBeat).toBe(24)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(0)
+
+    await wrapper.setProps({ playlistCurrentTime: 18 })
+    expect((wrapper.vm as any).currentBeat).toBe(36)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(1)
+  })
+
+  it('hides manual navigation buttons in Live Gallery Mode (trackIndex > 0)', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        chapters: [],
+        trackIndex: 1,
+        playlistCurrentTime: 0,
+      },
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+    await wrapper.vm.$nextTick()
+
+    const prevBtn = wrapper.find('button[aria-label="Previous page"]')
+    const nextBtn = wrapper.find('button[aria-label="Next page"]')
+
+    expect((prevBtn.element as any).style.display).toBe('none')
+    expect((nextBtn.element as any).style.display).toBe('none')
+  })
+
+  it('allows manual navigation buttons when not in Live Gallery Mode (trackIndex = 0)', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        chapters: [],
+        trackIndex: 0,
+        page: 2,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    vm.pdfLoading = false
+    vm.pdfError = ''
+    await wrapper.vm.$nextTick()
+
+    const prevBtn = wrapper.find('button[aria-label="Previous page"]')
+    const nextBtn = wrapper.find('button[aria-label="Next page"]')
+
+    expect(prevBtn.isVisible()).toBe(true)
+    expect(nextBtn.isVisible()).toBe(true)
+  })
+
+  it('correctly transitions and double-buffers Flickr photos', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        chapters: [],
+        trackIndex: 1,
+        playlistCurrentTime: 0,
+      },
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+    await wrapper.vm.$nextTick()
+
+    expect((wrapper.vm as any).activePhotoIndex).toBe(0)
+    expect((wrapper.vm as any).previousPhotoIndex).toBeNull()
+
+    await wrapper.setProps({ playlistCurrentTime: 18 })
+    await wrapper.vm.$nextTick()
+
+    expect((wrapper.vm as any).activePhotoIndex).toBe(1)
+    expect((wrapper.vm as any).previousPhotoIndex).toBe(0)
+    expect((wrapper.vm as any).isPhotoTransitioning).toBe(true)
+
+    const layer = wrapper.find('.flickr-photo-layer.fading-out')
+    expect(layer.exists()).toBe(true)
   })
 })

@@ -105,6 +105,31 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
+    "name": "wolves/showcase/Pasted image (2).png",
+    "title": "Pasted image (2)"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/Pasted image (3).png",
+    "title": "Pasted image (3)"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/Pasted image (4).png",
+    "title": "Pasted image (4)"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/Pasted image (5).png",
+    "title": "Pasted image (5)"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/Pasted image.png",
+    "title": "Pasted image"
+  },
+  {
+    "type": "single",
     "name": "wolves/showcase/Screenshot From 2026-01-23 09-32-12.png",
     "title": "Screenshot From 2026 01 23 09 32 12"
   },
@@ -112,6 +137,31 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/showcase/Screenshot From 2026-02-03 17-43-17.png",
     "title": "Screenshot From 2026 02 03 17 43 17"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/bluespeed-cluster.png",
+    "title": "Bluespeed Cluster"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/bluespeed-cpu.png",
+    "title": "Bluespeed Cpu"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/bluespeed-storage.png",
+    "title": "Bluespeed Storage"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/knuckle-progress.png",
+    "title": "Knuckle Progress"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/kubestellar-dashboard.png",
+    "title": "Kubestellar Dashboard"
   },
   {
     "type": "single",
@@ -772,6 +822,21 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/people/kubecon-55386335785.webp",
     "title": "KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/summit-03.webp",
+    "title": "Summit 03"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/summit-11.webp",
+    "title": "Summit 11"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/summit-15.webp",
+    "title": "Summit 15"
   },
   {
     "type": "single",

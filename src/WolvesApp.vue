@@ -377,6 +377,8 @@ onBeforeUnmount(() => {
             :chapters="wolvesRelease.chapters"
             :pacing-mode="pacingMode"
             :page="currentPage"
+            :track-index="playlistTrackIndex"
+            :playlist-current-time="playlistCurrentTime"
             @update:page="currentPage = $event"
           />
         </div>
@@ -1895,7 +1897,8 @@ onBeforeUnmount(() => {
       flex-shrink: 0 !important;
     }
 
-    .quote-nav-btn {
+    .quote-nav-btn,
+    .soundtrack-skip-btn {
       width: 54px !important; /* Upgraded 50% from 36px */
       height: 54px !important; /* Upgraded 50% from 36px */
       font-size: 1.65rem !important; /* Upgraded 50% from 1.1rem */

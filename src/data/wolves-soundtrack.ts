@@ -4,6 +4,9 @@ export interface SoundtrackTrack {
   artist: string
   artwork: string
   youtubeVideoId: string
+  bpm?: number
+  phraseBeats?: number
+  fadeDuration?: number
 }
 
 export interface SoundtrackSource {
