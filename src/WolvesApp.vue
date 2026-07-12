@@ -147,10 +147,10 @@ function handleEmailSubmit() {
           <div class="decryption-meter-card">
             <div class="meter-header">
               <span class="meter-title font-mono">DECRYPTION_STATUS // CHAPTER_02</span>
-              <span class="meter-percentage font-mono">84%</span>
+              <span class="meter-percentage font-mono">7%</span>
             </div>
             <div class="meter-bar-container">
-              <div class="meter-bar-fill" style="width: 84%" />
+              <div class="meter-bar-fill" style="width: 7%" />
             </div>
             <p class="meter-details font-mono">
               Operatives active: 1,337 // Decoding node: PROMETHEUS-7
