@@ -275,7 +275,7 @@ function handleEmailSubmit() {
 
   @media (min-width: 1024px) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 2fr 1fr;
     align-items: stretch;
     gap: 16px;
   }
