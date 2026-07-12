@@ -24,7 +24,7 @@ const currentLoreEntry = computed<WolvesLoreEntry | null>(() => filteredLoreEntr
 
 const typedQuoteText = ref('')
 const typedMessagesText = ref<string[]>([])
-let loreTimer: ReturnType<typeof setInterval> | null = null
+let loreTimer: ReturnType<typeof setTimeout> | null = null
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
 
 let copyTimeout: ReturnType<typeof setTimeout> | null = null
@@ -118,9 +118,25 @@ function skipTypewriter() {
 
 function stopLoreTimer() {
   if (loreTimer) {
-    clearInterval(loreTimer)
+    clearTimeout(loreTimer)
     loreTimer = null
   }
+}
+
+function getDynamicDelay(entry: WolvesLoreEntry): number {
+  let charCount = 0
+  if (entry.type === 'quote') {
+    charCount = entry.data.quote.length
+  }
+  else {
+    charCount = entry.data.messages.reduce((sum, msg) => sum + msg.text.length, 0)
+  }
+
+  // Base reading/pacing buffer: 8000ms
+  // Plus 45ms per character (realistic reading pace and typing time)
+  // Clamp between 10 seconds and 45 seconds to ensure clean user experience
+  const delay = 8000 + charCount * 45
+  return Math.max(10000, Math.min(45000, delay))
 }
 
 function startLoreTimer() {
@@ -128,9 +144,16 @@ function startLoreTimer() {
     return
   }
 
-  loreTimer = setInterval(() => {
+  const currentEntry = currentLoreEntry.value
+  if (!currentEntry) {
+    return
+  }
+
+  const delay = getDynamicDelay(currentEntry)
+
+  loreTimer = setTimeout(() => {
     currentLoreIndex.value = (currentLoreIndex.value + 1) % filteredLoreEntries.value.length
-  }, 15000)
+  }, delay)
 }
 
 function restartLoreTimer() {
@@ -212,6 +235,7 @@ watch(filteredLoreEntries, () => {
 
 watch(currentLoreEntry, () => {
   runTypewriter()
+  restartLoreTimer()
 }, { immediate: true })
 
 onMounted(() => {
