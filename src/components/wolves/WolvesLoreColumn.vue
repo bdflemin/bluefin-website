@@ -285,7 +285,7 @@ defineExpose({
             nimbinatus@blue-universal:~$ monitor --archive
           </p>
           <h2 class="title-h2">
-            Recovered Transmissions
+            // se7en.days
           </h2>
           <p class="title-p">
             CLUSTER: ghost.exo-1.k3s // NS: wolves-telemetry
