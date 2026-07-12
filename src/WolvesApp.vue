@@ -73,6 +73,13 @@ const playlistCurrentTime = ref(0)
 const playlistDuration = ref(0)
 const playlistTrackIndex = ref(0)
 const isSoundtrackActive = ref(false)
+const isFastPacingActive = ref(false)
+
+watch([playlistTrackIndex, playlistCurrentTime], ([trackIdx, curTime]) => {
+  if (trackIdx === 0 && curTime >= 201) {
+    isFastPacingActive.value = true
+  }
+})
 
 function handleProgress(data: { currentTime: number, duration: number, playlistIndex: number }) {
   playlistCurrentTime.value = data.currentTime
@@ -206,6 +213,7 @@ function handleFirstLoreFinished() {
 function enterImmersiveExperience() {
   isImmersive.value = true
   isComicAutoplay.value = false
+  isFastPacingActive.value = false
   isPlaying.value = true
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch((err) => {
@@ -313,6 +321,7 @@ onBeforeUnmount(() => {
           <WolvesComicReader
             v-model:autoplay="isComicAutoplay"
             :chapters="wolvesRelease.chapters"
+            :fast-pacing="isFastPacingActive"
             @update:page="currentPage = $event"
           />
         </div>

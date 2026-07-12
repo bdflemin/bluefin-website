@@ -8,7 +8,7 @@ vi.mock('../components/TopNavbar.vue', () => ({
 
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
-    props: ['chapters', 'autoplay'],
+    props: ['chapters', 'autoplay', 'fastPacing'],
     emits: ['update:page'],
     template: '<button class="comic-reader" @click="$emit(`update:page`, 8)">WolvesComicReader</button>',
   },
@@ -16,7 +16,8 @@ vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
 
 vi.mock('../components/wolves/WolvesSoundtrack.vue', () => ({
   default: {
-    props: ['playing', 'chapter'],
+    props: ['playing', 'chapter', 'loreCopied'],
+    emits: ['progress'],
     template: '<div class="soundtrack-chapter">{{ chapter?.id ?? `none` }}</div>',
   },
 }))
@@ -57,5 +58,21 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.comic-reader').exists()).toBe(true)
     expect(wrapper.find('.soundtrack-chapter').text()).toBe('none')
     expect(wrapper.find('.lore-chapter').text()).toBe('none')
+  })
+
+  it('activates fast pacing when first song progress passes 3:21 (201s)', async () => {
+    const wrapper = mount(WolvesApp)
+
+    await wrapper.find('.experience-cta-btn').trigger('click')
+
+    const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
+    const reader = wrapper.findComponent({ name: 'WolvesComicReader' })
+
+    expect(reader.props('fastPacing')).toBeFalsy()
+
+    // Emit progress event
+    await soundtrack.vm.$emit('progress', { currentTime: 205, duration: 300, playlistIndex: 0 })
+
+    expect(reader.props('fastPacing')).toBe(true)
   })
 })

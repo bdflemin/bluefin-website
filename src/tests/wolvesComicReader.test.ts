@@ -87,4 +87,16 @@ describe('wolvesComicReader', () => {
 
     expect(wrapper.props('autoplay')).toBe(true)
   })
+
+  it('handles fastPacing prop correctly', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        chapters: [],
+        autoplay: true,
+        fastPacing: true,
+      },
+    })
+
+    expect(wrapper.props('fastPacing')).toBe(true)
+  })
 })

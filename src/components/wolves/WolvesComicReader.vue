@@ -18,6 +18,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 const props = defineProps<{
   chapters: WolvesChapter[]
   autoplay?: boolean
+  fastPacing?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -247,6 +248,10 @@ async function loadComicPdf() {
 let autoplayTimer: ReturnType<typeof setInterval> | null = null
 const localAutoplay = ref(false)
 
+const autoplayInterval = computed(() => {
+  return props.fastPacing ? 5000 : 10000
+})
+
 function stopAutoplayTimer() {
   if (autoplayTimer) {
     clearInterval(autoplayTimer)
@@ -266,7 +271,7 @@ function startAutoplayTimer() {
       /* Loop back to page 2 (instead of page 1) at the end */
       setPage(2)
     }
-  }, 10000) // Paced at 10 seconds per page
+  }, autoplayInterval.value)
 }
 
 watch(() => props.autoplay, (val) => {
@@ -280,6 +285,13 @@ watch(localAutoplay, (val) => {
   }
   else {
     stopAutoplayTimer()
+  }
+})
+
+watch(autoplayInterval, () => {
+  if (localAutoplay.value) {
+    stopAutoplayTimer()
+    startAutoplayTimer()
   }
 })
 
