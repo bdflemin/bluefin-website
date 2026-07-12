@@ -12,7 +12,9 @@ describe('wolves soundtrack (nowPlayingBar design)', () => {
     })
 
     expect(wrapper.text()).toContain('RELEASE SOUNDTRACK TO HUNT BY')
-    expect(wrapper.text()).toContain('Bluefin: Seven Days to the Wolves')
+    expect(wrapper.text()).toContain('7 Days to the Wolves')
+    expect(wrapper.text()).toContain('Nightwish')
+    expect(wrapper.text()).toContain('Dark Passion Play')
     expect(wrapper.find('iframe').exists()).toBe(false)
   })
 
