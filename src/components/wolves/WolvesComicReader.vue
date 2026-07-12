@@ -127,23 +127,44 @@ const mixedPhotos = computed(() => {
     rawPhoto: p
   }))
 
-  // 4. Combine and apply random-offset bias scores
-  // First 3 showcase screenshots get score range [0.0, 0.1] (strictly pinned to start of playlist)
-  // Remaining showcase screenshots get score range [0.1, 0.4]
-  // People (local and remote) get score range [0.3, 1.0] (biased to end)
-  const scored = [
-    ...localShowcase.map((p, idx) => {
-      const score = idx < 3 ? (Math.random() * 0.1) : (0.1 + Math.random() * 0.3)
-      return { p, score }
-    }),
-    ...localPeople.map(p => ({ p, score: 0.3 + Math.random() * 0.7 })),
-    ...remotePeople.map(p => ({ p, score: 0.3 + Math.random() * 0.7 }))
-  ]
+  const trackIdx = props.trackIndex ?? 1
 
-  // Sort strictly by score
-  scored.sort((a, b) => a.score - b.score)
+  // Shuffle inputs to vary the lists per-song
+  const shuffledShowcase = shuffleArray([...localShowcase])
+  const shuffledPeople = shuffleArray([
+    ...localPeople,
+    ...remotePeople
+  ])
 
-  return scored.map(x => x.p)
+  // Every track starts with 3 showcase screenshots
+  const pinnedStart = shuffledShowcase.slice(0, 3)
+  const remainingShowcase = shuffledShowcase.slice(3)
+
+  if (trackIdx === 1) {
+    // Track 1 (First Song): Bias showcase at start and fade into people
+    const scoredRemaining = [
+      ...remainingShowcase.map(p => ({ p, score: Math.random() * 0.4 })),
+      ...shuffledPeople.map(p => ({ p, score: 0.2 + Math.random() * 0.8 }))
+    ]
+    scoredRemaining.sort((a, b) => a.score - b.score)
+
+    return [
+      ...pinnedStart,
+      ...scoredRemaining.map(x => x.p)
+    ]
+  }
+  else {
+    // Other Tracks: Uniformly mix showcase, people, and Flickr photos for healthy diversity
+    const fullyMixedRemaining = shuffleArray([
+      ...remainingShowcase,
+      ...shuffledPeople
+    ])
+
+    return [
+      ...pinnedStart,
+      ...fullyMixedRemaining
+    ]
+  }
 })
 
 const activeFlickrIndex = computed(() => {
