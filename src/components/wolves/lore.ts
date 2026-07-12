@@ -43,12 +43,23 @@ const clarkeEntries = rawEntries.filter(
   entry => entry.type === 'quote' && entry.data.attribution === 'Arthur C. Clarke'
 )
 
+const targetQuoteText = 'In the space of a few days, humanity had lost its future, for the heart of any race is destroyed, and its will to survive is utterly broken, when its children are taken from it.'
+
+const targetEntry = clarkeEntries.find(
+  entry => entry.type === 'quote' && entry.data.quote === targetQuoteText
+)
+
+const remainingClarke = clarkeEntries.filter(
+  entry => !(entry.type === 'quote' && entry.data.quote === targetQuoteText)
+)
+
 const nonClarkeEntries = rawEntries.filter(
   entry => !(entry.type === 'quote' && entry.data.attribution === 'Arthur C. Clarke')
 )
 
 const loreEntries = [
-  ...shuffleLoreEntries(clarkeEntries),
+  ...(targetEntry ? [targetEntry] : []),
+  ...shuffleLoreEntries(remainingClarke),
   ...shuffleLoreEntries(nonClarkeEntries),
 ]
 

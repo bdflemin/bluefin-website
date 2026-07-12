@@ -24,6 +24,7 @@ const currentLoreEntry = computed<WolvesLoreEntry | null>(() => filteredLoreEntr
 
 const typedQuoteText = ref('')
 const typedMessagesText = ref<string[]>([])
+const isInitialQuote = ref(true)
 let loreTimer: ReturnType<typeof setTimeout> | null = null
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
 
@@ -149,9 +150,11 @@ function startLoreTimer() {
     return
   }
 
-  const delay = getDynamicDelay(currentEntry)
+  const isInitial = currentLoreIndex.value === 0 && isInitialQuote.value
+  const delay = isInitial ? 15000 : getDynamicDelay(currentEntry)
 
   loreTimer = setTimeout(() => {
+    isInitialQuote.value = false
     currentLoreIndex.value = (currentLoreIndex.value + 1) % filteredLoreEntries.value.length
   }, delay)
 }
@@ -166,6 +169,7 @@ function nextLore() {
     return
   }
 
+  isInitialQuote.value = false
   currentLoreIndex.value = (currentLoreIndex.value + 1) % filteredLoreEntries.value.length
   restartLoreTimer()
 }
@@ -175,6 +179,7 @@ function prevLore() {
     return
   }
 
+  isInitialQuote.value = false
   currentLoreIndex.value = (currentLoreIndex.value - 1 + filteredLoreEntries.value.length) % filteredLoreEntries.value.length
   restartLoreTimer()
 }
@@ -225,11 +230,17 @@ ${pageUrl}`
     }, 2000)
   }
 
+  isInitialQuote.value = false
   restartLoreTimer()
 }
 
+let firstWatch = true
 watch(filteredLoreEntries, () => {
   currentLoreIndex.value = 0
+  if (!firstWatch) {
+    isInitialQuote.value = false
+  }
+  firstWatch = false
   restartLoreTimer()
 }, { immediate: true })
 

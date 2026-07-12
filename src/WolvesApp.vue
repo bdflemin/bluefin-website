@@ -169,27 +169,39 @@ const nextMascotIndex = ref<number | null>(null)
 const isMascotTransitioning = ref(false)
 
 let mascotTimer: ReturnType<typeof setInterval> | null = null
+let mascotInitialTimeout: ReturnType<typeof setTimeout> | null = null
 
-function startMascotRotation() {
-  if (mascotTimer) {
+function rotateMascot() {
+  if (filteredMascots.value.length === 0) {
     return
   }
-  mascotTimer = setInterval(() => {
-    if (filteredMascots.value.length === 0) {
-      return
-    }
-    const nextIdx = (mascotIndex.value + 1) % filteredMascots.value.length
-    nextMascotIndex.value = nextIdx
-    isMascotTransitioning.value = true
-    setTimeout(() => {
-      mascotIndex.value = nextIdx
-      nextMascotIndex.value = null
-      isMascotTransitioning.value = false
-    }, 1000)
-  }, 6000)
+  const nextIdx = (mascotIndex.value + 1) % filteredMascots.value.length
+  nextMascotIndex.value = nextIdx
+  isMascotTransitioning.value = true
+  setTimeout(() => {
+    mascotIndex.value = nextIdx
+    nextMascotIndex.value = null
+    isMascotTransitioning.value = false
+  }, 1000)
+}
+
+function startMascotRotation() {
+  if (mascotTimer || mascotInitialTimeout) {
+    return
+  }
+  // Wait 15 seconds before the first rotation starts, then repeat every 6 seconds
+  mascotInitialTimeout = setTimeout(() => {
+    mascotInitialTimeout = null
+    rotateMascot()
+    mascotTimer = setInterval(rotateMascot, 6000)
+  }, 15000)
 }
 
 function stopMascotRotation() {
+  if (mascotInitialTimeout) {
+    clearTimeout(mascotInitialTimeout)
+    mascotInitialTimeout = null
+  }
   if (mascotTimer) {
     clearInterval(mascotTimer)
     mascotTimer = null
