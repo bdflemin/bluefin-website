@@ -58,7 +58,6 @@ const wallpapers = [
   { type: 'daynight', name: 'bluefin-duality', dayName: 'bluefin-duality-day.webp', nightName: 'bluefin-duality-night.webp', title: 'Duality (Day & Night)' },
   { type: 'daynight', name: 'bluefin-prey', dayName: 'bluefin-prey-day.webp', nightName: 'bluefin-prey-night.webp', title: 'Prey (Day & Night)' },
   { type: 'daynight', name: 'bluefin-collapse', dayName: 'bluefin-collapse-day.webp', nightName: 'bluefin-collapse-night.webp', title: 'Collapse (Day & Night)' },
-  { type: 'single', name: 'bluefin-xe_sunset.webp', title: 'Sunset' },
   { type: 'single', name: 'bluefin-xe_red_tulip.webp', title: 'Red Tulip' },
   { type: 'daynight', name: 'bluefin-tenacious', dayName: 'bluefin-tenacious-day.webp', nightName: 'bluefin-tenacious-night.webp', title: 'Tenacious Pterosaur (Day & Night)' }
 ]
