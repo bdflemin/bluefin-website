@@ -641,8 +641,8 @@ onBeforeUnmount(() => {
 
   @media (min-width: 1024px) {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
-    align-items: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
     gap: 16px;
   }
 }
@@ -652,6 +652,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 100%;
 
   // Left-align the comic reader within its column instead of the
   // page-wide auto-centering used when the reader is the sole column.
@@ -673,10 +674,7 @@ onBeforeUnmount(() => {
   gap: 16px;
 
   @media (min-width: 1024px) {
-    position: sticky;
-    top: 24px;
-    align-self: start;
-    height: max-content;
+    height: 100%;
   }
 }
 
@@ -752,6 +750,14 @@ onBeforeUnmount(() => {
   }
 }
 
+.dispatch-quote-section {
+  @media (min-width: 1024px) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 // Intercepted communications section
 .dispatch-quote-card {
   background-color: #10151f;
@@ -767,6 +773,10 @@ onBeforeUnmount(() => {
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
+
+  @media (min-width: 1024px) {
+    flex: 1;
+  }
 
   &:hover {
     border-color: rgba(var(--color-blue-rgb), 0.4);
@@ -810,24 +820,15 @@ onBeforeUnmount(() => {
 
 .quote-viewport {
   position: relative;
+  @media (min-width: 1024px) {
+    flex: 1;
+  }
 }
 
 .conversation-rotator {
   position: relative;
-  height: 290px;
-  overflow-y: auto;
   padding-top: 4px;
   padding-right: 4px;
-
-  /* Custom thin scrollbar */
-  scrollbar-width: thin;
-  &::-webkit-scrollbar {
-    width: 3px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(var(--color-blue-rgb), 0.2);
-    border-radius: 2px;
-  }
 }
 
 .conversation-heading {
