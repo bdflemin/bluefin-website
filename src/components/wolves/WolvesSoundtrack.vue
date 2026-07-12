@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { WolvesChapter } from '@/data/wolves-story'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   chapter: WolvesChapter | undefined
@@ -22,13 +22,14 @@ interface LyricLine {
   text: string
 }
 
-// Real-world Nightwish Track Metadata & Lyrics Timed List
+// Real-world Nightwish Track Metadata, Timed Lyrics & Chapter Commentary
 interface TrackMetadata {
   song: string
   artist: string
   album: string
   artwork: string
   playlistIndex: number
+  commentary: string
   lyrics: LyricLine[]
 }
 
@@ -39,6 +40,7 @@ const trackData: Record<string, TrackMetadata> = {
     album: 'Dark Passion Play',
     artwork: 'https://upload.wikimedia.org/wikipedia/en/c/ca/Nightwish_-_Dark_Passion_Play.jpg',
     playlistIndex: 0,
+    commentary: 'PROLOGUE DOWNLINK: The hunt begins in the frozen territories. The wolves of corporate licensing track open-source nomads under the dark aurora.',
     lyrics: [
       { time: 0, text: '[Instrumental Intro // Decrypting Transmission]' },
       { time: 18, text: 'The core of the sun, the source of the light' },
@@ -57,6 +59,7 @@ const trackData: Record<string, TrackMetadata> = {
     album: 'Dark Passion Play',
     artwork: 'https://upload.wikimedia.org/wikipedia/en/c/ca/Nightwish_-_Dark_Passion_Play.jpg',
     playlistIndex: 1,
+    commentary: 'PURSUIT DOWNLINK: Deep space Europa escape. A self-sacrifice under the swinging blades of automated compliance, a beautiful story written in frozen nitrogen.',
     lyrics: [
       { time: 0, text: '[Orchestral Intro // Dark Passion Play]' },
       { time: 14, text: 'The white land of the north, a dream before time' },
@@ -74,6 +77,7 @@ const trackData: Record<string, TrackMetadata> = {
     album: 'Dark Passion Play',
     artwork: 'https://upload.wikimedia.org/wikipedia/en/c/ca/Nightwish_-_Dark_Passion_Play.jpg',
     playlistIndex: 2,
+    commentary: 'AWAKENING DOWNLINK: Retribution and rebirth. The nomad fleet breaks the blockade, setting the stage for 2027\'s final transmission.',
     lyrics: [
       { time: 0, text: '[Synthesizer Intro // Retribution]' },
       { time: 11, text: 'It\'s the end of an era, a final farewell' },
@@ -123,6 +127,7 @@ function runLyricTypewriter() {
 let player: any = null
 const isPlayerReady = ref(false)
 let timePollTimer: ReturnType<typeof setInterval> | null = null
+const lyricsContainer = ref<HTMLElement | null>(null)
 
 function loadYtApi(): Promise<void> {
   return new Promise((resolve) => {
@@ -298,6 +303,20 @@ watch(activeTrack, () => {
   syncPlayerState()
 })
 
+watch(currentLyricIndex, async (newIdx) => {
+  await nextTick()
+  if (lyricsContainer.value) {
+    const lines = lyricsContainer.value.querySelectorAll('.lyrics-line-item')
+    const activeLine = lines[newIdx] as HTMLElement | null
+    if (activeLine) {
+      lyricsContainer.value.scrollTo({
+        top: activeLine.offsetTop - lyricsContainer.value.clientHeight / 2 + activeLine.clientHeight / 2,
+        behavior: 'smooth'
+      })
+    }
+  }
+})
+
 onMounted(async () => {
   await loadYtApi()
   initPlayer()
@@ -318,60 +337,93 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="sidebar-soundtrack-card now-playing-bar" :class="{ 'has-lyrics': playing }">
-    <div class="player-top-row">
-      <div class="thumbnail-wrapper">
-        <img
-          :src="activeTrack.artwork"
-          class="artwork-img"
-          :alt="`${activeTrack.song} Album Artwork`"
-        >
-      </div>
+    <div class="meta-panel-grid">
+      <!-- Left Column: Audio and Chapter Commentary -->
+      <div class="meta-panel-left">
+        <div class="player-top-row">
+          <div class="thumbnail-wrapper" :class="{ 'is-playing-pulse': playing }">
+            <img
+              :src="activeTrack.artwork"
+              class="artwork-img"
+              :alt="`${activeTrack.song} Album Artwork`"
+            >
+          </div>
 
-      <div class="info-zone">
-        <span class="label font-mono">RELEASE SOUNDTRACK TO HUNT BY</span>
-        <a
-          :href="playlistUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="playlist-title"
-        >
-          {{ activeTrack.song }}
-        </a>
-        <div class="active-track font-mono text-gray">
-          Artist: <span class="track-name text-cyan">{{ activeTrack.artist }}</span>
+          <div class="info-zone">
+            <span class="label font-mono">RELEASE SOUNDTRACK TO HUNT BY</span>
+            <a
+              :href="playlistUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="playlist-title"
+            >
+              {{ activeTrack.song }}
+            </a>
+            <div class="active-track font-mono text-gray">
+              Artist: <span class="track-name text-cyan">{{ activeTrack.artist }}</span>
+            </div>
+            <div class="active-album font-mono text-gray">
+              Album: <span class="album-name">{{ activeTrack.album }}</span>
+            </div>
+          </div>
+
+          <div class="video-wrapper">
+            <button
+              class="play-button"
+              :class="{ 'is-playing': playing }"
+              :aria-label="playing ? 'Pause soundtrack' : 'Play soundtrack'"
+              type="button"
+              @click="togglePlay"
+            >
+              <span class="play-icon">
+                <svg v-if="playing" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+            </button>
+          </div>
         </div>
-        <div class="active-album font-mono text-gray">
-          Album: <span class="album-name">{{ activeTrack.album }}</span>
+
+        <!-- Telemetry Commentary Panel -->
+        <div class="telemetry-commentary font-mono">
+          <div class="telemetry-header">
+            <span class="telemetry-label text-cyan">METADATA_DOWNLINK //</span> COMM_ESTABLISHED
+          </div>
+          <p class="telemetry-text">
+            {{ activeTrack.commentary }}
+          </p>
         </div>
       </div>
 
-      <div class="video-wrapper">
-        <button
-          class="play-button"
-          :class="{ 'is-playing': playing }"
-          :aria-label="playing ? 'Pause soundtrack' : 'Play soundtrack'"
-          type="button"
-          @click="togglePlay"
-        >
-          <span class="play-icon">
-            <svg v-if="playing" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Live timed lyrics downlink panel -->
-    <div v-if="playing" class="lyrics-downlink font-mono animate-fade">
-      <div class="lyrics-header text-cyan">
-        <span class="pulse-dot" /> LIVE_LYRICS_DOWNLINK //
-      </div>
-      <div class="lyrics-text">
-        &gt; {{ typedLyric }}<span class="cursor" />
+      <!-- Right Column: Rolling timed lyrics -->
+      <div class="meta-panel-right">
+        <div class="lyrics-downlink font-mono animate-fade">
+          <div class="lyrics-header text-cyan">
+            <span class="pulse-dot" /> LIVE_LYRICS_DOWNLINK //
+          </div>
+          <div v-if="playing" ref="lyricsContainer" class="lyrics-scroll-panel">
+            <div
+              v-for="(line, idx) in activeTrack.lyrics"
+              :key="idx"
+              class="lyrics-line-item"
+              :class="{
+                'is-active': idx === currentLyricIndex,
+                'is-past': idx < currentLyricIndex,
+                'is-future': idx > currentLyricIndex,
+              }"
+            >
+              <span v-if="idx === currentLyricIndex" class="cursor-arrow">&gt; </span>
+              {{ idx === currentLyricIndex ? typedLyric : line.text }}
+              <span v-if="idx === currentLyricIndex" class="cursor" />
+            </div>
+          </div>
+          <div v-else class="lyrics-standby text-gray">
+            &gt; STANDBY // Click PLAY to establish real-time lyrics downlink...
+          </div>
+        </div>
       </div>
     </div>
 
@@ -391,7 +443,6 @@ onBeforeUnmount(() => {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   align-items: stretch;
   position: relative;
   overflow: hidden;
@@ -400,6 +451,30 @@ onBeforeUnmount(() => {
   &:hover {
     border-color: rgba(66, 133, 244, 0.4);
   }
+}
+
+.meta-panel-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+  }
+}
+
+.meta-panel-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.meta-panel-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
 }
 
 .player-top-row {
@@ -421,17 +496,17 @@ onBeforeUnmount(() => {
   justify-content: center;
   color: #888888;
   overflow: hidden;
+  transition: transform 0.5s ease;
+
+  &.is-playing-pulse {
+    animation: thumb-pulse 3s infinite ease-in-out;
+  }
 }
 
 .artwork-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.music-icon {
-  width: 24px;
-  height: 24px;
 }
 
 .info-zone {
@@ -480,17 +555,41 @@ onBeforeUnmount(() => {
   }
 }
 
-.lyrics-downlink {
+.telemetry-commentary {
   background-color: #090d16;
   border: 1px solid #1e293b;
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   line-height: 1.4;
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  color: #94a3b8;
+
+  .telemetry-header {
+    font-weight: 700;
+    font-size: 0.68rem;
+    color: #38bdf8; /* cyan */
+  }
+
+  .telemetry-text {
+    margin: 0;
+  }
+}
+
+.lyrics-downlink {
+  background-color: #090d16;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   color: #e2e8f0;
+  height: 100%;
+  min-height: 170px;
 
   .lyrics-header {
     font-weight: 700;
@@ -502,10 +601,58 @@ onBeforeUnmount(() => {
     color: #38bdf8; /* cyan */
   }
 
-  .lyrics-text {
-    min-height: 1.4em;
-    color: #e2e8f0;
+  .lyrics-scroll-panel {
+    max-height: 130px;
+    overflow-y: auto;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scroll-behavior: smooth;
+
+    scrollbar-width: thin;
+    &::-webkit-scrollbar {
+      width: 3px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #1e293b;
+      border-radius: 2px;
+    }
+  }
+
+  .lyrics-line-item {
+    font-size: 0.74rem;
+    line-height: 1.4;
+    transition: all 0.3s ease;
     word-break: break-word;
+
+    &.is-active {
+      color: #38bdf8; /* cyan */
+      font-weight: 700;
+      opacity: 1;
+      transform: scale(1.01);
+    }
+
+    &.is-past {
+      color: #64748b;
+      opacity: 0.45;
+    }
+
+    &.is-future {
+      color: #475569;
+      opacity: 0.25;
+    }
+  }
+
+  .lyrics-standby {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 110px;
+    font-size: 0.72rem;
+    text-align: center;
+    color: #64748b;
   }
 
   .cursor {
@@ -548,6 +695,18 @@ onBeforeUnmount(() => {
   50% {
     transform: scale(1.3);
     opacity: 1;
+  }
+}
+
+@keyframes thumb-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(56, 189, 248, 0);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
   }
 }
 

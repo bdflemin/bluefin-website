@@ -353,15 +353,15 @@ onBeforeUnmount(() => {
             :autoplay="isPlaying"
             @update:page="currentPage = $event"
           />
-        </div>
 
-        <div class="col-right">
-          <!-- Soundtrack Control Sidebar Widget -->
+          <!-- Soundtrack Control Widget (Moved below slides, expanded) -->
           <WolvesSoundtrack
             v-model:playing="isPlaying"
             :chapter="activeChapter"
           />
+        </div>
 
+        <div class="col-right">
           <!-- SECTION 3: INTERCEPTED COMMUNICATIONS -->
           <section id="intercepted-communications" class="comic-reader-section dispatch-quote-section">
             <div class="dispatch-quote-card">
@@ -649,15 +649,20 @@ onBeforeUnmount(() => {
 
 .col-left {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 
   // Left-align the comic reader within its column instead of the
   // page-wide auto-centering used when the reader is the sole column.
   :deep(.comic-viewport),
   :deep(.scroll-comic-layout),
-  :deep(.reader-controls) {
+  :deep(.reader-controls),
+  :deep(.sidebar-soundtrack-card) {
     margin-left: 0;
     margin-right: 0;
     max-width: 100%;
+    width: 100%;
   }
 }
 
