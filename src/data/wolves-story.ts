@@ -103,6 +103,14 @@ export const wolvesRelease: WolvesRelease = {
       sourceLabel: 'John Bazzite — Inspired by Childhood\'s End, Arthur C. Clarke, 1953',
     },
     {
+      id: 'childhoods-end-wager',
+      chapterId: 'pursuit',
+      type: 'transmission',
+      publishedAt: '2326-07-09',
+      title: 'Childhood\'s End Wager',
+      body: 'JOHN BAZZITE: Can you deny that they have brought security, peace, and prosperity to the world?\nJZB: That is true, but they have taken our liberty. Man does not live—\nJOHN BAZZITE: —by bread alone. Yes, I know—but this is the first age in which every man was sure of getting even that.',
+    },
+    {
       id: 'quote-childhoods-end-future',
       chapterId: 'pursuit',
       type: 'quote',
