@@ -401,17 +401,14 @@ function startAutoplayTimer() {
 
 watch(() => props.autoplay, (val) => {
   localAutoplay.value = !!val
-}, { immediate: true })
-
-watch(localAutoplay, (val) => {
-  emit('update:autoplay', val)
+  emit('update:autoplay', !!val)
   if (val) {
     startAutoplayTimer()
   }
   else {
     stopAutoplayTimer()
   }
-})
+}, { immediate: true })
 
 watch(autoplayInterval, () => {
   if (localAutoplay.value) {
