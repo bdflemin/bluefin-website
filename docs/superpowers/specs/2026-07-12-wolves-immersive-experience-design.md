@@ -1,7 +1,7 @@
 # Specification: Immersive "Seven Days to the Wolves" Fullscreen Experience
 
 Date: 2026-07-12
-Status: Draft
+Status: Implemented (as of 2026-07-12)
 Scope: Repository
 
 This document specifies the technical design for a dedicated, immersive, theater-style fullscreen experience for "Seven Days to the Wolves" (projectbluefin.io/wolves). The experience highlights the comic slideshow, synchronizes monthly wallpapers with high-fidelity crossfades, embeds a HUD for music controls, and introduces rotating mascot avatars in a dedicated console frame.
@@ -13,7 +13,7 @@ This document specifies the technical design for a dedicated, immersive, theater
 ### 1.1 Entrance Button
 * **Location:** Rendered immediately below the comic book description within the hero section in `WolvesApp.vue`.
 * **Visual style:** High-tech, dark terminal CTA button styled with Tailwind utility classes. No emojis are used.
-* **Label:** `[ EXPERIENCE SEVEN DAYS TO THE WOLVES ]`
+* **Label:** `▶ JOIN THE EVOLUTION`
 * **Sub-label:** `RECOMMENDED: HEADPHONES ON // VOLUME UP` (monospaced, dim gray)
 * **Behavior:**
   1. Sets Vue state `isImmersive = true`.
@@ -48,6 +48,16 @@ To fix the jarring snap between monthly wallpapers during playlist progression:
 * **Removal filter:** The specific aurora-themed wallpapers requested (`aurora-xe_sunset.webp`, `aurora-xe_space_needle.webp`, `aurora-xe_foothills.webp`, `aurora-xe_clouds.webp`, `aurora-jonatan-pie-aurora.webp`) will be completely removed from any slideshow or asset loops.
 * **Visual layout:** Sits inside a circular HUD frame in the bottom left console area.
 * **Behavior:** Every 6 seconds, the console crossfades to a random mascot image from the filtered list, giving a live telemetry-feed feel to the interface.
+
+### 2.3 Native Google Chromecast Device discovery
+* **Standard Integration:** Loaded globally in `<head>` and initialized via an on-demand, race-free `window['__onGCastApiAvailable']` callback hook positioned BEFORE the Google Cast Sender script block.
+* **Launcher Button:** Employs the official `<google-cast-launcher>` customized strictly with CSS custom variables for thematic integration.
+* **Vitest Coverage:** Integrated unit assertions inside `src/tests/wolvesQrCodes.test.ts` validating correct launcher presence.
+
+### 2.4 Seamless Autoplay and View Transitions
+* **View Transitions API:** Integrated browser-native `document.startViewTransition()` around the layout rendering changes to perform clean screenshot-crossfading transitions.
+* **Cover Transition Pace:** To optimize the entry feel, the static Cover PDF (Page 1) is automatically shown for a reduced delay of 1.5 seconds under active autoplay before transitioning immediately to the dynamic wallpaper slideshow. Subsequent slides respect standard pacing (10 seconds).
+* **Vue 3 Mounted Race-free Watchers:** Unified state synchronization watchers in `WolvesComicReader.vue` and `WolvesSoundtrack.vue` under `{ immediate: true }` so that synchrony mounting updates are successfully registered and evaluated without race condition locks on startup.
 
 ---
 
