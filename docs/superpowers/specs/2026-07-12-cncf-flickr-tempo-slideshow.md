@@ -56,7 +56,7 @@ In `public/wolves-playlist.json` (and `src/data/wolves-soundtrack.ts`), each tra
 * `fadeDuration`: Time in milliseconds to crossfade between images.
 
 The emotional configuration is mapped as follows:
-* **Track 0 (Nightwish - 7 Days to the Wolves):** Handled as story lore (unaffected, tempo is null).
+* **Track 0 (Nightwish - 7 Days to the Wolves):** Handled as story lore (unaffected, tempo is null). This setup is designated as the Alpha 1 Configuration.
 * **Track 1 (Unleash The Archers - Ghosts In The Mist):** `bpm: 100`, `phraseBeats: 32` (~19.2s hold), `fadeDuration: 1500` (Smooth, atmospheric).
 * **Track 2 (Avatar Metal - Tonight We Must Be Warriors):** `bpm: 168`, `phraseBeats: 48` (~17.1s hold), `fadeDuration: 1000` (Crisp, theatrical).
 * **Track 3 (The Dark Element - Not Your Monster):** `bpm: 86`, `phraseBeats: 24` (~16.7s hold), `fadeDuration: 2000` (Dreamy, symphonic).
@@ -79,7 +79,7 @@ The emotional configuration is mapped as follows:
 The slideshow in `WolvesComicReader.vue` will automatically adjust its rendering engine depending on the current track index of the soundtrack.
 
 ### 3.1 Content Modes
-* **Lore Mode (Track 0):** Shows the 14 static illustrated wallpapers (`wallpapers-list.ts`) matching the custom paced story triggers.
+* **Lore Mode / Alpha 1 Configuration (Track 0):** Shows the 14 static illustrated wallpapers (`wallpapers-list.ts`) matching the custom paced story triggers.
 * **Live Gallery Mode (Tracks 1-6):** Swaps the display template from standard illustrations to a fullscreen responsive photo viewport that renders images harvested from `flickr-photos.json` using Flickr's static CDN.
 
 ### 3.2 Flickr Image URL Construction
