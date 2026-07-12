@@ -56,13 +56,7 @@ npm run typecheck   # Type-check with vue-tsc
 
 ## Wolves soundtrack metadata
 
-The Wolves soundtrack metadata is refreshed locally with:
-
-```bash
-npm run update:wolves-playlist
-```
-
-This workflow requires [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) to read the public YouTube playlist, writes the checked-in manifest to `public/wolves-playlist.json`, and stores the downloaded artwork under local `public/wolves-artwork/` assets. The site serves those checked-in files at build time, so no YouTube Data API key is exposed to browsers or required in the frontend bundle.
+Run `npm run update:wolves-playlist` after installing `yt-dlp` to refresh the checked-in `public/wolves-playlist.json` and local track artwork for playlist `PLA78oiE-RGAE`. The site consumes those static assets at runtime and does not expose a YouTube Data API key.
 
 ## Contributing
 
