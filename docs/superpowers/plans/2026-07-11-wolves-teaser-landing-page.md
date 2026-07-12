@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Revise the Wolves teaser landing page at `projectbluefin.io/wolves` to use the native Bluefin Blue palette, implement a floating sticky soundtrack widget, construct a highly responsive on-demand HTML5 Canvas PDF reader utilizing PDF.js CDN, and display automatically cycling dispatches from the 77 Discord quotes credited to "John Bazzite".
+**Goal:** Revise the Wolves teaser landing page at `projectbluefin.io/wolves` to use the native Bluefin Blue palette, implement a floating sticky soundtrack widget, construct a highly responsive on-demand HTML5 Canvas PDF reader utilizing PDF.js CDN, and display automatically cycling dispatches from the 77 Discord quotes credited to "John Bazzite". The current refinement pass also compresses the page vertically, removes the explicit comic-reader heading, and keeps the comic reader comfortably on-screen.
 
 **Architecture:**
 The application revisions are contained entirely within `src/WolvesApp.vue`. It integrates the standard `TopNavbar.vue` header, fetches dynamic scripts from the official PDF.js CDN to keep the bundle size small, handles resize observers to fit canvases across viewports, and uses CSS opacity transitions to cyclically fade quotes from `bazzite-quotes.json`.
@@ -64,25 +64,25 @@ The application revisions are contained entirely within `src/WolvesApp.vue`. It 
 **Files:**
 - Modify: `src/WolvesApp.vue`
 
-- [ ] **Step 1: Dynamically Inject PDF.js Library**
+- [x] **Step 1: Dynamically Inject PDF.js Library**
   Add logic in `onMounted` to inject the PDF.js main script and worker script from CDNJS:
   - Script CDN: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js`
   - Worker CDN: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
 
-- [ ] **Step 2: Implement PDF Loading & Page On-Demand Render**
+- [x] **Step 2: Implement PDF Loading & Page On-Demand Render**
   - Fetch PDF from: `https://download.projectbluefin.io/color-with-bluefin.pdf`.
   - Fetch the requested page and render it onto an HTML5 `<canvas>` using `page.render()`.
 
-- [ ] **Step 3: Implement Auto-Scaling Page Fit**
+- [x] **Step 3: Implement Auto-Scaling Page Fit**
   Add a `ResizeObserver` on the canvas container element that recalculates the page scale based on viewport client width, keeping the aspect ratio perfect and scaling dynamically on resize.
 
-- [ ] **Step 4: Implement Page Turning, Selector Dropdown, and Layout Toggles**
+- [x] **Step 4: Implement Page Turning, Selector Dropdown, and Layout Toggles**
   - Add Next/Prev page flip actions.
   - Listen to keyboard arrow keydown (`Left`/`Right`) to turn pages.
   - Build jump dropdown select element.
   - Build toggle to switch between "Page By Page" (canvas) and "Continuous Scroll" (stacked canvas-pages or responsive stacked placeholders).
 
-- [ ] **Step 5: Commit the PDF reader changes**
+- [x] **Step 5: Commit the PDF reader changes**
   ```bash
   git add src/WolvesApp.vue
   git commit -m "feat(wolves): Build responsive canvas-based PDF.js reader"
@@ -95,19 +95,19 @@ The application revisions are contained entirely within `src/WolvesApp.vue`. It 
 **Files:**
 - Modify: `src/WolvesApp.vue`
 
-- [ ] **Step 1: Read Quotes from bazzite-quotes.json**
+- [x] **Step 1: Read Quotes from bazzite-quotes.json**
   Update quotes selection to render only one dispatch card in the center.
 
-- [ ] **Step 2: Set Up Quote Cycling Interval**
+- [x] **Step 2: Set Up Quote Cycling Interval**
   Add a `setInterval` timer in `onMounted` that increments the active quote index every **9 seconds**. Ensure the timer is properly cleared in `onBeforeUnmount` to prevent memory leaks.
 
-- [ ] **Step 3: Add CSS Opacity Fade Transition**
+- [x] **Step 3: Add CSS Opacity Fade Transition**
   Write an elegant transition class to fade quotes in and out smoothly.
 
-- [ ] **Step 4: Credit to "John Bazzite"**
+- [x] **Step 4: Credit to "John Bazzite"**
   Ensure attribution is strictly set to `John Bazzite` and the subtext is `Bluefin Discord Teaser Dispatch`.
 
-- [ ] **Step 5: Commit the quotes revisions**
+- [x] **Step 5: Commit the quotes revisions**
   ```bash
   git add src/WolvesApp.vue
   git commit -m "feat(wolves): Change dispatch quotes to single-quote automatic cycle"
@@ -117,14 +117,14 @@ The application revisions are contained entirely within `src/WolvesApp.vue`. It 
 
 ### Task 5: Build Verification and Typecheck
 
-- [ ] **Step 1: Validate TypeScript Compilation**
+- [x] **Step 1: Validate TypeScript Compilation**
   Run: `npm run typecheck`
   Expected: Command exits with status 0.
 
-- [ ] **Step 2: Validate ESLint and Code Formatting**
+- [x] **Step 2: Validate ESLint and Code Formatting**
   Run: `npm run lint:fix`
   Expected: Command exits with status 0.
 
-- [ ] **Step 3: Compile Production Build**
+- [x] **Step 3: Compile Production Build**
   Run: `npm run build`
   Expected: Build succeeds and outputs into `dist/`.

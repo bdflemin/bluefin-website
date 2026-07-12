@@ -1,44 +1,48 @@
 [
   {
     "quote": "In a world of overwhelming automation, they are the light!",
-    "attribution": "John Bazzite",
-    "context": "The Wolves, Issue #1",
-    "date": "2026-07-09"
+    "person": "Natasha Woods VI",
+    "sourceType": "CNCF",
+    "sourceTitle": "Marketing Material",
+    "sourceDetail": "Circa 2349",
+    "date": "2326-07-09"
   },
   {
     "quote": "Our Childhood's End. Open Source fights back!",
-    "attribution": "John Bazzite",
-    "context": "The Wolves, Issue #1: Teaser",
-    "date": "2026-07-09"
+    "person": "John Bazzite",
+    "sourceType": "Inspired by",
+    "sourceTitle": "Childhood's End",
+    "sourceDetail": "Arthur C. Clarke, 1953",
+    "date": "2326-07-09"
   },
   {
     "quote": "Our future's end. Their beginning.",
-    "attribution": "John Bazzite",
-    "context": "The Wolves, Issue #1",
-    "date": "2026-07-09"
+    "person": "John Bazzite",
+    "sourceType": "Inspired by",
+    "sourceTitle": "Childhood's End",
+    "sourceDetail": "Arthur C. Clarke, 1953",
+    "date": "2326-07-09"
   },
   {
     "quote": "When it comes to matters of the star known as Siosm, the empires of the cosmos look to inspiration. It is said that even John Bazzite pays tribute to the star of the atomic universe. The number of stars in the sky, uncountable.",
-    "attribution": "John Bazzite",
-    "context": "The Cosmos, Volume 3 (Blue Universal Approved Edition)",
-    "date": "2026-06-15"
+    "person": "Berkus the Wise",
+    "sourceType": "Treatise",
+    "sourceTitle": "The Cosmos",
+    "sourceDetail": "Volume 3 (Blue Universal Red Letter Edition)",
+    "date": "2326-06-15"
   },
   {
-    "quote": "Honestly I just work on Fedora to toss RPMs right at Jorge's smug cloud native face.",
-    "attribution": "John Bazzite",
-    "context": "Bluefin Spring 2026",
-    "date": "2026-05-11"
-  },
-  {
-    "quote": "UNDER NO CIRCUMSTANCE IS CASTROJO TO MANAGE SECRETS.",
-    "attribution": "Unmarked Grave, the Death of Thousands",
-    "context": "Lore Archive",
-    "date": "2026-05-24"
+    "quote": "Under NO CIRCUMSTANCE let the stupid one manage secrets.",
+    "person": "Unmarked Grave",
+    "sourceType": "Euology",
+    "sourceTitle": "The Horror of Thousands",
+    "date": "2326-05-24"
   },
   {
     "quote": "And the people, enslaved by the Toilmaster under the boot of John Bazzite, suffered.",
-    "attribution": "The Chronicles of Universal Blue",
-    "context": "Teaser Lore Drop",
-    "date": "2026-05-25"
+    "person": "Third Disciple of Renner",
+    "sourceType": "HISTORY",
+    "sourceTitle": "The Chronicles of Blue Universal",
+    "date": "2326-05-25"
   }
 ]

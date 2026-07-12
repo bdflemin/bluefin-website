@@ -1,6 +1,6 @@
 # Specification: Bluefin Wolves Teaser Landing Page Revisions
 
-- **Status:** APPROVED
+- **Status:** IMPLEMENTED
 - **Date:** 2026-07-11
 - **Target Route:** `projectbluefin.io/wolves`
 - **Primary Source:** `https://download.projectbluefin.io/color-with-bluefin.pdf`
@@ -62,9 +62,15 @@ Side-by-side or stacked grid layout containing the build-time generated inline S
 ---
 
 ## 6. Verification Criteria
-- [ ] Visual checks: Theme is Bluefin Blue (`#4285f4`), not red.
-- [ ] Audio check: Sound widget stays visible/active in bottom-right/bottom-mobile as reader scrolls.
-- [ ] Reader check: Coloring Book PDF renders dynamically on canvas, scales to fit view, and supports page navigation (arrows + dropdown).
-- [ ] Quote check: Exactly one quote at a time, cycling every 9 seconds, credited to "John Bazzite".
-- [ ] Typecheck: `npm run typecheck` passes with zero errors.
-- [ ] Linter: `npm run lint:fix` reports zero problems.
+- [x] Visual checks: Theme is Bluefin Blue (`#4285f4`), not red.
+- [x] Audio check: Sound widget stays visible/active in bottom-right/bottom-mobile as reader scrolls.
+- [x] Reader check: Coloring Book PDF renders dynamically on canvas, scales to fit view, and supports page navigation (arrows + dropdown).
+- [x] Quote check: Exactly one quote at a time, cycling every 9 seconds, credited to "John Bazzite".
+- [x] Typecheck: `npm run typecheck` passes with zero errors.
+- [x] Linter: `npm run lint:fix` reports zero problems.
+
+## 7. Current Refinement Pass
+- The explicit "Comic Reader" heading was removed to reduce visual clutter.
+- Hero and section spacing were tightened to reduce wasted vertical space.
+- The comic viewport now uses a capped height and tighter canvas sizing so the page feels more compact while keeping the comic readable on screen.
+- Reader controls and mode toggles are aligned into a single compact toolbar.

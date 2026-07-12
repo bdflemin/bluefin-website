@@ -1340,8 +1340,8 @@ onBeforeUnmount(() => {
 }
 
 .quote-nav-btn {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   border: 1px solid rgba(var(--color-blue-rgb), 0.45);
   background-color: #10151f;
