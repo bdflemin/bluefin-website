@@ -1378,8 +1378,7 @@ onBeforeUnmount(() => {
   width: 100vw;
   height: 100vh;
   z-index: 100;
-  background-color: rgba(12, 16, 22, 0.85);
-  backdrop-filter: blur(8px);
+  background-color: rgba(12, 16, 22, 0.35);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
