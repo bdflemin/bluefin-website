@@ -28,7 +28,13 @@ export default defineConfig({
   },
   plugins: [
     tailwindcss(),
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: tag => tag.startsWith('google-cast-')
+        }
+      }
+    }),
   ],
   build: {
     rollupOptions: {

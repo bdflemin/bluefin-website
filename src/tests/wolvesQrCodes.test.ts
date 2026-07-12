@@ -14,6 +14,6 @@ describe('wolvesQrCodes.vue', () => {
     expect(qrImages[1].attributes('src')).toBe(qrDonate)
     expect(wrapper.get('a[href="https://store.projectbluefin.io"]').text()).toContain('VISIT STORE')
     expect(wrapper.get('a[href="#"]').text()).toContain('DONATE')
-    expect(wrapper.get('a[href^="https://warpcast.com"]').text()).toContain('CAST NOW')
+    expect(wrapper.find('google-cast-launcher.chromecast-btn').exists()).toBe(true)
   })
 })
