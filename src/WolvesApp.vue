@@ -1571,12 +1571,14 @@ onBeforeUnmount(() => {
 
 .immersive-col-left {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
 
   :deep(#comic-reader) {
     height: 100% !important;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1587,6 +1589,7 @@ onBeforeUnmount(() => {
 
   :deep(.page-flip-comic-layout) {
     height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1595,7 +1598,8 @@ onBeforeUnmount(() => {
 
   :deep(.comic-viewport) {
     flex: 1;
-    max-height: calc(100vh - 260px); /* Upgraded subtraction for 80px header + 120px footer */
+    min-height: 0 !important;
+    max-height: calc(100vh - 270px); /* Upgraded subtraction for 80px header + 140px footer + padding */
     width: 100%;
     max-width: 100%;
     border-color: rgba(102, 179, 255, 0.35);
@@ -2017,8 +2021,9 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   background: rgba(16, 21, 31, 0.3);
   position: absolute;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   pointer-events: none; /* Let clicks pass through to dock if they overlap */
   z-index: 10;
 
@@ -2197,7 +2202,7 @@ onBeforeUnmount(() => {
 .equinox-overlay {
   position: absolute;
   top: 80px; /* HUD header offset */
-  bottom: 120px; /* HUD footer offset */
+  bottom: 140px; /* HUD footer offset */
   left: 0;
   width: 100vw;
   z-index: 105;
