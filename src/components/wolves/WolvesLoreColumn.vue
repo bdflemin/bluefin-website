@@ -1,93 +1,25 @@
 <script setup lang="ts">
-import type { WolvesChapter } from '../../data/wolves-story'
 import type { WolvesLoreEntry } from './lore'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { LangLandingBluefinImageURLs } from '../../content'
-import { getLoreEntriesForChapter } from './lore'
+import { loreEntries } from './lore'
 
 const props = defineProps<{
-  chapter?: WolvesChapter
-  page?: number
-  totalPages?: number
-}>()
-
-const emit = defineEmits<{
-  (e: 'copiedStatus', status: boolean): void
-  (e: 'firstFinished'): void
-  (e: 'update:page', page: number): void
+  artifactId: string
+  duration: number
 }>()
 
 const baseUrl = import.meta.env.BASE_URL
 
-const isCopied = ref(false)
-
-watch(isCopied, (newVal) => {
-  emit('copiedStatus', newVal)
-})
-
-const pageToArtifactIdMap: Record<number, string> = {
-  1: 'arthur-c-clarke-4',
-  2: 'lorem-prologue-1',
-  3: 'arthur-c-clarke-1',
-  4: 'lorem-prologue-2',
-  5: 'arthur-c-clarke-2',
-  6: 'forbidden-factory',
-  7: 'maintenance-window',
-  8: 'quote-childhoods-end-future',
-  9: 'lorem-pursuit-1',
-  10: 'quote-natasha-woods',
-  11: 'do-not-reply',
-  12: 'quote-berkus',
-  13: 'childhoods-end-wager',
-  14: 'quote-third-disciple',
-  15: 'lorem-awakening-1',
-  16: 'ishtar-gardener-and-winnower',
-  17: 'glorious-eggroll',
-  18: 'project-neptune',
-  19: 'john-seager',
-  20: 'blue-universal-acquires-wayland-yutani'
-}
-
-const filteredLoreEntries = computed(() => getLoreEntriesForChapter(props.chapter))
-const localLoreIndex = ref(0)
-
-const currentLoreEntry = computed<WolvesLoreEntry | null>(() => {
-  if (props.page !== undefined) {
-    const p = Math.max(1, Math.min(20, props.page))
-    const targetId = pageToArtifactIdMap[p]
-    if (targetId) {
-      return filteredLoreEntries.value.find(entry => entry.id === targetId) || filteredLoreEntries.value[0] || null
-    }
-  }
-  return filteredLoreEntries.value[localLoreIndex.value] ?? null
-})
-
-const currentLoreIndex = computed({
-  get() {
-    if (props.page !== undefined) {
-      const entry = currentLoreEntry.value
-      if (!entry) {
-        return 0
-      }
-      const idx = filteredLoreEntries.value.findIndex(e => e.id === entry.id)
-      return idx !== -1 ? idx : 0
-    }
-    return localLoreIndex.value
-  },
-  set(val) {
-    localLoreIndex.value = val
-  }
-})
+const currentLoreEntry = computed<WolvesLoreEntry | null>(() =>
+  loreEntries.find(entry => entry.id === props.artifactId) ?? null,
+)
 
 const quoteViewportRef = ref<HTMLElement | null>(null)
 const activeMessageIndex = ref(0)
 const typedQuoteText = ref('')
 const typedMessagesText = ref<string[]>([])
-const isInitialQuote = ref(true)
-let loreTimer: ReturnType<typeof setTimeout> | null = null
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
-
-let copyTimeout: ReturnType<typeof setTimeout> | null = null
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -106,29 +38,6 @@ function runTypewriter() {
     return
   }
 
-  const pageDurationsMap: Record<number, number> = {
-    1: 18000,
-    2: 18000,
-    3: 18000,
-    4: 18000,
-    5: 18000,
-    6: 18000,
-    7: 19000,
-    8: 53000,
-    9: 40000,
-    10: 11000,
-    11: 11000,
-    12: 11000,
-    13: 12000,
-    14: 12000,
-    15: 24000,
-    16: 24000,
-    17: 25000,
-    18: 24000,
-    19: 24000,
-    20: 25000
-  }
-
   let stepTime = 35
 
   if (entry.type === 'quote') {
@@ -136,10 +45,7 @@ function runTypewriter() {
     typedMessagesText.value = []
     const targetText = entry.data.quote
 
-    if (props.page !== undefined) {
-      const D = pageDurationsMap[props.page] ?? 15000
-      stepTime = Math.max(5, Math.min(50, (D * 0.7) / targetText.length))
-    }
+    stepTime = Math.max(1, Math.min(50, (props.duration * 700) / targetText.length))
 
     let index = 0
 
@@ -162,8 +68,8 @@ function runTypewriter() {
   activeMessageIndex.value = 0
   typedMessagesText.value = entry.data.messages.map(() => '')
 
-  if (props.page !== undefined) {
-    const D = pageDurationsMap[props.page] ?? 15000
+  {
+    const D = props.duration * 1000
     let totalTicks = 0
     entry.data.messages.forEach((message) => {
       const isSlow = message.speaker === 'BUR//S' || message.speaker === 'SARAH'
@@ -183,7 +89,7 @@ function runTypewriter() {
       }
       totalTicks += isSlow ? 50 : 20
     })
-    stepTime = Math.max(5, Math.min(50, (D * 0.7) / totalTicks))
+    stepTime = Math.max(1, Math.min(50, (D * 0.7) / totalTicks))
   }
 
   // Track which message index we are currently typing. We type sequentially.
@@ -279,180 +185,8 @@ function skipTypewriter() {
   }, 50)
 }
 
-function stopLoreTimer() {
-  if (loreTimer) {
-    clearTimeout(loreTimer)
-    loreTimer = null
-  }
-}
-
-function getDynamicDelay(entry: WolvesLoreEntry): number {
-  let charCount = 0
-  let isSlow = false
-  if (entry.type === 'quote') {
-    charCount = entry.data.quote.length
-  }
-  else {
-    charCount = entry.data.messages.reduce((sum, msg) => sum + msg.text.length, 0)
-    isSlow = entry.data.messages.some(msg => msg.speaker === 'BUR//S' || msg.speaker === 'SARAH')
-  }
-
-  // Base reading/pacing buffer: 8000ms
-  // Plus 45ms per character (realistic reading pace and typing time)
-  // Slow speakers type at ~1/3 speed with massive punctuation pauses, so we increase their multiplier and base.
-  const multiplier = isSlow ? 180 : 45
-  const baseDelay = isSlow ? 12000 : 8000
-  const delay = baseDelay + charCount * multiplier
-
-  // Clamp between 10 seconds and 120 seconds to ensure the slow, dramatic conversations finish
-  return Math.max(10000, Math.min(120000, delay))
-}
-
-function startLoreTimer() {
-  if (props.page !== undefined) {
-    return
-  }
-  if (filteredLoreEntries.value.length <= 1 || loreTimer) {
-    return
-  }
-  if (currentLoreIndex.value >= filteredLoreEntries.value.length - 1) {
-    return // Lock in place - do not rotate further once we've reached the end
-  }
-
-  const currentEntry = currentLoreEntry.value
-  if (!currentEntry) {
-    return
-  }
-
-  const isInitial = currentLoreIndex.value === 0 && isInitialQuote.value
-  const delay = isInitial ? 28000 : getDynamicDelay(currentEntry)
-
-  loreTimer = setTimeout(() => {
-    if (currentLoreIndex.value === 0 && isInitialQuote.value) {
-      emit('firstFinished')
-    }
-
-    if (currentLoreIndex.value >= filteredLoreEntries.value.length - 1) {
-      return // Lock in place
-    }
-
-    isInitialQuote.value = false
-    currentLoreIndex.value++
-  }, delay)
-}
-
-function restartLoreTimer() {
-  stopLoreTimer()
-  startLoreTimer()
-}
-
-function nextLore() {
-  if (props.page !== undefined && props.totalPages !== undefined) {
-    if (props.page < props.totalPages) {
-      emit('update:page', props.page + 1)
-    }
-    return
-  }
-
-  if (filteredLoreEntries.value.length <= 1) {
-    return
-  }
-
-  // Prevent manual nexting past the final locked slide
-  if (currentLoreIndex.value >= filteredLoreEntries.value.length - 1) {
-    return
-  }
-
-  if (currentLoreIndex.value === 0 && isInitialQuote.value) {
-    emit('firstFinished')
-  }
-  isInitialQuote.value = false
-  currentLoreIndex.value++
-  restartLoreTimer()
-}
-
-function prevLore() {
-  if (props.page !== undefined) {
-    if (props.page > 1) {
-      emit('update:page', props.page - 1)
-    }
-    return
-  }
-
-  if (filteredLoreEntries.value.length <= 1) {
-    return
-  }
-
-  isInitialQuote.value = false
-  if (currentLoreIndex.value > 0) {
-    currentLoreIndex.value--
-  }
-  restartLoreTimer()
-}
-
-function shareLore() {
-  const entry = currentLoreEntry.value
-  if (!entry) {
-    return
-  }
-
-  const pageUrl = window.location.href.split('#')[0]
-  let shareText = ''
-
-  if (entry.type === 'quote') {
-    shareText = `[Bluefin Archive Quote]
-"${entry.data.quote}"
-— ${entry.data.attribution}${entry.data.context ? ` (${entry.data.context})` : ''}${entry.data.date ? `\n${entry.data.date}` : ''}
-${pageUrl}`
-  }
-  else {
-    const messages = entry.data.messages
-      .map(message => message.isSfx ? `⟪ ${message.text} ⟫` : (message.speaker ? `${message.speaker}: ${message.text}` : message.text))
-      .join('\n')
-    shareText = `[Bluefin Archive Intercept - ${entry.data.title}]
-Channel: ${entry.data.channel} | Date: ${entry.data.date}
-${messages}
-${pageUrl}`
-  }
-
-  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-    void navigator.clipboard.writeText(shareText).then(() => {
-      isCopied.value = true
-      if (copyTimeout) {
-        clearTimeout(copyTimeout)
-      }
-      copyTimeout = setTimeout(() => {
-        isCopied.value = false
-      }, 2000)
-    })
-  }
-  else {
-    isCopied.value = true
-    if (copyTimeout) {
-      clearTimeout(copyTimeout)
-    }
-    copyTimeout = setTimeout(() => {
-      isCopied.value = false
-    }, 2000)
-  }
-
-  isInitialQuote.value = false
-  restartLoreTimer()
-}
-
-let firstWatch = true
-watch(filteredLoreEntries, () => {
-  currentLoreIndex.value = 0
-  if (!firstWatch) {
-    isInitialQuote.value = false
-  }
-  firstWatch = false
-  restartLoreTimer()
-}, { immediate: true })
-
 watch(currentLoreEntry, () => {
   runTypewriter()
-  restartLoreTimer()
 }, { immediate: true })
 
 const filteredMascots = computed(() => {
@@ -516,8 +250,6 @@ function updateTelemetry() {
 }
 
 onMounted(() => {
-  startLoreTimer()
-
   // Preload all mascots to completely eliminate flashing and decode stutter
   // Since we know the list of filtered mascots, we load them into browser cache
   filteredMascots.value.forEach((m) => {
@@ -530,23 +262,12 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  stopLoreTimer()
   stopMascotRotation()
   if (telemetryTimer) {
     clearInterval(telemetryTimer)
     telemetryTimer = null
   }
   clearTypewriter()
-  if (copyTimeout) {
-    clearTimeout(copyTimeout)
-  }
-})
-
-defineExpose({
-  nextLore,
-  prevLore,
-  shareLore,
-  isCopied,
 })
 </script>
 
@@ -586,7 +307,7 @@ defineExpose({
                 <li
                   v-for="(message, index) in currentLoreEntry.data.messages"
                   v-show="index <= activeMessageIndex"
-                  :key="`${currentLoreIndex}-${index}`"
+                  :key="`${currentLoreEntry.id}-${index}`"
                   class="conversation-message"
                 >
                   <div class="conversation-message-header">

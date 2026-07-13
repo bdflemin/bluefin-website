@@ -17,167 +17,38 @@ README: Bluefin Wolves Teaser Landing Page Component
 -->
 <script setup lang="ts">
 import type { WolvesSoundtrackManifest } from './data/wolves-soundtrack'
-import type { WolvesChapter } from './data/wolves-story'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import TopNavbar from './components/TopNavbar.vue'
-import { wallpapers } from './components/wolves/wallpapers-list'
 import WolvesComicReader from './components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
 import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
 import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
+import { getNarrativeSlotForTime } from './data/wolves-narrative-timeline'
 import { loadWolvesSoundtrack } from './data/wolves-soundtrack'
 import { wolvesRelease } from './data/wolves-story'
 
-import { getChapterForPage } from './utils/wolvesStory'
-
-// Soundtrack playback and comic autoplay state
 const isPlaying = ref(false)
 const isEquinoxActive = ref(false)
 const equinoxTrackTitle = ref('')
 const equinoxTrackArtist = ref('')
 const soundtrackManifest = ref<WolvesSoundtrackManifest | null>(null)
 
-// Current page (1-based) tracked here so the chapter can be passed to WolvesSoundtrack.
-const currentPage = ref(1)
-const totalPages = wallpapers.length + 1
-const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPage.value))
-
-const loreColumnRef = ref<any>(null)
-const isLoreCopied = ref(false)
-
-function handlePrevLore() {
-  loreColumnRef.value?.prevLore()
-}
-
-function handleNextLore() {
-  loreColumnRef.value?.nextLore()
-}
-
-function handleShareLore() {
-  loreColumnRef.value?.shareLore()
-}
-
-function handleCopiedStatus(status: boolean) {
-  isLoreCopied.value = status
-}
-
-function handleTrackChange(index: number) {
-  if (index === 0) {
-    currentPage.value = 1
-  }
-  else if (index === 1) {
-    currentPage.value = 8
-  }
-  else if (index === 6) {
-    currentPage.value = 15
-  }
-}
-
-// Email submission removed as form is deleted
-
 // Background Wallpaper State
 const playlistCurrentTime = ref(0)
 const playlistDuration = ref(0)
 const playlistTrackIndex = ref(0)
 const isSoundtrackActive = ref(false)
-const pacingMode = ref<'normal' | 'fast' | 'hyper'>('normal')
+const currentNarrativeSlot = computed(() =>
+  getNarrativeSlotForTime(playlistTrackIndex.value === 0 ? playlistCurrentTime.value : Number.POSITIVE_INFINITY),
+)
 
-const isAnnouncementVisible = computed(() => {
-  if (!isSoundtrackActive.value || playlistTrackIndex.value !== 0) {
-    return false
-  }
-  const cur = playlistCurrentTime.value
-  return (cur >= 345 && cur <= 359) || (cur >= 395 && cur <= 425)
-})
+const activeNarrativeArtifact = computed(() =>
+  wolvesRelease.artifacts.find(artifact => artifact.id === currentNarrativeSlot.value.artifactId),
+)
 
-const announcementText = computed(() => {
-  if (!isAnnouncementVisible.value) {
-    return ''
-  }
-
-  const cur = playlistCurrentTime.value
-
-  if (cur >= 345 && cur <= 359) {
-    const offset = cur - 345
-    const phase1Text = 'We\'ve got your back, welcome to the path.'
-
-    // Phase 1: Typewriter effect (345s to 348s)
-    if (offset < 3) {
-      const chars = Math.floor((offset / 3) * phase1Text.length)
-      return phase1Text.substring(0, chars)
-    }
-    // Phase 2: Dramatic pause (348s to 349s)
-    else if (offset < 4) {
-      return phase1Text
-    }
-    // Phase 3: Garbled mess 1 (349s to 350.5s)
-    else if (offset < 5.5) {
-      const chars = '!<>-_\\\\/[]{}—=+*^?#________X01'
-      let res = ''
-      const seed = Math.floor(offset * 20)
-      for (let i = 0; i < 35; i++) {
-        res += chars[(seed + i * 7) % chars.length]
-      }
-      return res
-    }
-    // Phase 4: The Reveal (350.5s to 353.5s)
-    else if (offset < 8.5) {
-      return 'We are Universal Blue.'
-    }
-    // Phase 5: Garbled mess 2 (353.5s to 355s)
-    else if (offset < 10) {
-      const chars = '!<>-_\\\\/[]{}—=+*^?#________X01'
-      let res = ''
-      const seed = Math.floor((offset + 10) * 20)
-      for (let i = 0; i < 28; i++) {
-        res += chars[(seed + i * 5) % chars.length]
-      }
-      return res
-    }
-    // Phase 6: Final Reveal (355s to 359s)
-    else {
-      return 'Evolve or die ...'
-    }
-  }
-
-  if (cur >= 395 && cur <= 425) {
-    const offset = cur - 395
-    if (offset < 10) {
-      // 395s to 405s: Playful noise that builds up in intensity/length
-      const chars = '!<>-_\\\\/[]{}—=+*^?#________X01'
-      let res = ''
-      const seed = Math.floor(offset * 20)
-      const len = 5 + Math.floor((offset / 10) * 35) // Grows from 5 chars to 40
-      for (let i = 0; i < len; i++) {
-        res += chars[(seed + i * 7) % chars.length]
-      }
-      return res
-    }
-    else {
-      // 405s to 425s: The Legend Reveal
-      return 'Become Legend.'
-    }
-  }
-
-  return ''
-})
-
-watch([playlistTrackIndex, playlistCurrentTime], ([trackIdx, curTime]) => {
-  if (trackIdx === 0) {
-    if (curTime >= 257) {
-      pacingMode.value = 'hyper'
-    }
-    else if (curTime >= 201) {
-      pacingMode.value = 'fast'
-    }
-    else {
-      pacingMode.value = 'normal'
-    }
-  }
-  else {
-    pacingMode.value = 'normal'
-  }
-})
+const activeChapter = computed(() =>
+  wolvesRelease.chapters.find(chapter => chapter.id === activeNarrativeArtifact.value?.chapterId),
+)
 
 let equinoxTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -270,17 +141,10 @@ function getNightWallpaperUrl(monthIndex: number) {
 }
 
 const isImmersive = ref(false)
-const isComicAutoplay = ref(false)
-
-function handleFirstLoreFinished() {
-  isComicAutoplay.value = true
-}
 
 function enterImmersiveExperience() {
   const transition = () => {
     isImmersive.value = true
-    isComicAutoplay.value = true
-    pacingMode.value = 'normal'
     isPlaying.value = true
   }
 
@@ -408,25 +272,15 @@ onBeforeUnmount(() => {
       <div class="immersive-content-grid" :class="{ 'equinox-active': isEquinoxActive }">
         <div class="immersive-col-left">
           <WolvesComicReader
-            v-model:autoplay="isComicAutoplay"
-            :chapters="wolvesRelease.chapters"
-            :pacing-mode="pacingMode"
-            :page="currentPage"
             :track-index="isSoundtrackActive ? playlistTrackIndex : undefined"
             :playlist-current-time="playlistCurrentTime"
-            @update:page="currentPage = $event"
           />
         </div>
 
         <div class="immersive-col-right">
           <WolvesLoreColumn
-            ref="loreColumnRef"
-            :chapter="activeChapter"
-            :page="currentPage"
-            :total-pages="totalPages"
-            @copied-status="handleCopiedStatus"
-            @first-finished="handleFirstLoreFinished"
-            @update:page="currentPage = $event"
+            :artifact-id="currentNarrativeSlot.artifactId"
+            :duration="currentNarrativeSlot.endTime - currentNarrativeSlot.startTime"
           />
         </div>
       </div>
@@ -455,42 +309,12 @@ onBeforeUnmount(() => {
           <WolvesSoundtrack
             v-model:playing="isPlaying"
             :chapter="activeChapter"
-            :lore-copied="isLoreCopied"
-            :page="currentPage"
-            :total-pages="totalPages"
-            @update:page="currentPage = $event"
-            @track-change="handleTrackChange"
-            @prev-lore="handlePrevLore"
-            @next-lore="handleNextLore"
-            @share-lore="handleShareLore"
             @progress="handleProgress"
           />
         </div>
 
-        <!-- Announcement Area -->
-        <div class="hud-announcement-area font-mono">
-          <div v-if="!isAnnouncementVisible" class="announcement-standby text-gray">
-            [ COMM-LINK STANDBY ]
-          </div>
-          <transition name="flicker-glitch">
-            <div v-if="isAnnouncementVisible" class="announcement-message lore-quote-text">
-              {{ announcementText }}<span v-if="playlistCurrentTime < 348" class="cursor">_</span>
-            </div>
-          </transition>
-        </div>
-
-        <!-- Telemetry & Controls (including comic autoplay toggle) -->
+        <!-- Telemetry -->
         <div class="hud-right-telemetry font-mono">
-          <button
-            class="immersive-autoplay-btn font-mono"
-            :class="{ 'is-active': isComicAutoplay }"
-            type="button"
-            @click="isComicAutoplay = !isComicAutoplay"
-          >
-            <span class="hud-indicator-dot-mini" />
-            COMIC: {{ isComicAutoplay ? 'Auto' : 'Manual' }}
-          </button>
-
           <div class="decryption-mini-meter">
             <div class="meter-header-mini">
               <span>DEPLOYMENT: wolves-decryption-engine-7</span>

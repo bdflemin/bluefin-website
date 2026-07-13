@@ -1,37 +1,18 @@
 <!--
 WolvesComicReader — Chapter-aware canvas PDF reader
 ===================================================
-Renders the wolves comic PDF in paged or continuous mode.
-Accepts WolvesChapter[] to derive which chapter is active.
-
-Props
-  chapters  Array of WolvesChapter for active-chapter derivation.
-
-Emits
-  update:page(page: number)        1-based current page on every navigation.
-  chapter-change(id: string)       Chapter ID when the active chapter changes.
+Renders the soundtrack-synced Wolves visual presentation.
 -->
 <script setup lang="ts">
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
-import type { WolvesChapter } from '@/data/wolves-story'
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import { wallpapers } from './wallpapers-list'
 
 const props = defineProps<{
-  chapters: WolvesChapter[]
-  autoplay?: boolean
-  pacingMode?: 'normal' | 'fast' | 'hyper'
-  page?: number
   trackIndex?: number
   playlistCurrentTime?: number
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:page', page: number): void
-  (e: 'chapterChange', id: string): void
-  (e: 'update:autoplay', autoplay: boolean): void
 }>()
 
 // PDF source ───────────────────────────────────────────────────────────────
@@ -49,7 +30,6 @@ const isExperimental = ref(true)
 const baseUrl = import.meta.env.BASE_URL
 
 const shuffledWallpapers = ref<any[]>(shuffleWallpapers([...wallpapers]))
-const totalPages = ref(wallpapers.length + 1)
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
 
@@ -602,11 +582,6 @@ function handleImageError(event: Event, photo: any) {
   img.src = `${baseUrl}img/wallpapers/wolves/showcase/bluespeed-cluster.png`
 }
 
-// Active chapter ───────────────────────────────────────────────────────────
-const activeChapter = computed(() =>
-  props.chapters.find(ch => page.value >= ch.pageStart && page.value <= ch.pageEnd),
-)
-
 // Template refs ────────────────────────────────────────────────────────────
 const flipViewport = ref<HTMLElement | null>(null)
 
@@ -633,185 +608,8 @@ async function loadComicPdf() {
   pdfError.value = ''
 }
 
-// Autoplay / Autoscroll Timer
-let autoplayTimer: ReturnType<typeof setInterval> | null = null
-const localAutoplay = ref(false)
-
-const autoplayInterval = computed(() => {
-  if (props.pacingMode === 'hyper') {
-    return 1000
-  }
-  if (props.pacingMode === 'fast') {
-    return 2000
-  }
-  return 10000
-})
-
-function stopAutoplayTimer() {
-  if (autoplayTimer) {
-    clearInterval(autoplayTimer)
-    autoplayTimer = null
-  }
-}
-
-function startAutoplayTimer() {
-  if (autoplayTimer) {
-    return
-  }
-  const delay = autoplayInterval.value
-  autoplayTimer = setInterval(() => {
-    if (page.value < totalPages.value) {
-      setPage(page.value + 1)
-    }
-    else {
-      // Reshuffle the local playlist copy for the next loop
-      shuffledWallpapers.value = shuffleWallpapers([...wallpapers])
-      setPage(1)
-    }
-  }, delay)
-}
-
-watch(() => props.autoplay, (val) => {
-  localAutoplay.value = !!val
-  emit('update:autoplay', !!val)
-  if (val) {
-    startAutoplayTimer()
-  }
-  else {
-    stopAutoplayTimer()
-  }
-}, { immediate: true })
-
-watch(autoplayInterval, () => {
-  if (localAutoplay.value) {
-    stopAutoplayTimer()
-    startAutoplayTimer()
-  }
-})
-
-// Navigation ───────────────────────────────────────────────────────────────
-function setPage(n: number) {
-  page.value = n
-  emit('update:page', n)
-  if (localAutoplay.value) {
-    stopAutoplayTimer()
-    startAutoplayTimer()
-  }
-}
-
-// Watchers ─────────────────────────────────────────────────────────────────
-// Page watch removed for static cover optimization
-
-watch(() => props.page, (newVal) => {
-  if (newVal !== undefined && newVal !== page.value) {
-    page.value = newVal
-  }
-})
-
-watch(() => props.playlistCurrentTime, (newTime) => {
-  if (newTime === undefined || props.trackIndex === undefined) {
-    return
-  }
-
-  let targetPage = props.page || 1
-
-  if (props.trackIndex === 0) {
-    // Master track 0 playhead mapping
-    if (newTime <= 127) {
-      if (newTime < 18) {
-        targetPage = 1
-      }
-      else if (newTime < 36) {
-        targetPage = 2
-      }
-      else if (newTime < 54) {
-        targetPage = 3
-      }
-      else if (newTime < 72) {
-        targetPage = 4
-      }
-      else if (newTime < 90) {
-        targetPage = 5
-      }
-      else if (newTime < 108) {
-        targetPage = 6
-      }
-      else { targetPage = 7 }
-    }
-    else if (newTime <= 277) {
-      if (newTime < 180) {
-        targetPage = 8
-      }
-      else if (newTime < 220) {
-        targetPage = 9
-      }
-      else if (newTime < 231) {
-        targetPage = 10
-      }
-      else if (newTime < 242) {
-        targetPage = 11
-      }
-      else if (newTime < 253) {
-        targetPage = 12
-      }
-      else if (newTime < 265) {
-        targetPage = 13
-      }
-      else { targetPage = 14 }
-    }
-    else {
-      if (newTime < 301) {
-        targetPage = 15
-      }
-      else if (newTime < 325) {
-        targetPage = 16
-      }
-      else if (newTime < 350) {
-        targetPage = 17
-      }
-      else if (newTime < 374) {
-        targetPage = 18
-      }
-      else if (newTime < 398) {
-        targetPage = 19
-      }
-      else { targetPage = 20 }
-    }
-  }
-
-  if (targetPage !== props.page) {
-    emit('update:page', targetPage)
-  }
-})
-
-watch(activeChapter, (chapter) => {
-  if (chapter) {
-    emit('chapterChange', chapter.id)
-  }
-})
-
-// Keyboard navigation ──────────────────────────────────────────────────────
-function handleKeyDown(event: KeyboardEvent) {
-  const target = event.target as HTMLElement
-  if (target && (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable)) {
-    return
-  }
-
-  if (event.key === 'ArrowRight' || event.key === 'Right') {
-    if (page.value < totalPages.value) {
-      setPage(page.value + 1)
-    }
-  }
-  else if (event.key === 'ArrowLeft' || event.key === 'Left') {
-    if (page.value > 1) {
-      setPage(page.value - 1)
-    }
-  }
-}
-
 // Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  window.addEventListener('keydown', handleKeyDown)
   loadComicPdf()
   duskTimer = setInterval(() => {
     duskIsNight.value = !duskIsNight.value
@@ -837,11 +635,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  stopAutoplayTimer()
   if (duskTimer) {
     clearInterval(duskTimer)
   }
-  window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
@@ -990,24 +786,6 @@ onBeforeUnmount(() => {
             </div>
           </template>
         </div>
-
-        <button
-          v-show="!pdfLoading && !pdfError && page > 1 && (!props.trackIndex || props.trackIndex === 0)"
-          class="nav-btn prev"
-          aria-label="Previous page"
-          @click="setPage(page - 1)"
-        >
-          &larr;
-        </button>
-
-        <button
-          v-show="!pdfLoading && !pdfError && page < totalPages && (!props.trackIndex || props.trackIndex === 0)"
-          class="nav-btn next"
-          aria-label="Next page"
-          @click="setPage(page + 1)"
-        >
-          &rarr;
-        </button>
       </div>
 
       <!-- Bottom control bar removed (fused into soundtrack widget) -->

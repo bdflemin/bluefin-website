@@ -1,22 +1,15 @@
 <script setup lang="ts">
 import type { SoundtrackSource, SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
-import type { WolvesChapter } from '@/data/wolves-story'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 
 const props = defineProps<{
-  chapter?: WolvesChapter
   playing?: boolean
-  loreCopied?: boolean
-  page?: number
-  totalPages?: number
 }>()
 
 const emit = defineEmits<{
   (e: 'update:playing', playing: boolean): void
-  (e: 'trackChange', index: number): void
   (e: 'progress', data: { currentTime: number, duration: number, playlistIndex: number }): void
-  (e: 'update:page', page: number): void
 }>()
 
 type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
@@ -129,36 +122,6 @@ function stopProgressTimer() {
   if (progressTimer) {
     clearInterval(progressTimer)
     progressTimer = null
-  }
-}
-
-function seekToPosition(event: MouseEvent) {
-  if (!player || typeof player.seekTo !== 'function' || duration.value === 0) {
-    return
-  }
-
-  const target = event.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const percentage = clickX / rect.width
-
-  const targetTime = duration.value * percentage
-  player.seekTo(targetTime, true)
-  currentTime.value = targetTime // Optimistic update
-}
-
-function handleSeekKeydown(event: KeyboardEvent) {
-  if (!player || typeof player.seekTo !== 'function' || duration.value === 0) {
-    return
-  }
-
-  if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-    event.preventDefault()
-    const step = 5 // Seek 5 seconds per keypress
-    const targetTime = Math.max(0, Math.min(duration.value, currentTime.value + (event.key === 'ArrowRight' ? step : -step)))
-
-    player.seekTo(targetTime, true)
-    currentTime.value = targetTime
   }
 }
 
@@ -425,13 +388,6 @@ watch(status, (newStatus) => {
   }
 })
 
-watch(currentTrackIndex, (newIndex) => {
-  emit('trackChange', newIndex)
-})
-
-// props.chapter changes do not drive soundtrack playback to prevent track restarts during reading
-watch(() => props.chapter, () => {})
-
 watch(() => props.playing, (newPlaying) => {
   if (newPlaying && status.value !== 'playing') {
     if (status.value === 'idle' || status.value === 'error') {
@@ -451,20 +407,6 @@ onBeforeUnmount(() => {
   syncRootPlayerClass(false)
   // Deliberately skipping player?.destroy() so the iframe survives Vite HMR during development.
 })
-
-// setPage removed
-
-function nextTrack() {
-  if (player && typeof player.nextVideo === 'function') {
-    player.nextVideo()
-  }
-}
-
-function prevTrack() {
-  if (player && typeof player.previousVideo === 'function') {
-    player.previousVideo()
-  }
-}
 </script>
 
 <template>
@@ -493,13 +435,6 @@ function prevTrack() {
             <span class="soundtrack-time font-mono">{{ formattedCurrentTime }}</span>
             <div
               class="soundtrack-progress-bar group"
-              role="slider"
-              tabindex="0"
-              :aria-valuenow="progressPercent"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              @click="seekToPosition"
-              @keydown="handleSeekKeydown"
             >
               <div class="soundtrack-progress-fill group-hover:bg-[#7dd3fc]" :style="{ width: `${progressPercent}%` }" />
             </div>
@@ -511,16 +446,6 @@ function prevTrack() {
         <div class="soundtrack-controls-group">
           <button
             type="button"
-            class="soundtrack-icon-btn prev"
-            aria-label="Previous track"
-            :disabled="!isStarted"
-            @click="prevTrack"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-          </button>
-
-          <button
-            type="button"
             class="soundtrack-icon-btn play-pause soundtrack-action"
             :aria-label="actionAriaLabel"
             :disabled="status === 'loading'"
@@ -528,16 +453,6 @@ function prevTrack() {
           >
             <svg v-if="isPlaying" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
             <svg v-else class="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-          </button>
-
-          <button
-            type="button"
-            class="soundtrack-icon-btn next"
-            aria-label="Next track"
-            :disabled="!isStarted"
-            @click="nextTrack"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>

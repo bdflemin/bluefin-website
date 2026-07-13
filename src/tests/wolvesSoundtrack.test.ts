@@ -151,6 +151,14 @@ afterEach(() => {
 })
 
 describe('wolves soundtrack', () => {
+  it('does not expose controls that can change narrative position', () => {
+    const wrapper = mount(WolvesSoundtrack)
+
+    expect(wrapper.find('button[aria-label="Previous track"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Next track"]').exists()).toBe(false)
+    expect(wrapper.find('[role="slider"]').exists()).toBe(false)
+  })
+
   it('does not request the IFrame API until Start Soundtrack is clicked', async () => {
     const wrapper = mount(WolvesSoundtrack)
 

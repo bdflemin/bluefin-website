@@ -2,15 +2,21 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import WolvesApp from '../WolvesApp.vue'
 
+vi.mock('../data/wolves-soundtrack', () => ({
+  loadWolvesSoundtrack: vi.fn().mockResolvedValue({
+    source: { provider: 'youtube', playlistId: 'test' },
+    tracks: [],
+  }),
+}))
+
 vi.mock('../components/TopNavbar.vue', () => ({
   default: { template: '<div>TopNavbar</div>' },
 }))
 
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
-    props: ['chapters', 'autoplay', 'pacingMode'],
-    emits: ['update:page'],
-    template: '<button class="comic-reader" @click="$emit(`update:page`, 8)">WolvesComicReader</button>',
+    props: ['trackIndex', 'playlistCurrentTime'],
+    template: '<div class="comic-reader">WolvesComicReader</div>',
   },
 }))
 
@@ -24,8 +30,8 @@ vi.mock('../components/wolves/WolvesSoundtrack.vue', () => ({
 
 vi.mock('../components/wolves/WolvesLoreColumn.vue', () => ({
   default: {
-    props: ['chapter'],
-    template: '<div class="lore-chapter">{{ chapter?.id ?? `none` }}</div>',
+    props: ['artifactId', 'duration'],
+    template: '<div class="lore-artifact">{{ artifactId }}</div>',
   },
 }))
 
@@ -45,7 +51,7 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.experience-cta-btn').exists()).toBe(true)
   })
 
-  it('passes the active chapter to soundtrack and lore in immersive mode', async () => {
+  it('passes the timeline-selected artifact to lore in immersive mode', async () => {
     const wrapper = mount(WolvesApp)
 
     // Initially immersive elements are not rendered
@@ -56,34 +62,11 @@ describe('wolvesApp.vue', () => {
 
     // Now elements are rendered
     expect(wrapper.find('.comic-reader').exists()).toBe(true)
-    // Page 1 is in 'prologue' chapter
-    expect(wrapper.find('.soundtrack-chapter').text()).toBe('prologue')
-    expect(wrapper.find('.lore-chapter').text()).toBe('prologue')
-
-    // Clicking the comic reader mock advances page to 8 (which is 'pursuit' chapter)
-    await wrapper.find('.comic-reader').trigger('click')
-    expect(wrapper.find('.soundtrack-chapter').text()).toBe('pursuit')
-    expect(wrapper.find('.lore-chapter').text()).toBe('pursuit')
-  })
-
-  it('activates fast pacing when first song progress passes 3:21 (201s) and hyper pacing at 4:17 (257s)', async () => {
-    const wrapper = mount(WolvesApp)
-
-    await wrapper.find('.experience-cta-btn').trigger('click')
+    expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-4')
 
     const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
-    const reader = wrapper.findComponent({ name: 'WolvesComicReader' })
+    await soundtrack.vm.$emit('progress', { currentTime: 180, duration: 423, playlistIndex: 0 })
 
-    expect(reader.props('pacingMode')).toBe('normal')
-
-    // Emit progress event
-    await soundtrack.vm.$emit('progress', { currentTime: 205, duration: 300, playlistIndex: 0 })
-
-    expect(reader.props('pacingMode')).toBe('fast')
-
-    // Emit progress event past 257 seconds
-    await soundtrack.vm.$emit('progress', { currentTime: 260, duration: 300, playlistIndex: 0 })
-
-    expect(reader.props('pacingMode')).toBe('hyper')
+    expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
 })
