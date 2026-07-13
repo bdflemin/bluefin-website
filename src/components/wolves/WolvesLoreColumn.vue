@@ -26,6 +26,8 @@ const filteredLoreEntries = computed(() => getLoreEntriesForChapter(props.chapte
 const currentLoreIndex = ref(0)
 const currentLoreEntry = computed<WolvesLoreEntry | null>(() => filteredLoreEntries.value[currentLoreIndex.value] ?? null)
 
+const quoteViewportRef = ref<HTMLElement | null>(null)
+const activeMessageIndex = ref(0)
 const typedQuoteText = ref('')
 const typedMessagesText = ref<string[]>([])
 const isInitialQuote = ref(true)
@@ -73,19 +75,19 @@ function runTypewriter() {
   }
 
   typedQuoteText.value = ''
+  activeMessageIndex.value = 0
   typedMessagesText.value = entry.data.messages.map(() => '')
 
   // Track which message index we are currently typing. We type sequentially.
-  let currentMsgIndex = 0
   let currentLength = 0
 
   typewriterTimer = setInterval(() => {
-    if (currentMsgIndex >= entry.data.messages.length) {
+    if (activeMessageIndex.value >= entry.data.messages.length) {
       clearTypewriter()
       return
     }
 
-    const currentMessage = entry.data.messages[currentMsgIndex]
+    const currentMessage = entry.data.messages[activeMessageIndex.value]
     const targetText = currentMessage.text
     // We increment letter by letter for a realistic human typing tempo.
     currentLength++
@@ -93,13 +95,18 @@ function runTypewriter() {
     if (currentLength <= targetText.length) {
       const cyberChars = '01#$@&%<>_+'
       const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
-      typedMessagesText.value[currentMsgIndex] = targetText.slice(0, currentLength) + randChar
+      typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength) + randChar
     }
     else {
-      typedMessagesText.value[currentMsgIndex] = targetText
+      typedMessagesText.value[activeMessageIndex.value] = targetText
       // Once a message completes, proceed to the next after a brief pause
-      currentMsgIndex++
+      activeMessageIndex.value++
       currentLength = 0
+    }
+
+    // Auto-scroll
+    if (quoteViewportRef.value) {
+      quoteViewportRef.value.scrollTop = quoteViewportRef.value.scrollHeight
     }
   }, 35)
 }
@@ -118,7 +125,14 @@ function skipTypewriter() {
     return
   }
 
+  activeMessageIndex.value = entry.data.messages.length - 1
   typedMessagesText.value = entry.data.messages.map(message => message.text)
+
+  setTimeout(() => {
+    if (quoteViewportRef.value) {
+      quoteViewportRef.value.scrollTop = quoteViewportRef.value.scrollHeight
+    }
+  }, 50)
 }
 
 function stopLoreTimer() {
@@ -372,7 +386,7 @@ defineExpose({
           </p>
         </div>
 
-        <div class="quote-viewport" @click="skipTypewriter">
+        <div ref="quoteViewportRef" class="quote-viewport" @click="skipTypewriter">
           <Transition name="quote-fade">
             <div
               v-if="currentLoreEntry"
@@ -389,6 +403,7 @@ defineExpose({
               <ol v-if="currentLoreEntry.type === 'conversation'" class="conversation-messages">
                 <li
                   v-for="(message, index) in currentLoreEntry.data.messages"
+                  v-show="index <= activeMessageIndex"
                   :key="`${currentLoreIndex}-${index}`"
                   class="conversation-message"
                 >
