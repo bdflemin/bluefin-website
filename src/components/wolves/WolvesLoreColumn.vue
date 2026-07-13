@@ -3,7 +3,7 @@ import type { WolvesChapter } from '../../data/wolves-story'
 import type { WolvesLoreEntry } from './lore'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { LangLandingBluefinImageURLs } from '../../content'
-import { formatQuoteSource, getLoreEntriesForChapter } from './lore'
+import { getLoreEntriesForChapter } from './lore'
 
 const props = defineProps<{
   chapter?: WolvesChapter
@@ -343,11 +343,9 @@ defineExpose({
             // se7en.days
           </h2>
           <p class="title-p">
-            CLUSTER: ghost.exo-1.k3s // NS: wolves-telemetry
-            <br>FACTORY: factory.projectbluefin.io // BUILD: 100% [PASS]
-            <br>VARIANT: bluefin:testing // ARCH: x86_64, aarch64
-            <br>STREAMS: 13/13 LOCALES // STATUS: Active
-            <br>REPLICAS: 3/3 READY // TELEMETRY: Connected
+            CLUSTER: ghost.exo-1.k3s // NS: wolves-telemetry // REPLICAS: 3/3 READY // TELEMETRY: Connected
+            <br>FACTORY: factory.projectbluefin.io // BUILD: 100% [PASS] // STREAMS: 13/13 LOCALES
+            <br>VARIANT: bluefin:testing // ARCH: x86_64, aarch64 // STATUS: Active
           </p>
         </div>
 
@@ -378,25 +376,6 @@ defineExpose({
                   <p>{{ typedMessagesText[index] ?? '' }}</p>
                 </li>
               </ol>
-              <div
-                v-if="currentLoreEntry.type === 'conversation' && currentLoreEntry.data.sourceTitle"
-                class="conversation-source"
-              >
-                <span>{{ currentLoreEntry.data.attribution ?? 'ARCHIVE REFERENCE' }}</span>
-                <a
-                  v-if="currentLoreEntry.data.sourceUrl"
-                  :href="currentLoreEntry.data.sourceUrl"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {{ currentLoreEntry.data.sourceCollection ?? 'SOURCE' }}:
-                  {{ currentLoreEntry.data.sourceTitle }}
-                </a>
-                <span v-else>
-                  {{ currentLoreEntry.data.sourceCollection ?? 'SOURCE' }}:
-                  {{ currentLoreEntry.data.sourceTitle }}
-                </span>
-              </div>
               <div v-else-if="currentLoreEntry.type === 'quote'" class="lore-quote">
                 <div class="lore-quote-mark">
                   &ldquo;
@@ -406,9 +385,6 @@ defineExpose({
                 </p>
                 <div class="lore-quote-meta">
                   <strong>{{ currentLoreEntry.data.attribution }}</strong>
-                  <span v-if="formatQuoteSource(currentLoreEntry.data)">
-                    {{ formatQuoteSource(currentLoreEntry.data) }}
-                  </span>
                   <time v-if="currentLoreEntry.data.date" :datetime="currentLoreEntry.data.date">
                     {{ currentLoreEntry.data.date }}
                   </time>
@@ -440,7 +416,8 @@ defineExpose({
           </div>
           <div class="mascot-telemetry-text font-mono">
             <span>POD: wolves-telemetry-controller-7</span>
-            <span class="text-cyan">STATUS: Running</span>
+            <span>NODE: ip-10-0-1-23.ec2.internal // CPU: 14m // MEM: 128Mi</span>
+            <span class="text-cyan">STATUS: Running // UPTIME: 34d 12h // RESTART: 0</span>
           </div>
         </div>
       </div>
@@ -481,6 +458,7 @@ defineExpose({
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
+  overflow: hidden;
 
   @media (min-width: 1024px) {
     flex: 1;
@@ -524,6 +502,23 @@ defineExpose({
 
 .quote-viewport {
   position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-right: 8px;
+
+  /* Scrollbar styles to make it look decent on dark background */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 179, 255, 0.3) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(102, 179, 255, 0.3);
+    border-radius: 3px;
+  }
 }
 
 .conversation-rotator {
@@ -587,30 +582,6 @@ defineExpose({
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-size: 1.15rem;
   line-height: 1.65;
-}
-
-.conversation-source {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  margin-top: 20px;
-  padding-top: 12px;
-  color: rgba(189, 189, 189, 0.62);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.conversation-source a {
-  color: var(--color-blue);
-  text-decoration: underline;
-  text-decoration-color: rgba(var(--color-blue-rgb), 0.4);
-  text-underline-offset: 3px;
-}
-
-.conversation-source a:hover {
-  color: var(--color-blue-light);
 }
 
 .lore-quote {
