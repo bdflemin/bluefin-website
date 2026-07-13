@@ -299,12 +299,11 @@ onBeforeUnmount(() => {
       <!-- MIDDLE CONTENT AREA (WIDESCREEN SPLIT 2fr 1fr) -->
       <div
         class="immersive-content-grid"
-        :class="{ 'equinox-active': isEquinoxActive }"
         :data-presentation="isGalleryPresentation ? 'centered-gallery' : 'narrative-split'"
       >
         <div class="immersive-col-left">
           <WolvesComicReader
-            :track-index="isSoundtrackActive ? playlistTrackIndex : undefined"
+            :track-index="isSoundtrackActive ? presentationTrackIndex : undefined"
             :playlist-current-time="playlistCurrentTime"
           />
         </div>
@@ -2114,14 +2113,6 @@ onBeforeUnmount(() => {
   }
   50% {
     opacity: 0.35;
-  }
-}
-
-/* Equinox transition styling */
-.immersive-content-grid {
-  &.equinox-active {
-    opacity: 0 !important;
-    pointer-events: none;
   }
 }
 

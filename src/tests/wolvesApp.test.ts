@@ -16,7 +16,7 @@ vi.mock('../components/TopNavbar.vue', () => ({
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
     props: ['trackIndex', 'playlistCurrentTime'],
-    template: '<div class="comic-reader">WolvesComicReader</div>',
+    template: '<div class="comic-reader" :data-track-index="trackIndex">WolvesComicReader</div>',
   },
 }))
 
@@ -84,7 +84,7 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
 
-  it('keeps Track 0 lore visible until the equinox overlay has entered', async () => {
+  it('keeps the Track 0 presentation under the entering Equinox overlay', async () => {
     vi.useFakeTimers()
 
     try {
@@ -99,13 +99,49 @@ describe('wolvesApp.vue', () => {
 
       expect(wrapper.find('.equinox-overlay').exists()).toBe(true)
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
+      expect(wrapper.get('.immersive-content-grid').classes()).not.toContain('equinox-active')
       expect(wrapper.find('.lore-artifact').exists()).toBe(true)
+      expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
 
-      await vi.advanceTimersByTimeAsync(1500)
+      await vi.advanceTimersByTimeAsync(1499)
+
+      expect(wrapper.find('.equinox-overlay').exists()).toBe(true)
+      expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
+      expect(wrapper.find('.lore-artifact').exists()).toBe(true)
+      expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
+
+      await vi.advanceTimersByTimeAsync(1)
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
       expect(wrapper.find('.comic-reader').exists()).toBe(true)
+      expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('1')
       expect(wrapper.find('.lore-artifact').exists()).toBe(false)
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('ignores a stale presentation handoff when tracks change rapidly', async () => {
+    vi.useFakeTimers()
+
+    try {
+      const wrapper = mount(WolvesApp)
+
+      await wrapper.get('.experience-cta-btn').trigger('click')
+      const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
+      await soundtrack.vm.$emit('progress', { currentTime: 0, duration: 240, playlistIndex: 1 })
+      await vi.advanceTimersByTimeAsync(1000)
+      await soundtrack.vm.$emit('progress', { currentTime: 0, duration: 240, playlistIndex: 2 })
+      await vi.advanceTimersByTimeAsync(500)
+
+      expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
+      expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
+
+      await vi.advanceTimersByTimeAsync(1000)
+
+      expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
+      expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('2')
     }
     finally {
       vi.useRealTimers()
