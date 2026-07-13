@@ -9,6 +9,6 @@ _editor_prompt: >-
 
 **Berkus**: It is said that we should not touch that, let alone bring it out in the open.
 
-**Laura**: Where's your sense of fun it'll look great with the stuffed little dinos.
+**Laura**: Where's your sense of fun? It'll look great with the stuffed little dinos.
 
-**Joseph**: I don't know it gives me the creeps. Anyone seen Colin? We're late.
+**Joseph**: I don't know, it gives me the creeps. Anyone seen Colin? We're late.

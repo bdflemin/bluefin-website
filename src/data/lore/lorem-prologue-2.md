@@ -7,24 +7,24 @@ _editor_prompt: >-
   acts as a prompt for your editing.
 ---
 
-**Leonardo**: Who would make a seven sided dice that doesn't make any sense, it's clearly superior to an oblong ... thing?
+**Leonardo**: Who would make a seven-sided dice? That doesn't make any sense, it's clearly superior to an oblong... thing?
 
-**Jeefy**: Found the Linux nerd ...
+**Jeefy**: Found the Linux nerd...
 
-**Lakshi**: I think it's pretty, I can hear it's music.
+**Lakshi**: I think it's pretty. I can hear its music.
 
-**Bobbytables**: The mystical song of the warlock calls to us all, especially those who wish to claim it for themselves ...
+**Bobbytables**: The mystical song of the warlock calls to us all, especially those who wish to claim it for themselves...
 
 **Jeefy**: The one time I forget my rocket launcher. Call Krook, grab an axe.
 
-< static noise etc explosions >
+< static noise and distant explosions >
 
 **Rafael**: Something is shooting at us!
 
-< static noise etc explosions >
+< heavy static >
 
-Something's got Bluefin!
+**Rafael**: Something's got Bluefin!
 
-< static noise etc explosions >
+< connection dropping >
 
-Send ... Krook ..
+**Rafael**: Send... Krook...

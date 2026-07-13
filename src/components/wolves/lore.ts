@@ -9,9 +9,10 @@ export interface BazziteQuote {
 }
 
 export interface InterceptedMessage {
-  speaker: string
+  speaker?: string
   text: string
   timestamp?: string
+  isSfx?: boolean
 }
 
 export interface InterceptedConversation {
@@ -47,6 +48,14 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
     // parse body into messages
     const messageBlocks = artifact.body.split(/\n{2,}/)
     const messages = messageBlocks.map((block) => {
+      const sfxMatch = block.match(/^<([^>]+)>$/)
+      if (sfxMatch) {
+        return {
+          isSfx: true,
+          text: sfxMatch[1].trim()
+        }
+      }
+
       // support **Speaker**: or SPEAKER:
       const match = block.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9-]+))(?:\s+\[([^\]]+)\])?:\s*(\S[\s\S]*)$/i)
       if (match) {

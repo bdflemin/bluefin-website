@@ -65,6 +65,43 @@ export const wolvesRelease: WolvesRelease = {
     },
   ],
   artifacts: [
+    // --- Prologue: Arthur C. Clarke Quotes ---
+    {
+      id: 'arthur-c-clarke-1',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-1.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
+    },
+    {
+      id: 'arthur-c-clarke-2',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-2.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
+    },
+    {
+      id: 'arthur-c-clarke-3',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-3.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End',
+    },
+    {
+      id: 'arthur-c-clarke-4',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-4.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
+    },
     // --- Prologue: transmissions ---
     {
       id: 'lorem-prologue-1',

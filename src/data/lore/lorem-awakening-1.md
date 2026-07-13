@@ -11,4 +11,4 @@ _editor_prompt: >-
 
 **ONLOOKER II**: Get him out of here!
 
-**Toph**: A lifetime ... waste on these ... ungrateful ... I just want to live!
+**Toph**: A lifetime... wasted on these... ungrateful... I just want to live!

@@ -225,7 +225,7 @@ ${pageUrl}`
   }
   else {
     const messages = entry.data.messages
-      .map(message => `${message.speaker}: ${message.text}`)
+      .map(message => message.isSfx ? `⟪ ${message.text} ⟫` : `${message.speaker}: ${message.text}`)
       .join('\n')
     shareText = `[Bluefin Archive Intercept - ${entry.data.title}]
 Channel: ${entry.data.channel} | Date: ${entry.data.date}
@@ -612,6 +612,23 @@ defineExpose({
 .conversation-message {
   border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
   padding-left: 16px;
+}
+
+.sfx-message {
+  border-left: none;
+  padding-left: 0;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.sfx-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  color: var(--color-blue-light);
+  font-style: italic;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  margin: 0;
 }
 
 .conversation-message-header {

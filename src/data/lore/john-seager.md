@@ -7,27 +7,23 @@ _editor_prompt: >-
   acts as a prompt for your editing.
 ---
 
-**JON**: I must say I appreciate the ... banter between us.
+**JON**: I must say I appreciate the... banter between us.
 
-**LAKSHMI**: Is he really the First African in Space?
-I think I travelled more today than Kalpana Chawla!
+**LAKSHMI**: Is he really the First African in Space? I think I travelled more today than Kalpana Chawla!
 
-**JON**: Clever, yes, of course ... and how can we assist today?
+**JON**: Clever, yes, of course... and how can we assist today?
 
-**RAFAEL**: It was something you said ...
+**RAFAEL**: It was something you said...
 
-**LEONARDO**: About the forging your own path. How you endured. We're having a bit of a ...
+**LEONARDO**: About forging your own path. How you endured. We're having a bit of a...
 
-**JON**: Problem, yes of course.
+**JON**: Problem, yes, of course.
 
-**MRBOBBYTABLES**: We are running short on time ...
+**MRBOBBYTABLES**: We are running short on time...
 
-**JON**: Yes of course.
-The word I said. Unapologetic.
-The old world is dead.
-It is the end the Harbringer will come to all the things in this world that are unbalanced.
+**JON**: Yes, of course. The word I said. Unapologetic. The old world is dead. It is the end. The Harbinger will come to all the things in this world that are unbalanced.
 
-**RAFAEL**: But they won't let us ...
+**RAFAEL**: But they won't let us...
 
 **AMBER**: What, let you do what? Take charge of your own destiny?
 
@@ -37,4 +33,4 @@ It is the end the Harbringer will come to all the things in this world that are 
 
 **POPEY**: I am thoroughly enjoying this English banter!
 
-**KEN**: Rafael remind your father that chickens do not run very fast compared to Jackelopes!
+**KEN**: Rafael, remind your father that chickens do not run very fast compared to Jackalopes!
