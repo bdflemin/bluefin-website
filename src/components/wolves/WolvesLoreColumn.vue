@@ -321,6 +321,14 @@ function updateTelemetry() {
 
 onMounted(() => {
   startLoreTimer()
+
+  // Preload all mascots to completely eliminate flashing and decode stutter
+  // Since we know the list of filtered mascots, we load them into browser cache
+  filteredMascots.value.forEach((m) => {
+    const img = new Image()
+    img.src = `${baseUrl}${m.replace('./', '')}`
+  })
+
   startMascotRotation()
   telemetryTimer = setInterval(updateTelemetry, 30000)
 })
@@ -708,14 +716,16 @@ defineExpose({
     position: absolute;
     top: 0;
     left: 0;
-    transition: opacity 1s ease-in-out;
+    transition: opacity 1s linear;
     opacity: 0.85;
+    will-change: opacity;
+    transform: translateZ(0);
 
     &.fading-out {
       opacity: 0;
     }
     &.fading-in {
-      animation: mascotFadeIn 1s ease-in-out forwards;
+      animation: mascotFadeIn 1s linear forwards;
     }
   }
 
