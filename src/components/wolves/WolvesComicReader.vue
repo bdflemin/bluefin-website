@@ -252,6 +252,13 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     heartPhoto = localPeople.splice(heartTargetIndex, 1)[0]
   }
 
+  const finaleTarget = 'wolves/people/kubecon-55164466314.webp'
+  const finaleTargetIndex = localPeople.findIndex(wp => wp.id === finaleTarget)
+  let finalePhoto: any = null
+  if (finaleTargetIndex !== -1) {
+    finalePhoto = localPeople.splice(finaleTargetIndex, 1)[0]
+  }
+
   const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
   const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
   const shuffledPeople = deterministicShuffle(localPeople, 303)
@@ -340,7 +347,6 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   }
 
   // 6. Fast Solo Climax & Outro [345, 423] seconds (78s total)
-  let remainingSec6 = 78
 
   if (pivotalPhoto) {
     const freezeDuration = 5.5
@@ -352,7 +358,6 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       endTime: currentTime + freezeDuration
     })
     currentTime += freezeDuration
-    remainingSec6 -= freezeDuration
   }
 
   if (bkPhoto) {
@@ -365,11 +370,11 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       endTime: currentTime + freezeDuration
     })
     currentTime += freezeDuration
-    remainingSec6 -= freezeDuration
   }
 
   const peoplePool4 = shuffledPeople.slice(73)
-  const sec6BaseDuration = remainingSec6 / peoplePool4.length
+  const finaleStartTime = 408
+  const sec6BaseDuration = (finaleStartTime - currentTime) / peoplePool4.length
   for (const item of peoplePool4) {
     const duration = sec6BaseDuration
     result.push({
@@ -380,6 +385,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       endTime: currentTime + duration
     })
     currentTime += duration
+  }
+
+  if (finalePhoto) {
+    result.push({
+      ...finalePhoto,
+      path: finalePhoto.path || '',
+      startTime: currentTime,
+      duration: 423 - currentTime,
+      endTime: 423
+    })
   }
 
   return result

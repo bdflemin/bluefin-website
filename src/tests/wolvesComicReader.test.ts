@@ -115,6 +115,20 @@ describe('wolvesComicReader', () => {
     expect(srcs.some(src => src.includes('kubecon-55168460993.webp'))).toBe(true)
   })
 
+  it('holds the Maintainer Summit finale image from Become Legend through Track 0 completion', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 408,
+      },
+    })
+
+    expect(activeTimelineImage(wrapper)).toContain('kubecon-55164466314.webp')
+
+    await wrapper.setProps({ playlistCurrentTime: 422.99 })
+    expect(activeTimelineImage(wrapper)).toContain('kubecon-55164466314.webp')
+  })
+
   it('maps Collapse from its brighter visual day to its darker visual night', () => {
     const collapse = wallpapers.find(wallpaper => wallpaper.name === 'bluefin-collapse')
 
