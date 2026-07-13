@@ -344,7 +344,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   let remainingSec6 = 78
 
   if (pivotalPhoto) {
-    const freezeDuration = 10
+    const freezeDuration = 14
     result.push({
       ...pivotalPhoto,
       path: pivotalPhoto.path || '',

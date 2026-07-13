@@ -87,7 +87,7 @@ const isAnnouncementVisible = computed(() => {
   if (!isSoundtrackActive.value || playlistTrackIndex.value !== 0) {
     return false
   }
-  return playlistCurrentTime.value >= 345 && playlistCurrentTime.value <= 355
+  return playlistCurrentTime.value >= 345 && playlistCurrentTime.value <= 359
 })
 
 const announcementText = computed(() => {
@@ -103,12 +103,12 @@ const announcementText = computed(() => {
     const chars = Math.floor((offset / 3) * phase1Text.length)
     return phase1Text.substring(0, chars)
   }
-  // Phase 2: Dramatic pause (348s to 349.5s)
-  else if (offset < 4.5) {
+  // Phase 2: Dramatic pause (348s to 349s)
+  else if (offset < 4) {
     return phase1Text
   }
-  // Phase 3: Garbled mess (349.5s to 351s)
-  else if (offset < 6) {
+  // Phase 3: Garbled mess 1 (349s to 350.5s)
+  else if (offset < 5.5) {
     const chars = '!<>-_\\\\/[]{}—=+*^?#________X01'
     let res = ''
     const seed = Math.floor(offset * 20)
@@ -117,9 +117,23 @@ const announcementText = computed(() => {
     }
     return res
   }
-  // Phase 4: The Reveal (351s to 355s)
-  else {
+  // Phase 4: The Reveal (350.5s to 353.5s)
+  else if (offset < 8.5) {
     return 'We are Universal Blue.'
+  }
+  // Phase 5: Garbled mess 2 (353.5s to 355s)
+  else if (offset < 10) {
+    const chars = '!<>-_\\\\/[]{}—=+*^?#________X01'
+    let res = ''
+    const seed = Math.floor((offset + 10) * 20)
+    for (let i = 0; i < 28; i++) {
+      res += chars[(seed + i * 5) % chars.length]
+    }
+    return res
+  }
+  // Phase 6: Final Reveal (355s to 359s)
+  else {
+    return 'We evolve, or die ...'
   }
 })
 
