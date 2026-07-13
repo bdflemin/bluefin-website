@@ -206,6 +206,57 @@ describe('wolvesComicReader', () => {
     }
   })
 
+  it('excludes Track 0 People Flickr photos from later tracks', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const trackZeroPhoto = wallpapers.find(wallpaper =>
+      wallpaper.name?.startsWith('wolves/people/') && /\d{8,}/.test(wallpaper.name),
+    )
+    const trackZeroPhotoId = trackZeroPhoto?.name?.match(/\d{8,}/)?.[0]
+    if (!trackZeroPhotoId) {
+      throw new Error('Expected a Track 0 Flickr-backed People photo')
+    }
+
+    const photos = [
+      {
+        id: 'new-photo-0',
+        server: '1',
+        secret: '0',
+        title: 'New photo 0',
+      },
+      {
+        id: trackZeroPhotoId,
+        server: '1',
+        secret: 'duplicate',
+        title: 'Track 0 duplicate',
+      },
+      ...Array.from({ length: 99 }, (_, index) => ({
+        id: `new-photo-${index + 1}`,
+        server: '1',
+        secret: String(index + 1),
+        title: `New photo ${index + 1}`,
+      })),
+    ]
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'later-track',
+        title: 'Later Track',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/later-track.jpg',
+        youtubeVideoId: '1',
+        bpm: 120,
+        phraseBeats: 5,
+      },
+    ], new Response(JSON.stringify(photos)))
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+
+    expect(galleryCaption(wrapper)).not.toContain('Track 0 duplicate')
+  })
+
   it('uses local images for later tracks only when the Flickr feed is unavailable', async () => {
     mockGalleryData(
       [

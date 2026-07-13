@@ -33,6 +33,12 @@ const shuffledWallpapers = ref<any[]>(shuffleWallpapers([...wallpapers]))
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
 
+const trackZeroFlickrPhotoIds = new Set(
+  wallpapers.flatMap((wallpaper) => {
+    const photoId = wallpaper.name?.startsWith('wolves/people/') && wallpaper.name.match(/\d{8,}/)?.[0]
+    return photoId ? [photoId] : []
+  }),
+)
 const flickrPhotos = ref<{ id: string, server: string, secret: string, title: string }[]>([])
 const laterTrackPhotos = ref<any[]>([])
 const galleryCycle = ref<any[]>([])
@@ -573,16 +579,18 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 function snapshotLaterTrackPhotos(trackIndex: number) {
-  const remotePhotos = flickrPhotos.value.map(photo => ({
-    id: photo.id,
-    isLocal: false,
-    path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
-    title: photo.title,
-    type: 'single' as const,
-    dayName: undefined,
-    nightName: undefined,
-    rawPhoto: photo
-  }))
+  const remotePhotos = flickrPhotos.value
+    .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id))
+    .map(photo => ({
+      id: photo.id,
+      isLocal: false,
+      path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
+      title: photo.title,
+      type: 'single' as const,
+      dayName: undefined,
+      nightName: undefined,
+      rawPhoto: photo
+    }))
   const localPhotos = wallpapers.map(wallpaper => ({
     id: wallpaper.name || wallpaper.dayName || wallpaper.nightName || '',
     isLocal: true,
