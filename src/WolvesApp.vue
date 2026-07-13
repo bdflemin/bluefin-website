@@ -1476,13 +1476,6 @@ onBeforeUnmount(() => {
     letter-spacing: 0.12em;
   }
 
-  &.is-welcome,
-  &.is-universal-blue,
-  &.is-evolve {
-    h1 {
-      font-size: clamp(1.5rem, 3.5vw, 3.5rem);
-    }
-  }
   &.is-legend {
     background: radial-gradient(circle, rgba(26, 71, 105, 0.45), transparent 65%);
   }

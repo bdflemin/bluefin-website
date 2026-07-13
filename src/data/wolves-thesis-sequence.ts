@@ -33,13 +33,13 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
   if (time < 349) {
     return active('welcome', 'Welcome to the path.', '', '', true)
   }
-  if (time < 350.5 || (time >= 353.5 && time < 355)) {
+  if (time < 359) {
     return active('corruption')
   }
-  if (time < 353.5) {
+  if (time < 362) {
     return active('universal-blue', 'We are Universal Blue.')
   }
-  if (time < 359) {
+  if (time < 365) {
     return active('evolve', 'Evolve or die ...')
   }
   if (time < 395) {
@@ -48,5 +48,8 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
   if (time < 405) {
     return active('growing-corruption')
   }
-  return active('legend', 'Become Legend', 'You have ascended ...', 'truly a great loss for humanity.')
+  if (time < 408) {
+    return active('legend', 'You have ascended ...', '', 'truly a great loss for humanity.')
+  }
+  return active('legend', 'Become Legend', '', 'truly a great loss for humanity.')
 }
