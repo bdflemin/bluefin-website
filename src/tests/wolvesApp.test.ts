@@ -84,18 +84,31 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
 
-  it('switches later tracks to the centered gallery without the lore column', async () => {
-    const wrapper = mount(WolvesApp)
+  it('keeps Track 0 lore visible until the equinox overlay has entered', async () => {
+    vi.useFakeTimers()
 
-    await wrapper.get('.experience-cta-btn').trigger('click')
-    await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
-      currentTime: 0,
-      duration: 240,
-      playlistIndex: 1,
-    })
+    try {
+      const wrapper = mount(WolvesApp)
 
-    expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
-    expect(wrapper.find('.comic-reader').exists()).toBe(true)
-    expect(wrapper.find('.lore-artifact').exists()).toBe(false)
+      await wrapper.get('.experience-cta-btn').trigger('click')
+      await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
+        currentTime: 0,
+        duration: 240,
+        playlistIndex: 1,
+      })
+
+      expect(wrapper.find('.equinox-overlay').exists()).toBe(true)
+      expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
+      expect(wrapper.find('.lore-artifact').exists()).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(1500)
+
+      expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
+      expect(wrapper.find('.comic-reader').exists()).toBe(true)
+      expect(wrapper.find('.lore-artifact').exists()).toBe(false)
+    }
+    finally {
+      vi.useRealTimers()
+    }
   })
 })

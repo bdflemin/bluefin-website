@@ -56,12 +56,17 @@ const activeChapter = computed(() =>
   wolvesRelease.chapters.find(chapter => chapter.id === activeNarrativeArtifact.value?.chapterId),
 )
 
+const EQUINOX_ENTER_DURATION = 1500
 let equinoxTimeout: ReturnType<typeof setTimeout> | null = null
+let presentationTimeout: ReturnType<typeof setTimeout> | null = null
+let equinoxTransitionId = 0
 
 watch(playlistTrackIndex, (newVal) => {
   if (!isSoundtrackActive.value) {
     return
   }
+
+  const transitionId = ++equinoxTransitionId
 
   if (soundtrackManifest.value && soundtrackManifest.value.tracks[newVal]) {
     const track = soundtrackManifest.value.tracks[newVal]
@@ -74,15 +79,26 @@ watch(playlistTrackIndex, (newVal) => {
   }
 
   isEquinoxActive.value = true
-  presentationTrackIndex.value = newVal
 
   if (equinoxTimeout) {
     clearTimeout(equinoxTimeout)
   }
+  if (presentationTimeout) {
+    clearTimeout(presentationTimeout)
+  }
+
+  presentationTimeout = setTimeout(() => {
+    if (transitionId === equinoxTransitionId) {
+      presentationTrackIndex.value = newVal
+      presentationTimeout = null
+    }
+  }, EQUINOX_ENTER_DURATION)
 
   equinoxTimeout = setTimeout(() => {
-    isEquinoxActive.value = false
-    equinoxTimeout = null
+    if (transitionId === equinoxTransitionId) {
+      isEquinoxActive.value = false
+      equinoxTimeout = null
+    }
   }, 6000)
 })
 
@@ -201,6 +217,12 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  if (equinoxTimeout) {
+    clearTimeout(equinoxTimeout)
+  }
+  if (presentationTimeout) {
+    clearTimeout(presentationTimeout)
+  }
 })
 </script>
 
