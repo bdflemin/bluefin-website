@@ -69,4 +69,33 @@ describe('wolvesApp.vue', () => {
 
     expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
+
+  it('preserves the Track 0 story and lore split after playback progress begins', async () => {
+    const wrapper = mount(WolvesApp)
+
+    await wrapper.get('.experience-cta-btn').trigger('click')
+    await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
+      currentTime: 180,
+      duration: 423,
+      playlistIndex: 0,
+    })
+
+    expect(wrapper.find('.comic-reader').exists()).toBe(true)
+    expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
+  })
+
+  it('switches later tracks to the centered gallery without the lore column', async () => {
+    const wrapper = mount(WolvesApp)
+
+    await wrapper.get('.experience-cta-btn').trigger('click')
+    await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
+      currentTime: 0,
+      duration: 240,
+      playlistIndex: 1,
+    })
+
+    expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
+    expect(wrapper.find('.comic-reader').exists()).toBe(true)
+    expect(wrapper.find('.lore-artifact').exists()).toBe(false)
+  })
 })
