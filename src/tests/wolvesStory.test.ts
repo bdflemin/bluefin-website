@@ -12,7 +12,16 @@ describe('wolves story manifest', () => {
 
   it('keeps archive artifacts in their chapter order', () => {
     expect(getArtifactsForChapter('prologue').map(artifact => artifact.id))
-      .toEqual(['forbidden-factory', 'maintenance-window'])
+      .toEqual([
+        'arthur-c-clarke-4',
+        'arthur-c-clarke-1',
+        'lorem-prologue-1',
+        'lorem-prologue-2',
+        'forbidden-factory',
+        'maintenance-window',
+        'arthur-c-clarke-2',
+        'arthur-c-clarke-3'
+      ])
   })
 
   it('identifies artifacts added after a stored release', () => {
