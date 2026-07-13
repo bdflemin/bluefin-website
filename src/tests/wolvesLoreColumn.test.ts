@@ -99,6 +99,47 @@ describe('wolvesLoreColumn Logic', () => {
     })
   })
 
+  it('holds and fades the Golden Era vision before Sarah speaks', async () => {
+    vi.useFakeTimers()
+    const entry = loreEntries.find(entry => entry.id === 'lorem-pursuit-1')
+    if (!entry || entry.type !== 'conversation') {
+      throw new Error('Expected the Golden Era transmission fixture')
+    }
+
+    const climaxMessage = entry.data.messages.find(message => message.speaker === 'BUR//S')
+    if (!climaxMessage) {
+      throw new Error('Expected the Golden Era vision fixture')
+    }
+
+    const vision = climaxMessage.text.slice(climaxMessage.text.indexOf('. ') + 2)
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: entry.id,
+        duration: 0.01,
+      },
+    })
+
+    vi.advanceTimersByTime(8_800)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).not.toContain(vision)
+
+    vi.advanceTimersByTime(50)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.climax-sentence').text()).toBe(vision)
+    expect(wrapper.findAll('.conversation-message')
+      .filter(message => !(message.attributes('style') ?? '').includes('display: none'))
+      .map(message => message.find('.conversation-speaker').text())).not.toContain('SARAH')
+
+    vi.advanceTimersByTime(1_050)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('.conversation-message')
+      .filter(message => !(message.attributes('style') ?? '').includes('display: none'))
+      .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
+  })
+
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()

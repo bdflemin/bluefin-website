@@ -20,7 +20,14 @@ const quoteViewportRef = ref<HTMLElement | null>(null)
 const activeMessageIndex = ref(0)
 const typedQuoteText = ref('')
 const typedMessagesText = ref<string[]>([])
+const climaxMessageIndex = ref<number | null>(null)
+const revealedClimaxSentence = ref('')
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
+
+const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
+const CLIMAX_SPEAKER = 'BUR//S'
+const CLIMAX_HOLD_MS = 3000
+const CLIMAX_FADE_MS = 1000
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -76,9 +83,16 @@ function runTypewriter() {
   typedQuoteText.value = ''
   activeMessageIndex.value = 0
   typedMessagesText.value = entry.data.messages.map(() => '')
+  climaxMessageIndex.value = entry.id === CLIMAX_ARTIFACT_ID
+    ? entry.data.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
+    : null
+  revealedClimaxSentence.value = ''
 
   {
     const D = props.duration * 1000
+    const climaxCueDuration = entry.id === CLIMAX_ARTIFACT_ID
+      ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
+      : 0
     let totalTicks = 0
     entry.data.messages.forEach((message) => {
       const isSlow = message.speaker === 'BUR//S' || message.speaker === 'SARAH'
@@ -98,12 +112,13 @@ function runTypewriter() {
       }
       totalTicks += isSlow ? 50 : 20
     })
-    stepTime = Math.max(5, Math.min(50, (D * 0.7) / totalTicks))
+    stepTime = Math.max(5, Math.min(50, Math.max(0, D * 0.7 - climaxCueDuration) / totalTicks))
   }
 
   // Track which message index we are currently typing. We type sequentially.
   let currentLength = 0
   let pauseTicks = 0
+  let climaxStage: 'typing' | 'holding' | 'fading' = 'typing'
 
   typewriterTimer = setInterval(() => {
     if (pauseTicks > 0) {
@@ -120,12 +135,34 @@ function runTypewriter() {
     const targetText = currentMessage.text
     const speaker = currentMessage.speaker
     const isSlowSpeaker = speaker === 'BUR//S' || speaker === 'SARAH'
+    const isClimaxMessage = activeMessageIndex.value === climaxMessageIndex.value
+    const climaxOpeningEnd = targetText.indexOf('. ') + 2
+
+    if (isClimaxMessage && climaxStage === 'holding') {
+      revealedClimaxSentence.value = targetText.slice(climaxOpeningEnd)
+      climaxStage = 'fading'
+      pauseTicks = Math.ceil(CLIMAX_FADE_MS / stepTime)
+      return
+    }
+
+    if (isClimaxMessage && climaxStage === 'fading') {
+      scrollViewport()
+      activeMessageIndex.value++
+      currentLength = 0
+      return
+    }
 
     // We increment letter by letter for a realistic human typing tempo.
     currentLength++
 
     if (currentLength <= targetText.length) {
       typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength)
+
+      if (isClimaxMessage && currentLength === climaxOpeningEnd) {
+        climaxStage = 'holding'
+        pauseTicks = Math.ceil(CLIMAX_HOLD_MS / stepTime)
+        return
+      }
 
       const lastChar = targetText[currentLength - 1]
 
@@ -320,7 +357,15 @@ onBeforeUnmount(() => {
                     <span class="conversation-speaker">{{ message.speaker }}</span>
                     <time v-if="message.timestamp">{{ message.timestamp }}</time>
                   </div>
-                  <p>{{ typedMessagesText[index] ?? '' }}</p>
+                  <p>
+                    {{ typedMessagesText[index] ?? '' }}
+                    <Transition name="climax-fade">
+                      <span
+                        v-if="index === climaxMessageIndex && revealedClimaxSentence"
+                        class="climax-sentence"
+                      >{{ revealedClimaxSentence }}</span>
+                    </Transition>
+                  </p>
                 </li>
               </ol>
               <div v-else-if="currentLoreEntry.type === 'quote'" class="lore-quote">
@@ -583,6 +628,18 @@ onBeforeUnmount(() => {
   font-size: 1.15rem;
   line-height: 1.65;
   white-space: pre-wrap;
+}
+
+.climax-sentence {
+  display: inline;
+}
+
+.climax-fade-enter-active {
+  transition: opacity 1s linear;
+}
+
+.climax-fade-enter-from {
+  opacity: 0;
 }
 
 .lore-quote {
