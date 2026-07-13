@@ -28,7 +28,7 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
     return inactive
   }
   if (time < 349) {
-    return active('welcome', 'We\'ve got your back, welcome to the path.', '', '', time < 348)
+    return active('welcome', 'Welcome to the Path.', '', '', true)
   }
   if (time < 350.5 || (time >= 353.5 && time < 355)) {
     return active('corruption')
