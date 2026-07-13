@@ -40,6 +40,12 @@ function galleryCaption(wrapper: ReturnType<typeof mount>) {
   return wrapper.get('.flickr-caption').text()
 }
 
+function galleryCrossfadeDuration(wrapper: ReturnType<typeof mount>) {
+  const duration = wrapper.get('.flickr-gallery-wrapper').attributes('data-crossfade-ms')
+  expect(duration).toBeDefined()
+  return Number(duration)
+}
+
 describe('wolvesComicReader', () => {
   beforeEach(() => {
     mockGalleryData()
@@ -245,7 +251,57 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).not.toBe(firstCaption)
   })
 
-  it('uses a deterministic permitted fallback hold without BPM metadata', async () => {
+  it.each([
+    {
+      id: 'fast-phrases',
+      bpm: 120,
+      phraseBeats: 5,
+      fadeDuration: 1500,
+      hold: 5.5,
+    },
+    {
+      id: 'slow-phrases',
+      bpm: 120,
+      phraseBeats: 48,
+      fadeDuration: 3000,
+      hold: 11.5,
+    },
+    {
+      id: 'metadata-paced',
+      bpm: 100,
+      phraseBeats: 12,
+      fadeDuration: undefined,
+      hold: 7.2,
+    },
+  ])('keeps the $id crossfade within one quarter of its BPM-derived hold', async ({ id, bpm, phraseBeats, fadeDuration, hold }) => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id,
+        title: id,
+        artist: 'Artist',
+        artwork: `wolves-artwork/${id}.jpg`,
+        youtubeVideoId: '1',
+        bpm,
+        phraseBeats,
+        fadeDuration,
+      },
+    ])
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(wrapper)
+    expect(firstCaption).toContain('CNCF STREAM //')
+    await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+    expect(galleryCaption(wrapper)).toBe(firstCaption)
+    await wrapper.setProps({ playlistCurrentTime: hold })
+    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+    expect(galleryCrossfadeDuration(wrapper)).toBeLessThanOrEqual(hold * 1000 * 0.25)
+  })
+
+  it('uses the same permitted fallback cadence across equivalent mounts and subsequent slides without BPM metadata', async () => {
     mockGalleryData([
       coverTrack,
       {
@@ -256,32 +312,44 @@ describe('wolvesComicReader', () => {
         youtubeVideoId: '1',
       },
     ])
-    const wrapper = mount(WolvesComicReader, {
+    const firstRun = mount(WolvesComicReader, {
       props: { trackIndex: 1, playlistCurrentTime: 0 },
     })
     await flushPromises()
 
-    const firstCaption = galleryCaption(wrapper)
+    const firstCaption = galleryCaption(firstRun)
     expect(firstCaption).toContain('CNCF STREAM //')
 
-    let selectedHold: number | undefined
-    for (const hold of [7, 8, 10]) {
-      await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
-      const captionBeforeBoundary = galleryCaption(wrapper)
-      await wrapper.setProps({ playlistCurrentTime: hold })
+    async function findFallbackHold(wrapper: ReturnType<typeof mount>, initialCaption: string) {
+      for (const hold of [7, 8, 10]) {
+        await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+        const captionBeforeBoundary = galleryCaption(wrapper)
+        await wrapper.setProps({ playlistCurrentTime: hold })
 
-      if (captionBeforeBoundary === firstCaption && galleryCaption(wrapper) !== firstCaption) {
-        selectedHold = hold
-        break
+        if (captionBeforeBoundary === initialCaption && galleryCaption(wrapper) !== initialCaption) {
+          return hold
+        }
       }
+
+      return undefined
     }
 
-    expect(selectedHold).toBeDefined()
-    expect([7, 8, 10]).toContain(selectedHold)
+    const firstRunHold = await findFallbackHold(firstRun, firstCaption)
+    expect(firstRunHold).toBeDefined()
+    expect([7, 8, 10]).toContain(firstRunHold)
 
-    await wrapper.setProps({ playlistCurrentTime: selectedHold! - 0.01 })
-    expect(galleryCaption(wrapper)).toBe(firstCaption)
-    await wrapper.setProps({ playlistCurrentTime: selectedHold! })
-    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+    const secondRun = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    const secondRunHold = await findFallbackHold(secondRun, galleryCaption(secondRun))
+    expect(secondRunHold).toBe(firstRunHold)
+
+    for (const slideNumber of [2, 3]) {
+      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber - 0.01 })
+      const captionBeforeBoundary = galleryCaption(firstRun)
+      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber })
+      expect(galleryCaption(firstRun)).not.toBe(captionBeforeBoundary)
+    }
   })
 })
