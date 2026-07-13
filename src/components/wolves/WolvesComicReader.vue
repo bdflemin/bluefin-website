@@ -130,6 +130,10 @@ const mixedPhotos = computed(() => {
 
   const trackIdx = props.trackIndex ?? 1
 
+  if (trackIdx > 0 && remotePeople.length > 0) {
+    return shuffleArray([...remotePeople])
+  }
+
   // Shuffle inputs to vary the lists per-song
   const shuffledShowcase = shuffleArray([...localShowcase])
   const shuffledPeople = shuffleArray([
