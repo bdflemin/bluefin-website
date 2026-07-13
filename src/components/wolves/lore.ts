@@ -46,7 +46,10 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
   }
   else {
     // parse body into messages
-    const messageBlocks = artifact.body.split(/\n{2,}/)
+    // To support legacy files that only use single newlines between speakers or SFX,
+    // we normalize them by inserting a double newline before any recognized speaker or SFX tag.
+    const normalizedBody = artifact.body.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9-]+)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
+    const messageBlocks = normalizedBody.split(/\n{2,}/)
     const messages = messageBlocks.map((block) => {
       const trimmedBlock = block.trim()
       const sfxMatch = trimmedBlock.match(/^<([^>]+)>$/)

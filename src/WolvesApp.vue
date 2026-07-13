@@ -1693,7 +1693,7 @@ onBeforeUnmount(() => {
 
 /* Immersive Bottom HUD Footer */
 .immersive-hud-footer {
-  height: 120px; /* Upgraded from 96px to fit 50% larger typography comfortably */
+  height: 140px; /* Upgraded from 120px to fit double-sized announcement text */
   border-top: 1px solid rgba(102, 179, 255, 0.2);
   background: rgba(16, 21, 31, 0.45);
   backdrop-filter: blur(12px);
@@ -1816,10 +1816,12 @@ onBeforeUnmount(() => {
 /* Soundtrack Dock Row Customization */
 .immersive-soundtrack-dock {
   flex: 1;
+  min-width: 400px;
   max-width: 680px;
 
   @media (max-width: 767px) {
     width: 100%;
+    min-width: unset;
   }
 }
 
@@ -2003,10 +2005,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 1.5; /* Give it more room so it doesn't smoosh others */
   padding: 0 16px;
   overflow: hidden;
-  height: 90px;
+  height: 110px;
   border: 1px dashed rgba(102, 179, 255, 0.15);
   border-radius: 4px;
   margin: 0 16px;
@@ -2021,9 +2023,9 @@ onBeforeUnmount(() => {
 
   .announcement-message {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    font-size: 2.25rem;
-    font-style: italic;
-    font-weight: 700;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-style: normal;
+    font-weight: 900;
     color: #ffffff;
     text-shadow:
       0 0 15px rgba(255, 255, 255, 0.4),
