@@ -250,6 +250,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/bketelsen.jpeg',
+    title: 'Bketelsen'
+  },
+  {
+    type: 'single',
     name: 'wolves/people/flickr-53608872377.webp',
     title: 'KC+CNC_EU_240319_KCS_Breakouts_MN_024'
   },

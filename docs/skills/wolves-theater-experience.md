@@ -41,6 +41,9 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 19. **Timeline-Driven Beat-Matched Slideshow (Track 0):** Guarded by `isExperimental = true`. Parses the 423-second first song into a 6-section timeline (Intro, Verse 1, Verse 2/Chorus, Bridge, Build-Up, and Climax) to schedule all 167 wallpapers exactly once without duplicates, using a pure deterministic sine-based PRNG shuffle. Slide transitions dynamically adjust their duration (e.g., 30% of slide length) to keep up with the fast-paced climax (down to 1.18s per slide).
 20. **Exclusive CNCF Flickr stream for Live Gallery Mode (Tracks 1-6):** To prevent curated duplicate images from repeating across the playlist session, restrict Tracks 1-6 to pull exclusively from remote CNCF Flickr photos, falling back to local slides only if remote results are empty.
 21. **6-Second Seasonal Equinox Transition Fader:** During track changes, a global 6-second Equinox state machine in `WolvesApp.vue` displays a full-screen night-sky background overlay. This minimizes visual jank by gracefully fading out the active slideshow content and providing a clean boundary ("a new season") between different songs.
+22. **Continuous Timeline Boundary Matching:** When calculating the active slide for a continuous timeline (where Slide A ends exactly when Slide B begins), avoid boundary checks like `find(s => time >= s.startTime && time < s.endTime)`. Floating point micro-gaps can cause this to return `null` and create a 1-frame stutter to a fallback cover. Instead, use `findIndex(s => time < s.endTime)` to safely snap to the active slide.
+23. **GPU Hardware Acceleration for Crossfading:** Fading massive full-screen background images via main-thread opacity properties creates severe framerate drops (e.g., 5fps jank). Always apply `will-change: opacity`, `transform: translateZ(0)`, and a `linear` timing function to force the browser to use GPU compositor hardware acceleration for `.wallpaper-buffer-layer`, `.night-layer`, and `.flickr-photo-layer`.
+24. **High-Frequency Audio Progress Sync:** Standard 1000ms `setInterval` polling for media player progress creates up to 999ms of latency, which ruins the timing of tight HUD-synced animations (like typewriter or glitch effects). Increase broadcast intervals to 100ms (10Hz) to enable smooth UI synchronization without thrashing the main thread.
 
 ## Common Rationalizations
 
@@ -52,6 +55,8 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 | "A randomized array in-place is good enough for shuffling." | Mutation of a global constant array breaks Vue reactivity and causes severe repeats or missed slides. Local reactive loop-back shuffle is required. |
 | "Solid backgrounds are safer for text readability." | Completely solid backgrounds hide the seasonal fading artworks that are critical to the theater experience. Use rgba(16, 21, 31, 0.45) with blur(12px) to maximize both artwork visibility and text contrast. |
 | "Maintaining a static array is simpler and doesn't require a script." | A static list is prone to rot, mismatched paths, and requires editing code to add or remove images. An automated build-time generator is completely robust, matches the folder structure on disk automatically, and lets non-developers edit the slideshow by just managing files in Nautilus. |
+| "An ease-in-out curve looks better for crossfading wallpapers." | Applying complex easing curves to massive full-screen images on the main thread causes layout thrashing and 5fps stuttering. Use linear timing and hardware acceleration (`translateZ(0)`). |
+| "A 1-second progress poll is fast enough for the YouTube player." | A 1000ms poll interval causes up to 999ms of latency between the audio and the UI state, causing text animations to appear out of sync or delayed. Use 100ms. |
 
 ## Red Flags
 - Snapping monthly wallpapers without double-buffered crossfading.
@@ -59,6 +64,9 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 - Emojis used in code comments or templates (the user hates emojis; never use them).
 - Mutation of global constant arrays for slideshow item rotations.
 - Completely opaque HUD backgrounds that block the background seasonal art.
+- `ease-in-out` transitions on massive background image opacity (causes 5fps stuttering).
+- Using strict `time >= start && time < end` boundary checks for continuous timelines (causes 1-frame micro-gap stutters).
+- 1000ms poll loops for audio progress when syncing fast UI text effects.
 
 ## Verification
 - [ ] No emojis in changed files or comments.
@@ -68,3 +76,5 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 - [ ] Double-buffered state successfully transitions backgrounds over 1.5s.
 - [ ] Slideshow plays sequentially through every item once per loop without duplicate repeats.
 - [ ] Backdrop filters and opacity balances remain performant with no layout lag on mobile viewports.
+- [ ] Hardware acceleration (`translateZ(0)` and `will-change: opacity`) is applied to fullscreen crossfading layers.
+- [ ] Timeline boundaries use `findIndex(s => time < s.endTime)` to prevent floating-point stutter.

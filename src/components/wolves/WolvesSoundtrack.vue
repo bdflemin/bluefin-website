@@ -98,7 +98,7 @@ function startProgressTimer() {
         emit('progress', { currentTime, duration, playlistIndex })
       }
     }
-  }, 1000)
+  }, 100)
 }
 
 function stopProgressTimer() {
