@@ -16,8 +16,8 @@ export const wallpapers: Wallpaper[] = [
   {
     type: 'daynight',
     name: 'bluefin-collapse',
-    dayName: 'wolves/wolves/bluefin-collapse-day.webp',
-    nightName: 'wolves/wolves/bluefin-collapse-night.webp',
+    dayName: 'wolves/wolves/bluefin-collapse-night.webp',
+    nightName: 'wolves/wolves/bluefin-collapse-day.webp',
     title: 'Collapse (Day & Night)'
   },
   {

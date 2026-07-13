@@ -1,6 +1,7 @@
 import type { SoundtrackTrack } from '../data/wolves-soundtrack'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
 
 const source = {
@@ -105,6 +106,16 @@ describe('wolvesComicReader', () => {
     // At 319s (5:19), the active slide should correspond to the heart picture (kubecon-55168460993.webp)
     const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
     expect(srcs.some(src => src.includes('kubecon-55168460993.webp'))).toBe(true)
+  })
+
+  it('maps Collapse from its brighter visual day to its darker visual night', () => {
+    const collapse = wallpapers.find(wallpaper => wallpaper.name === 'bluefin-collapse')
+
+    expect(collapse).toMatchObject({
+      type: 'daynight',
+      dayName: 'wolves/wolves/bluefin-collapse-night.webp',
+      nightName: 'wolves/wolves/bluefin-collapse-day.webp',
+    })
   })
 
   it('keeps each later-track Flickr sequence stable and refreshes it for the next track', async () => {

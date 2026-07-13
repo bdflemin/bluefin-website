@@ -185,6 +185,15 @@ function formatTitle(filename) {
     .join(' ')
 }
 
+function dayNightNames(stem, dayFile, nightFile) {
+  const isVisuallyReversed = stem === 'bluefin-collapse'
+
+  return {
+    dayName: `wolves/wolves/${isVisuallyReversed ? nightFile : dayFile}`,
+    nightName: `wolves/wolves/${isVisuallyReversed ? dayFile : nightFile}`,
+  }
+}
+
 async function scanDirectory(subfolder) {
   try {
     const dirPath = join(BASE_WALLPAPERS_DIR, subfolder)
@@ -222,8 +231,7 @@ async function generate() {
         wallpapers.push({
           type: 'daynight',
           name: stem,
-          dayName: `wolves/wolves/${file}`,
-          nightName: `wolves/wolves/${nightFile}`,
+          ...dayNightNames(stem, file, nightFile),
           title: formatTitle(stem)
         })
         processedStory.add(file)
@@ -238,8 +246,7 @@ async function generate() {
         wallpapers.push({
           type: 'daynight',
           name: stem,
-          dayName: `wolves/wolves/${dayFile}`,
-          nightName: `wolves/wolves/${file}`,
+          ...dayNightNames(stem, dayFile, file),
           title: formatTitle(stem)
         })
         processedStory.add(dayFile)
