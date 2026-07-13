@@ -38,7 +38,9 @@ const soundtrackManifest = ref<WolvesSoundtrackManifest | null>(null)
 const playlistCurrentTime = ref(0)
 const playlistDuration = ref(0)
 const playlistTrackIndex = ref(0)
+const presentationTrackIndex = ref(0)
 const isSoundtrackActive = ref(false)
+const isGalleryPresentation = computed(() => presentationTrackIndex.value > 0)
 const currentNarrativeSlot = computed(() =>
   getNarrativeSlotForTime(playlistTrackIndex.value === 0 ? playlistCurrentTime.value : Number.POSITIVE_INFINITY),
 )
@@ -72,6 +74,7 @@ watch(playlistTrackIndex, (newVal) => {
   }
 
   isEquinoxActive.value = true
+  presentationTrackIndex.value = newVal
 
   if (equinoxTimeout) {
     clearTimeout(equinoxTimeout)
@@ -272,7 +275,11 @@ onBeforeUnmount(() => {
       </header>
 
       <!-- MIDDLE CONTENT AREA (WIDESCREEN SPLIT 2fr 1fr) -->
-      <div class="immersive-content-grid" :class="{ 'equinox-active': isEquinoxActive }">
+      <div
+        class="immersive-content-grid"
+        :class="{ 'equinox-active': isEquinoxActive }"
+        :data-presentation="isGalleryPresentation ? 'centered-gallery' : 'narrative-split'"
+      >
         <div class="immersive-col-left">
           <WolvesComicReader
             :track-index="isSoundtrackActive ? playlistTrackIndex : undefined"
@@ -280,7 +287,7 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="immersive-col-right">
+        <div v-if="!isGalleryPresentation" class="immersive-col-right">
           <WolvesLoreColumn
             :artifact-id="currentNarrativeSlot.artifactId"
             :duration="currentNarrativeSlot.endTime - currentNarrativeSlot.startTime"
@@ -1456,6 +1463,15 @@ onBeforeUnmount(() => {
     gap: 16px;
     padding: 16px;
   }
+
+  &[data-presentation='centered-gallery'] {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+
+    .immersive-col-left {
+      width: min(100%, 120rem);
+    }
+  }
 }
 
 .immersive-col-left {
@@ -2077,7 +2093,6 @@ onBeforeUnmount(() => {
 
 /* Equinox transition styling */
 .immersive-content-grid {
-  transition: opacity 1.5s ease-in-out;
   &.equinox-active {
     opacity: 0 !important;
     pointer-events: none;
