@@ -25,7 +25,6 @@ import WolvesComicReader from './components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
 import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
 import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
-import { LangLandingBluefinImageURLs } from './content'
 import { loadWolvesSoundtrack } from './data/wolves-soundtrack'
 import { wolvesRelease } from './data/wolves-story'
 
@@ -272,67 +271,6 @@ function getNightWallpaperUrl(monthIndex: number) {
 
 const isImmersive = ref(false)
 const isComicAutoplay = ref(false)
-const baseUrl = import.meta.env.BASE_URL
-
-const filteredMascots = computed(() => {
-  return LangLandingBluefinImageURLs.filter((url) => {
-    const filename = url.split('/').pop() || ''
-    return !filename.startsWith('aurora') && !filename.includes('jonatan')
-  })
-})
-
-const mascotIndex = ref(0)
-const nextMascotIndex = ref<number | null>(null)
-const isMascotTransitioning = ref(false)
-
-let mascotTimer: ReturnType<typeof setInterval> | null = null
-let mascotInitialTimeout: ReturnType<typeof setTimeout> | null = null
-
-function rotateMascot() {
-  if (filteredMascots.value.length === 0) {
-    return
-  }
-  const nextIdx = (mascotIndex.value + 1) % filteredMascots.value.length
-  nextMascotIndex.value = nextIdx
-  isMascotTransitioning.value = true
-  setTimeout(() => {
-    mascotIndex.value = nextIdx
-    nextMascotIndex.value = null
-    isMascotTransitioning.value = false
-  }, 1000)
-}
-
-function startMascotRotation() {
-  if (mascotTimer || mascotInitialTimeout) {
-    return
-  }
-  // Wait 15 seconds before the first rotation starts, then repeat every 6 seconds
-  mascotInitialTimeout = setTimeout(() => {
-    mascotInitialTimeout = null
-    rotateMascot()
-    mascotTimer = setInterval(rotateMascot, 6000)
-  }, 15000)
-}
-
-function stopMascotRotation() {
-  if (mascotInitialTimeout) {
-    clearTimeout(mascotInitialTimeout)
-    mascotInitialTimeout = null
-  }
-  if (mascotTimer) {
-    clearInterval(mascotTimer)
-    mascotTimer = null
-  }
-}
-
-watch(isImmersive, (active) => {
-  if (active) {
-    startMascotRotation()
-  }
-  else {
-    stopMascotRotation()
-  }
-})
 
 function handleFirstLoreFinished() {
   isComicAutoplay.value = true
@@ -393,7 +331,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
-  stopMascotRotation()
 })
 </script>
 
@@ -510,33 +447,6 @@ onBeforeUnmount(() => {
 
       <!-- BOTTOM CONTROLS HUD -->
       <footer class="immersive-hud-footer">
-        <!-- Mascot Rotating Console (circular node) -->
-        <div class="mascot-console-hud">
-          <div class="mascot-console-ring">
-            <div class="mascot-display-area">
-              <template v-if="filteredMascots.length > 0">
-                <img
-                  v-if="nextMascotIndex !== null"
-                  :src="`${baseUrl}${filteredMascots[nextMascotIndex].replace('./', '')}`"
-                  class="mascot-avatar fading-in"
-                  alt="Telemetry Avatar Next"
-                >
-                <img
-                  :src="`${baseUrl}${filteredMascots[mascotIndex].replace('./', '')}`"
-                  class="mascot-avatar"
-                  :class="{ 'fading-out': isMascotTransitioning }"
-                  alt="Telemetry Avatar"
-                >
-              </template>
-            </div>
-            <div class="hud-ring-overlay" />
-          </div>
-          <div class="mascot-telemetry-text font-mono">
-            <span>POD: wolves-telemetry-controller-7</span>
-            <span class="text-cyan">STATUS: Running</span>
-          </div>
-        </div>
-
         <!-- Soundtrack Dock -->
         <div class="immersive-soundtrack-dock">
           <WolvesSoundtrack

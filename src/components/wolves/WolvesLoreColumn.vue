@@ -2,6 +2,7 @@
 import type { WolvesChapter } from '../../data/wolves-story'
 import type { WolvesLoreEntry } from './lore'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { LangLandingBluefinImageURLs } from '../../content'
 import { formatQuoteSource, getLoreEntriesForChapter } from './lore'
 
 const props = defineProps<{
@@ -12,6 +13,8 @@ const emit = defineEmits<{
   (e: 'copiedStatus', status: boolean): void
   (e: 'firstFinished'): void
 }>()
+
+const baseUrl = import.meta.env.BASE_URL
 
 const isCopied = ref(false)
 
@@ -256,12 +259,64 @@ watch(currentLoreEntry, () => {
   restartLoreTimer()
 }, { immediate: true })
 
+const filteredMascots = computed(() => {
+  return LangLandingBluefinImageURLs.filter((url) => {
+    const filename = url.split('/').pop() || ''
+    return !filename.startsWith('aurora') && !filename.includes('jonatan')
+  })
+})
+
+const mascotIndex = ref(0)
+const nextMascotIndex = ref<number | null>(null)
+const isMascotTransitioning = ref(false)
+
+let mascotTimer: ReturnType<typeof setInterval> | null = null
+let mascotInitialTimeout: ReturnType<typeof setTimeout> | null = null
+
+function rotateMascot() {
+  if (filteredMascots.value.length === 0) {
+    return
+  }
+  const nextIdx = (mascotIndex.value + 1) % filteredMascots.value.length
+  nextMascotIndex.value = nextIdx
+  isMascotTransitioning.value = true
+  setTimeout(() => {
+    mascotIndex.value = nextIdx
+    nextMascotIndex.value = null
+    isMascotTransitioning.value = false
+  }, 1000)
+}
+
+function startMascotRotation() {
+  if (mascotTimer || mascotInitialTimeout) {
+    return
+  }
+  mascotInitialTimeout = setTimeout(() => {
+    mascotInitialTimeout = null
+    rotateMascot()
+    mascotTimer = setInterval(rotateMascot, 6000)
+  }, 15000)
+}
+
+function stopMascotRotation() {
+  if (mascotInitialTimeout) {
+    clearTimeout(mascotInitialTimeout)
+    mascotInitialTimeout = null
+  }
+  if (mascotTimer) {
+    clearInterval(mascotTimer)
+    mascotTimer = null
+  }
+}
+
 onMounted(() => {
   startLoreTimer()
+  startMascotRotation()
 })
 
 onBeforeUnmount(() => {
   stopLoreTimer()
+  stopMascotRotation()
   clearTypewriter()
   if (copyTimeout) {
     clearTimeout(copyTimeout)
@@ -361,6 +416,33 @@ defineExpose({
               </div>
             </div>
           </Transition>
+        </div>
+
+        <!-- Mascot Rotating Console (circular node) integrated at bottom of card -->
+        <div class="mascot-console-hud">
+          <div class="mascot-console-ring">
+            <div class="mascot-display-area">
+              <template v-if="filteredMascots.length > 0">
+                <img
+                  v-if="nextMascotIndex !== null"
+                  :src="`${baseUrl}${filteredMascots[nextMascotIndex].replace('./', '')}`"
+                  class="mascot-avatar fading-in"
+                  alt="Telemetry Avatar Next"
+                >
+                <img
+                  :src="`${baseUrl}${filteredMascots[mascotIndex].replace('./', '')}`"
+                  class="mascot-avatar"
+                  :class="{ 'fading-out': isMascotTransitioning }"
+                  alt="Telemetry Avatar"
+                >
+              </template>
+            </div>
+            <div class="hud-ring-overlay" />
+          </div>
+          <div class="mascot-telemetry-text font-mono">
+            <span>POD: wolves-telemetry-controller-7</span>
+            <span class="text-cyan">STATUS: Running</span>
+          </div>
         </div>
       </div>
     </section>
@@ -596,5 +678,89 @@ defineExpose({
 
 .font-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* Mascot Telemetry Circle Console */
+.mascot-console-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(12, 16, 22, 0.45);
+  border: 1px solid rgba(102, 179, 255, 0.2);
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-top: 16px;
+
+  .mascot-console-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border: 1px solid rgba(102, 179, 255, 0.3);
+    background: rgba(9, 13, 22, 0.65);
+    padding: 6px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .mascot-display-area {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mascot-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 1s ease-in-out;
+
+    &.fading-out {
+      opacity: 0;
+    }
+    &.fading-in {
+      animation: mascotFadeIn 1s ease-in-out forwards;
+    }
+  }
+
+  .hud-ring-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+
+  .mascot-telemetry-text {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    line-height: 1.3;
+  }
+}
+
+@keyframes mascotFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>
