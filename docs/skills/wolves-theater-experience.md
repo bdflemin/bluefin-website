@@ -82,3 +82,8 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 - [ ] Hardware acceleration (\`translateZ(0)\` and \`will-change: opacity\`) is applied to fullscreen crossfading layers.
 - [ ] Timeline boundaries use \`findIndex(s => time < s.endTime)\` to prevent floating-point stutter.
 - [ ] Flex grids scale proportionally on 16:9 1080p, 1440p, and mobile views without overflowing the 100vh viewport due to missing \`min-height: 0\`.
+
+### Additional Architectural Rules
+27. **Transparent Letterboxing:** When using `object-fit: contain` for wallpapers and Flickr photos, set the container `background-color: transparent` instead of a solid black or dark hex color. This allows the underlying seasonal wallpapers to remain visible through the letterbox gaps instead of being blocked by black bars.
+28. **Chapter-Specific Lore Filtering:** Lore rotation filtering MUST partition by `chapterId`. Unifying or dumping all lore entries into a single list causes resets on page transitions that prevent the reader from ever reaching the end of the list (e.g. omitting the final Wayland Yutani quote). Always preserve `id` and `chapterId` when mapping CMS artifacts.
+29. **Accessible Custom Sliders:** Any UI element styled as a progress bar with `role="slider"` must have corresponding keyboard handlers (e.g. `@keydown` for ArrowRight/ArrowLeft to increment/decrement value) and provide `aria-valuemin`/`aria-valuemax` bounds to be compliant and operable for assistive-technology users.
