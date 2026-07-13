@@ -48,7 +48,8 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
     // parse body into messages
     const messageBlocks = artifact.body.split(/\n{2,}/)
     const messages = messageBlocks.map((block) => {
-      const sfxMatch = block.match(/^<([^>]+)>$/)
+      const trimmedBlock = block.trim()
+      const sfxMatch = trimmedBlock.match(/^<([^>]+)>$/)
       if (sfxMatch) {
         return {
           isSfx: true,
@@ -57,7 +58,7 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
       }
 
       // support **Speaker**: or SPEAKER:
-      const match = block.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9-]+))(?:\s+\[([^\]]+)\])?:\s*(\S[\s\S]*)$/i)
+      const match = trimmedBlock.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9-]+))(?:\s+\[([^\]]+)\])?:\s*(\S[\s\S]*)$/i)
       if (match) {
         return {
           speaker: (match[1] || match[2]).trim(),
@@ -65,7 +66,7 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
           text: match[4].replace(/<br>/g, '\n').trim()
         }
       }
-      return { speaker: 'SYSTEM', text: block }
+      return { text: trimmedBlock.replace(/<br>/g, '\n') }
     })
 
     return {

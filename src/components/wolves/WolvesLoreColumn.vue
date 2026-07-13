@@ -225,7 +225,7 @@ ${pageUrl}`
   }
   else {
     const messages = entry.data.messages
-      .map(message => message.isSfx ? `⟪ ${message.text} ⟫` : `${message.speaker}: ${message.text}`)
+      .map(message => message.isSfx ? `⟪ ${message.text} ⟫` : (message.speaker ? `${message.speaker}: ${message.text}` : message.text))
       .join('\n')
     shareText = `[Bluefin Archive Intercept - ${entry.data.title}]
 Channel: ${entry.data.channel} | Date: ${entry.data.date}
@@ -651,6 +651,7 @@ defineExpose({
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-size: 1.15rem;
   line-height: 1.65;
+  white-space: pre-wrap;
 }
 
 .lore-quote {
