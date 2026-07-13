@@ -1468,6 +1468,10 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
 
+    @media (max-width: 1023px) {
+      grid-template-rows: 1fr;
+    }
+
     .immersive-col-left {
       width: min(100%, 120rem);
     }
