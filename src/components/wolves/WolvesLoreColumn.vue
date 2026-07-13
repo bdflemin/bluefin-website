@@ -309,14 +309,29 @@ function stopMascotRotation() {
   }
 }
 
+const telemetryCpu = ref(14)
+const telemetryMem = ref(128)
+let telemetryTimer: ReturnType<typeof setInterval> | null = null
+
+function updateTelemetry() {
+  // Random fluctuations for the unix stats
+  telemetryCpu.value = 10 + Math.floor(Math.random() * 25)
+  telemetryMem.value = 120 + Math.floor(Math.random() * 40)
+}
+
 onMounted(() => {
   startLoreTimer()
   startMascotRotation()
+  telemetryTimer = setInterval(updateTelemetry, 30000)
 })
 
 onBeforeUnmount(() => {
   stopLoreTimer()
   stopMascotRotation()
+  if (telemetryTimer) {
+    clearInterval(telemetryTimer)
+    telemetryTimer = null
+  }
   clearTypewriter()
   if (copyTimeout) {
     clearTimeout(copyTimeout)
@@ -343,9 +358,9 @@ defineExpose({
             // se7en.days
           </h2>
           <p class="title-p">
-            CLUSTER: ghost.exo-1.k3s // NS: wolves-telemetry // REPLICAS: 3/3 READY // TELEMETRY: Connected
-            <br>FACTORY: factory.projectbluefin.io // BUILD: 100% [PASS] // STREAMS: 13/13 LOCALES
-            <br>VARIANT: bluefin:testing // ARCH: x86_64, aarch64 // STATUS: Active
+            <span class="stat-lbl">CLUSTER:</span> ghost.exo-1.k3s // <span class="stat-lbl">NS:</span> wolves-telemetry // <span class="stat-lbl">REPLICAS:</span> <span class="stat-ok">3/3 READY</span>
+            <br><span class="stat-lbl">FACTORY:</span> factory.projectbluefin.io // <span class="stat-lbl">BUILD:</span> <span class="stat-ok">PASS</span>
+            <br><span class="stat-lbl">VARIANT:</span> bluefin:testing // <span class="stat-lbl">ARCH:</span> x86_64, aarch64 // <span class="stat-lbl">STATUS:</span> <span class="stat-ok">Active</span>
           </p>
         </div>
 
@@ -415,9 +430,9 @@ defineExpose({
             </div>
           </div>
           <div class="mascot-telemetry-text font-mono">
-            <span>POD: wolves-telemetry-controller-7</span>
-            <span>NODE: ip-10-0-1-23.ec2.internal // CPU: 14m // MEM: 128Mi</span>
-            <span class="text-cyan">STATUS: Running // UPTIME: 34d 12h // RESTART: 0</span>
+            <span><span class="stat-lbl">POD:</span> wolves-telemetry-controller-7</span>
+            <span><span class="stat-lbl">NODE:</span> ip-10-0-1-23.ec2.internal // <span class="stat-lbl">CPU:</span> <span class="stat-warn">{{ telemetryCpu }}m</span> // <span class="stat-lbl">MEM:</span> <span class="stat-warn">{{ telemetryMem }}Mi</span></span>
+            <span><span class="stat-lbl">STATUS:</span> <span class="stat-ok">Running</span> // <span class="stat-lbl">UPTIME:</span> 34d 12h // <span class="stat-lbl">RESTART:</span> 0</span>
           </div>
         </div>
       </div>
@@ -498,6 +513,16 @@ defineExpose({
   font-size: 0.9rem;
   line-height: 1.5;
   color: rgba(189, 189, 189, 0.9);
+}
+
+.stat-lbl {
+  color: var(--color-blue-light);
+}
+.stat-ok {
+  color: #4ade80;
+}
+.stat-warn {
+  color: #facc15;
 }
 
 .quote-viewport {
