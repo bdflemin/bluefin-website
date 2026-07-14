@@ -115,9 +115,9 @@ describe('wolvesApp.vue', () => {
       expect(wrapper.get('.immersive-hud-header').classes()).toContain('is-thesis-active')
       expect(wrapper.get('.hud-left').text()).toContain('Incoming Signal: Universal Blue')
       const signalText = wrapper.get('.thesis-overlay h1')
-      expect(signalText.text()).toBe('INCOMING SIGNAL')
+      expect(signalText.text()).toBe('INCOMING SIGNAL:')
       expect(signalText.classes()).toContain('thesis-signal-text')
-      expect(signalText.findAll('.thesis-signal-character--accent')).toHaveLength(0)
+      expect(signalText.attributes('style')).toContain('animation-delay: 0s')
 
       await soundtrack.vm.$emit('progress', {
         currentTime: 345,
@@ -133,27 +133,6 @@ describe('wolvesApp.vue', () => {
     finally {
       vi.useRealTimers()
     }
-  })
-
-  it('renders colon-delimited signals as a title and subtitle panel', async () => {
-    const wrapper = mount(WolvesApp)
-
-    await wrapper.get('.experience-cta-btn').trigger('click')
-    await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
-      currentTime: 421,
-      duration: 423,
-      playlistIndex: 0,
-    })
-
-    const panel = wrapper.get('.thesis-signal-panel')
-
-    expect(panel.find('.thesis-signal-title').text()).toBe('Bazzite Mk6 Units')
-    expect(panel.find('.thesis-signal-subtitle').text()).toBe('Prepare for Titanfall.')
-    expect(panel.find('.thesis-signal-divider').exists()).toBe(true)
-    expect(panel.text()).not.toContain(':')
-    expect(panel.findAll('.thesis-signal-character--accent').map(character => character.text())).toEqual(['B', 'f'])
-    expect(panel.find('.thesis-signal-title .thesis-signal-character--accent').attributes('style')).toContain('animation-delay')
-    expect(panel.find('.thesis-signal-subtitle .thesis-signal-character--accent').attributes('style')).toContain('animation-delay')
   })
 
   it('keeps the Track 0 reader time and lore under the entering Equinox overlay', async () => {

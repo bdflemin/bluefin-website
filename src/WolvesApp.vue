@@ -24,7 +24,6 @@ import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
 import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
 import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
 import { getNarrativeSlotForTime } from './data/wolves-narrative-timeline'
-import { createSignalDisplay } from './data/wolves-signal-display'
 import { loadWolvesSoundtrack } from './data/wolves-soundtrack'
 import { wolvesRelease } from './data/wolves-story'
 import { getWolvesThesisState } from './data/wolves-thesis-sequence'
@@ -50,7 +49,6 @@ const currentNarrativeSlot = computed(() =>
 const thesisState = computed(() =>
   presentationTrackIndex.value === 0 ? getWolvesThesisState(presentationCurrentTime.value) : getWolvesThesisState(-1),
 )
-const signalDisplay = computed(() => createSignalDisplay(thesisState.value.text))
 const THESIS_PULSE_SECONDS = 4 * 60 / 152
 const thesisPulseDelay = computed(() => {
   const elapsed = presentationCurrentTime.value - 345
@@ -339,32 +337,12 @@ onBeforeUnmount(() => {
             <p v-if="thesisState.subtitle">
               {{ thesisState.subtitle }}
             </p>
-            <div v-if="signalDisplay.subtitle !== null" class="thesis-signal-panel">
-              <span class="thesis-signal-title">
-                <span
-                  v-for="(character, index) in signalDisplay.title"
-                  :key="`title-${index}`"
-                  :class="{ 'thesis-signal-character--accent': character.highlighted }"
-                  :style="character.highlighted ? { animationDelay: thesisPulseDelay } : undefined"
-                >{{ character.value }}</span>
-              </span>
-              <span aria-hidden="true" class="thesis-signal-divider" :style="{ animationDelay: thesisPulseDelay }" />
-              <span class="thesis-signal-subtitle">
-                <span
-                  v-for="(character, index) in signalDisplay.subtitle"
-                  :key="`subtitle-${index}`"
-                  :class="{ 'thesis-signal-character--accent': character.highlighted }"
-                  :style="character.highlighted ? { animationDelay: thesisPulseDelay } : undefined"
-                >{{ character.value }}</span>
-              </span>
-            </div>
-            <h1 v-else-if="thesisState.text" class="thesis-signal-text">
-              <span
-                v-for="(character, index) in signalDisplay.title"
-                :key="`signal-${index}`"
-                :class="{ 'thesis-signal-character--accent': character.highlighted }"
-                :style="character.highlighted ? { animationDelay: thesisPulseDelay } : undefined"
-              >{{ character.value }}</span>
+            <h1
+              v-if="thesisState.text"
+              class="thesis-signal-text"
+              :style="{ animationDelay: thesisPulseDelay }"
+            >
+              {{ thesisState.text }}
             </h1>
             <span v-if="thesisState.mode === 'corruption' || thesisState.mode === 'growing-corruption'">!&lt;&gt;-_\\/[]{}—=+*^?#________X01</span>
           </div>
@@ -1494,7 +1472,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
   color: #ffffff;
   text-align: center;
-  overflow-x: auto;
   text-shadow:
     0 0 24px #7dd3fc,
     0 0 52px rgba(255, 255, 255, 0.7);
@@ -1506,64 +1483,9 @@ onBeforeUnmount(() => {
   }
 
   .thesis-signal-text {
-    white-space: nowrap;
-  }
-
-  .thesis-signal-panel {
-    width: max-content;
-    max-width: 100%;
-    display: grid;
-    grid-template-columns: max-content 3px max-content;
-    justify-content: center;
-    align-items: center;
-    gap: clamp(1.4rem, 3vw, 3.6rem);
-    margin-inline: auto;
-    padding: clamp(1.8rem, 3vw, 3.4rem);
-    border: 1px solid rgba(102, 179, 255, 0.55);
-    border-radius: 0.5rem;
-    background: rgba(16, 21, 31, 0.42);
-    box-shadow: inset 0 0 3.5rem rgba(102, 179, 255, 0.08);
-  }
-
-  .thesis-signal-title,
-  .thesis-signal-subtitle {
-    white-space: nowrap;
-  }
-
-  .thesis-signal-title {
-    color: #66b3ff;
-    font-size: clamp(1.5rem, 2.15vw, 2.9rem);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    line-height: 1.15;
-    text-align: right;
-    text-transform: uppercase;
-  }
-
-  .thesis-signal-divider {
-    width: 3px;
-    height: clamp(4.4rem, 8vw, 7.4rem);
-    background: #66b3ff;
-    box-shadow: 0 0 1rem rgba(102, 179, 255, 0.85);
     animation: thesisSignalPulse 1.578947s ease-in-out infinite;
+    transform-origin: center;
   }
-
-  .thesis-signal-subtitle {
-    font-size: clamp(2.3rem, 3.4vw, 4.8rem);
-    font-weight: 900;
-    line-height: 1.05;
-    text-align: left;
-  }
-
-  .thesis-signal-character--accent {
-    display: inline-block;
-    color: #66b3ff;
-    text-shadow:
-      0 0 1.2rem #66b3ff,
-      0 0 2.6rem rgba(102, 179, 255, 0.85);
-    animation: thesisSignalPulse 1.578947s ease-in-out infinite;
-  }
-
   p {
     margin: 0 0 16px;
     font-size: clamp(1rem, 2vw, 2rem);
@@ -1584,22 +1506,17 @@ onBeforeUnmount(() => {
   100% {
     opacity: 0.94;
     transform: scale(1);
-    text-shadow:
-      0 0 24px #7dd3fc,
-      0 0 52px rgba(255, 255, 255, 0.7);
+    text-shadow: 0 0 24px #7dd3fc, 0 0 52px rgba(255, 255, 255, 0.7);
   }
   50% {
     opacity: 1;
     transform: scale(1.008);
-    text-shadow:
-      0 0 30px #7dd3fc,
-      0 0 60px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 30px #7dd3fc, 0 0 60px rgba(255, 255, 255, 0.8);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .thesis-signal-character--accent,
-  .thesis-signal-divider {
+  .thesis-signal-text {
     animation: none;
   }
 }
