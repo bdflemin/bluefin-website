@@ -98,6 +98,40 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.immersive-content-grid > .thesis-overlay').exists()).toBe(false)
   })
 
+  it('uses Track 0 playback time for thesis state and disables it for other tracks', async () => {
+    vi.useFakeTimers()
+
+    try {
+      const wrapper = mount(WolvesApp)
+
+      await wrapper.get('.experience-cta-btn').trigger('click')
+      const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
+      await soundtrack.vm.$emit('progress', {
+        currentTime: 345,
+        duration: 423,
+        playlistIndex: 0,
+      })
+
+      expect(wrapper.get('.immersive-hud-header').classes()).toContain('is-thesis-active')
+      expect(wrapper.get('.hud-left').text()).toContain('Incoming Signal: Universal Blue')
+      expect(wrapper.get('.thesis-overlay h1').text()).toBe('We\'ve got your back.')
+
+      await soundtrack.vm.$emit('progress', {
+        currentTime: 345,
+        duration: 423,
+        playlistIndex: 1,
+      })
+      await vi.advanceTimersByTimeAsync(1500)
+
+      expect(wrapper.get('.immersive-hud-header').classes()).not.toContain('is-thesis-active')
+      expect(wrapper.get('.hud-left').text()).toContain('kubectl get pods')
+      expect(wrapper.find('.thesis-overlay').exists()).toBe(false)
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('keeps the Track 0 reader time and lore under the entering Equinox overlay', async () => {
     vi.useFakeTimers()
 

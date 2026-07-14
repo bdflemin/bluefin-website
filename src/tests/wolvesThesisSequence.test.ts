@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   getWolvesThesisState,
+  parseIncomingSignalMessages,
   wolvesIncomingSignalMessages,
 } from '../data/wolves-thesis-sequence'
 
@@ -17,6 +18,41 @@ describe('wolves thesis sequence', () => {
       'You have ascended.',
       'Become Legend',
     ])
+  })
+
+  it('returns an immutable empty list for whitespace-only incoming signal sources', () => {
+    const messages = parseIncomingSignalMessages(' \n\t \r\n  ')
+
+    expect(messages).toEqual([])
+    expect(Object.isFrozen(messages)).toBe(true)
+    expect(() => {
+      (messages as string[]).push('fallback')
+    }).toThrow(TypeError)
+  })
+
+  it('keeps thesis state text empty when the incoming signal source has no messages', async () => {
+    const sourceModule = '../data/wolves-incoming-signal.txt?raw'
+    const sequenceModule = '../data/wolves-thesis-sequence'
+
+    try {
+      vi.resetModules()
+      vi.doMock(sourceModule, () => ({ default: ' \n\t \r\n  ' }))
+
+      const reloadedSequence = await import(sequenceModule)
+
+      expect(reloadedSequence.wolvesIncomingSignalMessages).toEqual([])
+      expect(getWolvesThesisState(THESIS_START_SECONDS).text).toBe(wolvesIncomingSignalMessages[0])
+      expect(reloadedSequence.getWolvesThesisState(THESIS_START_SECONDS)).toMatchObject({
+        active: true,
+        text: '',
+        hudLabel: 'Incoming Signal: Universal Blue',
+      })
+      expect(reloadedSequence.getWolvesThesisState(365).text).toBe('')
+    }
+    finally {
+      vi.doUnmock(sourceModule)
+      vi.resetModules()
+    }
   })
 
   it('cycles a message every eight beats from the Universal Blue HUD change', () => {

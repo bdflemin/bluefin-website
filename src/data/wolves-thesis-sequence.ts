@@ -31,12 +31,16 @@ function active(mode: WolvesThesisMode, text = '', subtitle = '', warning = '', 
   }
 }
 
-export const wolvesIncomingSignalMessages = Object.freeze(
-  incomingSignalSource
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean),
-)
+export function parseIncomingSignalMessages(source: string): readonly string[] {
+  return Object.freeze(
+    source
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean),
+  )
+}
+
+export const wolvesIncomingSignalMessages = parseIncomingSignalMessages(incomingSignalSource)
 
 function incomingSignalText(time: number): string {
   if (wolvesIncomingSignalMessages.length === 0) {
