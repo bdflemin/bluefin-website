@@ -66,11 +66,8 @@ const selectedLoreView = computed(() => {
 .wolves-lore-column {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 16px;
-
-  @media (min-width: 1024px) {
-    flex: 1;
-    min-height: 0;
-  }
+  min-height: 0;
 }
 </style>
