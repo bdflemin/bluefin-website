@@ -86,6 +86,18 @@ describe('wolvesLoreColumn Logic', () => {
     },
   )
 
+  it('renders Arthur C. Clarke Childhood’s End quote identity without a trailing dash', () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'arthur-c-clarke-1',
+        duration: 20,
+      },
+    })
+
+    expect(wrapper.get('.lore-quote-meta strong').text()).toBe('Arthur C. Clarke')
+    expect(wrapper.get('[data-lore-quote-context]').text()).toBe('Childhood\'s End')
+  })
+
   it('rejects quote rendering without authored attribution instead of falling back to a legacy label', () => {
     const record = parseLoreRecord('legacy-quote', 'prologue', './lore/legacy-quote.md', [
       '---',
