@@ -191,20 +191,6 @@ onBeforeUnmount(clearTypewriter)
     data-lore-view-kind="chatlog"
   >
     <div class="dispatch-quote-card">
-      <div class="dispatch-plan-content">
-        <p class="dispatch-plan-command">
-          nimbinatus@blue-universal:~$ monitor --archive
-        </p>
-        <h2 class="title-h2">
-          // se7en.days
-        </h2>
-        <p class="title-p">
-          <span class="stat-lbl">CLUSTER:</span> ghost.exo-1.k3s // <span class="stat-lbl">NS:</span> wolves-telemetry // <span class="stat-lbl">REPLICAS:</span> <span class="stat-ok">3/3 READY</span>
-          <br><span class="stat-lbl">FACTORY:</span> factory.projectbluefin.io // <span class="stat-lbl">BUILD:</span> <span class="stat-ok">PASS</span>
-          <br><span class="stat-lbl">VARIANT:</span> bluefin:testing // <span class="stat-lbl">ARCH:</span> x86_64, aarch64 // <span class="stat-lbl">STATUS:</span> <span class="stat-ok">Active</span>
-        </p>
-      </div>
-
       <div ref="quoteViewportRef" class="quote-viewport" @click="skipTypewriter">
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
@@ -288,45 +274,6 @@ onBeforeUnmount(clearTypewriter)
     border-color: rgba(var(--color-blue-rgb), 0.4);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   }
-}
-
-.dispatch-plan-content {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  background: linear-gradient(180deg, rgba(16, 21, 31, 0.98) 0%, rgba(12, 16, 22, 0.98) 100%);
-  border: 1px solid rgba(var(--color-blue-rgb), 0.22);
-  border-radius: 10px;
-  padding: 12px 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-}
-
-.dispatch-plan-command {
-  margin: 0 0 6px;
-  font-size: 0.86rem;
-  color: rgba(189, 189, 189, 0.65);
-}
-
-.dispatch-plan-content .title-h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #ffffff;
-}
-
-.dispatch-plan-content .title-p {
-  margin: 6px 0 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: rgba(189, 189, 189, 0.9);
-}
-
-.stat-lbl {
-  color: var(--color-blue-light);
-}
-
-.stat-ok {
-  color: #4ade80;
 }
 
 .quote-viewport {

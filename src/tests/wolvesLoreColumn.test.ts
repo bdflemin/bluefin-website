@@ -24,6 +24,21 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.text()).toContain('It is a bitter thought, but you must face it.')
   })
 
+  it.each([
+    ['arthur-c-clarke-3', 'quote'],
+    ['lorem-prologue-1', 'chatlog'],
+  ])('renders %s as a record surface without the generic monitor console', (artifactId, kind) => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId,
+        duration: 20,
+      },
+    })
+
+    expect(wrapper.get(`[data-lore-view-kind="${kind}"]`).text()).not.toContain('nimbinatus@blue-universal:~$ monitor --archive')
+    expect(wrapper.text()).not.toContain('// se7en.days')
+  })
+
   it('types quote source characters without generated glyphs', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'arthur-c-clarke-3')
