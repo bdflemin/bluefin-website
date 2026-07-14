@@ -8,38 +8,43 @@ const props = defineProps<LoreViewProps>()
 const telemetry = computed(() => deriveLoreTelemetry(props.record))
 
 const parsedParagraphs = computed(() => {
-  return props.record.body.split(/\n{2,}/).map((para) => {
-    const trimmed = para.trim()
-    const match = trimmed.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s-]+)):\s*(\S[\s\S]*)$/i)
-    if (match) {
-      const speaker = (match[1] || match[2]).trim()
-      let text = match[3].trim()
-      text = text
+  const cleanBody = props.record.body.replace(/\r\n/g, '\n')
+  const normalizedBody = cleanBody.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9\-/]+(?:\s+[A-Z0-9\-/]+)*)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
+  return normalizedBody
+    .split(/\n{2,}/)
+    .map(para => para.trim())
+    .filter(Boolean)
+    .map((para) => {
+      const match = para.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i)
+      if (match) {
+        const speaker = (match[1] || match[2]).trim()
+        let text = match[3].trim()
+        text = text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        return {
+          isSpeaker: true,
+          speaker,
+          text,
+        }
+      }
+      const escaped = para
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      const text = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       return {
-        isSpeaker: true,
-        speaker,
+        isSpeaker: false,
+        speaker: '',
         text,
       }
-    }
-    const escaped = trimmed
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    const text = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    return {
-      isSpeaker: false,
-      speaker: '',
-      text,
-    }
-  })
+    })
 })
 </script>
 

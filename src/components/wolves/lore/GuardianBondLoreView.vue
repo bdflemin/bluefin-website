@@ -30,6 +30,18 @@ const validationState = computed(() => {
     return 'RECIPROCAL / INVALID'
   }
 })
+
+const paragraphs = computed(() => {
+  return props.record.body.split(/\n{2,}/).map((para) => {
+    const escaped = para
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+    return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  })
+})
 </script>
 
 <template>
@@ -84,8 +96,13 @@ const validationState = computed(() => {
     <p class="m-0 border-l-2 border-blue-300/50 pl-3 text-base text-blue-100">
       {{ validationState }}
     </p>
-    <article class="mt-auto whitespace-pre-wrap text-lg leading-6 text-slate-100">
-      {{ record.body }}
+    <article class="my-4 text-lg leading-6 text-slate-100">
+      <p
+        v-for="(para, index) in paragraphs"
+        :key="index"
+        class="mb-4 whitespace-pre-wrap"
+        v-html="para"
+      />
     </article>
   </section>
 </template>
