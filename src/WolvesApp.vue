@@ -310,7 +310,7 @@ onBeforeUnmount(() => {
       <header class="immersive-hud-header" :class="{ 'is-thesis-active': thesisState.active }">
         <div class="hud-left font-mono">
           <span class="hud-indicator-dot animate-pulse-fast" />
-          {{ thesisState.text || thesisState.hudLabel || 'kubectl get pods -n wolves --selector=app=seven-days-to-the-wolves --watch' }}
+          {{ thesisState.hudLabel || 'kubectl get pods -n wolves --selector=app=seven-days-to-the-wolves --watch' }}
         </div>
         <button class="hud-exit-btn font-mono" @click="exitImmersiveExperience">
           [ EXIT EXPERIENCE ]
@@ -331,6 +331,9 @@ onBeforeUnmount(() => {
             <p v-if="thesisState.subtitle">
               {{ thesisState.subtitle }}
             </p>
+            <h1 v-if="thesisState.text" class="thesis-signal-text">
+              {{ thesisState.text }}
+            </h1>
             <span v-if="thesisState.mode === 'corruption' || thesisState.mode === 'growing-corruption'">!&lt;&gt;-_\\/[]{}—=+*^?#________X01</span>
           </div>
         </div>
@@ -1462,6 +1465,12 @@ onBeforeUnmount(() => {
   text-shadow:
     0 0 24px #7dd3fc,
     0 0 52px rgba(255, 255, 255, 0.7);
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 6rem);
+    font-weight: 900;
+  }
 
   p {
     margin: 0 0 16px;

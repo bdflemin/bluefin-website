@@ -78,12 +78,17 @@ describe('wolves thesis sequence', () => {
       active: true,
       mode: 'welcome',
       dayPulse: true,
-      hudLabel: 'Incoming Signal: Universal Blue',
+      hudLabel: 'INCOMING SIGNAL:',
+    })
+    expect(getWolvesThesisState(351.316)).toMatchObject({
+      active: true,
+      mode: 'universal-blue',
+      hudLabel: 'Universal Blue to Cloud Native, we\'re coming.',
     })
     expect(getWolvesThesisState(349)).toMatchObject({
       active: true,
       mode: 'corruption',
-      hudLabel: 'Incoming Signal: Universal Blue',
+      hudLabel: 'INCOMING SIGNAL:',
     })
     expect(getWolvesThesisState(395)).toMatchObject({ active: true, mode: 'growing-corruption' })
     expect(getWolvesThesisState(405)).toMatchObject({
