@@ -6,6 +6,16 @@ import { deriveLoreTelemetry } from '../../../data/wolves-lore-records'
 const props = defineProps<LoreViewProps>()
 
 const telemetry = computed(() => deriveLoreTelemetry(props.record))
+
+const formattedBody = computed(() => {
+  const escaped = props.record.body
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+  return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+})
 </script>
 
 <template>
@@ -38,9 +48,7 @@ const telemetry = computed(() => deriveLoreTelemetry(props.record))
       {{ warning }}
     </aside>
 
-    <p class="my-4 whitespace-pre-wrap text-lg leading-6 text-slate-100">
-      {{ record.body }}
-    </p>
+    <p class="my-4 whitespace-pre-wrap text-lg leading-6 text-slate-100" v-html="formattedBody" />
 
     <footer class="mt-auto border-t border-blue-300/25 pt-3 text-base text-blue-200">
       STATUS / {{ telemetry.phase }} · {{ telemetry.resourceName }} · {{ telemetry.recordFingerprint }}
