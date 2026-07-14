@@ -59,3 +59,11 @@ The following commits form the complete, direct-to-main development history for 
 - **PASS:** `npm run test:run -- src/tests/wolvesLoreRecords.test.ts src/tests/wolvesNarrativeTimeline.test.ts src/tests/wolvesApp.test.ts src/tests/wolvesLore.test.ts` — 4 files, 32 tests.
 - **PASS:** `npm run typecheck`
 - **PASS:** `npx eslint src/tests/wolvesLoreRecords.test.ts`
+
+## 2026-07-14: Authored quote attribution regression
+
+- Parsed validated authored `attribution` and `context` fields into `LoreFrontmatter`; quote rendering now prefers those fields over legacy source labels and titles.
+- Added a column-rendering regression for `arthur-c-clarke-2`, confirming it renders `Arthur C. Clarke` and remains diagnostic-free without changing its authored Markdown.
+- **PASS:** `npm run test:run -- src/tests/wolvesLore.test.ts src/tests/wolvesLoreRecords.test.ts src/tests/wolvesLoreColumn.test.ts` — 3 files, 35 tests.
+- **PASS:** `npm run typecheck`
+- **PASS:** `npx eslint src/data/wolves-lore-records.ts src/components/wolves/lore.ts src/tests/wolvesLoreColumn.test.ts`

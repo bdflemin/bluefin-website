@@ -50,8 +50,8 @@ export function getQuoteLore(record: LoreRecord): BazziteQuote {
   const parts = (artifact?.sourceLabel || record.metadata.title || '').split('—')
   return {
     quote: record.body,
-    attribution: parts[0]?.trim() || record.metadata.title || '',
-    context: parts[1]?.trim() || '',
+    attribution: record.metadata.attribution ?? (parts[0]?.trim() || record.metadata.title || ''),
+    context: record.metadata.context ?? (parts[1]?.trim() || ''),
     date: record.metadata.timestamp,
   }
 }

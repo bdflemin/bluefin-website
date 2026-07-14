@@ -17,6 +17,8 @@ export interface LoreFrontmatter {
   kind?: LoreKind | 'transmission'
   title?: string
   timestamp?: string
+  attribution?: string
+  context?: string
   channel?: string
   classification?: string
   sender?: string
@@ -213,6 +215,8 @@ function parseFrontmatter(relativePath: string, raw: string): { metadata: LoreFr
       kind,
       title: stringField(loaded, 'title'),
       timestamp: stringField(loaded, 'timestamp') ?? stringField(loaded, 'date'),
+      attribution: stringField(loaded, 'attribution'),
+      context: stringField(loaded, 'context'),
       channel: stringField(loaded, 'channel'),
       classification: stringField(loaded, 'classification'),
       sender: stringField(loaded, 'sender'),

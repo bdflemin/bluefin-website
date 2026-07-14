@@ -45,6 +45,24 @@ describe('wolvesLoreColumn Logic', () => {
     expect(quote.quote.startsWith(renderedQuote)).toBe(true)
   })
 
+  it('renders an authored quote attribution over its title', async () => {
+    const record = loreRecords.find(record => record.id === 'arthur-c-clarke-2')
+    if (!record || record.kind !== 'quote') {
+      throw new Error('Expected the Arthur C. Clarke quote fixture')
+    }
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: record.id,
+        duration: 20,
+      },
+    })
+
+    await wrapper.find('.quote-viewport').trigger('click')
+
+    expect(record.diagnostics).toEqual([])
+    expect(wrapper.get('.lore-quote-meta strong').text()).toBe('Arthur C. Clarke')
+  })
+
   it('types transmission source characters without generated glyphs', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'lorem-prologue-1')
