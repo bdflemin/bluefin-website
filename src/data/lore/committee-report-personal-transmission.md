@@ -14,4 +14,4 @@ _editor_prompt: >-
 
 **Nimbatus**: No, it's just... the Vanguard are pissed... I kinda left some stuff out of that report...
 
-**The Foreman**: They'll thank us when we spend our considerable resources. Get moving. Out.
+**The Foreman**: They'll thank us when we send our considerable resources. Get moving. Out.
