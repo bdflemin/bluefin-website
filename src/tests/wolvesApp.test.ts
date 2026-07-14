@@ -113,11 +113,8 @@ describe('wolvesApp.vue', () => {
       })
 
       expect(wrapper.get('.immersive-hud-header').classes()).toContain('is-thesis-active')
-      expect(wrapper.get('.hud-left').text()).toContain('Incoming Signal: Universal Blue')
-      const signalText = wrapper.get('.thesis-overlay h1')
-      expect(signalText.text()).toBe('INCOMING SIGNAL:')
-      expect(signalText.classes()).toContain('thesis-signal-text')
-      expect(signalText.attributes('style')).toContain('animation-delay: 0s')
+      expect(wrapper.get('.hud-left').text()).toContain('INCOMING SIGNAL:')
+      expect(wrapper.find('.thesis-overlay h1').exists()).toBe(false)
 
       await soundtrack.vm.$emit('progress', {
         currentTime: 345,
