@@ -1,3 +1,5 @@
+import incomingSignalSource from './wolves-incoming-signal.txt?raw'
+
 export type WolvesThesisMode = 'inactive' | 'welcome' | 'corruption' | 'universal-blue' | 'evolve' | 'growing-corruption' | 'legend'
 
 export interface WolvesThesisState {
@@ -10,7 +12,13 @@ export interface WolvesThesisState {
   hudLabel: string
 }
 
+const THESIS_START_SECONDS = 345
+const THESIS_END_SECONDS = 425
+const TRACK_ZERO_BPM = 152
+const PHRASE_BEATS = 8
+
 const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
+
 function active(mode: WolvesThesisMode, text = '', subtitle = '', warning = '', dayPulse = false): WolvesThesisState {
   return {
     active: true,
@@ -23,30 +31,48 @@ function active(mode: WolvesThesisMode, text = '', subtitle = '', warning = '', 
   }
 }
 
+export const wolvesIncomingSignalMessages = Object.freeze(
+  incomingSignalSource
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean),
+)
+
+function incomingSignalText(time: number): string {
+  if (wolvesIncomingSignalMessages.length === 0) {
+    return ''
+  }
+
+  const phraseIndex = Math.floor(
+    (time - THESIS_START_SECONDS) / (60 / TRACK_ZERO_BPM * PHRASE_BEATS) + 1e-9,
+  )
+  return wolvesIncomingSignalMessages[phraseIndex % wolvesIncomingSignalMessages.length]
+}
+
 export function getWolvesThesisState(time: number): WolvesThesisState {
-  if (time < 345 || time > 425) {
+  if (time < THESIS_START_SECONDS || time > THESIS_END_SECONDS) {
     return inactive
   }
   if (time < 347.75) {
-    return active('welcome', 'We\'ve got your back.', '', '', true)
+    return active('welcome', incomingSignalText(time), '', '', true)
   }
   if (time < 350.5) {
-    return active('welcome', 'You\'ll never walk alone ...', '', '', true)
+    return active('welcome', incomingSignalText(time), '', '', true)
   }
   if (time < 359) {
-    return active('universal-blue', 'We are Universal Blue.')
+    return active('universal-blue', incomingSignalText(time))
   }
   if (time < 365) {
-    return active('evolve', 'Evolve or die ...')
+    return active('evolve', incomingSignalText(time))
   }
   if (time < 395) {
-    return inactive
+    return active('corruption', incomingSignalText(time))
   }
   if (time < 405) {
-    return active('growing-corruption')
+    return active('growing-corruption', incomingSignalText(time))
   }
   if (time < 408) {
-    return active('legend', 'You have ascended ...', '', 'truly a great loss for humanity.')
+    return active('legend', incomingSignalText(time), '', 'truly a great loss for humanity.')
   }
-  return active('legend', 'Become Legend', '', 'truly a great loss for humanity.')
+  return active('legend', incomingSignalText(time), '', 'truly a great loss for humanity.')
 }
