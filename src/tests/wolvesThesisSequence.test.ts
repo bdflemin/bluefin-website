@@ -96,6 +96,15 @@ describe('wolves thesis sequence', () => {
       mode: 'legend',
       warning: 'truly a great loss for humanity.',
     })
+    expect(getWolvesThesisState(407.999).hudLabel).toBe('Projected Joining: Salt Lake City, Utah, Circa 2026')
+    expect(getWolvesThesisState(408)).toMatchObject({
+      text: 'Become Legend',
+      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall.',
+    })
+    expect(getWolvesThesisState(425)).toMatchObject({
+      text: 'Become Legend',
+      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall.',
+    })
     expect(getWolvesThesisState(425).active).toBe(true)
     expect(getWolvesThesisState(425.001).active).toBe(false)
   })

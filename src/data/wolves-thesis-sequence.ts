@@ -22,6 +22,7 @@ const UNIVERSAL_BLUE_TEXT = 'We are Universal Blue.'
 const EVOLVE_TEXT = 'Evolve or die ...'
 const ASCENDED_TEXT = 'You have ascended ...'
 const LEGEND_TEXT = 'Become Legend'
+const TITANFALL_HUD_LABEL = 'Bazzite Mk6 Units: Prepare for Titanfall.'
 
 const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
 
@@ -91,5 +92,5 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
   if (time < 408) {
     return active('legend', ASCENDED_TEXT, '', 'truly a great loss for humanity.', false, incomingSignalLabel(time))
   }
-  return active('legend', LEGEND_TEXT, '', 'truly a great loss for humanity.', false, incomingSignalLabel(time))
+  return active('legend', LEGEND_TEXT, '', 'truly a great loss for humanity.', false, TITANFALL_HUD_LABEL)
 }
