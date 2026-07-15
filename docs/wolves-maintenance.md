@@ -123,6 +123,20 @@ Architecture:
 
 **What agents may touch**: segment data, `youtubeVideoId`/`audioYoutubeVideoId`, `maxDuration`/`duration`, and overlay text/timing/background in `buildIntroVideoSequence()` (`src/data/wolves-intro-sequence.ts`), with exact user-supplied copy only — same editorial rule as everywhere else on this page. The Collapse artwork (`public/wolves-intro/bluefin-collapse-{day,night}.webp`) is exclusive to this sequence by explicit user request; do not restore it to the Track 0 wallpaper rotation.
 
+## Creator Shorts Interstitial
+
+**Authorized exception to the "WolvesSoundtrack.vue is locked" rule above**, added by explicit, repeatedly-confirmed user request (not agent-initiated). Before touching this surface again, re-read this section; the boundary above still applies to everything not described here.
+
+A one-time, fullscreen bridge between Track 0 ("7 Days to the Wolves") and Track 1 ("Ghosts In The Mist") plays an alternating feed of real YouTube Shorts from two creators, Lindsay Nikole (`@LindsayNikole`) first, then Cassidy Williams (`@cassidoo`), continuing to alternate through the whole list. It highlights both creators equally by design — never let one dominate the running order.
+
+Architecture:
+
+- `src/data/wolves-creator-shorts.ts`: the **content surface** — a typed, ordered array of `{ videoId, title, creatorName, creatorHandle, channelUrl }`. This is the only editable part: swap, add, or remove entries here. Order must stay strictly alternating and Lindsay Nikole must stay first per explicit instruction.
+- `src/components/wolves/WolvesCreatorShortsInterstitial.vue`: fullscreen, `<Teleport to="body">` player (same reason as the intro overlay — immersive-layout ancestors use `transform`, which would otherwise confine a `position: fixed` overlay to its own widget). Plays through `wolvesCreatorShorts` **once**, in order, with no looping (unlike the intro overlay, this never repeats). Reuses the shared `useYoutubeIframeApi` composable. Advances on `onStateChange` `ENDED`; auto-advances on `onError` (a missing/restricted short never blocks the return to the live soundtrack). Emits `complete` after the last short ends. This component's markup/logic is locked; only the video list it's given is editable.
+- Wired into `WolvesSoundtrack.vue`: a `watch(currentTrackIndex, ...)` detects the native playlist's Track 0 → Track 1 transition exactly once (guarded by a `creatorShortsShown` flag that never resets), calls the existing internal `pausePlayback()`, and shows the interstitial. `handleCreatorShortsInterstitialComplete()` (fired on the `complete` event) hides it and calls `resumePlayback()`. It never fires again on any later track change (e.g. 1 → 2, or looping back to 0). This mirrors the same Teleport-from-inside-`WolvesSoundtrack.vue` pattern the intro overlay already established.
+
+**What agents may touch**: only the video list in `src/data/wolves-creator-shorts.ts`, with exact real, non-fictional video ids/titles/creator credit — same editorial rule as everywhere else on this page. The trigger condition (Track 0 → Track 1, once only), the pause/resume behavior, and the interstitial's own markup/logic are locked.
+
 **What agents must not touch without a fresh, explicit user request**: `WolvesIntroOverlay.vue` markup/styles/logic, `useYoutubeIframeApi.ts`, the `handlePrimaryAction`/`props.playing` watcher/`handleIntroOverlayComplete` wiring in `WolvesSoundtrack.vue`, or the pure functions in `wolves-intro-sequence.ts` (only its `buildIntroVideoSequence()` data payload is content). The `video`/`text` segment kinds, `maxDuration`/`duration` auto-advance mechanics, and background-crossfade rendering were added by explicit, confirmed user request; re-confirm before extending them further.
 
 ## Slideshows

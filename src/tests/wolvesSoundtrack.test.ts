@@ -2,6 +2,7 @@ import type { WolvesSoundtrackManifest } from '../data/wolves-soundtrack'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
+import { wolvesCreatorShorts } from '../data/wolves-creator-shorts'
 
 const { loadWolvesSoundtrack } = vi.hoisted(() => ({
   loadWolvesSoundtrack: vi.fn<() => Promise<WolvesSoundtrackManifest>>(),
@@ -170,6 +171,7 @@ beforeEach(() => {
 
 afterEach(() => {
   document.body.className = ''
+  document.body.querySelectorAll('.wolves-creator-shorts-interstitial').forEach(node => node.remove())
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
   delete (window as any).onYouTubeIframeAPIReady
@@ -398,6 +400,44 @@ describe('wolves soundtrack', () => {
 
     expect(wrapper.text()).toContain('Ghosts In The Mist')
     expect(wrapper.text()).toContain('Unleash The Archers')
+  })
+
+  it('pauses and shows the Creator Shorts interstitial exactly once, on the Track 0 to Track 1 transition, then resumes', async () => {
+    const wrapper = mount(WolvesSoundtrack)
+
+    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+    await flushPromises()
+    await skipIntroOverlay(wrapper)
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+
+    players[0].triggerPlaylistItem(1)
+    await flushPromises()
+
+    expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).not.toBeNull()
+
+    // Further track changes must never re-trigger the once-only interstitial.
+    players[0].triggerPlaylistItem(0)
+    await flushPromises()
+    players[0].triggerPlaylistItem(1)
+    await flushPromises()
+
+    expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+
+    // Finishing the shorts feed resumes the soundtrack and removes the interstitial.
+    for (let i = 0; i < wolvesCreatorShorts.length; i++) {
+      const shortsPlayer = players[players.length - 1]
+      shortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: shortsPlayer })
+      await flushPromises()
+    }
+
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+    expect(players[0].playVideo).toHaveBeenCalled()
   })
 
   it('shows the music link and Premium notice when playback cannot initialize', async () => {

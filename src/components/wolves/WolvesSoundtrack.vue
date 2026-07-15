@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SoundtrackSource, SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
@@ -86,6 +87,14 @@ const currentTrackIndex = ref(0)
 const playerHost = ref<HTMLElement | null>(null)
 const currentTime = ref(0)
 const duration = ref(0)
+
+/**
+ * One-time bridge between Track 0 ("7 Days to the Wolves") and Track 1 ("Ghosts In The
+ * Mist"): pauses the soundtrack and shows the alternating Creator Shorts feed, then resumes.
+ * `creatorShortsShown` guards against firing again on any later track change.
+ */
+const creatorShortsInterstitialActive = ref(false)
+const creatorShortsShown = ref(false)
 
 const formattedCurrentTime = computed(() => formatTime(currentTime.value))
 const formattedDuration = computed(() => formatTime(duration.value))
@@ -402,6 +411,11 @@ function handleIntroOverlayComplete() {
   void startSoundtrack()
 }
 
+function handleCreatorShortsInterstitialComplete() {
+  creatorShortsInterstitialActive.value = false
+  resumePlayback()
+}
+
 function handlePreviousTrack() {
   if (!canGoToPreviousTrack.value) {
     return
@@ -417,6 +431,14 @@ function handleNextTrack() {
 }
 
 watch(isStarted, syncRootPlayerClass, { immediate: true })
+
+watch(currentTrackIndex, (newIndex, oldIndex) => {
+  if (oldIndex === 0 && newIndex === 1 && !creatorShortsShown.value) {
+    creatorShortsShown.value = true
+    creatorShortsInterstitialActive.value = true
+    pausePlayback()
+  }
+})
 
 watch(status, (newStatus) => {
   emit('update:playing', newStatus === 'playing')
@@ -485,6 +507,11 @@ onBeforeUnmount(() => {
       @complete="handleIntroOverlayComplete"
     />
   </Teleport>
+
+  <WolvesCreatorShortsInterstitial
+    v-if="creatorShortsInterstitialActive"
+    @complete="handleCreatorShortsInterstitialComplete"
+  />
 
   <div class="sidebar-soundtrack-card wolves-soundtrack-card">
     <section class="soundtrack-panel" :class="{ 'is-started': isStarted, 'has-error': status === 'error' }">

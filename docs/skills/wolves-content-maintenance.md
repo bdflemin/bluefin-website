@@ -15,6 +15,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Editing top-bar incoming-signal lines (`src/data/wolves-incoming-signal.txt`).
 - Adding, swapping, or fixing metadata for soundtrack tracks (`public/wolves-playlist.json`).
 - Adding or removing slideshow images under `public/img/wallpapers/wolves/`, including optional per-slide theater-caption descriptions in `curatedDescriptions` (`scripts/generate-wallpapers.js`).
+- Swapping, adding, or removing entries in the Creator Shorts interstitial video list (`src/data/wolves-creator-shorts.ts`) — see "Creator Shorts Interstitial" in the reference.
 - Any user request that mentions the Wolves page, lore, thesis, soundtrack, or slideshow.
 
 ## When NOT to Use

@@ -1,9 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 import { wolvesCreatorShorts } from '../data/wolves-creator-shorts'
 
-const { default: WolvesCreatorShorts } = await import('../components/wolves/WolvesCreatorShorts.vue')
+const { default: WolvesCreatorShortsInterstitial } = await import('../components/wolves/WolvesCreatorShortsInterstitial.vue')
 
 const iframeApiSrc = 'https://www.youtube.com/iframe_api'
 
@@ -53,6 +54,11 @@ function resolveIframeApi() {
   ;(window as any).onYouTubeIframeAPIReady?.()
 }
 
+function interstitialVisible() {
+  // Teleported to document.body — see docs/skills/wolves-fullscreen-overlays.md.
+  return document.body.querySelector('.wolves-creator-shorts-interstitial') !== null
+}
+
 beforeEach(() => {
   players = []
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
@@ -63,6 +69,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  document.body.querySelectorAll('.wolves-creator-shorts-interstitial').forEach(node => node.remove())
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
   delete (window as any).onYouTubeIframeAPIReady
@@ -70,72 +77,69 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('wolves-creator-shorts data', () => {
-  it('has twelve entries strictly alternating, starting with Lindsay Nikole', () => {
-    expect(wolvesCreatorShorts).toHaveLength(12)
-    expect(wolvesCreatorShorts[0].creatorName).toBe('Lindsay Nikole')
-
-    wolvesCreatorShorts.forEach((short, index) => {
-      const expectedCreator = index % 2 === 0 ? 'Lindsay Nikole' : 'Cassidy Williams'
-      expect(short.creatorName).toBe(expectedCreator)
-    })
-  })
-})
-
-describe('wolvesCreatorShorts player', () => {
-  it('embeds the first short (Lindsay Nikole) and credits her by name and link', async () => {
-    const wrapper = mount(WolvesCreatorShorts)
+describe('wolvesCreatorShortsInterstitial', () => {
+  it('teleports to body and starts with the first (Lindsay Nikole) short', async () => {
+    mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
 
+    expect(interstitialVisible()).toBe(true)
     expect(players).toHaveLength(1)
     expect(players[0].videoId).toBe(wolvesCreatorShorts[0].videoId)
-    expect(wrapper.text()).toContain('Lindsay Nikole')
-    const link = wrapper.find('a')
-    expect(link.attributes('href')).toBe(wolvesCreatorShorts[0].channelUrl)
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial-credit')?.textContent).toContain('Lindsay Nikole')
   })
 
-  it('advances to the next (alternating) short when the current one ends', async () => {
-    const wrapper = mount(WolvesCreatorShorts)
+  it('advances through the alternating list as each short ends', async () => {
+    mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
 
     players[0].triggerEnded()
     await flushPromises()
+    await nextTick()
 
     expect(players).toHaveLength(2)
     expect(players[1].videoId).toBe(wolvesCreatorShorts[1].videoId)
-    expect(wrapper.text()).toContain('Cassidy Williams')
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial-credit')?.textContent).toContain('Cassidy Williams')
   })
 
-  it('loops back to the first short after the last one ends', async () => {
-    const wrapper = mount(WolvesCreatorShorts)
+  it('emits complete after the last short ends, without looping back to the first', async () => {
+    const wrapper = mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
 
-    for (let i = 0; i < wolvesCreatorShorts.length; i++) {
+    for (let i = 0; i < wolvesCreatorShorts.length - 1; i++) {
       players[players.length - 1].triggerEnded()
       await flushPromises()
+      await nextTick()
     }
 
-    expect(players).toHaveLength(wolvesCreatorShorts.length + 1)
-    expect(players[players.length - 1].videoId).toBe(wolvesCreatorShorts[0].videoId)
-    expect(wrapper.text()).toContain('Lindsay Nikole')
+    expect(players).toHaveLength(wolvesCreatorShorts.length)
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    players[players.length - 1].triggerEnded()
+    await flushPromises()
+    await nextTick()
+
+    // The component emits `complete` and leaves the unmount decision to its parent
+    // (WolvesSoundtrack.vue's `v-if`), so it does not remove itself here.
+    expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
   it('never blocks the feed when a short errors', async () => {
-    const wrapper = mount(WolvesCreatorShorts)
+    mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
 
     players[0].triggerError()
     await flushPromises()
+    await nextTick()
 
     expect(players).toHaveLength(2)
-    expect(wrapper.text()).toContain('Cassidy Williams')
+    expect(document.body.querySelector('.wolves-creator-shorts-interstitial-credit')?.textContent).toContain('Cassidy Williams')
   })
 })
