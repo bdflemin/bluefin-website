@@ -61,9 +61,10 @@ export function activeOverlayText(
 }
 
 /**
- * The two-stage sequence played before the live playlist experience begins:
- * 1. The new self-produced intro video (character overlays, own encode).
- * 2. The existing hero video (`wolves-first-song-1440p`), left untouched by this system.
+ * The intro video played before the live playlist experience begins. The live experience's
+ * own hero moment is the YouTube-hosted Track 0 playback that `startSoundtrack()` already
+ * starts once this sequence completes — there is no separate local hero video file to chain
+ * here, so this sequence contains only the new, self-produced intro video.
  *
  * Paths are resolved against BASE_URL so fork previews and production both work
  * (see AGENTS.md "Public asset fetches" convention).
@@ -75,13 +76,7 @@ export function buildIntroVideoSequence(baseUrl: string): readonly IntroVideoSpe
       src: `${baseUrl}videos/wolves-intro-1440p.mp4`,
       overlays: [
         { text: 'In this world ... our contributors are not just stewards, they are Guardians!', start: 0, end: 6 },
-      ],
-    },
-    {
-      id: 'wolves-hero',
-      src: `${baseUrl}videos/wolves-first-song-1440p.mp4`,
-      overlays: [
-        { text: 'Who would _dare_ to Fight for the User', start: 0, end: 6 },
+        { text: 'Who would _dare_ to Fight for the User', start: 6, end: 12 },
       ],
     },
   ] as const
