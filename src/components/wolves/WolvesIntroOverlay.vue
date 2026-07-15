@@ -463,7 +463,7 @@ onBeforeUnmount(() => {
       :class="{
         'wolves-intro-overlay-text-somber': isSomberTextSegment,
         'wolves-intro-overlay-text-dominant': activeCue?.emphasis === 'dominant',
-        'wolves-intro-overlay-text-top': activeCue?.backgroundCrossfade && activeCue.emphasis !== 'dominant' && !activeCue.calamity,
+        'wolves-intro-overlay-text-top': activeCue?.backgroundCrossfade && activeCue.emphasis !== 'dominant' && !activeCue.calamity && activeCue.textPosition !== 'bottom',
       }"
       :style="isSomberTextSegment ? { animationDuration: `${somberFadeDuration}s` } : undefined"
     >

@@ -57,6 +57,14 @@ export interface IntroOverlayTextCue {
    * both callouts can render at once without stacking on top of each other.
    */
   readonly position?: 'left' | 'right'
+  /**
+   * Overrides the default `backgroundCrossfade` caption placement (which moves text up to the
+   * top of the frame, since most Bluefin wallpaper scenes are sky-led landscapes with their
+   * busiest imagery lower down). Reserved for scenes where that's reversed, e.g. scene 9's
+   * large dark dinosaur-silhouette mass sits in the lower frame, which reads better as a
+   * legible backdrop for bottom-anchored text than the top.
+   */
+  readonly textPosition?: 'top' | 'bottom'
 }
 
 interface IntroSegmentBase {
@@ -294,6 +302,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
           start: 112.61,
           end: 132.6,
           backgroundCrossfade: bluefinMonthCrossfade(9),
+          textPosition: 'bottom',
         },
         {
           // A single unbroken line, cycling through two wallpaper scenes underneath it: scene
