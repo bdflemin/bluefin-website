@@ -28,7 +28,6 @@ export const wolvesCreatorShortsLindsayNikole: readonly WolvesCreatorShort[] = [
   { videoId: 'hqbR6Kt2McY', title: 'Animals that are METAL AS F*CK', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'horizontal' },
   { videoId: 'T8aREn47900', title: 'every single one is horrific', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },
   { videoId: 'GjSzNxJG1dA', title: 'rocket needs some medicine', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },
-  { videoId: 'K1DJNw2zHlo', title: 'Hammerheads are getting hammered', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },
   { videoId: 'Xz8kStQDgUI', title: 'this is INSANE.', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },
   { videoId: 'GnBTGEvOuRk', title: 'a gargantuan snack', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },
   { videoId: 'CqyzFjfmLhU', title: 'this is a real seal', creatorName: 'Lindsay Nikole', channelUrl: 'https://www.youtube.com/@LindsayNikole', orientation: 'vertical' },

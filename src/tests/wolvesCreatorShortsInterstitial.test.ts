@@ -155,8 +155,8 @@ describe('wolvesCreatorShortsInterstitial', () => {
       return slots[0]?.classList.contains('is-active') ? 'left' : 'right'
     }
 
-    // Lindsay has 8 entries, Cassidy has 6 -- Cassidy's list must run out first, and Lindsay
-    // must keep playing solo (via loadVideoById) for her last two entries before completing.
+    // Lindsay has 7 entries, Cassidy has 6 -- Cassidy's list must run out first, and Lindsay
+    // must keep playing solo (via loadVideoById) for her last entry before completing.
     const totalTurns = wolvesCreatorShortsLindsayNikole.length + wolvesCreatorShortsCassidyWilliams.length
     for (let turn = 0; turn < totalTurns; turn++) {
       expect(wrapper.emitted('complete')).toBeUndefined()
@@ -168,7 +168,7 @@ describe('wolvesCreatorShortsInterstitial', () => {
 
     // No third player was ever created -- the solo phase reuses the same two persistent players.
     expect(players).toHaveLength(2)
-    expect(right.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[7].videoId)
+    expect(right.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[6].videoId)
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
