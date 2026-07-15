@@ -441,9 +441,20 @@ onBeforeUnmount(() => {
         :class="{
           'wolves-guardian-plate-left': cue.position === 'left',
           'wolves-guardian-plate-right': cue.position === 'right',
+          'wolves-guardian-plate-raised': cue.raised,
         }"
       >
         <template v-if="parseGuardianCue(cue.text)">
+          <div class="wolves-guardian-plate-burst" aria-hidden="true" />
+          <div class="wolves-guardian-plate-header">
+            <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-left" aria-hidden="true" />
+            <svg class="wolves-guardian-plate-crest" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-guardian-plate-crest-outer" />
+              <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-guardian-plate-crest-inner" />
+              <path d="M35,45 L50,60 L65,45" class="wolves-guardian-plate-crest-chevron" />
+            </svg>
+            <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-right" aria-hidden="true" />
+          </div>
           <p class="wolves-guardian-plate-label">
             GUARDIAN // MAINTAINER
           </p>
@@ -824,20 +835,26 @@ onBeforeUnmount(() => {
   cursor: default;
 }
 
-/* Guardian trailer callout, styled after the live Guardian dossier cards (see
-   GuardianDossierView.vue): a bordered, monospace "nerd plate" instead of the plain caption
-   used for the Prologue/Epilogue's somber text cards. */
+/* Guardian trailer callout, redesigned as a Destiny 2 "Guardian Rank Up" style HUD burst:
+   a chamfered plate with a radial ignition flash, a crest badge flanked by horizon accent
+   lines, and a slow letter-spacing text drift -- built from research into Bungie's diegetic
+   HUD notification style (geometry, glow/bloom, and animation choreography). Replaces the
+   earlier plain "nerd plate" card. */
 .wolves-guardian-plate {
   position: absolute;
   bottom: 10%;
   left: 5%;
-  max-width: 34rem;
-  padding: 1rem 1.35rem;
+  max-width: 44rem;
+  padding: 1.75rem 2rem 1.5rem;
+  overflow: visible;
   border: 1px solid rgb(147 197 253 / 45%);
   border-radius: 0.75rem;
-  background: rgb(8 12 20 / 80%);
+  clip-path: polygon(16px 0%, 100% 0%, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0% 100%, 0% 16px);
+  background: rgb(8 12 20 / 82%);
   color: #e2e8f0;
+  text-align: center;
   text-shadow: 0 2px 10px rgb(0 0 0 / 80%);
+  animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Anchors this callout to the left/right side of the frame instead of the default lower-left
@@ -853,16 +870,96 @@ onBeforeUnmount(() => {
   right: 5%;
 }
 
+/* Raises the callout from the default lower-third anchor to sit closer to a Guardian's
+   actual on-screen position when it towers above the frame's lower third (see the `raised`
+   field doc comment in wolves-intro-sequence.ts). */
+.wolves-guardian-plate-raised {
+  bottom: auto;
+  top: 28%;
+}
+
+/* Radial ignition flash behind the crest at the moment the plate appears. */
+.wolves-guardian-plate-burst {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #93c5fd 45%, transparent 70%);
+  mix-blend-mode: color-dodge;
+  filter: blur(8px);
+  transform: translate(-50%, -50%) scale(0.1);
+  animation: wolves-guardian-plate-ignite 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.wolves-guardian-plate-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.wolves-guardian-plate-horizon {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 2rem;
+  background: linear-gradient(to right, transparent, #93c5fd 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(147 197 253 / 55%);
+  transform: scaleX(0);
+}
+
+.wolves-guardian-plate-horizon-left {
+  transform-origin: right center;
+  animation: wolves-guardian-plate-line-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.wolves-guardian-plate-horizon-right {
+  transform-origin: left center;
+  background: linear-gradient(to left, transparent, #93c5fd 60%, #fff 100%);
+  animation: wolves-guardian-plate-line-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.wolves-guardian-plate-crest {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgb(147 197 253 / 65%));
+  opacity: 0;
+  animation: wolves-guardian-plate-crest-drop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15) 0.05s forwards;
+}
+
+.wolves-guardian-plate-crest-outer {
+  fill: none;
+  stroke: #93c5fd;
+  stroke-width: 2;
+}
+
+.wolves-guardian-plate-crest-inner {
+  fill: rgb(8 12 20 / 95%);
+  stroke: #f5f5f5;
+  stroke-width: 1;
+}
+
+.wolves-guardian-plate-crest-chevron {
+  fill: none;
+  stroke: #93c5fd;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .wolves-guardian-plate-label {
   margin: 0;
-  font-size: 1.05rem;
-  letter-spacing: 0.2em;
+  font-size: clamp(1.4rem, 1.1rem + 0.6vw, 1.8rem);
+  letter-spacing: 0.35em;
   color: #93c5fd;
 }
 
 .wolves-guardian-plate-class {
   margin: 0.35rem 0 0;
-  font-size: 1.15rem;
+  font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.1rem);
   letter-spacing: 0.05em;
   color: #bfdbfe;
   text-transform: uppercase;
@@ -870,15 +967,88 @@ onBeforeUnmount(() => {
 
 .wolves-guardian-plate-name {
   margin: 0.2rem 0 0;
-  font-size: 2rem;
+  font-size: clamp(2.6rem, 1.9rem + 1.6vw, 3.6rem);
   font-weight: 700;
   color: #f5f5f5;
+  background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
+  animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.15s backwards;
 }
 
 .wolves-guardian-plate-title {
   margin: 0.35rem 0 0;
-  font-size: 1.2rem;
+  font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
   color: #94a3b8;
+}
+
+@keyframes wolves-guardian-plate-ignite {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+@keyframes wolves-guardian-plate-line-sweep {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes wolves-guardian-plate-crest-drop {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(12deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wolves-guardian-plate-text-drift {
+  0% {
+    opacity: 0;
+    letter-spacing: -0.05em;
+    filter: blur(4px);
+  }
+  25% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: normal;
+    filter: blur(0);
+  }
+}
+
+@keyframes wolves-guardian-plate-impact {
+  0% {
+    filter: contrast(1) saturate(1);
+  }
+  12% {
+    filter: contrast(1.2) saturate(1.4) drop-shadow(2px 0 0 rgb(255 0 100 / 50%))
+      drop-shadow(-2px 0 0 rgb(0 255 255 / 50%));
+  }
+  35% {
+    filter: contrast(1) saturate(1);
+  }
 }
 
 /* Permanent progress bar for the whole intro sequence (Prologue + Guardian trailer +

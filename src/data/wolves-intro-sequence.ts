@@ -58,6 +58,13 @@ export interface IntroOverlayTextCue {
    */
   readonly position?: 'left' | 'right'
   /**
+   * Raises a Guardian trailer callout from the default lower-third anchor to sit closer to
+   * that Guardian's actual position in the shot. Reserved for cues where the default bottom
+   * placement would sit far below the Guardian's on-screen character (e.g. Natali Vlatko's
+   * Behemoth Titan towers in the upper/center of the shared Christopher Blecker shot).
+   */
+  readonly raised?: boolean
+  /**
    * Overrides the default `backgroundCrossfade` caption placement (which moves text up to the
    * top of the frame, since most Bluefin wallpaper scenes are sky-led landscapes with their
    * busiest imagery lower down). Reserved for scenes where that's reversed, e.g. scene 9's
@@ -429,7 +436,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
         { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star', start: 83, end: 90, position: 'left' },
-        { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch', start: 87.5, end: 96, position: 'right' },
+        { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch', start: 87.5, end: 96, position: 'right', raised: true },
       ],
     },
     {
