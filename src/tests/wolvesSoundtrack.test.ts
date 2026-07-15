@@ -137,9 +137,17 @@ function mockIframeApiFailure() {
   script?.dispatchEvent(new Event('error'))
 }
 
-async function skipIntroOverlay(wrapper: ReturnType<typeof mount>) {
-  await wrapper.get('button[aria-label="Skip intro"]').trigger('click')
+async function skipIntroOverlay(_wrapper: ReturnType<typeof mount>) {
+  const skipButton = document.body.querySelector<HTMLButtonElement>('button[aria-label="Skip intro"]')
+  expect(skipButton).not.toBeNull()
+  skipButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   await flushPromises()
+}
+
+function introOverlayVisible() {
+  // WolvesIntroOverlay is Teleported to document.body so it renders fullscreen,
+  // clear of the soundtrack widget's own layout/stacking context.
+  return document.body.querySelector('.wolves-intro-overlay') !== null
 }
 
 beforeEach(() => {
@@ -230,13 +238,13 @@ describe('wolves soundtrack', () => {
     // startSoundtrack() directly.
     const wrapper = mount(WolvesSoundtrack, { props: { playing: false } })
 
-    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
+    expect(introOverlayVisible()).toBe(false)
     expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
 
     await wrapper.setProps({ playing: true })
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(true)
+    expect(introOverlayVisible()).toBe(true)
     expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
 
     await skipIntroOverlay(wrapper)
@@ -251,13 +259,13 @@ describe('wolves soundtrack', () => {
     // timestamp, so WolvesApp.vue passes skipIntro=true while simulating.
     const wrapper = mount(WolvesSoundtrack, { props: { playing: false, skipIntro: true } })
 
-    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
+    expect(introOverlayVisible()).toBe(false)
     expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
 
     await wrapper.setProps({ playing: true })
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
+    expect(introOverlayVisible()).toBe(false)
     expect(loadWolvesSoundtrack).toHaveBeenCalledTimes(1)
   })
 

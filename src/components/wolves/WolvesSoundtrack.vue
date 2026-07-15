@@ -478,13 +478,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="sidebar-soundtrack-card wolves-soundtrack-card">
+  <Teleport to="body">
     <WolvesIntroOverlay
       v-if="introOverlayActive"
       :videos="introVideos"
       @complete="handleIntroOverlayComplete"
     />
+  </Teleport>
 
+  <div class="sidebar-soundtrack-card wolves-soundtrack-card">
     <section class="soundtrack-panel" :class="{ 'is-started': isStarted, 'has-error': status === 'error' }">
       <div class="soundtrack-panel-main">
         <div class="soundtrack-artwork-shell" :class="{ 'is-playing': isPlaying }">
