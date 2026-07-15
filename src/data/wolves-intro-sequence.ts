@@ -410,11 +410,12 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
     },
     {
       // The real trailer runs 2:00 (120s), shorter than the requested 2:46 cutoff, so it
-      // already ends naturally within budget — no `maxDuration` needed. Guardian window
-      // timings below were re-verified frame-by-frame against the real embed (Playwright +
-      // the YouTube IFrame API, screenshotting every ~1-2s) per docs/wolves-maintenance.md's
-      // verification checklist, replacing the original automated hue/brightness pass that had
-      // mismatched two of the six windows:
+      // already fits within budget. It is deliberately cut a few seconds short of its own
+      // natural end via `maxDuration` (see below) to skip dead time after the narrator
+      // finishes speaking. Guardian window timings below were re-verified frame-by-frame
+      // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
+      // ~1-2s) per docs/wolves-maintenance.md's verification checklist, replacing the
+      // original automated hue/brightness pass that had mismatched two of the six windows:
       // - Robert Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
       //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
       //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
@@ -440,6 +441,13 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   gilding it gold instead of the standard silver/blue treatment to signify leadership,
       //   pairing with his existing "First Among Equals" title line — reserved for him alone,
       //   do not apply broadly.
+      // - The narrator's final line ("...for all time.") finishes around 113s, confirmed via
+      //   0.2s-resolution frame capture (the caption is still on screen at 113.2-113.5s, with
+      //   the same squad shot still holding, no cut yet). From ~113.7s the trailer cuts to a
+      //   black frame, then a "Destiny 2: Season of the Wish" promotional card, before its
+      //   natural end at 120s — none of that is Guardian content. `maxDuration: 114` ends the
+      //   segment right after the last line lands, skipping ~7s of dead promotional time, per
+      //   explicit user request (2026-07-15).
       id: 'wolves-intro',
       kind: 'video',
       youtubeVideoId: 'BKm0TPqeOjY',
@@ -448,6 +456,9 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       // Starting 2s in skips past it entirely without touching any of the cue windows below,
       // since those are keyed to the video's absolute/native timeline, not this offset.
       startOffset: 2,
+      // Ends the segment right after the narrator's last line, before the black cut and
+      // "Season of the Wish" promo card — see the comment block above.
+      maxDuration: 114,
       overlays: [
         { text: 'Void Warlock — Robert Killen — Reconciler of the Arcane', start: 5, end: 16.5 },
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 16.5, end: 24.5 },
