@@ -410,13 +410,16 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       // verification checklist, replacing the original automated hue/brightness pass that had
       // mismatched two of the six windows:
       // - Robert Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
-      //   5-17.5s; the whip-pan cut to a Titan Ward of Dawn bubble forming happens at ~17.5s
-      //   (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the Warlock's
-      //   caped back, 18.5s is already the Titan crouched inside the bubble), earlier than the
-      //   previous 19s boundary, so Kat Cosgrove's window now starts there instead.
-      // - Kat Cosgrove's Harbinger Titan bubble shot runs 17.5-24.5s. The old 25.5-37.5s window
-      //   was wrong — that stretch is an unrelated Fallen/Scorn captain's dialogue, not a
-      //   Guardian shot at all, so no cue covers it.
+      //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
+      //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
+      //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
+      // - Kat Cosgrove's plate is deliberately cued 1s ahead of the frame-verified footage cut,
+      //   at 16.5s (explicit user request, confirmed 2026-07-15: her nameplate should "come
+      //   forward"). Robert Killen's window is shortened to match (5-16.5s) so the two plates
+      //   stay adjacent rather than overlapping — neither has a `position`, so two simultaneous
+      //   cues here would stack on top of each other instead of rendering side-by-side. Her
+      //   plate now runs 16.5-24.5s. This is an intentional exception to frame-accurate cueing —
+      //   do not "fix" the boundary back to 17.5 without a fresh user request.
       // - Kaslin Fields' Arc Warlock lightning duel runs the full 38-48s (previously cut off at
       //   40s, well before the footage itself ends).
       // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
@@ -433,8 +436,8 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       // since those are keyed to the video's absolute/native timeline, not this offset.
       startOffset: 2,
       overlays: [
-        { text: 'Void Warlock — Robert Killen — Reconciler of the Arcane', start: 5, end: 17.5 },
-        { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 17.5, end: 24.5 },
+        { text: 'Void Warlock — Robert Killen — Reconciler of the Arcane', start: 5, end: 16.5 },
+        { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 16.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
         { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star', start: 83, end: 90, position: 'left' },
