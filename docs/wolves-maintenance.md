@@ -18,6 +18,7 @@ Every section below repeats this boundary for its own surface. If a request cann
   - **Landing view**: global navbar, hero, and QR code section.
   - **Immersive theater**: fullscreen HUD experience entered through the hero CTA. Escape or the exit button leaves it. Both directions use `document.startViewTransition` when available.
 - Immersive layout budgets are fixed: 80px top HUD, 140px footer HUD, and a `2fr 1fr` desktop content split (66% content viewer, 33% lore viewer). These numbers are design law.
+- **Design target: fullscreen, mobile-first UX.** The immersive theater is meant to read as a fullscreen, phone-in-hand experience first, not a windowed PC app that happens to be maximized. Treat mobile breakpoints and touch ergonomics (thumb-reachable controls, large tap targets, minimal chrome) as the primary design target when evaluating or proposing any layout change; the desktop `2fr 1fr` split is a widescreen adaptation of that mobile-first intent, not the other way around. This does not loosen the design-freeze boundary above — it is context for how existing locked layout decisions should be interpreted and defended, not a license to redesign.
 
 ## Named Regions
 
