@@ -1,0 +1,81 @@
+{
+  "userId": "143247548@N03",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "requestDelayMs": 250,
+  "maxRetries": 4,
+  "maxPagesPerAlbum": 4,
+  "maxPhotosPerAlbum": 40,
+  "maxPhotosPerTitleFamily": 8,
+  "targetTotalPhotos": 200,
+  "albums": [
+    {
+      "id": "72177720332630036",
+      "title": "Maintainer Summit Europe 2026"
+    },
+    {
+      "id": "72177720330210424",
+      "title": "Maintainer Summit North America 2025"
+    },
+    {
+      "id": "72177720324699266",
+      "title": "Maintainer Summit Europe 2025"
+    },
+    {
+      "id": "72177720321919003",
+      "title": "Kubernetes Contributor Summit North America 2024"
+    }
+  ],
+  "peopleFirst": {
+    "allowPatterns": [
+      "session",
+      "keynote",
+      "reception",
+      "breakout",
+      "breaks",
+      "lunch",
+      "awards",
+      "closing",
+      "remarks",
+      "summit",
+      "maintainer",
+      "contributor",
+      "maintainersummit",
+      "contributorsummit",
+      "kcs",
+      "people",
+      "crowd",
+      "attendee",
+      "group",
+      "portrait",
+      "headshot",
+      "networking",
+      "social",
+      "welcome"
+    ],
+    "blockPatterns": [
+      "graphics",
+      "signage",
+      "banner",
+      "logo",
+      "backdrop",
+      "stage",
+      "venue",
+      "expo",
+      "sponsor",
+      "booth",
+      "slide",
+      "screen",
+      "display",
+      "poster",
+      "registration",
+      "badge",
+      "lanyard",
+      "swag",
+      "merchandise",
+      "schedule",
+      "program",
+      "map",
+      "direction"
+    ]
+  }
+}

@@ -7,13 +7,23 @@ const MODULE_PATH = import.meta.url.startsWith('file:')
   : null
 const ROOT_DIR = MODULE_PATH ? dirname(dirname(MODULE_PATH)) : process.cwd()
 const TARGET_PATH = join(ROOT_DIR, 'public', 'flickr-photos.json')
+const CONFIG_PATH = join(ROOT_DIR, 'scripts', 'flickr-curation.json')
 
-const API_KEY = '49dc70cc62bfcbcde55883993d9121ce'
-const USER_ID = '143247548@N03'
-const PER_PAGE = 50
-const REQUEST_DELAY_MS = 250
-const MAX_RETRIES = 4
-const MAX_ADDITIONAL_PHOTOS = 100
+const DEFAULT_CONFIG = {
+  userId: '143247548@N03',
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  requestDelayMs: 250,
+  maxRetries: 4,
+  maxPagesPerAlbum: 4,
+  maxPhotosPerAlbum: 40,
+  maxPhotosPerTitleFamily: 8,
+  targetTotalPhotos: 200,
+  albums: [],
+  peopleFirst: {
+    allowPatterns: [],
+    blockPatterns: [],
+  },
+}
 
 export function shuffleArray(array) {
   const copy = [...array]
@@ -28,9 +38,15 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export async function fetchWithRateLimit(url, { retries = MAX_RETRIES, attempt = 0 } = {}) {
+export async function fetchWithRateLimit(url, { retries = DEFAULT_CONFIG.maxRetries, attempt = 0, userAgent = DEFAULT_CONFIG.userAgent } = {}) {
   try {
-    const res = await fetch(url)
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': userAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    })
 
     if (res.status === 429) {
       const retryAfter = res.headers.get('retry-after')
@@ -38,7 +54,7 @@ export async function fetchWithRateLimit(url, { retries = MAX_RETRIES, attempt =
       if (attempt < retries) {
         console.warn(`Rate limited (429) for ${url}. Waiting ${waitSeconds}s before retry ${attempt + 1}/${retries}...`)
         await sleep(waitSeconds * 1000)
-        return fetchWithRateLimit(url, { retries, attempt: attempt + 1 })
+        return fetchWithRateLimit(url, { retries, attempt: attempt + 1, userAgent })
       }
       throw new Error(`HTTP error 429 after ${retries} retries: ${url}`)
     }
@@ -54,41 +70,34 @@ export async function fetchWithRateLimit(url, { retries = MAX_RETRIES, attempt =
       const backoffMs = Math.min(2 ** attempt * 1000, 30000)
       console.warn(`Fetch failed for ${url}, retrying in ${backoffMs}ms...`, error.message)
       await sleep(backoffMs)
-      return fetchWithRateLimit(url, { retries, attempt: attempt + 1 })
+      return fetchWithRateLimit(url, { retries, attempt: attempt + 1, userAgent })
     }
     throw error
   }
 }
 
-function buildFlickrUrl(method, params) {
-  const searchParams = new URLSearchParams({
-    method,
-    api_key: API_KEY,
-    user_id: USER_ID,
-    format: 'json',
-    nojsoncallback: '1',
-    ...params,
-  })
-  return `https://www.flickr.com/services/rest/?${searchParams.toString()}`
-}
-
-export async function fetchPhotoPage(method, page, extraParams = {}) {
-  const url = buildFlickrUrl(method, {
-    per_page: String(PER_PAGE),
-    page: String(page),
-    ...extraParams,
-  })
-  const res = await fetchWithRateLimit(url)
-  const data = await res.json()
-  if (data.stat !== 'ok' || !data.photos || !Array.isArray(data.photos.photo)) {
-    throw new Error(`Flickr API error ${method} page ${page}: ${data.message || 'invalid'}`)
-  }
-  return data.photos
-}
-
-export async function loadExistingPhotos() {
+export async function loadCurationConfig(configPath = CONFIG_PATH) {
   try {
-    const raw = await readFile(TARGET_PATH, 'utf8')
+    const raw = await readFile(configPath, 'utf8')
+    const parsed = JSON.parse(raw)
+    return {
+      ...DEFAULT_CONFIG,
+      ...parsed,
+      peopleFirst: {
+        ...DEFAULT_CONFIG.peopleFirst,
+        ...(parsed.peopleFirst || {}),
+      },
+    }
+  }
+  catch (error) {
+    console.warn(`Failed to load curation config at ${configPath}: ${error.message}. Using defaults.`)
+    return { ...DEFAULT_CONFIG }
+  }
+}
+
+export async function loadExistingPhotos(targetPath = TARGET_PATH) {
+  try {
+    const raw = await readFile(targetPath, 'utf8')
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed)) {
       return parsed
@@ -126,79 +135,217 @@ export function normalizePhoto(p) {
   }
 }
 
+export function buildAlbumPageUrl(albumId, userId, page = 1) {
+  const base = `https://www.flickr.com/photos/${userId}/albums/${albumId}`
+  return page > 1 ? `${base}/page${page}` : base
+}
+
+export function extractPhotosFromAlbumHtml(html) {
+  if (typeof html !== 'string') {
+    return []
+  }
+
+  const photos = []
+  const seen = new Set()
+
+  // Each photo card contains an img whose src is:
+  // //live.staticflickr.com/{server}/{id}_{secret}.jpg
+  // and a nearby title link/photo-link with the title text.
+  const cardPattern = /<div[^>]*class="view photo-card-view[^"]*"[^>]*>/gi
+
+  let cardMatch = cardPattern.exec(html)
+  while (cardMatch !== null) {
+    const start = cardMatch.index
+    // Approximate the card block by scanning to the next photo-card-view or a safe limit.
+    let end = html.indexOf('<div  class="view photo-card-view', start + 1)
+    if (end === -1) {
+      end = start + 4000
+    }
+    const block = html.slice(start, end)
+
+    const srcMatch = block.match(/<img[^>]+src="(?:https?:)?\/\/live\.staticflickr\.com\/(\d+)\/(\d+)_(.+?)\.jpg"/i)
+    const titleMatch = block.match(/<a[^>]*class="title"[^>]*>([^<]*)<\/a>/i)
+      || block.match(/<a[^>]*class="photo-link"[^>]*title="([^"]*)"/i)
+
+    if (srcMatch) {
+      const server = srcMatch[1]
+      const id = srcMatch[2]
+      const secret = srcMatch[3]
+      const title = titleMatch ? titleMatch[1].trim() : ''
+
+      if (!seen.has(id)) {
+        seen.add(id)
+        photos.push({ id, server, secret, title })
+      }
+    }
+
+    cardMatch = cardPattern.exec(html)
+  }
+
+  return photos
+}
+
+export function countAlbumPages(html) {
+  if (typeof html !== 'string') {
+    return 1
+  }
+  const matches = html.match(/href="[^"]*\/albums\/\d+\/page(\d+)"/g)
+  if (!matches) {
+    return 1
+  }
+  let maxPage = 1
+  for (const match of matches) {
+    const pageMatch = match.match(/page(\d+)/)
+    if (pageMatch) {
+      maxPage = Math.max(maxPage, Number(pageMatch[1]))
+    }
+  }
+  return maxPage
+}
+
+export function isPeopleFirstPhoto(photo, config) {
+  const title = String(photo.title || '').toLowerCase()
+  const blockPatterns = (config.peopleFirst?.blockPatterns || []).map(p => p.toLowerCase())
+  for (const pattern of blockPatterns) {
+    if (pattern && title.includes(pattern)) {
+      return false
+    }
+  }
+  const allowPatterns = (config.peopleFirst?.allowPatterns || []).map(p => p.toLowerCase())
+  for (const pattern of allowPatterns) {
+    if (pattern && title.includes(pattern)) {
+      return true
+    }
+  }
+  return false
+}
+
+export function computeTitleFamily(title) {
+  let family = String(title || '').trim()
+  let previous
+  do {
+    previous = family
+    family = family
+      .replace(/_\d+$/g, '')
+      .replace(/_[A-Z]{2,}(?:-[A-Z]{2,})?$/g, '')
+      .replace(/\s+\d+$/g, '')
+      .trim()
+  } while (family !== previous)
+  return family || title
+}
+
+export function diversifyByTitleFamily(photos, maxPerFamily) {
+  if (maxPerFamily <= 0) {
+    return photos
+  }
+  const familyCounts = new Map()
+  const result = []
+  for (const photo of photos) {
+    const family = computeTitleFamily(photo.title)
+    const count = familyCounts.get(family) || 0
+    if (count < maxPerFamily) {
+      result.push(photo)
+      familyCounts.set(family, count + 1)
+    }
+  }
+  return result
+}
+
 export function isMainModule() {
   return MODULE_PATH !== null && process.argv[1] === MODULE_PATH
 }
 
+export async function scrapeAlbum(album, config, fetcher = fetchWithRateLimit) {
+  const photos = []
+  const seenIds = new Set()
+  const userId = config.userId || DEFAULT_CONFIG.userId
+
+  const firstPageUrl = buildAlbumPageUrl(album.id, userId, 1)
+  const firstRes = await fetcher(firstPageUrl, { userAgent: config.userAgent })
+  if (!firstRes.ok) {
+    throw new Error(`HTTP error ${firstRes.status}: ${firstPageUrl}`)
+  }
+  const firstHtml = await firstRes.text()
+  const totalPages = countAlbumPages(firstHtml)
+  const targetPages = selectSpreadPages(totalPages, config.maxPagesPerAlbum)
+  const pageHtmlCache = new Map([[1, firstHtml]])
+
+  for (const page of targetPages) {
+    let html = pageHtmlCache.get(page)
+    if (!html) {
+      const url = buildAlbumPageUrl(album.id, userId, page)
+      const res = await fetcher(url, { userAgent: config.userAgent })
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}: ${url}`)
+      }
+      html = await res.text()
+    }
+    const pagePhotos = extractPhotosFromAlbumHtml(html)
+    for (const p of pagePhotos) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id)
+        photos.push({ ...p, albumId: album.id, albumTitle: album.title })
+      }
+    }
+    if (page !== targetPages[targetPages.length - 1]) {
+      await sleep(config.requestDelayMs)
+    }
+  }
+
+  return photos
+}
+
 async function main() {
   try {
-    console.info('Loading existing Flickr photo cache...')
-    const existingPhotos = await loadExistingPhotos()
-    const existingIds = new Set(existingPhotos.map(p => p.id))
-    console.info(`Found ${existingPhotos.length} existing photos.`)
+    const config = await loadCurationConfig()
 
-    console.info('Querying CNCF Flickr account metadata...')
-
-    const mMetadata = await fetchPhotoPage('flickr.photos.search', 1, { text: 'Maintainer', per_page: '1' })
-    await sleep(REQUEST_DELAY_MS)
-    const gMetadata = await fetchPhotoPage('flickr.people.getPublicPhotos', 1, { per_page: '1' })
-    await sleep(REQUEST_DELAY_MS)
-
-    const totalMaintainer = Number(mMetadata.total) || 1400
-    const totalGeneral = Number(gMetadata.total) || 60000
-
-    console.info(`Found ${totalMaintainer} Maintainer photos and ${totalGeneral} General photos.`)
-
-    const maintainerPages = Math.ceil(totalMaintainer / PER_PAGE)
-    const generalPages = Math.ceil(totalGeneral / PER_PAGE)
-
-    // Select extra pages spread across the archive to find up to 100 new unique photos.
-    const mTargetPages = selectSpreadPages(maintainerPages, 12)
-    const gTargetPages = selectSpreadPages(generalPages, 3)
-
-    console.info(`Fetching Maintainer pages: ${mTargetPages.join(', ')}`)
-    console.info(`Fetching General pages: ${gTargetPages.join(', ')}`)
-
-    const newPhotos = []
-    const seenIds = new Set(existingIds)
-
-    for (const page of mTargetPages) {
-      const data = await fetchPhotoPage('flickr.photos.search', page, { text: 'Maintainer' })
-      for (const p of data.photo) {
-        if (!seenIds.has(p.id)) {
-          newPhotos.push(normalizePhoto(p))
-          seenIds.add(p.id)
-          if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
-            break
-          }
-        }
-      }
-      if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
-        break
-      }
-      await sleep(REQUEST_DELAY_MS)
+    if (!config.albums || config.albums.length === 0) {
+      throw new Error('No curated albums configured in scripts/flickr-curation.json')
     }
 
-    if (newPhotos.length < MAX_ADDITIONAL_PHOTOS) {
-      for (const page of gTargetPages) {
-        const data = await fetchPhotoPage('flickr.people.getPublicPhotos', page)
-        for (const p of data.photo) {
-          if (!seenIds.has(p.id)) {
-            newPhotos.push(normalizePhoto(p))
-            seenIds.add(p.id)
-            if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
-              break
-            }
+    console.info('Loading existing Flickr photo cache...')
+    const existingPhotos = (await loadExistingPhotos()).filter(photo => isPeopleFirstPhoto(photo, config))
+    const existingIds = new Set(existingPhotos.map(p => p.id))
+    console.info(`Found ${existingPhotos.length} existing photos that match the people-first filter.`)
+
+    console.info(`Scraping ${config.albums.length} curated album(s)...`)
+    const allCandidates = []
+
+    for (const album of config.albums) {
+      console.info(`Album: ${album.title || album.id}`)
+      try {
+        const albumPhotos = await scrapeAlbum(album, config)
+        console.info(`  ${albumPhotos.length} raw photos scraped`)
+        const peopleFirstPhotos = albumPhotos.filter(p => isPeopleFirstPhoto(p, config))
+        console.info(`  ${peopleFirstPhotos.length} passed people-first filter`)
+        const diversified = diversifyByTitleFamily(peopleFirstPhotos, config.maxPhotosPerTitleFamily)
+        console.info(`  ${diversified.length} after title-family diversification`)
+        const capped = diversified.slice(0, config.maxPhotosPerAlbum)
+        for (const p of capped) {
+          if (!existingIds.has(p.id)) {
+            allCandidates.push(p)
           }
         }
-        if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
+      }
+      catch (error) {
+        console.warn(`  Failed to scrape album ${album.title || album.id}:`, error.message)
+      }
+    }
+
+    // Deduplicate and cap to target total, then shuffle.
+    const seenIds = new Set(existingIds)
+    const newPhotos = []
+    for (const p of allCandidates) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id)
+        newPhotos.push(normalizePhoto(p))
+        if (newPhotos.length >= config.targetTotalPhotos) {
           break
         }
-        await sleep(REQUEST_DELAY_MS)
       }
     }
 
-    console.info(`Harvested ${newPhotos.length} new unique photos.`)
+    console.info(`Harvested ${newPhotos.length} new unique photos from curated albums.`)
 
     const combinedPhotos = [...existingPhotos, ...newPhotos]
     const shuffledPhotos = shuffleArray(combinedPhotos)
