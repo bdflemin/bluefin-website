@@ -411,6 +411,8 @@ npm run build             # Build for production (~2s)
 npm run preview           # Preview production build
 npm run lint               # Lints the project
 npm run lint:fix             # Lints and fixes issues in the project
+npm run typecheck          # TypeScript validation (vue-tsc)
+npm run test:run           # Vitest suite (leaves public/dakota-versions.json dirty; discard)
 ```
 
 **CRITICAL REMINDERS:**
@@ -435,6 +437,7 @@ npm run lint:fix             # Lints and fixes issues in the project
 - **public/dakota-versions.json modification:** Running the Vitest suite can rewrite `public/dakota-versions.json` as a side effect of its automatic updater path; this must remain unstaged and discarded before commits.
 - **Wolves layout ratio:** The Wolves page desktop layout MUST use a `2fr 1fr` grid template to allocate 66% width to the slides and 33% width to the lore column.
 - **Wolves maintenance reference:** `docs/wolves-maintenance.md` is the canonical production documentation for the Wolves page. Agents edit content only (lore records, incoming-signal lines, playlist metadata, wallpaper assets); the design layer is frozen. Read it before any Wolves change.
+- **Repository skills:** `docs/skills/` holds agent skills. `wolves-content-maintenance.md` routes all Wolves content work; `editorial-policy.md` governs all creative content sitewide (the user authors all fiction).
 - **Emoji restriction:** The repository owner/user hates emojis. NEVER use emojis in code comments, configuration files, commit messages, pull requests, documentation (including this file), or assistant responses.
 
 ## Ecosystem Integration Strategy (decided 2026-05-21)

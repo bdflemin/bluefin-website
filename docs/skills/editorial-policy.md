@@ -17,7 +17,7 @@ description: Use when editing or maintaining story chapters, lore quotes, releas
 2. Use exact source text: Only populate elements with exact text provided directly by the user or existing files in the repository.
 3. **Strict Minimal, Surgical Changes Only**: Never make unrequested additions, introduce speculative features, or shuffle existing content order unless explicitly instructed. Keep all modifications strictly scoped to the exact fix requested to prevent scope creep or introducing regressions.
 4. Use placeholder standards: If temporary placeholder text is required, use standard "lorem ipsum" text only. Never generate creative prose, fictional details, or story explanations.
-4. Fall back to simple organization: If the user provides a raw dataset (like a list of quotes), organize and balance them programmatically (e.g., using modulo distributions) instead of trying to manually group them under creatively named chapters.
+5. Fall back to simple organization: If the user provides a raw dataset (like a list of quotes), organize and balance them programmatically (e.g., using modulo distributions) instead of trying to manually group them under creatively named chapters.
 
 ## Common Rationalizations
 - "Generating a brief story snippet makes the slide feel more complete."
