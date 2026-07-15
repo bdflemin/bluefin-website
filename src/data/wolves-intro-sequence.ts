@@ -440,7 +440,17 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   screen, not just a stylistic hold. His plate additionally carries `leader: true`,
       //   gilding it gold instead of the standard silver/blue treatment to signify leadership,
       //   pairing with his existing "First Among Equals" title line — reserved for him alone,
-      //   do not apply broadly.
+      //   do not apply broadly. His title line now carries four segments joined the same way
+      //   ("First Among Equals — The North Star — Uncompromising Purity — Platinum Sponsor"),
+      //   all rendered on one `wolves-guardian-plate-title` line with identical styling so every
+      //   title reads with equal visual weight (no segment is emphasized over another) — per
+      //   explicit user request, confirmed 2026-07-15, to add "Uncompromising Purity" and
+      //   "Platinum Sponsor" with even association to his existing titles.
+      // - Natali Vlatko's title line adds a second line after "Boss B*tch" ("He's wearing a
+      //   dress, I'm wearing a FIST"), per explicit user request, confirmed 2026-07-15. The
+      //   user's original line ended in a trailing ellipsis; substituted with an em dash to
+      //   match this file's join convention and the sitewide ellipsis ban
+      //   (docs/wolves-maintenance.md), while preserving the same dramatic trail-off.
       // - The narrator's final line ("...for all time.") finishes around 113s, confirmed via
       //   0.2s-resolution frame capture (the caption is still on screen at 113.2-113.5s, with
       //   the same squad shot still holding, no cut yet). From ~113.7s the trailer cuts to a
@@ -464,8 +474,8 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 16.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
-        { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
-        { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch', start: 87.5, end: 96, position: 'right', raised: true },
+        { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star — Uncompromising Purity — Platinum Sponsor', start: 83, end: 96, position: 'left', leader: true },
+        { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch — He\'s wearing a dress, I\'m wearing a FIST', start: 87.5, end: 96, position: 'right', raised: true },
       ],
     },
     {
