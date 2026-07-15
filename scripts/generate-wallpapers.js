@@ -58,6 +58,7 @@ const curatedTitles = {
   // People / KubeCon / Flickr curated titles
   'interview-clyde-seepersad-linux-foundation': 'Clyde Seepersad, Linux Foundation — "AI Is Not Killing Tech Jobs"',
   'interview-jono-bacon-cult-psychology-kubernetes': 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
+  'interview-l4e-games-for-everyone-2-linux-gaming': 'Linux For Everyone — "Games For Everyone #2: Linux Gaming Is WINNING"',
   'kubecon-55164225841': 'Maintainer Summit Evening Reception - 043 MN',
   'kubecon-55164388368': 'Maintainer Summit Evening Reception - 040 MN',
   'kubecon-55163325182': 'Maintainer Summit Evening Reception - 030 MN',

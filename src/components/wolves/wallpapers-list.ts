@@ -501,6 +501,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/interview-l4e-games-for-everyone-2-linux-gaming.webp',
+    title: 'Linux For Everyone — "Games For Everyone #2: Linux Gaming Is WINNING"'
+  },
+  {
+    type: 'single',
     name: 'wolves/people/jorge.webp',
     title: 'Jorge'
   },
