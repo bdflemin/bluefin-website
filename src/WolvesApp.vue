@@ -62,6 +62,16 @@ const activeChapter = computed(() =>
 )
 
 const isImmersive = ref(false)
+if (typeof window !== 'undefined') {
+  (window as any).simulateWolvesProgress = (currentTime: number, duration: number, playlistIndex: number) => {
+    isImmersive.value = true
+    isPlaying.value = true
+    isSoundtrackActive.value = true
+    playlistCurrentTime.value = currentTime
+    playlistDuration.value = duration
+    playlistTrackIndex.value = playlistIndex
+  }
+}
 const EQUINOX_ENTER_DURATION = 1500
 let equinoxTimeout: ReturnType<typeof setTimeout> | null = null
 let presentationTimeout: ReturnType<typeof setTimeout> | null = null
