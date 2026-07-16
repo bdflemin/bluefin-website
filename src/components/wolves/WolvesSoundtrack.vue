@@ -139,17 +139,47 @@ let playerMount: HTMLDivElement | null = null
 let youtubeApiPromise: Promise<void> | null = null
 let shouldAutoplayOnReady = false
 let progressTimer: ReturnType<typeof setInterval> | null = null
+let spotifyFadeTimer: ReturnType<typeof setInterval> | null = null
+let spotifyVolume = 100
 
 const HANDOFF_FADE_MS = 600
 const selectedProvider = computed<PlaybackProvider>(() => props.provider ?? 'youtube')
 
-function fadeSoundtrackVolume(targetVolume: number, onComplete?: () => void) {
+function fadeSoundtrackVolume(targetVolume: number): Promise<void> {
   if (selectedProvider.value === 'spotify') {
-    void spotifyPlayback?.setVolume(targetVolume).finally(onComplete)
-    return
+    if (spotifyFadeTimer) {
+      clearInterval(spotifyFadeTimer)
+      spotifyFadeTimer = null
+    }
+
+    const startVolume = spotifyVolume
+    if (startVolume === targetVolume) {
+      return spotifyPlayback?.setVolume(targetVolume).then(() => {}) ?? Promise.resolve()
+    }
+
+    const steps = Math.max(1, Math.floor(HANDOFF_FADE_MS / 50))
+    const increment = (targetVolume - startVolume) / steps
+    let step = 0
+    return new Promise((resolve) => {
+      spotifyFadeTimer = setInterval(() => {
+        step++
+        spotifyVolume = step >= steps
+          ? targetVolume
+          : Math.round(startVolume + increment * step)
+        void spotifyPlayback?.setVolume(spotifyVolume)
+
+        if (step >= steps) {
+          clearInterval(spotifyFadeTimer!)
+          spotifyFadeTimer = null
+          resolve()
+        }
+      }, HANDOFF_FADE_MS / steps)
+    })
   }
   cancelPlayerVolumeFade()
-  fadePlayerVolume(player, targetVolume, HANDOFF_FADE_MS, onComplete)
+  return new Promise((resolve) => {
+    fadePlayerVolume(player, targetVolume, HANDOFF_FADE_MS, resolve)
+  })
 }
 
 function dispatchMovieFlow(event: WolvesMovieFlowEvent) {
@@ -157,7 +187,7 @@ function dispatchMovieFlow(event: WolvesMovieFlowEvent) {
   movieFlow.value = reduceWolvesMovieFlow(movieFlow.value, event)
 
   if (previousStage !== 'creator-shorts' && movieFlow.value.stage === 'creator-shorts') {
-    fadeSoundtrackVolume(0, () => {
+    void fadeSoundtrackVolume(0).then(() => {
       pausePlayback()
     })
   }
@@ -227,6 +257,8 @@ const statusCopy = computed(() => {
     case 'ready':
     case 'paused':
       return 'Playback is ready. Resume when you want the soundtrack back.'
+    case 'ineligible':
+      return 'Spotify Premium playback is required for this account.'
     case 'error':
       if (spotifyUnavailable.value) {
         return 'Spotify playback is unavailable until reviewed catalog mappings are loaded.'
@@ -412,9 +444,16 @@ function resetFailedPlayer() {
 }
 
 async function startSpotifyPlayback(loadedManifest: WolvesSoundtrackManifest) {
-  validateSpotifyCatalog(loadedManifest.tracks, wolvesSpotifyCatalog)
-  const trackUris = wolvesSpotifyCatalog.map(mapping => mapping.spotifyUri)
-  if (!trackUris.length) {
+  let trackUris: string[]
+  try {
+    validateSpotifyCatalog(loadedManifest.tracks, wolvesSpotifyCatalog)
+    trackUris = wolvesSpotifyCatalog.map(mapping => mapping.spotifyUri)
+    if (!trackUris.length) {
+      throw new Error('Spotify playback requires reviewed catalog mappings')
+    }
+  }
+  catch {
+    spotifyUnavailable.value = true
     throw new Error('Spotify playback requires reviewed catalog mappings')
   }
   if (!spotifyAuth.accessToken.value) {
@@ -434,6 +473,7 @@ async function startSpotifyPlayback(loadedManifest: WolvesSoundtrackManifest) {
       emit('progress', progress)
     },
   })
+  spotifyVolume = 100
   stopSpotifyStatusWatch = watch(spotifyPlayback.status, (nextStatus) => {
     status.value = nextStatus
   }, { immediate: true })
@@ -468,8 +508,9 @@ async function startSoundtrack() {
   }
   catch {
     shouldAutoplayOnReady = false
-    spotifyUnavailable.value = selectedProvider.value === 'spotify'
-    status.value = 'error'
+    status.value = selectedProvider.value === 'spotify' && spotifyPlayback?.status.value === 'ineligible'
+      ? 'ineligible'
+      : 'error'
   }
 }
 
@@ -510,18 +551,19 @@ function handleIntroOverlayComplete() {
   void startSoundtrack()
 }
 
-function handleCreatorShortsInterstitialComplete() {
+async function handleCreatorShortsInterstitialComplete() {
   dispatchMovieFlow({ type: 'creator-shorts-completed' })
 
   if (selectedProvider.value === 'spotify') {
     void spotifyPlayback?.setVolume(0)
+    spotifyVolume = 0
   }
   else if (typeof player?.setVolume === 'function') {
     player.setVolume(0)
   }
 
   resumePlayback()
-  fadeSoundtrackVolume(100)
+  void fadeSoundtrackVolume(100)
 }
 
 function handlePreviousTrack() {
@@ -621,6 +663,9 @@ onBeforeUnmount(() => {
   stopProgressTimer()
   stopSpotifyStatusWatch?.()
   spotifyPlayback?.destroy()
+  if (spotifyFadeTimer) {
+    clearInterval(spotifyFadeTimer)
+  }
   cancelPlayerVolumeFade()
   syncRootPlayerClass(false)
   // Deliberately skipping player?.destroy() so the iframe survives Vite HMR during development.

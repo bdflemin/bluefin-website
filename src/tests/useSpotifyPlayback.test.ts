@@ -29,10 +29,10 @@ function createHarness() {
     fetch,
     loadSdk: async () => ({ Player }),
     now: () => time,
-    setInterval: (callback) => {
+    setInterval: vi.fn((callback) => {
       tick = callback
       return 1 as unknown as ReturnType<typeof setInterval>
-    },
+    }),
     clearInterval: vi.fn(),
   }
 
@@ -136,6 +136,34 @@ describe('spotify Wolves playback', () => {
     expect(harness.dependencies.clearInterval).toHaveBeenCalled()
   })
 
+  it('keeps an unmapped-track failure terminal when a later state is known', async () => {
+    const harness = createHarness()
+    const playback = useSpotifyPlayback({
+      accessToken: 'token',
+      playlistUri: 'spotify:playlist:reviewed',
+      trackUris,
+      onProgress: vi.fn(),
+      dependencies: harness.dependencies,
+    })
+
+    await startAndReady(playback, harness)
+    harness.emit('player_state_changed', {
+      position: 1,
+      duration: 10,
+      paused: false,
+      track_window: { current_track: { uri: 'spotify:track:unmapped' } },
+    })
+    harness.emit('player_state_changed', {
+      position: 2,
+      duration: 10,
+      paused: false,
+      track_window: { current_track: { uri: trackUris[0] } },
+    })
+
+    expect(playback.status.value).toBe('error')
+    expect(harness.dependencies.setInterval).toHaveBeenCalledTimes(0)
+  })
+
   it('stops progress when the SDK reports no active state', async () => {
     const harness = createHarness()
     const playback = useSpotifyPlayback({
@@ -159,7 +187,7 @@ describe('spotify Wolves playback', () => {
     expect(harness.dependencies.clearInterval).toHaveBeenCalled()
   })
 
-  it('distinguishes account eligibility and device readiness failures', async () => {
+  it('keeps account errors ineligible but reports authentication errors as controlled failures', async () => {
     const ineligibleHarness = createHarness()
     const ineligible = useSpotifyPlayback({
       accessToken: 'token',
@@ -176,21 +204,48 @@ describe('spotify Wolves playback', () => {
     expect(ineligible.status.value).toBe('ineligible')
     expect(ineligible.error.value).toMatchObject({ code: 'account-ineligible' })
 
-    const notReadyHarness = createHarness()
-    const notReady = useSpotifyPlayback({
+    const authenticationHarness = createHarness()
+    const authentication = useSpotifyPlayback({
       accessToken: 'token',
       playlistUri: 'spotify:playlist:reviewed',
       trackUris,
       onProgress: vi.fn(),
-      dependencies: notReadyHarness.dependencies,
+      dependencies: authenticationHarness.dependencies,
     })
-    const notReadyStart = notReady.start()
+    const authenticationStart = authentication.start()
     await Promise.resolve()
-    notReadyHarness.emit('not_ready', { device_id: 'device-123' })
-    await expect(notReadyStart).rejects.toMatchObject({ code: 'device-not-ready' })
+    authenticationHarness.emit('authentication_error', { message: 'Expired token' })
+    await expect(authenticationStart).rejects.toMatchObject({ code: 'api-failed' })
 
-    expect(notReady.status.value).toBe('error')
-    expect(notReady.error.value).toMatchObject({ code: 'device-not-ready' })
+    expect(authentication.status.value).toBe('error')
+    expect(authentication.error.value).toMatchObject({ code: 'api-failed' })
+  })
+
+  it('does not start playback after the device becomes unavailable during transfer', async () => {
+    const harness = createHarness()
+    const playback = useSpotifyPlayback({
+      accessToken: 'token',
+      playlistUri: 'spotify:playlist:reviewed',
+      trackUris,
+      onProgress: vi.fn(),
+      dependencies: harness.dependencies,
+    })
+    let resolveTransfer: ((response: Response) => void) | undefined
+    harness.fetch.mockImplementationOnce(() => new Promise<Response>((resolve) => {
+      resolveTransfer = resolve
+    }))
+
+    const starting = playback.start()
+    await Promise.resolve()
+    harness.emit('ready', { device_id: 'device-123' })
+    await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledOnce())
+
+    harness.emit('not_ready', { device_id: 'device-123' })
+    resolveTransfer?.(new Response(null, { status: 204 }))
+    await expect(starting).rejects.toMatchObject({ code: 'device-not-ready' })
+
+    expect(playback.status.value).toBe('error')
+    expect(harness.fetch).toHaveBeenCalledOnce()
   })
 
   it('cleans up idempotently and ignores late SDK callbacks', async () => {

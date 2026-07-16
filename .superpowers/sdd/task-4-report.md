@@ -85,3 +85,63 @@ and left untouched. No live Spotify calls were made.
 - `b58b031d839f7b0dae777517ffc82615b98c3881` —
   `feat(wolves): add Spotify playback adapter`
 - `3bff65c` — `docs(wolves): document Spotify playback guardrails`
+
+## Review follow-up: lifecycle, eligibility, and fade regressions
+
+### TDD evidence
+
+Focused regressions were added before production changes.
+
+RED:
+
+```text
+npx vitest run src/tests/useSpotifyPlayback.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+Test Files  2 failed (2)
+Tests  4 failed | 6 passed (10)
+```
+
+The failures showed an unmapped URI later returning to `playing`,
+`authentication_error` classified as `account-ineligible`, playback starting after
+`not_ready` during transfer, and the soundtrack displaying catalog-unavailable copy
+for an account eligibility failure.
+
+The 600ms handoff regression was then added and run before its implementation:
+
+```text
+npx vitest run src/tests/wolvesSoundtrackSpotify.test.ts
+Test Files  1 failed (1)
+Tests  2 failed | 1 passed (3)
+```
+
+It showed Spotify pausing immediately instead of after the 600ms fade.
+
+GREEN:
+
+```text
+npx vitest run src/tests/useSpotifyPlayback.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+Test Files  2 passed (2)
+Tests  11 passed (11)
+```
+
+### Fix evidence
+
+- `account_error` remains `ineligible`; `authentication_error` is now a controlled
+  `api-failed` error. The soundtrack keeps the former ineligible and displays the
+  distinct Premium eligibility message. Catalog-unavailable copy is set only by
+  catalog validation failure.
+- Playback callbacks are generation-bound. `reportFailure()` marks that generation
+  terminal, clears its clock, and blocks later state events. Startup checks terminal
+  status after transfer before it may request play.
+- Spotify now interpolates volume over the existing 600ms handoff interval. The
+  fade-to-zero promise resolves before pause; resume occurs before the fade to 100.
+  The existing YouTube fade helper and timing are unchanged.
+
+### Follow-up validation
+
+```text
+npx eslint src/composables/useSpotifyPlayback.ts src/components/wolves/WolvesSoundtrack.vue src/tests/useSpotifyPlayback.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+git diff --check
+```
+
+Both commands passed. The user-owned dirty `public/dakota-versions.json` and
+`src/data/wolves-intro-sequence.ts` remain unstaged and untouched.

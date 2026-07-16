@@ -136,6 +136,8 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
   let latestProgress: WolvesPlaybackProgress | null = null
   let receivedAt = 0
   let destroyed = false
+  let activeGeneration = 0
+  let terminalGeneration: number | null = null
   let deviceReady: Promise<string> | null = null
   let resolveDeviceReady: ((deviceId: string) => void) | null = null
   let rejectDeviceReady: ((error: SpotifyPlaybackError) => void) | null = null
@@ -148,7 +150,7 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
   }
 
   function emitExtrapolatedProgress(): void {
-    if (!latestProgress) {
+    if (terminalGeneration === activeGeneration || !latestProgress) {
       return
     }
     const elapsedSeconds = Math.max(0, now() - receivedAt) / 1000
@@ -159,16 +161,17 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
   }
 
   function startProgressTimer(): void {
-    if (progressTimer) {
+    if (terminalGeneration === activeGeneration || progressTimer) {
       return
     }
     progressTimer = schedule(emitExtrapolatedProgress, 100)
   }
 
-  function reportFailure(failure: SpotifyPlaybackError): void {
-    if (destroyed) {
+  function reportFailure(failure: SpotifyPlaybackError, generation = activeGeneration): void {
+    if (destroyed || generation !== activeGeneration || terminalGeneration === generation) {
       return
     }
+    terminalGeneration = generation
     stopProgressTimer()
     latestProgress = null
     error.value = failure
@@ -178,8 +181,8 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
     resolveDeviceReady = null
   }
 
-  function handlePlayerState(state: SpotifyPlaybackState | null): void {
-    if (destroyed) {
+  function handlePlayerState(state: SpotifyPlaybackState | null, generation = activeGeneration): void {
+    if (destroyed || generation !== activeGeneration || terminalGeneration === generation) {
       return
     }
     if (!state) {
@@ -211,7 +214,7 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
     }
   }
 
-  async function ensurePlayer(): Promise<void> {
+  async function ensurePlayer(generation: number): Promise<void> {
     if (player) {
       return
     }
@@ -235,20 +238,25 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
     })
     player.addListener('not_ready', () => reportFailure(
       new SpotifyPlaybackError('device-not-ready', 'Spotify playback device is not ready'),
+      generation,
     ))
     player.addListener('account_error', ({ message }: { message?: string }) => reportFailure(
       new SpotifyPlaybackError('account-ineligible', message ?? 'Spotify Premium playback is required'),
+      generation,
     ))
     player.addListener('authentication_error', ({ message }: { message?: string }) => reportFailure(
-      new SpotifyPlaybackError('account-ineligible', message ?? 'Spotify authorization is not eligible for playback'),
+      new SpotifyPlaybackError('api-failed', message ?? 'Spotify authorization failed for playback'),
+      generation,
     ))
     player.addListener('initialization_error', ({ message }: { message?: string }) => reportFailure(
       new SpotifyPlaybackError('api-failed', message ?? 'Spotify playback could not initialize'),
+      generation,
     ))
     player.addListener('playback_error', ({ message }: { message?: string }) => reportFailure(
       new SpotifyPlaybackError('api-failed', message ?? 'Spotify playback failed'),
+      generation,
     ))
-    player.addListener('player_state_changed', handlePlayerState)
+    player.addListener('player_state_changed', state => handlePlayerState(state, generation))
     const connected = await player.connect()
     if (!connected) {
       throw new SpotifyPlaybackError('api-failed', 'Spotify playback device could not connect')
@@ -279,6 +287,8 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
       throw failure
     }
 
+    const generation = ++activeGeneration
+    terminalGeneration = null
     status.value = 'loading'
     error.value = null
     deviceReady = new Promise<string>((resolve, reject) => {
@@ -287,14 +297,17 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
     })
 
     try {
-      await ensurePlayer()
+      await ensurePlayer(generation)
       const readyDeviceId = deviceId ?? await deviceReady
       if (destroyed) {
         return
       }
       await request(SPOTIFY_API_URL, { device_ids: [readyDeviceId], play: false })
+      if (terminalGeneration === generation) {
+        throw error.value ?? new SpotifyPlaybackError('api-failed', 'Spotify playback stopped during device transfer')
+      }
       await request(`${SPOTIFY_API_URL}/play?device_id=${encodeURIComponent(readyDeviceId)}`, { uris: options.trackUris })
-      if (status.value === 'loading') {
+      if (terminalGeneration !== generation && status.value === 'loading') {
         status.value = 'ready'
       }
     }
@@ -302,7 +315,9 @@ export function useSpotifyPlayback(options: SpotifyPlaybackOptions) {
       const failure = caught instanceof SpotifyPlaybackError
         ? caught
         : new SpotifyPlaybackError('api-failed', 'Spotify playback could not start')
-      reportFailure(failure)
+      if (terminalGeneration !== generation) {
+        reportFailure(failure, generation)
+      }
       throw failure
     }
   }
