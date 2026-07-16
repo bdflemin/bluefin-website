@@ -114,7 +114,7 @@ describe('wolvesCreatorShortsInterstitial', () => {
     expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
   })
 
-  it('ping-pongs to the already-cued other side when the active side ends, and preloads the finished side', async () => {
+  it('holds Cassidy on the left for three lead videos before the first Lindsay turn', async () => {
     mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
@@ -126,20 +126,28 @@ describe('wolvesCreatorShortsInterstitial', () => {
     await flushPromises()
     await nextTick()
 
-    // Still only two players -- no new player instances are created for a swap.
     expect(players).toHaveLength(2)
-    expect(right.playVideo).toHaveBeenCalledTimes(1)
-    expect(left.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
+    expect(right.playVideo).not.toHaveBeenCalled()
+    expect(left.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
     expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[1].title)
     expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
 
-    right.triggerEnded()
+    left.triggerEnded()
     await flushPromises()
     await nextTick()
 
-    expect(left.playVideo).toHaveBeenCalledTimes(1)
-    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[1].videoId)
-    expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[1].title)
+    expect(right.playVideo).not.toHaveBeenCalled()
+    expect(left.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[2].videoId)
+    expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[2].title)
+
+    left.triggerEnded()
+    await flushPromises()
+    await nextTick()
+
+    expect(right.playVideo).toHaveBeenCalledTimes(1)
+    expect(left.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[3].videoId)
+    expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[3].title)
+    expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
   })
 
   it('lets the longer list continue solo once the shorter one runs out, then emits complete once both are done', async () => {
@@ -155,8 +163,9 @@ describe('wolvesCreatorShortsInterstitial', () => {
       return slots[0]?.classList.contains('is-active') ? 'left' : 'right'
     }
 
-    // Cassidy has 9 entries, Lindsay has 7 -- Lindsay's list must run out first, and Cassidy
-    // must keep playing solo (via loadVideoById) for her last entry before completing.
+    // Cassidy has 8 entries after removing the broken entry, Lindsay has 7 -- Lindsay's list
+    // must run out first, and Cassidy must keep playing solo (via loadVideoById) for her last
+    // entry before completing.
     const totalTurns = wolvesCreatorShortsLindsayNikole.length + wolvesCreatorShortsCassidyWilliams.length
     for (let turn = 0; turn < totalTurns; turn++) {
       expect(wrapper.emitted('complete')).toBeUndefined()
@@ -168,7 +177,9 @@ describe('wolvesCreatorShortsInterstitial', () => {
 
     // No third player was ever created -- the solo phase reuses the same two persistent players.
     expect(players).toHaveLength(2)
-    expect(left.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[8].videoId)
+    const lastCassidyLoad = left.loadVideoById.mock.calls[left.loadVideoById.mock.calls.length - 1]?.[0]
+    expect(lastCassidyLoad).toBeDefined()
+    expect(wolvesCreatorShortsCassidyWilliams.some(video => video.videoId === lastCassidyLoad)).toBe(true)
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
@@ -179,12 +190,22 @@ describe('wolvesCreatorShortsInterstitial', () => {
     await flushPromises()
 
     const [left, right] = players
-    left.triggerError()
+    left.triggerEnded()
+    await flushPromises()
+    await nextTick()
+    left.triggerEnded()
+    await flushPromises()
+    await nextTick()
+    left.triggerEnded()
+    await flushPromises()
+    await nextTick()
+
+    right.triggerError()
     await flushPromises()
     await nextTick()
 
     expect(players).toHaveLength(2)
-    expect(right.playVideo).toHaveBeenCalledTimes(1)
+    expect(left.playVideo).toHaveBeenCalledTimes(1)
   })
 
   it('does not swap the active side when the still-inactive, preloaded side errors', async () => {

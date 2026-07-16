@@ -38,6 +38,7 @@ const displayedIndex = reactive<Record<Side, number>>({ left: 0, right: 0 })
 const exhausted = reactive<Record<Side, boolean>>({ left: false, right: false })
 const activeSide = ref<Side>('left')
 const isPaused = ref(false)
+let cassidyLeadTurnsRemaining = 3
 
 const leftMountHost = ref<HTMLDivElement | null>(null)
 const rightMountHost = ref<HTMLDivElement | null>(null)
@@ -83,6 +84,16 @@ function advanceTurn(finishedSide: Side) {
   }
 
   const otherSide = otherSideOf(finishedSide)
+
+  if (finishedSide === 'left' && cassidyLeadTurnsRemaining > 0) {
+    cassidyLeadTurnsRemaining -= 1
+    if (cassidyLeadTurnsRemaining > 0 && !exhausted[finishedSide]) {
+      activeSide.value = 'left'
+      isPaused.value = false
+      players[finishedSide]?.loadVideoById?.(lists[finishedSide][displayedIndex[finishedSide]].videoId)
+      return
+    }
+  }
 
   if (!exhausted[otherSide]) {
     // The other side is already cued and ready -- flash-cut to it right away.
