@@ -765,7 +765,7 @@ export const wallpapers: Wallpaper[] = [
   {
     "type": "single",
     "name": "wolves/people/kubecon-55168684055.webp",
-    "title": "Daily Highlights - 029"
+    "title": "Marina Moore"
   },
   {
     "type": "single",

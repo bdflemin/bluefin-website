@@ -115,7 +115,7 @@ const curatedTitles = {
   'kubecon-55167395267': 'Daily Highlights - 005',
   'kubecon-55168460993': 'Daily Highlights - 021',
   'kubecon-55168460833': 'Daily Highlights - 027',
-  'kubecon-55168684055': 'Daily Highlights - 029',
+  'kubecon-55168684055': 'Marina Moore',
   'kubecon-55168545279': 'Daily Highlights - 052',
   'kubecon-55386335785': 'KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre',
   'kubecon-55386311935': 'KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre',

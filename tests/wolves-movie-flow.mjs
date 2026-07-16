@@ -262,11 +262,23 @@ try {
     window.__mockWolvesSoundtrackPlayer.seekTo(171.879, true)
   })
   await page.waitForTimeout(150)
-  const jonoAtEnd = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+  const marinaAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Jono Bacon slide hands off at 2:51.879', jonoAtEnd?.includes('interview-jono-bacon-cult-psychology-kubernetes.webp'), false)
+  assertTruthy('Marina Moore slide starts at 2:51.879', marinaAtStart?.includes('kubecon-55168684055.webp'))
+  const marinaCaption = await page.locator('.flickr-caption').textContent()
+  assertTruthy('Marina Moore caption is visible', marinaCaption?.includes('Marina Moore'))
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(175.959, true)
+  })
+  await page.waitForTimeout(150)
+  const marinaAtEnd = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('Marina Moore slide hands off at 2:55.959', marinaAtEnd?.includes('kubecon-55168684055.webp'), false)
 
   // Advance the soundtrack from Track 0 to Track 1. This should trigger the
   // Creator Shorts interstitial via the movie flow state machine.

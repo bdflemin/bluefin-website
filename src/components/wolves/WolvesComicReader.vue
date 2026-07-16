@@ -9,7 +9,14 @@ import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-so
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
-import { jonoBaconSlideId, jonoBaconTrackZeroWindow, pinJonoBaconAtTrackZeroWindow, splitTrackZeroFastFinaleSlides } from '@/data/wolves-track-zero-slides'
+import {
+  jonoBaconSlideId,
+  jonoBaconTrackZeroWindow,
+  marinaMooreSlideId,
+  marinaMooreTrackZeroWindow,
+  pinTrackZeroHeroSlides,
+  splitTrackZeroFastFinaleSlides,
+} from '@/data/wolves-track-zero-slides'
 import { wallpapers } from './wallpapers-list'
 
 const props = defineProps<{
@@ -274,7 +281,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
   const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
   const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides(localPeople)
-  const shuffledPeople = pinJonoBaconAtTrackZeroWindow(deterministicShuffle(regularSlides, 303))
+  const shuffledPeople = pinTrackZeroHeroSlides(deterministicShuffle(regularSlides, 303))
 
   const result: TimelineSlide[] = []
   let currentTime = 0
@@ -313,7 +320,10 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const normalPool2 = shuffledNormalShowcase.slice(22, 39)
   const peoplePool1 = shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
-  const remainingPeoplePool1 = peoplePool1.filter(item => item.id !== jonoBaconSlideId)
+  const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
+  const remainingPeoplePool1 = peoplePool1.filter(item =>
+    item.id !== jonoBaconSlideId && (!marinaPhoto || item.id !== marinaMooreSlideId),
+  )
 
   if (!jonoPhoto) {
     const sec3Items = [...normalPool2, ...peoplePool1]
@@ -352,6 +362,17 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       endTime: jonoBaconTrackZeroWindow.endTime
     })
     currentTime = jonoBaconTrackZeroWindow.endTime
+
+    if (marinaPhoto) {
+      result.push({
+        ...marinaPhoto,
+        path: marinaPhoto.path || '',
+        startTime: currentTime,
+        duration: marinaMooreTrackZeroWindow.endTime - marinaMooreTrackZeroWindow.startTime,
+        endTime: marinaMooreTrackZeroWindow.endTime,
+      })
+      currentTime = marinaMooreTrackZeroWindow.endTime
+    }
 
     const afterJonoDuration = (229 - currentTime) / remainingPeoplePool1.length
     for (const item of remainingPeoplePool1) {

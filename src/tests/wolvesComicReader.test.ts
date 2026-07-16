@@ -163,8 +163,9 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
   })
 
-  it('keeps the Jono Bacon slide in its authored Track 0 window', async () => {
+  it('keeps Jono Bacon and Marina Moore in their authored Track 0 windows', async () => {
     const jonoPath = 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp'
+    const marinaPath = 'wolves/people/kubecon-55168684055.webp'
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -178,7 +179,14 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain(jonoPath)
 
     await wrapper.setProps({ playlistCurrentTime: 171.879 })
-    expect(activeTimelineImage(wrapper)).not.toContain(jonoPath)
+    expect(activeTimelineImage(wrapper)).toContain(marinaPath)
+    expect(galleryCaption(wrapper)).toContain('Marina Moore')
+
+    await wrapper.setProps({ playlistCurrentTime: 175.958 })
+    expect(activeTimelineImage(wrapper)).toContain(marinaPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 175.959 })
+    expect(activeTimelineImage(wrapper)).not.toContain(marinaPath)
   })
 
   it('uses each Track 0 wallpaper once', async () => {
