@@ -1,6 +1,9 @@
 ---
 name: wolves-content-maintenance
 description: Use when adding or editing Wolves page content - lore records, incoming-signal lines, playlist tracks, wallpaper slides, characters, or dinosaurs - on the Seven Days to the Wolves teaser page. Enforces the content-vs-design boundary now that the design is frozen.
+metadata:
+  context7-sources:
+    - /websites/developer_spotify
 ---
 
 # Wolves Content Maintenance
@@ -34,6 +37,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 7. For post-hero Flickr galleries, use one complete Fisher-Yates shuffle across songs 2 onward. Do not group, rotate, or reuse photos. Preserve Track 0's authored schedule and locks.
 8. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
 9. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
+10. Do not add Spotify Web Playback SDK audio to any Wolves state that drives visuals, including the Track 0 slideshow, thesis, HUD, lore, intro, or interstitial. Spotify prohibits synchronizing recordings with visual media. Stop and obtain a provider-approved audiovisual arrangement before planning such work.
 
 ## Common Rationalizations
 
@@ -45,6 +49,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 | "The build passed, so the change is verified." | A green build is not verification. Seek the real Track 0 player at affected timestamps and check the live deploy. |
 | "The deterministic shuffle already places this slide correctly." | Generated order is not a timing lock. An owner-authorized fixed window needs explicit data plus independent browser assertions. |
 | "Photos need event buckets to make the gallery diverse." | The owner selected a simple full-pool shuffle. Do not introduce event grouping or rotation. |
+| "Spotify playback can drive the same progress events as YouTube." | Wolves progress drives visual media. Spotify's Web Playback SDK policy prohibits synchronizing recordings with visual media. Do not implement this integration. |
 
 ## Red Flags
 
@@ -55,6 +60,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Adding or changing the theater-caption rendering mechanism itself in `WolvesComicReader.vue` (it already exists; only the `curatedDescriptions` text content is an open surface).
 - A timing-sensitive slide that remains positioned only by generated-array order.
 - A post-hero gallery implementation that groups or rotates photos.
+- Spotify Web Playback SDK progress routed into Wolves visual, timeline, or interstitial state.
 - Emojis or ellipses introduced anywhere.
 
 ## Verification
@@ -67,3 +73,8 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - [ ] Later-track gallery assertions show a non-repeating shuffled sequence.
 - [ ] After renaming or converting any Track 0 people asset, regenerate `wallpapers-list.ts` and recalculate finale-photo browser checkpoints. The generator sorts filenames, so an extension change can alter the deterministic finale shuffle even when the image content is unchanged.
 - [ ] Affected Track 0 timestamps verified on the real player; deploy workflow for the pushed SHA succeeded.
+- [ ] Any proposed Spotify integration was checked against the current Web Playback SDK policy; synchronized Wolves audiovisual playback was rejected.
+
+## Sources
+
+- Spotify Web Playback SDK policy notes, verified through Context7: `/websites/developer_spotify`.
