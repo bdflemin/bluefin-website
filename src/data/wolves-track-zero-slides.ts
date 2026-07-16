@@ -10,6 +10,18 @@ export const marinaMooreTrackZeroWindow = {
   endTime: 175.96,
 } as const
 
+export const shermanSlideId = 'wolves/people/sherman.webp'
+export const shermanTrackZeroWindow = {
+  startTime: marinaMooreTrackZeroWindow.endTime,
+  endTime: 180.04,
+} as const
+
+export const m2SlideId = 'wolves/people/m2.jpg'
+export const m2TrackZeroWindow = {
+  startTime: shermanTrackZeroWindow.endTime,
+  endTime: 184.12,
+} as const
+
 /**
  * The first People slot is Jono's fixed 167.8s–171.88s Track 0 window.
  * Keep him first even when generated wallpaper input order changes.
@@ -28,7 +40,7 @@ export function pinJonoBaconAtTrackZeroWindow<T extends { id: string }>(slides: 
 }
 
 export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonly T[]): T[] {
-  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId]
+  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, shermanSlideId, m2SlideId]
   const heroSlides = heroSlideIds
     .map(id => slides.find(slide => slide.id === id))
     .filter((slide): slide is T => slide !== undefined)

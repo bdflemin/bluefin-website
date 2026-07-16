@@ -163,9 +163,11 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
   })
 
-  it('keeps Jono Bacon and Marina Moore in their authored Track 0 windows', async () => {
+  it('keeps the authored Jono Bacon, Marina Moore, Sherman, and m2 Track 0 sequence', async () => {
     const jonoPath = 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp'
     const marinaPath = 'wolves/people/kubecon-55168684055.webp'
+    const shermanPath = 'wolves/people/sherman.webp'
+    const m2Path = 'wolves/people/m2.jpg'
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -186,7 +188,19 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain(marinaPath)
 
     await wrapper.setProps({ playlistCurrentTime: 175.959 })
-    expect(activeTimelineImage(wrapper)).not.toContain(marinaPath)
+    expect(activeTimelineImage(wrapper)).toContain(shermanPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 180.038 })
+    expect(activeTimelineImage(wrapper)).toContain(shermanPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 180.039 })
+    expect(activeTimelineImage(wrapper)).toContain(m2Path)
+
+    await wrapper.setProps({ playlistCurrentTime: 184.118 })
+    expect(activeTimelineImage(wrapper)).toContain(m2Path)
+
+    await wrapper.setProps({ playlistCurrentTime: 184.119 })
+    expect(activeTimelineImage(wrapper)).not.toContain(m2Path)
   })
 
   it('uses each Track 0 wallpaper once', async () => {

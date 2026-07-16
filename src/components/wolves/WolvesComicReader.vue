@@ -12,9 +12,13 @@ import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import {
   jonoBaconSlideId,
   jonoBaconTrackZeroWindow,
+  m2SlideId,
+  m2TrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
   pinTrackZeroHeroSlides,
+  shermanSlideId,
+  shermanTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
 } from '@/data/wolves-track-zero-slides'
 import { wallpapers } from './wallpapers-list'
@@ -321,8 +325,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool1 = shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
+  const shermanPhoto = peoplePool1.find(item => item.id === shermanSlideId)
+  const m2Photo = peoplePool1.find(item => item.id === m2SlideId)
+  const hasShermanM2Lock = Boolean(marinaPhoto && shermanPhoto && m2Photo)
+  const lockedHeroSlideIds = new Set([
+    jonoBaconSlideId,
+    ...(marinaPhoto ? [marinaMooreSlideId] : []),
+    ...(hasShermanM2Lock ? [shermanSlideId, m2SlideId] : []),
+  ])
   const remainingPeoplePool1 = peoplePool1.filter(item =>
-    item.id !== jonoBaconSlideId && (!marinaPhoto || item.id !== marinaMooreSlideId),
+    !lockedHeroSlideIds.has(item.id),
   )
 
   if (!jonoPhoto) {
@@ -372,6 +384,26 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
         endTime: marinaMooreTrackZeroWindow.endTime,
       })
       currentTime = marinaMooreTrackZeroWindow.endTime
+    }
+
+    if (hasShermanM2Lock && shermanPhoto && m2Photo) {
+      result.push({
+        ...shermanPhoto,
+        path: shermanPhoto.path || '',
+        startTime: currentTime,
+        duration: shermanTrackZeroWindow.endTime - shermanTrackZeroWindow.startTime,
+        endTime: shermanTrackZeroWindow.endTime,
+      })
+      currentTime = shermanTrackZeroWindow.endTime
+
+      result.push({
+        ...m2Photo,
+        path: m2Photo.path || '',
+        startTime: currentTime,
+        duration: m2TrackZeroWindow.endTime - m2TrackZeroWindow.startTime,
+        endTime: m2TrackZeroWindow.endTime,
+      })
+      currentTime = m2TrackZeroWindow.endTime
     }
 
     const afterJonoDuration = (229 - currentTime) / remainingPeoplePool1.length

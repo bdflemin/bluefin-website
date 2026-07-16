@@ -19,14 +19,18 @@ describe('wolves Track 0 slide locks', () => {
     ])
   })
 
-  it('pins Marina Moore immediately after Jono Bacon without reordering other slides', () => {
+  it('pins Marina Moore, Sherman, and m2 after Jono Bacon without reordering other slides', () => {
     const jono = { id: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp' }
     const marina = { id: 'wolves/people/kubecon-55168684055.webp' }
-    const before = [{ id: 'people-a' }, marina, { id: 'people-b' }, jono, { id: 'people-c' }]
+    const sherman = { id: 'wolves/people/sherman.webp' }
+    const m2 = { id: 'wolves/people/m2.jpg' }
+    const before = [{ id: 'people-a' }, marina, { id: 'people-b' }, m2, jono, sherman, { id: 'people-c' }]
 
     expect(pinTrackZeroHeroSlides(before)).toEqual([
       jono,
       marina,
+      sherman,
+      m2,
       { id: 'people-a' },
       { id: 'people-b' },
       { id: 'people-c' },
@@ -36,9 +40,11 @@ describe('wolves Track 0 slide locks', () => {
   it('keeps an already pinned pair stable and tolerates a missing hero slide', () => {
     const jono = { id: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp' }
     const marina = { id: 'wolves/people/kubecon-55168684055.webp' }
+    const sherman = { id: 'wolves/people/sherman.webp' }
+    const m2 = { id: 'wolves/people/m2.jpg' }
     const regular = { id: 'people-a' }
 
-    expect(pinTrackZeroHeroSlides([jono, marina, regular])).toEqual([jono, marina, regular])
+    expect(pinTrackZeroHeroSlides([jono, marina, sherman, m2, regular])).toEqual([jono, marina, sherman, m2, regular])
     expect(pinTrackZeroHeroSlides([marina, regular])).toEqual([marina, regular])
   })
 

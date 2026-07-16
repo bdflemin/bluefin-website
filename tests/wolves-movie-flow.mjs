@@ -276,11 +276,33 @@ try {
     window.__mockWolvesSoundtrackPlayer.seekTo(175.959, true)
   })
   await page.waitForTimeout(150)
-  const marinaAtEnd = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+  const shermanAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Marina Moore slide hands off at 2:55.959', marinaAtEnd?.includes('kubecon-55168684055.webp'), false)
+  assertTruthy('Sherman slide starts at 2:55.959', shermanAtStart?.includes('sherman.webp'))
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(180.039, true)
+  })
+  await page.waitForTimeout(150)
+  const m2AtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('m2 slide starts immediately after Sherman at 3:00.039', m2AtStart?.includes('m2.jpg'))
+  assert('Track 0 top HUD remains visible during m2', await page.locator('.immersive-hud-header').isVisible(), true)
+  assert('Track 0 lower thesis overlay remains inactive during m2', await page.locator('.thesis-overlay').count(), 0)
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(184.119, true)
+  })
+  await page.waitForTimeout(150)
+  const m2AtEnd = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('m2 slide hands off at 3:04.119', m2AtEnd?.includes('m2.jpg'), false)
 
   // Advance the soundtrack from Track 0 to Track 1. This should trigger the
   // Creator Shorts interstitial via the movie flow state machine.
