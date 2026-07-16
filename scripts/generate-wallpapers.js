@@ -188,7 +188,6 @@ const curatedTitles = {
 // its actual subject/quote, not just a name). Reserved for cases like this; most slides have
 // no entry here and fall back to the standard short caption pill.
 const curatedDescriptions = {
-  'interview-clyde-seepersad-linux-foundation': 'The headlines say AI is eliminating technical jobs at scale. The data tells a different story — and the organizations making critical workforce decisions based on media coverage alone are setting themselves up for a costly miscalculation. The real crisis is not displacement. It is readiness: security gaps, infrastructure incompatibility with agentic workflows, and a widening mismatch between the skills organizations have and the skills agentic deployments actually demand.\n\nIn this exclusive interview with Swapnil Bhartiya, Clyde Seepersad, Senior Vice President and General Manager of Education at the Linux Foundation, breaks down the actual workforce data, explains why smaller and mid-sized organizations are adding technical headcount faster than large tech companies are shedding it, and makes the case for why upskilling existing teams delivers an eightfold advantage over external recruiting in the current environment.',
 }
 
 function formatTitle(filename) {

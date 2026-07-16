@@ -596,7 +596,7 @@ describe('wolvesComicReader', () => {
 
   it('renders a large theater caption only for wallpapers with a description, leaving every other slide on the standard small caption pill', async () => {
     const wallpapersWithDescription = wallpapers.filter(wp => wp.description)
-    expect(wallpapersWithDescription.length, 'expected at least one wallpaper to carry a description').toBeGreaterThan(0)
+    expect(wallpapersWithDescription.length, 'expected no wallpaper to carry a description after simplifying these interview captions').toBe(0)
 
     // Track 0 (the opening/"guardian" video) is the only rotation that shows local People
     // wallpapers like these; later tracks only rotate remote Flickr photos.
@@ -606,32 +606,13 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    const seenDescriptionSlides = new Set<string>()
     for (let second = 0; second <= 423; second += 1) {
       await wrapper.setProps({ playlistCurrentTime: second })
-      const activeSrc = activeTimelineImage(wrapper)
-      if (!activeSrc) {
-        continue // no slide has swapped in yet (e.g. the very first tick)
-      }
-      const activeWallpaper = wallpapersWithDescription.find(wp => activeSrc.includes(wp.name!.replace('wolves/people/', '').replace(/\.[^/.]+$/, '')))
       const theaterCaption = wrapper.find('.wallpaper-theater-caption')
       const smallCaption = wrapper.find('.flickr-caption')
 
-      if (activeWallpaper) {
-        seenDescriptionSlides.add(activeWallpaper.name!)
-        expect(theaterCaption.exists()).toBe(true)
-        expect(smallCaption.exists()).toBe(false)
-        expect(theaterCaption.get('.wallpaper-theater-caption-title').text()).toBe(activeWallpaper.title)
-        const paragraphs = theaterCaption.findAll('.wallpaper-theater-caption-body').map(p => p.text())
-        expect(paragraphs.join('\n\n')).toBe(activeWallpaper.description)
-      }
-      else {
-        // Every slide without a description must keep the existing small caption pill unchanged.
-        expect(theaterCaption.exists()).toBe(false)
-        expect(smallCaption.exists()).toBe(true)
-      }
+      expect(theaterCaption.exists()).toBe(false)
+      expect(smallCaption.exists()).toBe(true)
     }
-
-    expect(seenDescriptionSlides.size, 'expected every wallpaper with a description to appear at least once during Track 0').toBe(wallpapersWithDescription.length)
   })
 })
