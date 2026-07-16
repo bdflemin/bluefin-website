@@ -514,6 +514,16 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
+    "name": "wolves/people/hikari1.jpg",
+    "title": "Hikari1"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/hikari2.jpg",
+    "title": "Hikari2"
+  },
+  {
+    "type": "single",
     "name": "wolves/people/interview-clyde-seepersad-linux-foundation.webp",
     "title": "Clyde Seepersad, Linux Foundation — \"AI Is Not Killing Tech Jobs\""
   },
@@ -916,6 +926,11 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/people/liz.webp",
     "title": "Liz"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/m2.jpg",
+    "title": "M2"
   },
   {
     "type": "single",
