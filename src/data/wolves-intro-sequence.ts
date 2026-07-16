@@ -465,7 +465,7 @@ Guardians were not only unnecessary, but a threat.`,
       maxDuration: 114,
       overlays: [
         { text: 'Void Warlock — Robert Killen — Reconciler of the Arcane', start: 5, end: 16.5 },
-        { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 16.5, end: 24.5 },
+        { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
         { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
