@@ -40,7 +40,7 @@ Use these names when talking to users. They map one-to-one to production markup.
 - **Lore viewer** (`src/components/wolves/WolvesLoreColumn.vue`, right column): the narrative record surface. Hidden during later-track gallery presentation. See Lore Records for how entries are organized and added.
 - **Equinox overlay** (`.equinox-overlay`): a 6-second fullscreen fader shown at every track change, displaying the incoming track title and artist over a fixed authored terminal block. The terminal text and the state machine are locked.
 - **Footer HUD** (`.immersive-hud-footer`): the music widget dock (left) and the telemetry block (right: the decryption meter and cluster coordinates). Telemetry strings are stylized design copy, not live data. Locked.
-- **Background wallpaper layers** (`.wallpaper-container`): monthly Bluefin day/night pairs (`public/img/wallpapers/bluefin-NN-{day,night}.webp`) that crossfade over 1.5 seconds as soundtrack progress advances, with a sine-modulated night blend. Locked, including asset naming.
+- **Background wallpaper layers** (`.wallpaper-container`): monthly Bluefin day/night pairs (`public/img/wallpapers/bluefin-NN-{day,night}.webp`) that crossfade over 1.5 seconds as soundtrack progress advances, with a sine-modulated night blend. The December pair is intentionally out of the rotation by owner request; November remains active through December's former slot. The selector and asset naming are otherwise locked.
 
 ## Content Layers
 

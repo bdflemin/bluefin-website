@@ -154,7 +154,8 @@ const currentPairIndex = computed(() => {
     return 6 // Start with July (index 6, Month 7) by default
   }
   const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  return Math.floor(wallpaperIndexFloat) % 12
+  const pairIndex = Math.floor(wallpaperIndexFloat) % 12
+  return pairIndex === 11 ? 10 : pairIndex
 })
 
 const activeMonth = ref(6)

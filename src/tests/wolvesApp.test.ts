@@ -84,6 +84,20 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
 
+  it('holds the November background pair through December’s former rotation slot', async () => {
+    const wrapper = mount(WolvesApp)
+
+    await wrapper.get('.experience-cta-btn').trigger('click')
+    await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
+      currentTime: 0,
+      duration: 100,
+      playlistIndex: 3,
+    })
+
+    expect(wrapper.get('.wallpaper-buffer-layer:not(.fading-out) .night-layer').attributes('style'))
+      .toContain('bluefin-11-night.webp')
+  })
+
   it('renders thesis callouts as a reader-local bottom third', async () => {
     const wrapper = mount(WolvesApp)
 

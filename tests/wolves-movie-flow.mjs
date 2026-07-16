@@ -311,6 +311,16 @@ try {
   await hasVisibleControl(page, 'Pause soundtrack')
   await hasVisibleControl(page, 'Next track')
   await captureStage(page, 'track-one')
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(0, true)
+    window.__mockWolvesSoundtrackPlayer.nextVideo()
+    window.__mockWolvesSoundtrackPlayer.nextVideo()
+  })
+  await page.waitForTimeout(150)
+  const decemberRotationNightLayer = await page.locator('.wallpaper-buffer-layer:not(.fading-out) .night-layer').getAttribute('style')
+  assertTruthy('November night background holds December’s former rotation slot', decemberRotationNightLayer?.includes('bluefin-11-night.webp'))
+  await captureStage(page, 'december-slot')
 }
 catch (error) {
   console.error(`\nTest failed with error: ${error.message}`)
