@@ -15,6 +15,10 @@ export interface YoutubePlayer {
   getDuration?: () => number
   seekTo?: (seconds: number, allowSeekAhead: boolean) => void
   destroy?: () => void
+  /** Reads the player's current volume level (0–100). */
+  getVolume?: () => number
+  /** Sets the player's volume level (0–100). */
+  setVolume?: (volume: number) => void
   /** Loads and immediately plays a new video in this same player instance. */
   loadVideoById?: (videoId: string) => void
   /**
@@ -108,6 +112,67 @@ export function getYoutubePlayerState(): YoutubePlayerState {
     BUFFERING: 3,
     CUED: 5,
   }
+}
+
+let activeFadeTimer: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Stops any in-progress volume fade initiated by `fadePlayerVolume`.
+ * Safe to call even when no fade is running.
+ */
+export function cancelPlayerVolumeFade(): void {
+  if (activeFadeTimer) {
+    clearInterval(activeFadeTimer)
+    activeFadeTimer = null
+  }
+}
+
+/**
+ * Smoothly fades a YouTube player's volume to `targetVolume` over `durationMs`.
+ *
+ * - If the player does not expose `setVolume`, the fade is skipped and `onComplete` is called
+ *   immediately so callers can fall back cleanly.
+ * - Uses `getVolume` as the starting point when available; otherwise assumes 100.
+ * - A new fade cancels any previous fade, preventing overlapping ramps.
+ */
+export function fadePlayerVolume(
+  player: YoutubePlayer | null | undefined,
+  targetVolume: number,
+  durationMs: number,
+  onComplete?: () => void,
+): void {
+  cancelPlayerVolumeFade()
+
+  if (!player || typeof player.setVolume !== 'function') {
+    onComplete?.()
+    return
+  }
+
+  const startVolume = typeof player.getVolume === 'function'
+    ? (player.getVolume() ?? 100)
+    : 100
+
+  if (startVolume === targetVolume) {
+    onComplete?.()
+    return
+  }
+
+  const steps = Math.max(1, Math.floor(durationMs / 50))
+  const increment = (targetVolume - startVolume) / steps
+  let step = 0
+
+  activeFadeTimer = setInterval(() => {
+    step++
+    const volume = step >= steps
+      ? targetVolume
+      : Math.round(startVolume + increment * step)
+    player.setVolume?.(volume)
+
+    if (step >= steps) {
+      cancelPlayerVolumeFade()
+      onComplete?.()
+    }
+  }, durationMs / steps)
 }
 
 /**

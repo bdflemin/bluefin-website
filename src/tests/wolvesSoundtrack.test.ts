@@ -2,7 +2,6 @@ import type { WolvesSoundtrackManifest } from '../data/wolves-soundtrack'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
-import { wolvesCreatorShortsCassidyWilliams, wolvesCreatorShortsLindsayNikole } from '../data/wolves-creator-shorts'
 
 const { loadWolvesSoundtrack } = vi.hoisted(() => ({
   loadWolvesSoundtrack: vi.fn<() => Promise<WolvesSoundtrackManifest>>(),
@@ -47,11 +46,14 @@ interface MockPlayerRecord {
   element: Element | string
   mountedNode: HTMLIFrameElement
   playlistIndex: number
+  volume: number
   playVideo: ReturnType<typeof vi.fn>
   pauseVideo: ReturnType<typeof vi.fn>
   nextVideo: ReturnType<typeof vi.fn>
   previousVideo: ReturnType<typeof vi.fn>
   getPlaylistIndex: ReturnType<typeof vi.fn>
+  getVolume: ReturnType<typeof vi.fn>
+  setVolume: ReturnType<typeof vi.fn>
   destroy: ReturnType<typeof vi.fn>
   triggerReady: () => void
   triggerPlaylistItem: (index: number) => void
@@ -66,6 +68,7 @@ function installMockIframeApi() {
     element: Element | string
     mountedNode: HTMLIFrameElement
     playlistIndex = 0
+    volume = 100
     playVideo = vi.fn(() => {
       this.config.events?.onStateChange?.({
         data: (window as any).YT.PlayerState.PLAYING,
@@ -83,6 +86,11 @@ function installMockIframeApi() {
     nextVideo = vi.fn()
     previousVideo = vi.fn()
     getPlaylistIndex = vi.fn(() => this.playlistIndex)
+    getVolume = vi.fn(() => this.volume)
+    setVolume = vi.fn((volume: number) => {
+      this.volume = volume
+    })
+
     destroy = vi.fn()
 
     constructor(element: Element | string, config: any) {
@@ -196,34 +204,57 @@ describe('wolves soundtrack', () => {
   })
 
   it('uses native playlist controls and disables their boundaries', async () => {
-    const wrapper = mount(WolvesSoundtrack)
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(WolvesSoundtrack)
 
-    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
-    await flushPromises()
-    await skipIntroOverlay(wrapper)
-    resolveIframeApi()
-    await flushPromises()
-    players[0].triggerReady()
-    await flushPromises()
+      await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+      await flushPromises()
+      await skipIntroOverlay(wrapper)
+      resolveIframeApi()
+      await flushPromises()
+      players[0].triggerReady()
+      await flushPromises()
 
-    const previousButtons = wrapper.findAll('button[aria-label="Previous track"]')
-    const nextButtons = wrapper.findAll('button[aria-label="Next track"]')
-    expect(previousButtons).toHaveLength(2)
-    expect(nextButtons).toHaveLength(2)
-    expect(previousButtons.every(button => button.attributes('disabled') !== undefined)).toBe(true)
-    expect(nextButtons.every(button => button.attributes('disabled') === undefined)).toBe(true)
+      const previousButtons = wrapper.findAll('button[aria-label="Previous track"]')
+      const nextButtons = wrapper.findAll('button[aria-label="Next track"]')
+      expect(previousButtons).toHaveLength(2)
+      expect(nextButtons).toHaveLength(2)
+      expect(previousButtons.every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      expect(nextButtons.every(button => button.attributes('disabled') === undefined)).toBe(true)
 
-    await wrapper.get('.soundtrack-controls-group button[aria-label="Next track"]').trigger('click')
-    expect(players[0].nextVideo).toHaveBeenCalledOnce()
+      await wrapper.get('.soundtrack-controls-group button[aria-label="Next track"]').trigger('click')
+      expect(players[0].nextVideo).toHaveBeenCalledOnce()
 
-    players[0].triggerPlaylistItem(1)
-    await flushPromises()
+      players[0].triggerPlaylistItem(1)
+      await flushPromises()
+      // Track 0 -> Track 1 enters the Creator Shorts interstitial, so native skip controls
+      // must be disabled until the interstitial finishes and the playlist stage resumes.
+      expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
 
-    expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') === undefined)).toBe(true)
-    expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      // Finish the four-video shorts chapter so the playlist stage resumes at Track 1.
+      const [, leftShortsPlayer, rightShortsPlayer] = players
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      rightShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: rightShortsPlayer })
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(700)
 
-    await wrapper.get('.soundtrack-controls-group button[aria-label="Previous track"]').trigger('click')
-    expect(players[0].previousVideo).toHaveBeenCalledOnce()
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+      expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') === undefined)).toBe(true)
+      expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+
+      await wrapper.get('.soundtrack-controls-group button[aria-label="Previous track"]').trigger('click')
+      expect(players[0].previousVideo).toHaveBeenCalledOnce()
+    }
+    finally {
+      vi.useRealTimers()
+    }
   })
 
   it('does not request the IFrame API until Start Soundtrack is clicked', async () => {
@@ -403,51 +434,58 @@ describe('wolves soundtrack', () => {
   })
 
   it('pauses and shows the Creator Shorts interstitial exactly once, on the Track 0 to Track 1 transition, then resumes', async () => {
-    const wrapper = mount(WolvesSoundtrack)
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(WolvesSoundtrack)
 
-    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
-    await flushPromises()
-    await skipIntroOverlay(wrapper)
-    resolveIframeApi()
-    await flushPromises()
-    players[0].triggerReady()
-    await flushPromises()
-
-    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
-
-    players[0].triggerPlaylistItem(1)
-    await flushPromises()
-
-    expect(players[0].pauseVideo).toHaveBeenCalledOnce()
-    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).not.toBeNull()
-
-    // Further track changes must never re-trigger the once-only interstitial.
-    players[0].triggerPlaylistItem(0)
-    await flushPromises()
-    players[0].triggerPlaylistItem(1)
-    await flushPromises()
-
-    expect(players[0].pauseVideo).toHaveBeenCalledOnce()
-
-    // Finishing the shorts feed resumes the soundtrack and removes the interstitial. The
-    // interstitial creates exactly two persistent players (Cassidy, Lindsay) rather than one per
-    // short, ping-ponging which side is active until both creators' lists are exhausted.
-    const [, leftShortsPlayer, rightShortsPlayer] = players
-    const totalTurns = wolvesCreatorShortsLindsayNikole.length + wolvesCreatorShortsCassidyWilliams.length
-
-    function getActiveShortsSide(): 'left' | 'right' {
-      const slots = document.body.querySelectorAll('.wolves-creator-shorts-slot')
-      return slots[0]?.classList.contains('is-active') ? 'left' : 'right'
-    }
-
-    for (let turn = 0; turn < totalTurns; turn++) {
-      const activePlayer = getActiveShortsSide() === 'left' ? leftShortsPlayer : rightShortsPlayer
-      activePlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: activePlayer })
+      await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
       await flushPromises()
-    }
+      await skipIntroOverlay(wrapper)
+      resolveIframeApi()
+      await flushPromises()
+      players[0].triggerReady()
+      await flushPromises()
 
-    expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
-    expect(players[0].playVideo).toHaveBeenCalled()
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+
+      players[0].triggerPlaylistItem(1)
+      await flushPromises()
+
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).not.toBeNull()
+
+      await vi.advanceTimersByTimeAsync(700)
+
+      expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+      expect(players[0].setVolume).toHaveBeenLastCalledWith(0)
+
+      // Further track changes must never re-trigger the once-only interstitial.
+      players[0].triggerPlaylistItem(0)
+      await flushPromises()
+      players[0].triggerPlaylistItem(1)
+      await flushPromises()
+
+      expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+
+      // Finishing the four-video shorts chapter resumes the soundtrack and removes the interstitial.
+      const [, leftShortsPlayer, rightShortsPlayer] = players
+
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      rightShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: rightShortsPlayer })
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(700)
+
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+      expect(players[0].playVideo).toHaveBeenCalled()
+      expect(players[0].setVolume).toHaveBeenLastCalledWith(100)
+    }
+    finally {
+      vi.useRealTimers()
+    }
   })
 
   it('shows the music link and Premium notice when playback cannot initialize', async () => {
@@ -508,5 +546,78 @@ describe('wolves soundtrack', () => {
 
     expect(players[3].playVideo).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('Open Source is about supporting maintainers. Prove it.')
+  })
+
+  it('disables native skip controls during the intro and Creator Shorts stages', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(WolvesSoundtrack)
+
+      // Intro stage: playback has not started, so skip controls stay disabled.
+      expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+
+      await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+      await flushPromises()
+      await skipIntroOverlay(wrapper)
+      resolveIframeApi()
+      await flushPromises()
+      players[0].triggerReady()
+      await flushPromises()
+
+      // Playlist stage: Track 0 is playing, so next is available and previous is not.
+      expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') === undefined)).toBe(true)
+
+      // Track 0 -> Track 1 enters Creator Shorts and must disable both controls.
+      players[0].triggerPlaylistItem(1)
+      await flushPromises()
+
+      expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+      expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('falls back cleanly to pausing and resuming when the player lacks setVolume', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = mount(WolvesSoundtrack)
+
+      await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+      await flushPromises()
+      await skipIntroOverlay(wrapper)
+      resolveIframeApi()
+      await flushPromises()
+      players[0].triggerReady()
+      await flushPromises()
+
+      delete (players[0] as any).setVolume
+
+      players[0].triggerPlaylistItem(1)
+      await flushPromises()
+
+      expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).not.toBeNull()
+
+      const [, leftShortsPlayer, rightShortsPlayer] = players
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      leftShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: leftShortsPlayer })
+      await flushPromises()
+      rightShortsPlayer.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.ENDED, target: rightShortsPlayer })
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(700)
+
+      expect(document.body.querySelector('.wolves-creator-shorts-interstitial')).toBeNull()
+      expect(players[0].playVideo).toHaveBeenCalled()
+    }
+    finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import type { WolvesMovieFlowEvent } from '@/data/wolves-movie-flow'
 import type { SoundtrackSource, SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesControlBar from '@/components/wolves/WolvesControlBar.vue'
 import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
+import { cancelPlayerVolumeFade, fadePlayerVolume } from '@/composables/useYoutubeIframeApi'
 import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import {
+  createWolvesMovieFlowState,
+  reduceWolvesMovieFlow
+
+} from '@/data/wolves-movie-flow'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 
 const props = defineProps<{
@@ -35,6 +42,8 @@ interface YouTubePlayer {
   getDuration?: () => number
   seekTo?: (seconds: number, allowSeekAhead: boolean) => void
   destroy?: () => void
+  getVolume?: () => number
+  setVolume?: (volume: number) => void
   nextVideo?: () => void
   previousVideo?: () => void
 }
@@ -94,8 +103,8 @@ const duration = ref(0)
  * Mist"): pauses the soundtrack and shows the alternating Creator Shorts feed, then resumes.
  * `creatorShortsShown` guards against firing again on any later track change.
  */
-const creatorShortsInterstitialActive = ref(false)
-const creatorShortsShown = ref(false)
+const movieFlow = ref(createWolvesMovieFlowState())
+const creatorShortsInterstitialActive = computed(() => movieFlow.value.stage === 'creator-shorts')
 
 const formattedCurrentTime = computed(() => formatTime(currentTime.value))
 const formattedDuration = computed(() => formatTime(duration.value))
@@ -120,6 +129,24 @@ let playerMount: HTMLDivElement | null = null
 let youtubeApiPromise: Promise<void> | null = null
 let shouldAutoplayOnReady = false
 let progressTimer: ReturnType<typeof setInterval> | null = null
+
+const HANDOFF_FADE_MS = 600
+
+function fadeSoundtrackVolume(targetVolume: number, onComplete?: () => void) {
+  cancelPlayerVolumeFade()
+  fadePlayerVolume(player, targetVolume, HANDOFF_FADE_MS, onComplete)
+}
+
+function dispatchMovieFlow(event: WolvesMovieFlowEvent) {
+  const previousStage = movieFlow.value.stage
+  movieFlow.value = reduceWolvesMovieFlow(movieFlow.value, event)
+
+  if (previousStage !== 'creator-shorts' && movieFlow.value.stage === 'creator-shorts') {
+    fadeSoundtrackVolume(0, () => {
+      pausePlayback()
+    })
+  }
+}
 
 function startProgressTimer() {
   if (progressTimer) {
@@ -152,7 +179,8 @@ const currentTrack = computed(() => manifest.value?.tracks[currentTrackIndex.val
 const isStarted = computed(() => status.value !== 'idle')
 const isPlaying = computed(() => status.value === 'playing')
 const canSkipTracks = computed(() =>
-  (status.value === 'ready' || status.value === 'playing' || status.value === 'paused')
+  movieFlow.value.stage === 'playlist'
+  && (status.value === 'ready' || status.value === 'playing' || status.value === 'paused')
   && player !== null
   && manifest.value !== null,
 )
@@ -321,6 +349,10 @@ function createPlayer() {
         syncTrackIndex(event.target)
         status.value = 'ready'
 
+        if (typeof event.target.setVolume === 'function') {
+          event.target.setVolume(100)
+        }
+
         if (shouldAutoplayOnReady) {
           shouldAutoplayOnReady = false
           event.target.playVideo?.()
@@ -372,6 +404,9 @@ async function startSoundtrack() {
 
   status.value = 'loading'
   shouldAutoplayOnReady = true
+  if (movieFlow.value.stage === 'intro') {
+    dispatchMovieFlow({ type: 'intro-completed' })
+  }
 
   try {
     await ensureManifestLoaded()
@@ -386,10 +421,12 @@ async function startSoundtrack() {
 }
 
 function resumePlayback() {
+  cancelPlayerVolumeFade()
   player?.playVideo?.()
 }
 
 function pausePlayback() {
+  cancelPlayerVolumeFade()
   player?.pauseVideo?.()
 }
 
@@ -413,19 +450,25 @@ function handleIntroOverlayComplete() {
 }
 
 function handleCreatorShortsInterstitialComplete() {
-  creatorShortsInterstitialActive.value = false
+  dispatchMovieFlow({ type: 'creator-shorts-completed' })
+
+  if (typeof player?.setVolume === 'function') {
+    player.setVolume(0)
+  }
+
   resumePlayback()
+  fadeSoundtrackVolume(100)
 }
 
 function handlePreviousTrack() {
-  if (!canGoToPreviousTrack.value) {
+  if (!canGoToPreviousTrack.value || movieFlow.value.stage !== 'playlist') {
     return
   }
   player?.previousVideo?.()
 }
 
 function handleNextTrack() {
-  if (!canGoToNextTrack.value) {
+  if (!canGoToNextTrack.value || movieFlow.value.stage !== 'playlist') {
     return
   }
   player?.nextVideo?.()
@@ -433,12 +476,8 @@ function handleNextTrack() {
 
 watch(isStarted, syncRootPlayerClass, { immediate: true })
 
-watch(currentTrackIndex, (newIndex, oldIndex) => {
-  if (oldIndex === 0 && newIndex === 1 && !creatorShortsShown.value) {
-    creatorShortsShown.value = true
-    creatorShortsInterstitialActive.value = true
-    pausePlayback()
-  }
+watch(currentTrackIndex, (newIndex) => {
+  dispatchMovieFlow({ type: 'playlist-index-changed', playlistIndex: newIndex })
 })
 
 watch(status, (newStatus) => {
@@ -495,6 +534,7 @@ watch(() => props.playing, (newPlaying) => {
 
 onBeforeUnmount(() => {
   stopProgressTimer()
+  cancelPlayerVolumeFade()
   syncRootPlayerClass(false)
   // Deliberately skipping player?.destroy() so the iframe survives Vite HMR during development.
 })

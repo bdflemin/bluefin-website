@@ -44,6 +44,11 @@ export const wolvesCreatorShortsCassidyWilliams: readonly WolvesCreatorShort[] =
   { videoId: 'q_EsHzjmx-4', title: 'Interviewing is all a game', creatorName: 'Cassidy Williams', channelUrl: 'https://www.youtube.com/@cassidoo', orientation: 'vertical' },
 ] as const
 
+export const wolvesCreatorShortsChapter = [
+  ...wolvesCreatorShortsCassidyWilliams.slice(0, 3),
+  ...wolvesCreatorShortsLindsayNikole.slice(0, 1),
+] as const
+
 /** Ping-pong turn order: Cassidy's list on the left, Lindsay's on the right, Cassidy first. */
 export const wolvesCreatorShortsByCreator = [
   wolvesCreatorShortsCassidyWilliams,
