@@ -1286,9 +1286,6 @@ onBeforeUnmount(() => {
 
 .wolves-intro-overlay-debug-filename {
   flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: bold;
 }
 
