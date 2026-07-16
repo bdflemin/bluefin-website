@@ -1,58 +1,81 @@
-# Task 4 Report: Dedicated Wolves Lore Views
+# Task 4: Spotify playback adapter evidence
 
-## Status
+## Scope
 
-Complete.
+Implemented the injected, lazy Spotify Web Playback SDK adapter and connected it to
+`WolvesSoundtrack` behind the existing `provider` selection boundary. The default
+provider remains YouTube; no visual layout, markup, or YouTube behavior changed.
 
-## Implementation
+Spotify is rejected before SDK loading unless `validateSpotifyCatalog()` accepts the
+loaded manifest against `wolvesSpotifyCatalog` and produces a non-empty ordered URI
+list. The reviewed production catalog remains empty, so selecting Spotify currently
+shows the controlled unavailable state and makes no Spotify SDK request.
 
-- Added typed authored frontmatter support for `guardian.class` (`titan`, `warlock`, or `hunter`) and string-only `epic_name`; no defaults are introduced.
-- Added dedicated full-column views for news, sources, field reports, locations, Guardian dossiers, dinosaur dossiers, and Guardian bonds.
-- Kept `WolvesLoreColumn` a thin typed router. Character sheets choose the dinosaur dossier only for `subject_kind: dinosaur`; other character sheets use the Guardian dossier.
-- Passed the record collection into views only for explicit GuardianBond lookups and fixture-driven routing tests.
-- Guardian and bond views render authored profile fields, ordered specializations, and reciprocal validation. Deterministic FNV-1a telemetry is rendered only as UI status information.
-- Dinosaur artwork resolves only when its authored species ID matches an explicit `dinosaurSpecies` registry entry. The source is built with `import.meta.env.BASE_URL`; unmatched species render no image or fallback.
-- Source fragments now use the canonical source URL held by the existing release record, independently of the authored Markdown body.
-- Added generic, non-narrative TypeScript fixtures. No lore Markdown, thesis timeline, HUD text, or authored chronology was changed.
+## TDD evidence
 
-## TDD Evidence
+1. Added `src/tests/useSpotifyPlayback.test.ts` before
+   `src/composables/useSpotifyPlayback.ts`.
+2. Ran the required red command:
 
-1. Added parser and router assertions before production changes. The initial focused run failed as expected: the parser omitted `epic_name`, did not reject invalid Guardian classes, and all requested dossier routes were absent.
-2. Implemented the parser contract, router, and dedicated views; the focused suite passed.
-3. Screenshot review found that staged source records lack authored sender/channel provenance. Added a failing canonical-source-URL assertion, verified it failed, then added `getSourceProvenance()` and passed the regression.
+   ```text
+   npx vitest run src/tests/useSpotifyPlayback.test.ts
+   Error: Failed to resolve import "../composables/useSpotifyPlayback"
+   ```
 
-## Verification
+3. Implemented the adapter and ran the focused green suite:
 
-- `npm run test:run -- src/tests/wolvesLoreColumn.test.ts src/tests/wolvesLoreRecords.test.ts src/tests/wolvesDinosaurSpecies.test.ts`
-  - Passed: 3 files, 28 tests.
-- `npm run typecheck`
-  - Passed.
-- Scoped ESLint over every Task 4 source and test file
-  - Passed.
-- `git diff --check`
-  - Passed before staging.
-- Browser validation used the mounted Wolves soundtrack progress bar with a local IFrame API stand-in. All nine Track 0 `source`/`news` slots selected the expected dedicated view. The top HUD and lower thesis-overlay DOM were asserted independently at every timestamp.
-- Reviewed temporary desktop and 390px mobile screenshots for source/news rendering and footer fit. Temporary screenshots were removed.
+   ```text
+   npx vitest run src/tests/useSpotifyPlayback.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+   Test Files  2 passed (2)
+   Tests  7 passed (7)
+   ```
 
-## Commit
+The adapter tests inject SDK, player, fetch, clock, interval, and registered
+callbacks. They cover exact transfer/start request ordering and device targeting,
+100ms extrapolation without SDK polling, unknown URI failure and timer cleanup,
+null state loss, account eligibility, not-ready events, and idempotent destruction
+with late callbacks ignored.
 
-- `48e933c2d0029388e5be136150e2c6d8c3188d24` — `feat(wolves): add dedicated lore dossier views`
+`src/tests/wolvesSoundtrack.test.ts` received the same production-catalog
+unavailability regression, while
+`src/tests/wolvesSoundtrackSpotify.test.ts` runs that assertion with the dirty intro
+module mocked so it can execute independently.
 
-## Self-Review
+## Implementation evidence
 
-- The 2fr/1fr Wolves desktop grid is untouched.
-- Existing quote/chatlog selectors and Golden Era behavior remain covered by regression tests.
-- No generated lore aliases, titles, classes, supers, relationships, dinosaur dossiers, or Markdown records were added.
-- Artwork selection has no rotation, filename inference, or generic asset fallback.
-- No unrelated Dakota or wallpaper changes were staged.
+- `useSpotifyPlayback()` loads the SDK only on `start()`.
+- SDK `ready` supplies the device ID. The adapter then transfers with
+  `{ device_ids: [deviceId], play: false }` before it starts
+  `{ uris: trackUris }` on that same device. It never sends `context_uri`.
+- Incoming SDK state is retained as a baseline. A 100ms timer emits only while the
+  state is playing, extrapolating and clamping the position to its duration.
+- `account_error` and `authentication_error` yield `ineligible`; API,
+  initialization, playback, and device-not-ready failures are controlled errors.
+- Unknown Spotify URIs are caught inside the event callback, transition to a
+  controlled error, clear the timer, and discard stale progress.
+- The soundtrack uses provider-neutral `setVolume()` for the existing Track 0 to
+  Track 1 Creator Shorts handoff. The YouTube fade/pause/resume branch is unchanged.
+- Spotify cleanup destroys its SDK device on component unmount; the existing
+  deliberate YouTube HMR non-destruction remains unchanged.
 
-## Concerns
+## Validation
 
-None.
+Passed:
 
-## Review Follow-up: Final News Warning
+```text
+npx vitest run src/tests/useSpotifyPlayback.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+npx eslint src/composables/useSpotifyPlayback.ts src/tests/useSpotifyPlayback.test.ts src/components/wolves/WolvesSoundtrack.vue src/tests/wolvesSoundtrack.test.ts src/tests/wolvesSoundtrackSpotify.test.ts
+git diff --check
+```
 
-- Restored the explicitly passed thesis warning in `NewsLoreView` without changing thesis story text, HUD communications, authored lore, or timeline data.
-- Added a regression that derives the actual locked final artifact and warning at Track 0 405s and 425s. It first failed because `news-bulletin` had no `data-lore-warning`, then passed after the warning presentation was added.
-- Passed: `npm run test:run -- src/tests/wolvesLoreColumn.test.ts src/tests/wolvesThesisSequence.test.ts src/tests/wolvesNarrativeTimeline.test.ts` (31 tests), `npm run typecheck`, scoped ESLint, and `git diff --check`.
-- Browser validation used the mounted soundtrack progress bar with a local IFrame API stand-in at 405s and 425s. The top HUD, lower thesis overlay, and separate right-column warning were asserted independently. Desktop and 390px mobile screenshots were reviewed and removed.
+Blocked external to this task:
+
+```text
+npm run typecheck
+src/data/wolves-intro-sequence.ts(361,79): error TS1002: Unterminated string literal.
+```
+
+The same user-owned parse error prevents the unmocked
+`src/tests/wolvesSoundtrack.test.ts` suite from loading. The dirty
+`src/data/wolves-intro-sequence.ts` and `public/dakota-versions.json` were inspected
+and left untouched. No live Spotify calls were made.

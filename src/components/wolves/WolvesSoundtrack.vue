@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { WolvesMovieFlowEvent } from '@/data/wolves-movie-flow'
+import type { PlaybackProvider } from '@/data/wolves-playback'
 import type { SoundtrackSource, SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesControlBar from '@/components/wolves/WolvesControlBar.vue'
 import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
+import { useSpotifyAuth } from '@/composables/useSpotifyAuth'
+import { useSpotifyPlayback } from '@/composables/useSpotifyPlayback'
 import { cancelPlayerVolumeFade, fadePlayerVolume } from '@/composables/useYoutubeIframeApi'
 import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import {
@@ -12,10 +15,13 @@ import {
   reduceWolvesMovieFlow
 
 } from '@/data/wolves-movie-flow'
+import { validateSpotifyCatalog } from '@/data/wolves-playback'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
+import { wolvesSpotifyCatalog } from '@/data/wolves-spotify-catalog'
 
 const props = defineProps<{
   playing?: boolean
+  provider?: PlaybackProvider
   /**
    * Bypasses the intro overlay for the `props.playing` v-model path only.
    * Used by dev/test tooling (e.g. `window.simulateWolvesProgress`) that needs to
@@ -31,7 +37,7 @@ const emit = defineEmits<{
   (e: 'progress', data: { currentTime: number, duration: number, playlistIndex: number }): void
 }>()
 
-type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
+type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'ineligible' | 'error'
 
 interface YouTubePlayer {
   playVideo?: () => void
@@ -91,6 +97,8 @@ const officialLyricsUrls: Readonly<Record<string, string>> = {
 
 const status = ref<PlayerStatus>('idle')
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
+const spotifyAuth = useSpotifyAuth()
+const spotifyUnavailable = ref(false)
 const introOverlayActive = ref(false)
 const introVideos = buildIntroVideoSequence()
 const currentTrackIndex = ref(0)
@@ -125,14 +133,21 @@ function formatTime(seconds: number): string {
 }
 
 let player: YouTubePlayer | null = null
+let spotifyPlayback: ReturnType<typeof useSpotifyPlayback> | null = null
+let stopSpotifyStatusWatch: (() => void) | null = null
 let playerMount: HTMLDivElement | null = null
 let youtubeApiPromise: Promise<void> | null = null
 let shouldAutoplayOnReady = false
 let progressTimer: ReturnType<typeof setInterval> | null = null
 
 const HANDOFF_FADE_MS = 600
+const selectedProvider = computed<PlaybackProvider>(() => props.provider ?? 'youtube')
 
 function fadeSoundtrackVolume(targetVolume: number, onComplete?: () => void) {
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.setVolume(targetVolume).finally(onComplete)
+    return
+  }
   cancelPlayerVolumeFade()
   fadePlayerVolume(player, targetVolume, HANDOFF_FADE_MS, onComplete)
 }
@@ -181,7 +196,7 @@ const isPlaying = computed(() => status.value === 'playing')
 const canSkipTracks = computed(() =>
   movieFlow.value.stage === 'playlist'
   && (status.value === 'ready' || status.value === 'playing' || status.value === 'paused')
-  && player !== null
+  && (selectedProvider.value === 'spotify' ? spotifyPlayback !== null : player !== null)
   && manifest.value !== null,
 )
 const canGoToPreviousTrack = computed(() => canSkipTracks.value && currentTrackIndex.value > 0)
@@ -213,6 +228,9 @@ const statusCopy = computed(() => {
     case 'paused':
       return 'Playback is ready. Resume when you want the soundtrack back.'
     case 'error':
+      if (spotifyUnavailable.value) {
+        return 'Spotify playback is unavailable until reviewed catalog mappings are loaded.'
+      }
       return 'Playback could not initialize here. The playlist and music links still work below.'
     default:
       return 'Starts only after you click. No autoplay, no hidden soundtrack boot.'
@@ -393,6 +411,35 @@ function resetFailedPlayer() {
   playerHost.value?.replaceChildren()
 }
 
+async function startSpotifyPlayback(loadedManifest: WolvesSoundtrackManifest) {
+  validateSpotifyCatalog(loadedManifest.tracks, wolvesSpotifyCatalog)
+  const trackUris = wolvesSpotifyCatalog.map(mapping => mapping.spotifyUri)
+  if (!trackUris.length) {
+    throw new Error('Spotify playback requires reviewed catalog mappings')
+  }
+  if (!spotifyAuth.accessToken.value) {
+    throw new Error('Spotify authorization is required for playback')
+  }
+
+  stopSpotifyStatusWatch?.()
+  spotifyPlayback?.destroy()
+  spotifyPlayback = useSpotifyPlayback({
+    accessToken: spotifyAuth.accessToken.value,
+    playlistUri: loadedManifest.source.spotifyUri ?? '',
+    trackUris,
+    onProgress: (progress) => {
+      currentTime.value = progress.currentTime
+      duration.value = progress.duration
+      currentTrackIndex.value = progress.playlistIndex
+      emit('progress', progress)
+    },
+  })
+  stopSpotifyStatusWatch = watch(spotifyPlayback.status, (nextStatus) => {
+    status.value = nextStatus
+  }, { immediate: true })
+  await spotifyPlayback.start()
+}
+
 async function startSoundtrack() {
   if (status.value === 'loading') {
     return
@@ -403,29 +450,43 @@ async function startSoundtrack() {
   }
 
   status.value = 'loading'
+  spotifyUnavailable.value = false
   shouldAutoplayOnReady = true
   if (movieFlow.value.stage === 'intro') {
     dispatchMovieFlow({ type: 'intro-completed' })
   }
 
   try {
-    await ensureManifestLoaded()
+    const loadedManifest = await ensureManifestLoaded()
+    if (selectedProvider.value === 'spotify') {
+      await startSpotifyPlayback(loadedManifest)
+      return
+    }
     await ensureYouTubeIframeApi()
     await nextTick()
     createPlayer()
   }
   catch {
     shouldAutoplayOnReady = false
+    spotifyUnavailable.value = selectedProvider.value === 'spotify'
     status.value = 'error'
   }
 }
 
 function resumePlayback() {
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.resume()
+    return
+  }
   cancelPlayerVolumeFade()
   player?.playVideo?.()
 }
 
 function pausePlayback() {
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.pause()
+    return
+  }
   cancelPlayerVolumeFade()
   player?.pauseVideo?.()
 }
@@ -452,7 +513,10 @@ function handleIntroOverlayComplete() {
 function handleCreatorShortsInterstitialComplete() {
   dispatchMovieFlow({ type: 'creator-shorts-completed' })
 
-  if (typeof player?.setVolume === 'function') {
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.setVolume(0)
+  }
+  else if (typeof player?.setVolume === 'function') {
     player.setVolume(0)
   }
 
@@ -464,14 +528,24 @@ function handlePreviousTrack() {
   if (!canGoToPreviousTrack.value || movieFlow.value.stage !== 'playlist') {
     return
   }
-  player?.previousVideo?.()
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.previous()
+  }
+  else {
+    player?.previousVideo?.()
+  }
 }
 
 function handleNextTrack() {
   if (!canGoToNextTrack.value || movieFlow.value.stage !== 'playlist') {
     return
   }
-  player?.nextVideo?.()
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.next()
+  }
+  else {
+    player?.nextVideo?.()
+  }
 }
 
 watch(isStarted, syncRootPlayerClass, { immediate: true })
@@ -494,7 +568,7 @@ function handleSeek(event: MouseEvent) {
   if (status.value === 'idle' || status.value === 'loading' || status.value === 'error') {
     return
   }
-  if (!player || duration.value <= 0) {
+  if ((selectedProvider.value === 'spotify' ? !spotifyPlayback : !player) || duration.value <= 0) {
     return
   }
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -502,7 +576,18 @@ function handleSeek(event: MouseEvent) {
   const percentage = Math.min(1, Math.max(0, clickX / rect.width))
   const targetTime = percentage * duration.value
 
-  if (typeof player.seekTo === 'function') {
+  if (selectedProvider.value === 'spotify') {
+    void spotifyPlayback?.seek(targetTime)
+    currentTime.value = targetTime
+    emit('progress', {
+      currentTime: targetTime,
+      duration: duration.value,
+      playlistIndex: currentTrackIndex.value,
+    })
+    return
+  }
+
+  if (typeof player?.seekTo === 'function') {
     player.seekTo(targetTime, true)
     currentTime.value = targetTime
     emit('progress', {
@@ -534,6 +619,8 @@ watch(() => props.playing, (newPlaying) => {
 
 onBeforeUnmount(() => {
   stopProgressTimer()
+  stopSpotifyStatusWatch?.()
+  spotifyPlayback?.destroy()
   cancelPlayerVolumeFade()
   syncRootPlayerClass(false)
   // Deliberately skipping player?.destroy() so the iframe survives Vite HMR during development.
