@@ -171,6 +171,8 @@ This is the feature users depend on most. Its whole value is that adding a slide
 
 **Jono Bacon timing lock**: `interview-jono-bacon-cult-psychology-kubernetes.webp` is an owner-authorized exception to the general generated rotation. It occupies the fixed Track 0 data window from **167.8s to 171.88s** (2:47.8 to 2:51.88), after which the standard `TIMELINE_BOUNDARY_EPSILON_SECONDS` handoff selects the next slide at 171.879s. `src/data/wolves-track-zero-slides.ts` owns the identifier, interval, and reorder-safe pin; do not move or remove this lock without an explicit owner request. `src/tests/wolvesTrackZeroSlides.test.ts`, `src/tests/wolvesComicReader.test.ts`, and `tests/wolves-movie-flow.mjs` are the independent ordering, rendered-boundary, and player-progress assertions.
 
+**Later-track event diversity**: after the Track 0 hero presentation, the Flickr gallery groups photos by the first three underscore-separated title fields (for example, `KC+CNC_NA_251109`) and emits one shuffled photo from each available event per round. This applies only to later-track gallery cycles; it does not change Track 0's authored slideshow or its timing locks. `src/data/wolves-gallery-cycle.ts` owns this behavior.
+
 **What agents may touch**:
 
 - Image files in the three wallpaper folders (add or remove, compressed WebP only).

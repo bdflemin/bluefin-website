@@ -7,6 +7,7 @@ Renders the soundtrack-synced Wolves visual presentation.
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { buildWolvesGalleryCycle } from '@/data/wolves-gallery-cycle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import { jonoBaconSlideId, jonoBaconTrackZeroWindow, pinJonoBaconAtTrackZeroWindow } from '@/data/wolves-track-zero-slides'
 import { wallpapers } from './wallpapers-list'
@@ -679,7 +680,7 @@ function snapshotLaterTrackPhotos(trackIndex: number) {
   }
 
   if (galleryCycle.value.length === 0) {
-    galleryCycle.value = shuffleArray(remotePhotos)
+    galleryCycle.value = buildWolvesGalleryCycle(remotePhotos)
   }
 
   const startIndex = galleryCycle.value.length > 0

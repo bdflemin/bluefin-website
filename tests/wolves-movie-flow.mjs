@@ -93,6 +93,7 @@ try {
   // deterministic mock Player that the Wolves soundtrack and Creator Shorts
   // interstitial can drive without making external network requests.
   await page.addInitScript(() => {
+    Math.random = () => 0
     window.__mockWolvesPlayers = []
     window.__mockWolvesSoundtrackPlayer = null
 
@@ -310,6 +311,26 @@ try {
   assert('Soundtrack resumes at Track 1 (Ghosts In The Mist)', trackTitle?.trim(), TRACK_ONE_TITLE)
   await hasVisibleControl(page, 'Pause soundtrack')
   await hasVisibleControl(page, 'Next track')
+  await page.waitForTimeout(1000)
+  await page.waitForTimeout(4500)
+  assert('Visible Track 1 Flickr caption', await page.locator('.flickr-caption').isVisible(), true)
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(0, true)
+  })
+  await page.waitForTimeout(150)
+  const firstGalleryCaption = await page.textContent('.flickr-caption')
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(12, true)
+  })
+  await page.waitForTimeout(150)
+  const secondGalleryCaption = await page.textContent('.flickr-caption')
+  const firstGalleryEvent = firstGalleryCaption?.match(/KC\+CNC_[^_]+_[^_\s]+/)?.[0]
+  const secondGalleryEvent = secondGalleryCaption?.match(/KC\+CNC_[^_]+_[^_\s]+/)?.[0]
+  assertTruthy('Track 1 starts with a Flickr event caption', firstGalleryEvent)
+  assertTruthy('Track 1 advances to another Flickr event caption', secondGalleryEvent)
+  assert('Track 1 alternates events between consecutive gallery slides', firstGalleryEvent === secondGalleryEvent, false)
   await captureStage(page, 'track-one')
 
   await page.evaluate(() => {

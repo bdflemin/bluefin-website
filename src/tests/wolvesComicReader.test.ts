@@ -245,6 +245,50 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).not.toBe(firstTrackStart)
   })
 
+  it('spreads later-track Flickr events across each gallery segment', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const photos = [
+      ...Array.from({ length: 100 }, (_, index) => ({
+        id: `na-${index}`,
+        server: '1',
+        secret: `na-${index}`,
+        title: `KC+CNC_NA_251109_Photo_${index}`,
+      })),
+      ...Array.from({ length: 100 }, (_, index) => ({
+        id: `eu-${index}`,
+        server: '1',
+        secret: `eu-${index}`,
+        title: `KC+CNC_EU_260322_Photo_${index}`,
+      })),
+    ]
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'later-track',
+        title: 'Later Track',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/later-track.jpg',
+        youtubeVideoId: '1',
+        bpm: 120,
+        phraseBeats: 8,
+      },
+    ], new Response(JSON.stringify(photos)))
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+    const firstCaption = galleryCaption(wrapper)
+
+    await wrapper.setProps({ playlistCurrentTime: 8 })
+
+    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+    expect([firstCaption, galleryCaption(wrapper)]).toEqual(expect.arrayContaining([
+      expect.stringContaining('KC+CNC_NA_251109'),
+      expect.stringContaining('KC+CNC_EU_260322'),
+    ]))
+  })
+
   it('uses separate Flickr photo segments for all later tracks', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const photos = Array.from({ length: 600 }, (_, index) => ({
