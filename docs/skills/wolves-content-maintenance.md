@@ -32,8 +32,12 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 5. Treat intro copy as a 10-foot theater experience: retain theater-readable type, use user-authorized line breaks and cue splits for long copy, and keep `dominant` cues more forceful than standard cues. Do not make text smaller to fit.
 6. For an explicit owner-authorized fixed slide window, put the identifier and interval in `src/data/wolves-track-zero-slides.ts`; add independent reorder, rendered-boundary, and player-progress assertions. Do not turn a generated-order coincidence into an undocumented lock.
 7. For post-hero Flickr galleries, use one complete Fisher-Yates shuffle across songs 2 onward. Do not group, rotate, or reuse photos. Preserve Track 0's authored schedule and locks.
-8. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
-9. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
+8. For a provider-gated soundtrack, record only owner-reviewed exact catalog
+   mappings in YouTube playlist order. Never use runtime search, fuzzy matching,
+   or a substitute track; leave the Spotify catalog and manifest fields absent
+   until every mapping and the owner-created playlist are approved.
+9. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
+10. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
 
 ## Common Rationalizations
 
@@ -55,6 +59,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Adding or changing the theater-caption rendering mechanism itself in `WolvesComicReader.vue` (it already exists; only the `curatedDescriptions` text content is an open surface).
 - A timing-sensitive slide that remains positioned only by generated-array order.
 - A post-hero gallery implementation that groups or rotates photos.
+- A Spotify URI, artist, title, or alternate recording inferred without owner review.
 - Emojis or ellipses introduced anywhere.
 
 ## Verification
@@ -65,5 +70,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - [ ] Timeline anchors (0:00, 150-220, 398-425) and thesis text are byte-identical.
 - [ ] Each owner-authorized fixed slide window has ordering, rendered-boundary, and player-progress assertions.
 - [ ] Later-track gallery assertions show a non-repeating shuffled sequence.
+- [ ] Provider catalog mappings are exact, unique, reviewed, and ordered to match
+  the YouTube manifest; no unapproved mapping reaches runtime data.
 - [ ] After renaming or converting any Track 0 people asset, regenerate `wallpapers-list.ts` and recalculate finale-photo browser checkpoints. The generator sorts filenames, so an extension change can alter the deterministic finale shuffle even when the image content is unchanged.
 - [ ] Affected Track 0 timestamps verified on the real player; deploy workflow for the pushed SHA succeeded.
