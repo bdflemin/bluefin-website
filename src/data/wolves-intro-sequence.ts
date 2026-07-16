@@ -350,7 +350,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
           text: 'New Children arose, and filled the pattern.',
           start: 37.46,
           end: 39.91,
-          backgroundCrossfade: bluefinMonthCrossfade(3),
+          backgroundCrossfade: [{ day: 'img/wallpapers/bluefin-03-day.webp', night: 'img/wallpapers/bluefin-03-day.webp' }],
         },
         {
           text: 'And the pinnacel, Maintainer-Guardians. For eons they thrived.',
