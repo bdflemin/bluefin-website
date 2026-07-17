@@ -13,6 +13,8 @@
  *   YouTube embed for audio (`audioYoutubeVideoId`) and per-cue background artwork.
  */
 
+import destinyCaptions from './wolves-destiny-captions.txt?raw'
+
 export interface IntroBackgroundCrossfade {
   readonly day: string
   readonly night: string
@@ -24,6 +26,8 @@ export interface IntroOverlayTextCue {
   readonly end: number
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
+  /** Renders a full-screen comic title card instead of the standard overlay treatment. */
+  readonly comicHeroTitleCard?: boolean
   /**
    * Day/night crossfade background(s) shown behind the text for this cue only. Accepts one or
    * more stages: a single-stage cue crossfades day->night once over its full duration; a
@@ -53,7 +57,7 @@ export interface IntroOverlayTextCue {
   /**
    * Anchors a Guardian trailer callout to one side of the frame instead of the default centered
    * lower-third placement. Reserved for cues whose on-screen window overlaps another Guardian's
-   * (e.g. Christopher Blecker and Natali Vlatko sharing the same shot near the trailer's end) so
+   * (e.g. Christoph Blecker and Natali Vlatko sharing the same shot near the trailer's end) so
    * both callouts can render at once without stacking on top of each other.
    */
   readonly position?: 'left' | 'right'
@@ -61,7 +65,7 @@ export interface IntroOverlayTextCue {
    * Raises a Guardian trailer callout from the default lower-third anchor to sit closer to
    * that Guardian's actual position in the shot. Reserved for cues where the default bottom
    * placement would sit far below the Guardian's on-screen character (e.g. Natali Vlatko's
-   * Behemoth Titan towers in the upper/center of the shared Christopher Blecker shot).
+   * Behemoth Titan towers in the upper/center of the shared Christoph Blecker shot).
    */
   readonly raised?: boolean
   /**
@@ -72,16 +76,20 @@ export interface IntroOverlayTextCue {
    * legible backdrop for bottom-anchored text than the top.
    */
   readonly textPosition?: 'top' | 'bottom' | 'bottom-right'
+  /** Renders the cue with a lighter, narrower treatment for lines like the final title card. */
+  readonly slim?: boolean
+  /** Highlights a specific substring inside this cue's text instead of the default B/F auto-highlighting. */
+  readonly highlightSubstring?: string
   /**
    * Gilds a Guardian trailer callout with a gold treatment instead of the default silver/blue
-   * plate, signifying leadership. Reserved for Christopher Blecker's "First Among Equals" cue
+   * plate, signifying leadership. Reserved for Christoph Blecker's "First Among Equals" cue
    * per explicit user request (2026-07-15) — do not apply broadly, it should read as singular.
    */
   readonly leader?: boolean
   /**
    * A single exact substring of this cue's title line to render with a distinctive gold
    * shimmer/"bling" effect (`wolves-guardian-plate-bling` in `WolvesIntroOverlay.vue`), calling
-   * it out from the rest of the title line. Reserved for Christopher Blecker's "Platinum Member"
+   * it out from the rest of the title line. Reserved for Christoph Blecker's "Platinum Member"
    * segment per explicit user request (2026-07-15) — must match a title substring exactly
    * (case-sensitive) or it silently renders with no special treatment.
    */
@@ -105,6 +113,8 @@ export interface IntroVideoSegment extends IntroSegmentBase {
    * still line up against the video's real (absolute) timeline — they do not need to be shifted.
    */
   readonly startOffset?: number
+  /** Burned-in caption cues rendered over the video frame itself. */
+  readonly burnedInCaptions?: readonly IntroOverlayTextCue[]
 }
 
 export interface IntroTextSegment extends IntroSegmentBase {
@@ -189,7 +199,7 @@ export function activeOverlayText(
 
 /**
  * All cues active at the given timestamp, not just the first match. Guardian trailer cues can
- * intentionally overlap (e.g. Christopher Blecker and Natali Vlatko share the same shot near
+ * intentionally overlap (e.g. Christoph Blecker and Natali Vlatko share the same shot near
  * the trailer's end) so both need to render side-by-side rather than one hiding the other.
  */
 export function activeOverlayCues(
@@ -200,6 +210,60 @@ export function activeOverlayCues(
     return []
   }
   return overlays.filter(cue => currentTime >= cue.start && currentTime < cue.end)
+}
+
+export function buildOverlayTextParts(text: string, highlightSubstring?: string): readonly { char: string, highlight: boolean }[] {
+  if (!highlightSubstring) {
+    return Array.from(text).map(char => ({ char, highlight: char.toUpperCase() === 'B' || char.toUpperCase() === 'F' }))
+  }
+
+  const normalizedText = text.toLowerCase()
+  const normalizedHighlight = highlightSubstring.toLowerCase()
+  const startIndex = normalizedText.indexOf(normalizedHighlight)
+  if (startIndex === -1) {
+    return Array.from(text).map(char => ({ char, highlight: char.toUpperCase() === 'B' || char.toUpperCase() === 'F' }))
+  }
+
+  const endIndex = startIndex + normalizedHighlight.length
+  return Array.from(text).map((char, index) => ({
+    char,
+    highlight: index >= startIndex && index < endIndex,
+  }))
+}
+
+export function parseDestinyCaptionFile(source: string): readonly IntroOverlayTextCue[] {
+  const lines = source
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'))
+
+  const cues: IntroOverlayTextCue[] = []
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index]
+    const separatorIndex = line.indexOf('|')
+    if (separatorIndex === -1) {
+      continue
+    }
+    const timestamp = Number.parseFloat(line.slice(0, separatorIndex))
+    const text = line.slice(separatorIndex + 1).trim()
+    if (Number.isNaN(timestamp) || !text) {
+      continue
+    }
+    const start = timestamp
+    const nextLine = lines[index + 1]
+    const nextTimestamp = nextLine ? Number.parseFloat(nextLine.slice(0, nextLine.indexOf('|'))) : Number.NaN
+    const end = Number.isNaN(nextTimestamp) ? start + 2.5 : nextTimestamp
+    cues.push({ text, start, end })
+  }
+  return cues
+}
+
+export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
+  const cues = parseDestinyCaptionFile(destinyCaptions)
+  return [
+    ...cues,
+    { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
+  ]
 }
 
 /**
@@ -270,7 +334,6 @@ function bluefinMonthCrossfadePair(month: number): IntroBackgroundCrossfade {
  *    naturally within budget and needs no `maxDuration`. A legitimate embed via YouTube's own
  *    IFrame API — the exact same mechanism already used for every track in the soundtrack
  *    playlist — never a downloaded or re-encoded local copy of someone else's footage.
- * 3. `wolves-epilogue` — a short black-screen text card bridging into the live experience.
  *
  * The live experience's own hero moment is the YouTube-hosted Track 0 playback that
  * `startSoundtrack()` already starts once this sequence completes, so there is no separate
@@ -281,30 +344,24 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
     {
       id: 'wolves-prologue',
       kind: 'text',
-      // Cut down from the song's full 5:26 (326s) to a 75s excerpt per explicit user request
-      // (2026-07-15, later widened from an initial 45s and then 60s the same day). The user
-      // hand-edited which lines survive and rewrote several. The remaining cues below are
-      // manually paced for readable holds across the same 75-second runtime, with no dead/black gaps.
-      duration: 75,
+      // Cut down from the song's full 5:26 (326s) to an 85s excerpt per explicit user request
+      // (2026-07-15, later widened from an initial 45s and 60s, then extended again to 85s for
+      // the split line pacing). The user hand-edited which lines survive and rewrote several.
+      // The remaining cues below are manually paced for readable holds across the same 85-second
+      // runtime, with no dead/black gaps.
+      duration: 85,
       audioYoutubeVideoId: 'EB3IokHelRk',
       overlays: [
-        // Cold open on total darkness -- nothing exists yet, before Earth or its wallpaper
-        // scenes even enter the story. The bluefin-01..12 wallpaper cycle below only begins
-        // once life/Earth is introduced starting with the next line.
         { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
         {
           text: `One to spread life, and one to cull the dross
 to shape the Garden of Earth.`,
           start: 5,
           end: 13.75,
-          backgroundCrossfade: [bluefinMonthCrossfadePair(2), bluefinMonthCrossfadePair(1)],
+          backgroundCrossfade: [bluefinMonthCrossfadePair(6)],
           textPosition: 'bottom-right',
         },
         {
-          // NOTE: the two asset filenames are inverted relative to their actual content
-          // (confirmed by eye in-browser) — the file literally named "...-day.webp" is the
-          // darker/dusk frame and "...-night.webp" is the brighter frame, so the `day`/`night`
-          // keys below intentionally point at the opposite filenames to render correctly.
           text: 'One day changed the Garden forever.',
           start: 13.75,
           end: 25,
@@ -313,17 +370,19 @@ to shape the Garden of Earth.`,
         {
           text: 'New Children arose and filled the pattern.',
           start: 25,
-          end: 28.75,
-          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
+          end: 27.5,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+          backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-day.webp', night: 'wolves-intro/bluefin-collapse-night.webp' }],
         },
         {
           text: 'For eons, Maintainer-Guardians cultivated the Garden...',
-          start: 28.75,
+          start: 27.5,
           end: 36.25,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
-          text: `Until the AI Society deemed Guardians unnecessary.
+          text: `Until an AI-fueled Society deemed Guardians unnecessary.
 And then, a threat.`,
           start: 36.25,
           end: 45,
@@ -347,8 +406,7 @@ humanity had lost its future`,
         },
         {
           text: `For the heart of any race is destroyed
-And its will to survive is utterly Broken
-When its children are taken from it`,
+And its will to survive is utterly Broken`,
           start: 59.375,
           end: 65,
           emphasis: 'dominant',
@@ -356,15 +414,23 @@ When its children are taken from it`,
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         },
         {
-          text: `Now, what's left of a proud order fights for survival,
-surrounded by predators.`,
+          text: 'When its children are taken from it',
           start: 65,
-          end: 70,
-          emphasis: 'dominant',
+          end: 72.5,
           textPosition: 'bottom',
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         },
-        { text: 'B L U E F I N — seven days to the wolves', start: 70, end: 75 },
+        {
+          text: `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
+          start: 72.5,
+          end: 78.5,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+          backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
+          highlightSubstring: 'fights',
+        },
+        { text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 85, slim: true },
       ],
     },
     {
@@ -389,10 +455,10 @@ surrounded by predators.`,
       // - Kaslin Fields' Arc Warlock lightning duel runs the full 38-48s (previously cut off at
       //   40s, well before the footage itself ends).
       // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
-      // - Christopher Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
+      // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
       //   the same shot from ~87.5-90s onward, so their windows now overlap (83-96s and
       //   87.5-96s) with `position` anchoring each to its own side of the frame instead of one
-      //   caption overwriting the other. Christopher's window was extended from 90s to 96s
+      //   caption overwriting the other. Christoph's window was extended from 90s to 96s
       //   (matching Natali's own end) at explicit user request, confirmed 2026-07-15 — his green
       //   Strand arm is still clearly visible reaching into frame through 94-96s (re-verified via
       //   frame capture), so this also corrects the plate disappearing while he's still on
@@ -433,9 +499,10 @@ surrounded by predators.`,
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
-        { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
+        { text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
         { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch — He\'s wearing a dress, I\'m wearing a FIST', start: 87.5, end: 96, position: 'right', raised: true },
       ],
+      burnedInCaptions: buildDestinyCaptionCues(),
     },
   ] as const
 }

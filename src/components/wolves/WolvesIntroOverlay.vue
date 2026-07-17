@@ -76,7 +76,7 @@ const overlayText = computed(() => overlayCueForDisplay.value?.text)
 const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayCues(burnedInCaptionCues.value, currentTime.value))
 /**
  * All cues active right now, not just the first match — the Guardian trailer intentionally
- * overlaps Christopher Blecker's and Natali Vlatko's windows since they share the same shot, so
+ * overlaps Christoph Blecker's and Natali Vlatko's windows since they share the same shot, so
  * both callouts need to render side-by-side via their `position` anchor.
  */
 const activeCues = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayCues(currentSegment.value?.overlays, currentTime.value))
@@ -84,7 +84,7 @@ const activeCues = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayC
 /**
  * Splits a Guardian cue's authored "Class — Name — Title" string into its own dossier-style
  * fields for the nerd-plate callout. A cue with more than three ` — `-separated segments (e.g.
- * Christopher Blecker's "Strand Warlock — Christopher Blecker — First Among Equals — The North
+ * Christoph Blecker's "Strand Warlock — Christoph Blecker — First Among Equals — The North
  * Star") joins everything after the name back into a single title line rather than dropping it.
  */
 function parseGuardianCue(text: string): { guardianClass: string, name: string, title: string } | undefined {
@@ -970,7 +970,7 @@ defineExpose({
 }
 
 /* POWERFUL statements: dominant cues trade the standard blue accent for the
-   leader-plate gold (same hierarchy as Christopher's gold plate vs the blue
+   leader-plate gold (same hierarchy as Christoph's gold plate vs the blue
    standard plates), with a warm glow to embolden them. */
 .wolves-intro-overlay-text-dominant .wolves-intro-letter-highlight {
   color: #facc15;
@@ -1045,7 +1045,7 @@ defineExpose({
 }
 
 /* Gilds the plate gold instead of the default silver/blue treatment to signify leadership.
-   Reserved for Christopher Blecker's "First Among Equals" cue — see the `leader` field doc
+   Reserved for Christoph Blecker's "First Among Equals" cue — see the `leader` field doc
    comment in wolves-intro-sequence.ts. Overrides border, horizon lines, crest, burst flash,
    and the title line so the gold reads consistently across the whole plate. */
 .wolves-guardian-plate-leader {
@@ -1190,7 +1190,7 @@ defineExpose({
   color: #94a3b8;
 }
 
-/* Blue vertical rule dividing a multi-segment title (e.g. Christopher Blecker's four titles, or
+/* Blue vertical rule dividing a multi-segment title (e.g. Christoph Blecker's four titles, or
    Natali Vlatko's two), replacing the authored ` — ` em-dash join with a UI separator instead of
    punctuation, per explicit user request. Uses the same blue accent as the rest of the plate
    chrome (crest, horizon lines, class label) so it reads as structure, not text. */
@@ -1202,7 +1202,7 @@ defineExpose({
   opacity: 0.85;
 }
 
-/* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christopher
+/* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christoph
    Blecker's "Platinum Member"), separate from the plain title text around it. A shimmer sweeps
    across the gold gradient text on a loop, with a soft pulsing glow, so it reads as a
    deliberately flashy inline award rather than a plain title word. */

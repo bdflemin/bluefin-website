@@ -1,7 +1,7 @@
 ---
 kind: character-sheet
 subject_kind: person
-title: Christopher Blecker
+title: Christoph Blecker
 timestamp: '2326-08-01'
 subject: subjectprofile/christopher-blecker
 guardian:
