@@ -35,6 +35,9 @@ Routine Wolves content uses `wolves-content-maintenance.md`. Unapproved visual w
   the opaque `WolvesIntroOverlay`, call its dual-buffer `prepare()` method to
   cue the first segment, and keep the overlay opaque until the active player
   reports `PLAYING`. Make the overlay transparent only then.
+- Before an overall seek re-enters the intro from the cinematic, destroy the
+  retained stage first so its players and poller stop, then prewarm the same
+  stage again under the new intro.
 - Feature-detect `document.startViewTransition`; put the reactive handoff
   update in its callback, and run the same update directly when unsupported.
 - Read scrub-derived state immediately; the live player poll loop can overwrite test positions.

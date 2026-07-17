@@ -20,6 +20,7 @@ const CinematicStageStub = defineComponent({
       prepare: vi.fn(async () => handoffCalls.push('prepare')),
       start: vi.fn(async () => handoffCalls.push('start')),
       releaseHandoff: vi.fn(() => handoffCalls.push('release')),
+      destroy: vi.fn(() => handoffCalls.push('destroy')),
       togglePlay: vi.fn(),
       seekTo: vi.fn(),
       seekToRatio: vi.fn(),
@@ -60,6 +61,7 @@ const WolvesIntroOverlayStub = defineComponent({
 
 const MediaWidgetStub = defineComponent({
   name: 'MediaWidget',
+  emits: ['seek'],
   props: {
     showVoiceOverToggle: { type: Boolean, default: false },
     voiceOverEnabled: { type: Boolean, default: false },
@@ -165,6 +167,21 @@ describe('wolvesApp intro status handling', () => {
     expect(store.segmentIndex).toBe(1)
     expect(handoffCalls).toEqual(['start'])
     expect(wrapper.find('.cinematic-stage-stub').exists()).toBe(true)
+  })
+
+  it('destroys the cinematic stage before seeking back into the intro', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(MediaWidgetStub).vm.$emit('seek', 0)
+    await flushPromises()
+    await nextTick()
+
+    expect(handoffCalls).toEqual(['destroy', 'prepare'])
+    expect(store.phase).toBe('intro')
   })
 
   it('hides the prologue nameplate absent a cue-level title and shows it only for the authored override', async () => {

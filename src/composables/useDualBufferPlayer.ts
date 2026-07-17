@@ -53,9 +53,25 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   let lifecycleToken = 0
   let preparePromise: Promise<void> | null = null
   let resolveStart: (() => void) | null = null
+  const pendingReadyRejectors = new Set<(reason: Error) => void>()
 
   const other = (side: PlayerSide): PlayerSide => (side === 'a' ? 'b' : 'a')
   const activePlayer = () => sides[activeSide.value].player
+
+  function releasePlayers() {
+    sides.a.player?.destroy?.()
+    sides.b.player?.destroy?.()
+    sides.a.player = null
+    sides.b.player = null
+    sides.a.segmentIndex = -1
+    sides.b.segmentIndex = -1
+  }
+
+  function rejectPendingReadiness(reason: Error) {
+    for (const rejectBeforeReady of [...pendingReadyRejectors]) {
+      rejectBeforeReady(reason)
+    }
+  }
 
   function applyVolume(player: YoutubePlayer | null, volume: number) {
     player?.setVolume?.(Math.round(volume))
@@ -248,9 +264,27 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function createPlayer(side: PlayerSide, host: HTMLElement): Promise<YoutubePlayer> {
     return new Promise((resolve, reject) => {
+      let settled = false
+      const rejectBeforeReady = (reason: Error): boolean => {
+        if (settled) {
+          return false
+        }
+        settled = true
+        pendingReadyRejectors.delete(rejectBeforeReady)
+        reject(reason)
+        return true
+      }
+      const resolveReady = (player: YoutubePlayer) => {
+        if (settled) {
+          return
+        }
+        settled = true
+        pendingReadyRejectors.delete(rejectBeforeReady)
+        resolve(player)
+      }
       const PlayerCtor = getYoutubePlayerConstructor()
       if (!PlayerCtor) {
-        reject(new Error('YouTube player constructor unavailable'))
+        rejectBeforeReady(new Error('YouTube player constructor unavailable'))
         return
       }
       const player: YoutubePlayer = new PlayerCtor(host, {
@@ -268,9 +302,12 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
           modestbranding: 1,
         },
         events: {
-          onReady: () => resolve(player),
+          onReady: () => resolveReady(player),
           onStateChange: (event: { data: number }) => handleStateChange(side, event.data),
           onError: () => {
+            if (rejectBeforeReady(new Error('YouTube player failed before readiness'))) {
+              return
+            }
             // Skip an unplayable segment instead of stalling the whole cinematic.
             if (side === activeSide.value) {
               resolveStart?.()
@@ -280,6 +317,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
           },
         },
       })
+      sides[side].player = player
+      pendingReadyRejectors.add(rejectBeforeReady)
     })
   }
 
@@ -309,24 +348,26 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         return
       }
 
-      const results = await Promise.allSettled([
-        createPlayer('a', hostA),
-        createPlayer('b', hostB),
-      ])
-      const playerA = results[0].status === 'fulfilled' ? results[0].value : null
-      const playerB = results[1].status === 'fulfilled' ? results[1].value : null
-      if (token !== lifecycleToken || !playerA || !playerB) {
-        playerA?.destroy?.()
-        playerB?.destroy?.()
-        return
-      }
+      try {
+        await Promise.all([
+          createPlayer('a', hostA),
+          createPlayer('b', hostB),
+        ])
+        if (token !== lifecycleToken) {
+          releasePlayers()
+          return
+        }
 
-      sides.a.player = playerA
-      sides.b.player = playerB
-      const startIndex = store.phase === 'cinematic' ? store.segmentIndex : 0
-      cueNext('a', startIndex)
-      cueNext('b', startIndex + 1)
-      prepared.value = true
+        const startIndex = store.phase === 'cinematic' ? store.segmentIndex : 0
+        cueNext('a', startIndex)
+        cueNext('b', startIndex + 1)
+        prepared.value = true
+      }
+      catch (error) {
+        rejectPendingReadiness(new Error('YouTube player preparation cancelled'))
+        releasePlayers()
+        throw error
+      }
     })().finally(() => {
       if (token === lifecycleToken) {
         preparePromise = null
@@ -390,14 +431,13 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function destroy() {
     lifecycleToken += 1
+    preparePromise = null
     stopPolling()
     cancelAnimationFrame(rampFrame)
     resolveStart?.()
     resolveStart = null
-    sides.a.player?.destroy?.()
-    sides.b.player?.destroy?.()
-    sides.a.player = null
-    sides.b.player = null
+    rejectPendingReadiness(new Error('YouTube player destroyed before readiness'))
+    releasePlayers()
     prepared.value = false
     started.value = false
     swapping = false

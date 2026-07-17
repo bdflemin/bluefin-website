@@ -169,6 +169,7 @@ async function handleCreatorShortsComplete() {
 
 async function seekIntroTarget(ratio: number) {
   if (store.phase !== 'intro') {
+    stage.value?.destroy?.()
     const meta = INTRO_DISPLAY['wolves-prologue']
     store.setDisplayOverride({
       ...meta,
@@ -176,6 +177,12 @@ async function seekIntroTarget(ratio: number) {
     })
     store.enterIntro()
     await nextTick()
+    try {
+      await stage.value?.prepare?.()
+    }
+    catch {
+      return
+    }
   }
 
   const target = resolveOverallRatioTarget(ratio)

@@ -15,6 +15,7 @@ interface FakeEvents {
 class FakePlayer {
   static instances: FakePlayer[] = []
   static emitPlayingOnPlay = true
+  static emitReadyOnConstruct = true
   events: FakeEvents
   currentTime = 0
   duration = 0
@@ -28,7 +29,9 @@ class FakePlayer {
     this.events = options.events ?? {}
     FakePlayer.instances.push(this)
     // The real API fires onReady asynchronously after construction.
-    queueMicrotask(() => this.events.onReady?.({}))
+    if (FakePlayer.emitReadyOnConstruct) {
+      queueMicrotask(() => this.events.onReady?.({}))
+    }
   }
 
   playVideo() {
@@ -75,6 +78,7 @@ class FakePlayer {
 
   destroy() {
     this.destroyed = true
+    this.playing = false
   }
 }
 
@@ -104,6 +108,7 @@ describe('useDualBufferPlayer', () => {
     setActivePinia(createPinia())
     FakePlayer.instances = []
     FakePlayer.emitPlayingOnPlay = true
+    FakePlayer.emitReadyOnConstruct = true
     installFakeYoutubeApi()
     vi.useFakeTimers({
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
@@ -158,6 +163,74 @@ describe('useDualBufferPlayer', () => {
     player.destroy()
     await start
 
+    expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
+  })
+
+  it('stops active playback and polling when the stage is torn down for intro navigation', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const [playerA] = FakePlayer.instances
+    playerA.currentTime = 12
+    playerA.duration = 100
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.segmentElapsed).toBe(12)
+
+    player.destroy()
+    playerA.currentTime = 48
+    vi.advanceTimersByTime(TIME_POLL_MS)
+
+    expect(playerA.playing).toBe(false)
+    expect(store.segmentElapsed).toBe(12)
+  })
+
+  it('destroys locally constructed players when unmounted before they become ready', async () => {
+    FakePlayer.emitReadyOnConstruct = false
+    const hostA = ref<HTMLElement | null>(document.createElement('div'))
+    const hostB = ref<HTMLElement | null>(document.createElement('div'))
+    const player = useDualBufferPlayer({ hostA, hostB })
+
+    const prepare = player.prepare()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(FakePlayer.instances).toHaveLength(2)
+
+    player.destroy()
+
+    await expect(prepare).rejects.toThrow('destroyed')
+    expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
+  })
+
+  it('allows a fresh muted prewarm after cancelling an unready prepare', async () => {
+    FakePlayer.emitReadyOnConstruct = false
+    const hostA = ref<HTMLElement | null>(document.createElement('div'))
+    const hostB = ref<HTMLElement | null>(document.createElement('div'))
+    const player = useDualBufferPlayer({ hostA, hostB })
+
+    const cancelledPrepare = player.prepare()
+    await Promise.resolve()
+    await Promise.resolve()
+    player.destroy()
+    await expect(cancelledPrepare).rejects.toThrow('destroyed')
+
+    FakePlayer.emitReadyOnConstruct = true
+    await player.prepare()
+
+    expect(FakePlayer.instances).toHaveLength(4)
+    expect(FakePlayer.instances.slice(2).every(instance => instance.cuedId.length > 0)).toBe(true)
+  })
+
+  it('rejects preparation and releases both sides when a player errors before ready', async () => {
+    FakePlayer.emitReadyOnConstruct = false
+    const hostA = ref<HTMLElement | null>(document.createElement('div'))
+    const hostB = ref<HTMLElement | null>(document.createElement('div'))
+    const player = useDualBufferPlayer({ hostA, hostB })
+
+    const prepare = player.prepare()
+    await Promise.resolve()
+    await Promise.resolve()
+    FakePlayer.instances[0].events.onError?.({})
+
+    await expect(prepare).rejects.toThrow('failed before readiness')
     expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
   })
 

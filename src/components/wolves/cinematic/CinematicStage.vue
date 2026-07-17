@@ -38,6 +38,7 @@ defineExpose({
   seekTo: player.seekTo,
   seekToRatio: player.seekToRatio,
   skip: player.skip,
+  destroy: player.destroy,
 })
 </script>
 
