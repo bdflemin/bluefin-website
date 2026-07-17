@@ -330,18 +330,23 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       currentTime.value += 0.2
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
-    // seconds so it ends on the phrase's own decay instead of a hard cut.
+    // seconds so it ends on the phrase's own decay instead of a hard cut. The
+    // window is recomputed every tick, so seeking back out of it restores full
+    // volume instead of leaving the music stuck quiet (the "glitched fade").
     if (segment.audioFadeOutSeconds && audioPlayer?.setVolume) {
       const remaining = segment.duration - currentTime.value
       if (remaining <= segment.audioFadeOutSeconds) {
         const ratio = Math.max(0, remaining / segment.audioFadeOutSeconds)
         audioPlayer.setVolume(Math.round(ratio * 100))
       }
+      else {
+        audioPlayer.setVolume(100)
+      }
     }
     if (isTextSegmentComplete(segment, currentTime.value)) {
       advance()
     }
-  }, 200)
+  }, 100)
 }
 
 async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video' }> | undefined) {
@@ -901,7 +906,9 @@ defineExpose({
   color: #e9e9e5;
   /* Weyland-era display type (Michroma = Microgramma/Eurostile Extended stand-in). */
   font-family: var(--wc-font-weyland, 'Michroma', 'Arial Narrow', sans-serif);
-  font-size: clamp(2.6rem, 5.2vw, 5rem);
+  /* Michroma renders much wider than the old stack; this keeps the same optical
+     size while letting authored lines fit without double-wrapping. */
+  font-size: clamp(2.4rem, 4.6vw, 4.4rem);
   line-height: 1.2;
   font-weight: 400; /* Michroma ships one weight; synthetic bold ruins it */
   letter-spacing: 0.05em;
@@ -923,8 +930,9 @@ defineExpose({
 
 .wolves-intro-overlay-text-bottom-right {
   left: auto;
-  width: min(90%, 100rem);
-  font-size: clamp(3.25rem, 7vw, 6.5rem);
+  width: min(94%, 136rem);
+  /* Scaled with the Michroma base so authored lines fit without double-wrapping. */
+  font-size: clamp(2.4rem, 4.2vw, 4.2rem);
   line-height: 1.25;
   text-align: right;
 }
@@ -978,13 +986,6 @@ defineExpose({
   font-weight: 900;
 }
 
-/* POWERFUL statements: dominant cues trade the standard blue accent for the
-   leader-plate gold (same hierarchy as Christoph's gold plate vs the blue
-   standard plates), with a warm glow to embolden them. */
-.wolves-intro-overlay-text-dominant .wolves-intro-letter-highlight {
-  color: #facc15;
-}
-
 /* The Arthur C. Clarke quote is the emotional hinge of the Prologue (the line that explains
    why the Wolves' extinction stakes matter) and should visually dominate rather than read as
    just another caption: centered, much larger, bolder, and spanning most of the screen. */
@@ -999,10 +1000,12 @@ defineExpose({
   font-size: clamp(4rem, 8vw, 8rem);
   line-height: 1.2;
   letter-spacing: 0.015em;
-  color: #fde68a;
+  /* POWERFUL statements: muted gold presence (the B/F highlights stay blue —
+     the project is BLUEfin). Softer than the leader-plate yellow by request. */
+  color: #e6d5ae;
   text-shadow:
     0 4px 24px rgb(0 0 0 / 90%),
-    0 0 32px rgb(250 204 21 / 30%);
+    0 0 28px rgb(200 180 137 / 20%);
 }
 
 .wolves-intro-overlay-text-slim {

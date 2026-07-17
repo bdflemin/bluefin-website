@@ -365,7 +365,10 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       overlays: [
         { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
         {
-          text: `One to spread life, and one to cull the dross
+          // Break rebalanced to three lines so no single word strands on its own
+          // at theater scale; wording unchanged.
+          text: `One to spread life,
+and one to cull the dross
 to shape the Garden of Earth.`,
           start: 5,
           end: 13.75,

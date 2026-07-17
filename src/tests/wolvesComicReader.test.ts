@@ -170,6 +170,7 @@ describe('wolvesComicReader', () => {
     const m2Path = 'wolves/people/m2.jpg'
     const kylePath = 'wolves/people/kyle.jpg'
     const hikariPath = 'wolves/people/hikari.webp'
+    const jorgePath = 'wolves/people/jorge-bluefin.webp'
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -214,7 +215,13 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
 
     await wrapper.setProps({ playlistCurrentTime: 192.279 })
-    expect(activeTimelineImage(wrapper)).not.toContain(hikariPath)
+    expect(activeTimelineImage(wrapper)).toContain(jorgePath)
+
+    await wrapper.setProps({ playlistCurrentTime: 196.358 })
+    expect(activeTimelineImage(wrapper)).toContain(jorgePath)
+
+    await wrapper.setProps({ playlistCurrentTime: 196.359 })
+    expect(activeTimelineImage(wrapper)).not.toContain(jorgePath)
   })
 
   it('renders Jono Bacon’s Cult Psychology title as a theater banner', async () => {

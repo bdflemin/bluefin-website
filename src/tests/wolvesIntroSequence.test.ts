@@ -177,7 +177,8 @@ describe('wolves intro overlay sequence', () => {
     expect(prologue.audioFadeOutSeconds).toBe(2.5)
     expect(prologue.overlays?.map(cue => cue.text)).toEqual([
       'A Gardener and a Winnower walked among the stars.',
-      `One to spread life, and one to cull the dross
+      `One to spread life,
+and one to cull the dross
 to shape the Garden of Earth.`,
       'One day changed the Garden forever.',
       'New Children arose and filled the pattern.',
@@ -197,7 +198,8 @@ surrounded by predators.`,
     expect(prologue.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 }),
       expect.objectContaining({
-        text: `One to spread life, and one to cull the dross
+        text: `One to spread life,
+and one to cull the dross
 to shape the Garden of Earth.`,
         start: 5,
         end: 13.75,

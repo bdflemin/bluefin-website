@@ -34,15 +34,22 @@ export const hikariTrackZeroWindow = {
   endTime: 192.28,
 } as const
 
+export const jorgeBluefinSlideId = 'wolves/people/jorge-bluefin.webp'
+export const jorgeBluefinTrackZeroWindow = {
+  startTime: hikariTrackZeroWindow.endTime,
+  endTime: 196.36,
+} as const
+
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
- * back-to-back after Marina's window (sherman -> m2 -> kyle -> hikari).
+ * back-to-back after Marina's window (sherman -> m2 -> kyle -> hikari -> jorge).
  */
 export const bluefinGroupSlides = [
   { id: shermanSlideId, window: shermanTrackZeroWindow },
   { id: m2SlideId, window: m2TrackZeroWindow },
   { id: kyleSlideId, window: kyleTrackZeroWindow },
   { id: hikariSlideId, window: hikariTrackZeroWindow },
+  { id: jorgeBluefinSlideId, window: jorgeBluefinTrackZeroWindow },
 ] as const
 
 export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)

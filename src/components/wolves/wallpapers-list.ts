@@ -539,8 +539,18 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/jorge-bluefin.webp',
+    title: 'Jorge Bluefin'
+  },
+  {
+    type: 'single',
     name: 'wolves/people/jorge.webp',
     title: 'Jorge'
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/juju.webp',
+    title: 'Juju'
   },
   {
     type: 'single',
@@ -986,5 +996,10 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/vmbrasseur.webp',
     title: 'Vmbrasseur'
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/walters.JPG',
+    title: 'Walters'
   }
 ]
