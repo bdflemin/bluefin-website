@@ -544,13 +544,9 @@ surrounded by predators.`,
       //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
       //   the previous bright frame, 119.0s is fully black and stays there through the end card.
       //   This black-frame cutoff is a separate visual cutoff for the unvoiced source only,
-      //   retained unchanged as `maxDuration: 121.5` (2.5s past the black cut). The local caption
-      //   file is timed instead to the voiced Ikora source (`BKm0TPqeOjY`); its restored full
-      //   dialogue ends explicitly at 112.60s (see `src/data/wolves-destiny-captions.txt`), well
-      //   before either source's own cutoff, and it remains displayed in both modes regardless of
-      //   which video source is active. The optional Ikora voiced source is shorter overall
-      //   (~120.2s), so its alternate cutoff clamps to the video's own end via
-      //   `alternateMaxDuration: 120.2`.
+      //   retained unchanged as `maxDuration: 121.5` (2.5s past the black cut). The optional
+      //   Ikora voiced source is shorter overall (~120.2s), so its alternate cutoff clamps to
+      //   the video's own end via `alternateMaxDuration: 120.2`.
       id: 'wolves-intro',
       kind: 'video',
       youtubeVideoId: 'BV3BZKbpBns',
@@ -573,7 +569,6 @@ surrounded by predators.`,
         { text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
         { text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right', raised: true },
       ],
-      burnedInCaptions: buildDestinyCaptionCues(),
     },
   ] as const
 }

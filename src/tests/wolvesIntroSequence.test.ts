@@ -201,54 +201,21 @@ describe('wolves intro overlay sequence', () => {
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
 
-  it('carries all 21 dialogue cues retimed to the voiced BKm0TPqeOjY transcript', () => {
+  it('builds no Destiny caption cues when the caption file is empty', () => {
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
 
-    expect(cues.map(cue => ({ start: cue.start, text: cue.text }))).toEqual([
-      { start: 4.36, text: 'What is a guardian?' },
-      { start: 9.40, text: 'We are connected to the weft and weave of the universe.' },
-      { start: 13.68, text: 'No one knows how long we live.' },
-      { start: 17.04, text: 'We stand alongside those without our gifts.' },
-      { start: 20.72, text: 'We know, intimately, their life spans, their mortality, despite their resilience.' },
-      { start: 29.48, text: 'Mortals live more intensely than any guardian I\'ve known. Love harder, perhaps.' },
-      { start: 35.88, text: 'They know tomorrow is never guaranteed. That everything they could become dies with them.' },
-      { start: 43.40, text: 'So, are we protectors?' },
-      { start: 46.96, text: 'Our gifts were meant to defend against impossible threats.' },
-      { start: 51.60, text: 'Those who need us have never needed us more.' },
-      { start: 55.24, text: 'But we could do nothing, and they would still die.' },
-      { start: 59.84, text: 'What is a guardian in that moment?' },
-      { start: 66.24, text: 'Now, across Last City territory, the forces of the Witness search.' },
-      { start: 72.68, text: 'Our borders are under siege.' },
-      { start: 75.52, text: 'Does that make us soldiers?' },
-      { start: 79.76, text: 'Pushing back buys us only time, but the alternative is unthinkable.' },
-      { start: 86.88, text: 'We built the city none of us dared to dream of, with allies from unlikely places.' },
-      { start: 93.52, text: 'We\'ve never had more to lose.' },
-      { start: 96.88, text: 'I turn the question to you, on the eve of our darkest hour.' },
-      { start: 103.56, text: 'What is a guardian?' },
-      { start: 107.40, text: 'Define us in this moment for all time.' },
-    ])
+    expect(cues).toEqual([])
   })
 
-  it('restores the missing "soldiers" question and the full closing dialogue after the drifted tail', () => {
+  it('does not surface any legacy Destiny caption lines', () => {
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
     const texts = cues.map(cue => cue.text)
-    const soldiers = cues.find(cue => cue.text === 'Does that make us soldiers?')
-    const dreamOf = cues.find(cue => cue.text === 'We built the city none of us dared to dream of, with allies from unlikely places.')
-    const neverHadMore = cues.find(cue => cue.text === 'We\'ve never had more to lose.')
-    const eveOfDarkestHour = cues.find(cue => cue.text === 'I turn the question to you, on the eve of our darkest hour.')
-    const finalLine = cues.find(cue => cue.text === 'Define us in this moment for all time.')
 
-    expect(soldiers?.start).toBe(75.52)
-    expect(dreamOf?.start).toBe(86.88)
-    expect(neverHadMore?.start).toBe(93.52)
-    expect(eveOfDarkestHour?.start).toBe(96.88)
-    expect(finalLine).toBeDefined()
-    expect(finalLine?.start).toBe(107.40)
-    expect(finalLine?.end).toBe(112.60)
-
-    // The fabricated black-frame line and its truncated/drifted 119.0s timing must be gone.
-    expect(texts).not.toContain('We built a city none of us dared')
-    expect(cues.some(cue => cue.start === 119.0)).toBe(false)
+    expect(texts).not.toContain('Does that make us soldiers?')
+    expect(texts).not.toContain('We built the city none of us dared to dream of, with allies from unlikely places.')
+    expect(texts).not.toContain('We\'ve never had more to lose.')
+    expect(texts).not.toContain('I turn the question to you, on the eve of our darkest hour.')
+    expect(texts).not.toContain('Define us in this moment for all time.')
   })
 
   it('gives the revised prologue copy readable holds within its 94-second runtime', () => {
