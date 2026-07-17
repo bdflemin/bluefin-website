@@ -53,6 +53,8 @@ Three separate authored layers exist during Track 0. They never share or exchang
 
 Editing one layer must never erase, replace, reorder, or otherwise alter another.
 
+A fourth, separate authored layer exists only for Parts II-VII of the rebuilt cinematic experience (see `docs/wolves-cinematic.md`): the per-song **team chat**, authored in `src/data/wolves-team-chats.ts`. Agents may add or reorder chat message records and their timestamps, but never write the `text`/`speaker` dialogue itself — production ships every song's `messages` array empty by design. This layer is independent of the three Track 0 layers above and must never exchange text with them.
+
 ## Lore Records
 
 The lore viewer renders typed records parsed from Markdown with YAML frontmatter.
@@ -147,7 +149,7 @@ Architecture:
 
 - `src/data/wolves-creator-shorts.ts`: the **content surface** — two independent typed, ordered arrays, `wolvesCreatorShortsLindsayNikole` and `wolvesCreatorShortsCassidyWilliams`, each of `{ videoId, title, creatorName, channelUrl, orientation }`, plus `wolvesCreatorShortsChapter`, which derives the first three Cassidy and first Lindsay entries. `orientation` is `'vertical'` for normal 9:16 Shorts and `'horizontal'` for the rare real 16:9 video (see below).
 - `src/components/wolves/WolvesCreatorShortsInterstitial.vue`: fullscreen, `<Teleport to="body">` player that creates exactly two persistent `YT.Player` instances. It pre-cues inactive sources, advances the fixed chapter on an active player's `ENDED` or `onError`, and emits `complete` immediately after the single Lindsay chapter turn. Each side keeps its title and creator attribution. The current-month wallpaper backdrop, scrim, and Pause/Resume and Skip controls are locked design.
-- `src/data/wolves-movie-flow.ts` and `WolvesSoundtrack.vue`: the pure coordinator owns intro, playlist, and Creator Shorts stage changes. It opens Shorts only for the first Track 0 → Track 1 transition in an immersive session; returning to Track 0 and moving forward does not replay the chapter. On completion it resumes Track 1. Native playlist previous/next controls are available only during the playlist stage. The handoff uses a bounded IFrame-player volume fade when supported, otherwise a clean pause/play cut.
+- `src/stores/cinematic.ts` and `src/composables/useDualBufferPlayer.ts`: the pure coordinator owns intro, cinematic, and Creator Shorts phase changes (see `docs/wolves-cinematic.md` for full architecture). It opens Shorts only for the first Part I → Part II transition in a session (`store.creatorShortsDueFor()`, gated on the one-time `shortsConsumed` flag); returning to Part I and moving forward does not replay the chapter. `CinematicStage.vue` — and its two `YT.Player` instances — is unmounted and destroyed for the duration of the interstitial, then remounted from `store.segmentIndex === 1` (Part II) once `WolvesCreatorShortsInterstitial.vue` emits `complete`. Native playlist previous/next controls are available only during the cinematic stage.
 - `src/composables/useYoutubeIframeApi.ts`: the shared player contract includes optional volume methods and a cancellable volume-fade helper. Keep volume control progressive: unsupported browsers must still advance cleanly.
 
 **Note on the one horizontal exception**: "Animals that are METAL AS F*CK" (`hqbR6Kt2McY`) is a real, verified Lindsay Nikole video but is a horizontal long-form upload, not a vertical Short — confirmed via YouTube's oEmbed API (`width:200,height:113` vs. a real Short's `width:113,height:200`) since no literal vertical "metal af animals" Short exists on her channel. Kept per explicit user decision; embeds and plays correctly, letterboxed automatically by YouTube's player.
@@ -224,6 +226,7 @@ The complete list of places agents may edit, and nothing else:
 | Link URLs and label text in `WolvesQrCodes.vue` | Exact user-supplied values only |
 | `buildIntroVideoSequence()` in `src/data/wolves-intro-sequence.ts` | Intro-sequence segment data: `video`/`text` kind, `youtubeVideoId`/`audioYoutubeVideoId`, `maxDuration`/`duration`, and character-overlay text/timing/background cues; exact user-supplied copy only |
 | `public/wolves-intro/` | Intro-sequence-exclusive artwork (e.g. the Collapse day/night pair); add or remove WebP images referenced only from `wolves-intro-sequence.ts` |
+| `src/data/wolves-team-chats.ts` | Message records and `atSeconds` timestamps for the Parts II-VII team chat; dialogue text itself is user-supplied copy only, never agent-generated |
 
 ## Editorial Rules
 
