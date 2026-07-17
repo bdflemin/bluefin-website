@@ -15,9 +15,8 @@ const store = useCinematicStore()
 const time = computed(() => store.nativeTime)
 const narrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
 const slotDuration = computed(() => Math.max(1, narrativeSlot.value.endTime - narrativeSlot.value.startTime))
-const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
-
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
+const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
 // Background wallpaper layers, carried over from the original immersive
 // theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
@@ -126,7 +125,6 @@ onBeforeUnmount(() => {
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getDayWallpaperUrl(activeMonth) }" />
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }" />
       </div>
-      <div class="wc-wallpaper-scrim" />
     </div>
 
     <div class="wc-trackzero-grid" :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }">
@@ -196,14 +194,6 @@ onBeforeUnmount(() => {
   inset: 0;
   background-size: cover;
   background-position: center;
-}
-
-// Keeps the theater content readable over bright day wallpapers.
-.wc-wallpaper-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: rgb(8 9 12 / 55%);
 }
 
 @keyframes wc-wallpaper-fade-in {
