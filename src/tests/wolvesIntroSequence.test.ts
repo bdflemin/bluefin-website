@@ -4,11 +4,13 @@ import {
   activeOverlayText,
   advanceIntroSequence,
   buildIntroVideoSequence,
+  buildOverlayTextParts,
   createIntroSequenceState,
   isTextSegment,
   isTextSegmentComplete,
   isVideoCutoffReached,
   isVideoSegment,
+  parseDestinyCaptionFile,
   previousIntroSequence,
   skipIntroSequence,
 } from '../data/wolves-intro-sequence'
@@ -87,6 +89,74 @@ describe('wolves intro overlay sequence', () => {
     expect(isTextSegmentComplete(segment, 45)).toBe(true)
   })
 
+  it('parses the authored Destiny caption file into timed burn-in cues', () => {
+    const cues = parseDestinyCaptionFile('0.00|First line\n2.50|Second line')
+
+    expect(cues).toHaveLength(2)
+    expect(cues[0]).toEqual(expect.objectContaining({ text: 'First line', start: 0, end: 2.5 }))
+    expect(cues[1]).toEqual(expect.objectContaining({ text: 'Second line', start: 2.5, end: 5 }))
+  })
+
+  it('highlights a specific substring when the cue requests one', () => {
+    const parts = buildOverlayTextParts('Now, what\'s left of a proud order fights for survival', 'fights')
+
+    expect(parts).toEqual([
+      { char: 'N', highlight: false },
+      { char: 'o', highlight: false },
+      { char: 'w', highlight: false },
+      { char: ',', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'w', highlight: false },
+      { char: 'h', highlight: false },
+      { char: 'a', highlight: false },
+      { char: 't', highlight: false },
+      { char: '\'', highlight: false },
+      { char: 's', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'l', highlight: false },
+      { char: 'e', highlight: false },
+      { char: 'f', highlight: false },
+      { char: 't', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'o', highlight: false },
+      { char: 'f', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'a', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'p', highlight: false },
+      { char: 'r', highlight: false },
+      { char: 'o', highlight: false },
+      { char: 'u', highlight: false },
+      { char: 'd', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'o', highlight: false },
+      { char: 'r', highlight: false },
+      { char: 'd', highlight: false },
+      { char: 'e', highlight: false },
+      { char: 'r', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 'f', highlight: true },
+      { char: 'i', highlight: true },
+      { char: 'g', highlight: true },
+      { char: 'h', highlight: true },
+      { char: 't', highlight: true },
+      { char: 's', highlight: true },
+      { char: ' ', highlight: false },
+      { char: 'f', highlight: false },
+      { char: 'o', highlight: false },
+      { char: 'r', highlight: false },
+      { char: ' ', highlight: false },
+      { char: 's', highlight: false },
+      { char: 'u', highlight: false },
+      { char: 'r', highlight: false },
+      { char: 'v', highlight: false },
+      { char: 'i', highlight: false },
+      { char: 'v', highlight: false },
+      { char: 'a', highlight: false },
+      { char: 'l', highlight: false },
+    ])
+  })
+
   it('builds the intro sequence without the epilogue transition', () => {
     const sequence = buildIntroVideoSequence()
     expect(sequence).toHaveLength(2)
@@ -95,13 +165,13 @@ describe('wolves intro overlay sequence', () => {
     expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
   })
 
-  it('gives the revised prologue copy readable holds within its 75-second runtime', () => {
+  it('gives the revised prologue copy readable holds within its 85-second runtime', () => {
     const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
       throw new Error('Expected the first intro segment to be text-only')
     }
 
-    expect(prologue.duration).toBe(75)
+    expect(prologue.duration).toBe(85)
     expect(prologue.overlays?.map(cue => cue.text)).toEqual([
       'A Gardener and a Winnower walked among the stars.',
       `One to spread life, and one to cull the dross
@@ -109,14 +179,14 @@ to shape the Garden of Earth.`,
       'One day changed the Garden forever.',
       'New Children arose and filled the pattern.',
       'For eons, Maintainer-Guardians cultivated the Garden...',
-      `Until the AI Society deemed Guardians unnecessary.
+      `Until an AI-fueled Society deemed Guardians unnecessary.
 And then, a threat.`,
       'Others came to claim a bountiful and unprotected Garden.',
       `In the space of a few days,
 humanity had lost its future`,
       `For the heart of any race is destroyed
-And its will to survive is utterly Broken
-When its children are taken from it`,
+And its will to survive is utterly Broken`,
+      'When its children are taken from it',
       `Now, what's left of a proud order fights for survival,
 surrounded by predators.`,
       'B L U E F I N — seven days to the wolves',
@@ -132,7 +202,15 @@ to shape the Garden of Earth.`,
       }),
       expect.objectContaining({ text: 'One day changed the Garden forever.', start: 13.75, end: 25 }),
       expect.objectContaining({
-        text: 'Until the AI Society deemed Guardians unnecessary.\nAnd then, a threat.',
+        text: 'New Children arose and filled the pattern.',
+        start: 25,
+        end: 27.5,
+        emphasis: 'dominant',
+        textPosition: 'bottom',
+        backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-day.webp', night: 'wolves-intro/bluefin-collapse-night.webp' }],
+      }),
+      expect.objectContaining({
+        text: 'Until an AI-fueled Society deemed Guardians unnecessary.\nAnd then, a threat.',
         start: 36.25,
         end: 45,
       }),
@@ -145,19 +223,24 @@ humanity had lost its future`,
       }),
       expect.objectContaining({
         text: `For the heart of any race is destroyed
-And its will to survive is utterly Broken
-When its children are taken from it`,
+And its will to survive is utterly Broken`,
         start: 59.375,
         end: 65,
         textPosition: 'bottom',
       }),
       expect.objectContaining({
-        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
+        text: 'When its children are taken from it',
         start: 65,
-        end: 70,
+        end: 72.5,
         textPosition: 'bottom',
       }),
-      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 70, end: 75 }),
+      expect.objectContaining({
+        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
+        start: 72.5,
+        end: 78.5,
+        textPosition: 'bottom',
+      }),
+      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 85 }),
     ]))
     expect(prologue.overlays?.every(cue => !cue.text.includes('<br>'))).toBe(true)
     expect(prologue.overlays?.every(cue => !cue.text.includes('(hold this'))).toBe(true)
@@ -198,17 +281,23 @@ humanity had lost its future`,
       }),
       expect.objectContaining({
         text: `For the heart of any race is destroyed
-And its will to survive is utterly Broken
-When its children are taken from it`,
+And its will to survive is utterly Broken`,
         start: 59.375,
         end: 65,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         textPosition: 'bottom',
       }),
       expect.objectContaining({
-        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
+        text: 'When its children are taken from it',
         start: 65,
-        end: 70,
+        end: 72.5,
+        backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
+        textPosition: 'bottom',
+      }),
+      expect.objectContaining({
+        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
+        start: 72.5,
+        end: 78.5,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         textPosition: 'bottom',
       }),
