@@ -1,0 +1,40 @@
+GNOME logo
+Source: https://commons.wikimedia.org/wiki/File:Gnomelogo-footprint.svg
+Direct file: https://upload.wikimedia.org/wikipedia/commons/3/39/Gnomelogo-footprint.svg
+License: GNU Lesser General Public License (LGPL); GNOME footprint logo is a
+trademark of the GNOME Foundation (https://foundation.gnome.org/logo-and-trademarks/).
+Note: the brief's originally specified source
+(https://design.gnome.org/static/media/gnome-footprint-black.6890a3fa.svg) no
+longer resolves; design.gnome.org has been superseded by brand.gnome.org,
+which does not expose a direct static asset URL for this file. This Wikimedia
+Commons file mirrors the official GNOME Foundation LGPL-licensed footprint
+artwork and is used as the current verified stable source.
+
+Flathub logo
+Source: https://github.com/flathub-infra/assets
+File: https://raw.githubusercontent.com/flathub-infra/assets/main/brand/logo-white.svg
+License: CC0 (public domain dedication), per the flathub-infra/assets repository.
+Note: the brief's originally specified repository (flathub/branding) no longer
+exists; Flathub's branding assets now live in flathub-infra/assets. The white
+wordmark variant was selected for legibility on the theater's dark background,
+matching the treatment used elsewhere on this page (for example, white QR
+codes on a transparent background).
+
+KDE logo
+Source: https://kde.org/stuff/clipart/
+File: https://kde.org/stuff/clipart/logo/kde-logo-white-blue-rounded-source.svg
+License: KDE Logo copying is subject to the LGPL copyright license; trademark
+usage is subject to the KDE trademark policy (https://kde.org/community/whatiskde/trademark/).
+Note: the brief's originally specified source
+(https://invent.kde.org/teams/artwork/branding/-/raw/master/logos/app/kde-logo-blueonwhite.svg)
+requires GitLab sign-in and is not publicly reachable; kde.org/stuff/clipart/
+is KDE's current public logo distribution page. The self-contained "White on
+Blue Rounded" badge variant was selected so the mark stays legible regardless
+of the surrounding ad-tile background.
+
+KubeCon CloudNativeCon Japan 2026 banner
+Source: https://cncf.github.io/banners/banners.yml
+Image: https://cncf.github.io/banners/events/Kubecon-Japan-2026-600x500.png
+Link: https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/?utm_source=artifacthub&utm_campaign=KubeCon-Japan-2026
+License: Official CNCF event banner, distributed by the Cloud Native Computing
+Foundation for use by artifact/project pages linking to the event.
