@@ -48,7 +48,7 @@ async function connect(provider: AuthProvider) {
         PROJECT BLUEFIN
       </p>
       <h1 class="wc-lobby-title">
-        WOLVES
+        SEVEN DAYS<br>TO THE WOLVES
       </h1>
       <div class="wc-hairline" />
       <p class="wc-lobby-sub">
@@ -141,11 +141,11 @@ async function connect(provider: AuthProvider) {
 }
 
 .wc-lobby-title {
-  font-size: clamp(4.8rem, 10vw, 8rem);
+  font-size: clamp(3.4rem, 6.8vw, 6rem);
   font-weight: 800;
   letter-spacing: 0.28em;
   margin-right: -0.28em; // optically recenters tracked uppercase
-  line-height: 1;
+  line-height: 1.15;
   color: var(--wc-white);
 }
 
