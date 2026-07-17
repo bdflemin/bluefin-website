@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
+
 const emit = defineEmits<{ enter: [] }>()
 
 const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
@@ -21,6 +23,8 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
       <p class="wc-lobby-status wc-label">
         SIGNAL READY · NO ACCOUNT REQUIRED
       </p>
+
+      <WolvesQrCodes />
 
       <button
         class="wc-lobby-enter wc-plate"
