@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
+import { WOLVES_TEAM_CHATS } from '@/data/wolves-team-chats'
 import { useCinematicStore } from '@/stores/cinematic'
+import WolvesTeamChat from './WolvesTeamChat.vue'
 
 const store = useCinematicStore()
-const active = ref(false)
 
 // Authored terminal block carried over verbatim from the original equinox overlay.
 const TERMINAL_LINES = [
@@ -16,34 +17,42 @@ const TERMINAL_LINES = [
   '// Deploy CNCF Projects Team, scramble all Guardians.',
 ]
 
-const HOLD_MS = 6000
-let hideTimer: ReturnType<typeof setTimeout> | null = null
+const TRANSITION_HOLD_SECONDS = 10
+const TRANSITION_DECAY_SECONDS = 4
 
 const segment = computed(() => CINEMATIC_SEGMENTS[store.segmentIndex])
 const loreLines = computed(() => segment.value?.transitionLore ?? [])
 
-// Every segment handoff (natural or manual skip) raises the overlay for six
-// seconds — it doubles as cover for the brief buffering gap on manual skips.
-watch(
-  () => store.segmentIndex,
-  () => {
-    if (store.phase !== 'cinematic') {
-      return
-    }
-    active.value = true
-    if (hideTimer) {
-      clearTimeout(hideTimer)
-    }
-    hideTimer = setTimeout(() => {
-      active.value = false
-    }, HOLD_MS)
+// Full opacity through the hold window, then a linear fade over the decay
+// window, derived solely from the real player clock so pause, seek, and
+// YouTube ads freeze/restore state correctly (no wall-clock timers).
+const shellOpacity = computed(() => {
+  const elapsed = store.segmentElapsed
+  if (elapsed <= TRANSITION_HOLD_SECONDS) {
+    return 1
+  }
+  return Math.max(
+    0,
+    1 - (elapsed - TRANSITION_HOLD_SECONDS) / TRANSITION_DECAY_SECONDS,
+  )
+})
+
+const chatSequence = computed(() =>
+  WOLVES_TEAM_CHATS[segment.value.id] ?? {
+    messages: [],
+    finalMessageEndsAtSeconds: 0,
   },
 )
 </script>
 
 <template>
-  <Transition name="wc-transition">
-    <div v-if="active" class="wc-transition-overlay">
+  <div class="wc-transition-layer">
+    <div
+      v-if="shellOpacity > 0"
+      class="wc-transition-shell"
+      :data-opacity="shellOpacity"
+      :style="{ opacity: shellOpacity }"
+    >
       <div class="wc-transition-frame">
         <div class="wc-transition-terminal">
           <span v-for="line in (loreLines.length ? loreLines : TERMINAL_LINES)" :key="line">{{ line }}</span>
@@ -58,11 +67,20 @@ watch(
         </p>
       </div>
     </div>
-  </Transition>
+
+    <WolvesTeamChat
+      :elapsed-seconds="store.segmentElapsed"
+      :sequence="chatSequence"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.wc-transition-overlay {
+.wc-transition-layer {
+  display: contents;
+}
+
+.wc-transition-shell {
   position: absolute;
   inset: 0;
   z-index: 30;
@@ -119,18 +137,5 @@ watch(
   100% {
     opacity: 0.75;
   }
-}
-
-.wc-transition-enter-active {
-  transition: opacity 0.4s ease;
-}
-
-.wc-transition-leave-active {
-  transition: opacity 1.2s ease;
-}
-
-.wc-transition-enter-from,
-.wc-transition-leave-to {
-  opacity: 0;
 }
 </style>
