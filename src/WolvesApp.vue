@@ -18,8 +18,13 @@ async function enterCinematic() {
   await nextTick() // stage mounts with the new phase before players are created
   await stage.value?.start()
   if (import.meta.env.DEV) {
-    // Dev-only hook so browser-based boundary verification can drive the real player.
-    ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
+    // Dev-only hook so browser-based boundary verification can drive the real player
+    // by player time (seek) and by segment handoff (skip). Never exposed in
+    // production builds — import.meta.env.DEV is false there, so this is tree-shaken.
+    ;(window as any).__wolvesCinematic = {
+      seekTo: (seconds: number) => stage.value?.seekTo(seconds),
+      skip: (delta: number) => stage.value?.skip(delta),
+    }
   }
 }
 

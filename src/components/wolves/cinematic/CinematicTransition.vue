@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { WolvesTeamChatSequence } from '@/data/wolves-team-chats'
 import { computed } from 'vue'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
 import { WOLVES_TEAM_CHATS } from '@/data/wolves-team-chats'
@@ -37,12 +38,25 @@ const shellOpacity = computed(() => {
   )
 })
 
-const chatSequence = computed(() =>
-  WOLVES_TEAM_CHATS[segment.value.id] ?? {
+const chatSequence = computed(() => {
+  if (import.meta.env.DEV) {
+    // Dev/CI-only: the Wolves browser flow test injects a placeholder chat
+    // sequence through this window global so the separate team-chat region can be
+    // asserted. Gated on import.meta.env.DEV so it is tree-shaken from production
+    // builds and can never ship fixture dialogue; production WOLVES_TEAM_CHATS
+    // stays empty and is never edited with dialogue here.
+    const fixture = (window as unknown as {
+      __wolvesTeamChatFixtures?: Record<string, WolvesTeamChatSequence>
+    }).__wolvesTeamChatFixtures?.[segment.value.id]
+    if (fixture) {
+      return fixture
+    }
+  }
+  return WOLVES_TEAM_CHATS[segment.value.id] ?? {
     messages: [],
     finalMessageEndsAtSeconds: 0,
-  },
-)
+  }
+})
 </script>
 
 <template>
