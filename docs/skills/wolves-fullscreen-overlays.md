@@ -15,7 +15,15 @@ metadata:
 
 This is engineering work on a frozen design surface. Explicit authorization is required. Read `docs/wolves-maintenance.md` and `docs/wolves-cinematic.md` first.
 
-## Core Patterns
+## When to Use
+
+Use only for explicitly authorized Wolves overlay, cinematic, control, or YouTube IFrame engineering.
+
+## When NOT to Use
+
+Routine Wolves content uses `wolves-content-maintenance.md`. Unapproved visual work stops.
+
+## Core Process
 
 - A transformed ancestor contains `position: fixed`; wrap true fullscreen overlays in `<Teleport to="body">`.
 - Tests for teleported content query `document.body`, not the component wrapper.
@@ -27,6 +35,13 @@ This is engineering work on a frozen design surface. Explicit authorization is r
 - Test embeds through `projectbluefin.io.localhost`; compare localhost error 150 with production before declaring a source broken.
 - Keep fixed media from collapsing adjacent text columns; inspect computed grid columns and bounds.
 - Theater typography is owned by `docs/wolves-maintenance.md`; never shrink type to fit copy.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "`position: fixed` is already fullscreen." | Transformed ancestors create containing blocks; use Teleport. |
+| "The DOM node exists, so controls work." | Verify bounds and clicks in Chromium. |
 
 ## Red Flags
 

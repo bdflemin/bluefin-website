@@ -14,6 +14,14 @@ Read `docs/wolves-maintenance.md` before touching any Wolves file. It is the can
 
 **Agents edit documented content surfaces. Agents never edit Wolves design.**
 
+## When to Use
+
+Use for Wolves lore, incoming signals, playlist metadata, creator shorts, characters, dinosaurs, guardian bonds, or wallpapers.
+
+## When NOT to Use
+
+Fullscreen overlay engineering uses `wolves-fullscreen-overlays.md`. Any other Wolves design work is locked.
+
 ## Core Process
 
 1. Match the request to an open surface in `docs/wolves-maintenance.md`.
@@ -28,7 +36,14 @@ Read `docs/wolves-maintenance.md` before touching any Wolves file. It is the can
 6. Preserve Track 0, timeline anchors, fixed slide windows, playlist order, and gallery shuffle rules exactly as documented.
 7. Load `build-verify-deploy.md` and complete every Wolves-specific check from the canonical reference.
 
-## Stop Immediately
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "A tiny component change makes the content fit." | Components are locked design. |
+| "I can write placeholder lore." | Only user-authored prose or standard lorem ipsum is allowed. |
+
+## Red Flags
 
 - Any `.vue`, `.scss`, layout, typography, animation, control, or rendering change.
 - Any thesis text or timing change without explicit authorization.

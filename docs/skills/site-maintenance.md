@@ -43,6 +43,19 @@ metadata:
 
 Stop before changing `.vue`, `.scss`, Tailwind classes, `src/style/**`, navigation prominence, or page discoverability unless the user explicitly approved visual work.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The content fits better with a small style tweak." | Content work grants no design authority. |
+| "Every locale must be updated before shipping." | Translation parity never blocks shipping. |
+
+## Red Flags
+
+- A content task changes components or styles.
+- An unlisted page is added to navigation.
+- Internal download facts are copied without checking source.
+
 ## Verification
 
 - [ ] Diff contains only requested content, data, or approved assets.

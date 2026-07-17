@@ -10,6 +10,14 @@ metadata:
 
 # Design Authority
 
+## When to Use
+
+Use for any possible visual, layout, component, navigation, or discoverability change.
+
+## When NOT to Use
+
+Routine content, data, and asset work stays in `site-maintenance.md`.
+
 ## Authority
 
 | Surface | Default |
@@ -31,7 +39,7 @@ Stop if the change affects:
 
 An explicit content, behavior, or bug-fix request does not authorize redesign.
 
-## Approved Visual Work
+## Core Process
 
 1. Confirm the exact surface and intended outcome.
 2. Follow existing visual patterns; do not create a parallel design system.
@@ -39,6 +47,13 @@ An explicit content, behavior, or bug-fix request does not authorize redesign.
 4. Capture desktop and mobile screenshots.
 5. Verify interaction, responsive behavior, console output, and bounds.
 6. Do not commit or push until the screenshots are approved.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "It is only spacing." | Spacing is design and needs approval on established pages. |
+| "The bug report implies a redesign." | Fix behavior without changing visual authority. |
 
 ## Red Flags
 

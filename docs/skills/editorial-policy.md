@@ -12,6 +12,14 @@ metadata:
 
 The user authors all creative and editorial content.
 
+## When to Use
+
+Use for fiction, lore, quotes, transcripts, attributions, marketing prose, and release-note narrative.
+
+## When NOT to Use
+
+Purely functional code, data, and layout changes do not need this skill.
+
 ## Core Process
 
 1. Find the authoritative source: direct user text, existing repository content, or cited upstream material.
@@ -27,6 +35,19 @@ The user authors all creative and editorial content.
 - Marketing or release-note narrative not supplied by the user.
 - Machine-generated translations presented as authored copy.
 - Rewriting recovered prose.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "A short bridge would improve flow." | The user authors all connective prose. |
+| "I can recreate the missing passage." | Recover exact authored text instead. |
+
+## Red Flags
+
+- New prose without an authoritative source.
+- Reworded quotes or attributions.
+- Agent-created headings or chapter names.
 
 ## Verification
 

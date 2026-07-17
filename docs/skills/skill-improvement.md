@@ -10,6 +10,16 @@ metadata:
 
 # Skill Improvement
 
+## When to Use
+
+Use when a session discovers durable agent knowledge or finds duplicated, stale, or missing guidance.
+
+## When NOT to Use
+
+One-off task notes and current status do not belong in skills.
+
+## Core Process
+
 Every completed implementation has two possible outputs:
 
 1. The requested work.
@@ -31,6 +41,19 @@ Update the closest existing skill in the same change when the learning is durabl
 - Ephemeral CI or deployment status in skills.
 - New skills when an existing skill owns the domain.
 - Duplicated non-negotiables.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I will document it later." | Reusable learning ships with the work. |
+| "A new skill is cleaner." | Update the existing owner unless the domain is genuinely new. |
+
+## Red Flags
+
+- Session-dated narrative.
+- Duplicate rules.
+- A new skill with the same authority as an existing one.
 
 ## Verification
 

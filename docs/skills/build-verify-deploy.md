@@ -10,6 +10,14 @@ metadata:
 
 # Build, Verify, Deploy
 
+## When to Use
+
+Use before committing, pushing, reporting completion, or answering whether a change is live.
+
+## When NOT to Use
+
+Do not run every application suite for a documentation-only change.
+
 ## Commands
 
 | Purpose | Command |
@@ -24,6 +32,14 @@ metadata:
 | Navbar browser assertions | `node tests/navbar-visual.mjs` |
 
 Use the smallest relevant checks. Documentation-only changes need path/link checks and `git diff --check`, not unrelated application test suites.
+
+## Core Process
+
+1. Run the smallest checks that prove the changed behavior.
+2. Inspect the worktree and stage explicit paths.
+3. Push only the intended commit.
+4. Verify the exact pushed SHA's Pages run.
+5. Complete Wolves or visual browser checks when applicable.
 
 ## Worktree Safety
 
@@ -54,6 +70,19 @@ gh run list \
 ```
 
 Production is complete only when the run for the exact pushed SHA is `completed` with conclusion `success`. No matching run, an in-progress run, or a failed run is not complete.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The build passed, so it is live." | Only the exact pushed-SHA Pages run proves deployment. |
+| "Staging everything is faster." | It risks committing unrelated user work. |
+
+## Red Flags
+
+- Completion claimed from a local build.
+- A Pages run for a different SHA is cited.
+- `git add .` or `git add -A`.
 
 ## Verification
 
