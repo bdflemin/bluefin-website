@@ -224,6 +224,7 @@ describe('wolves intro overlay sequence', () => {
         start: 48,
         end: 70.5,
         preservePunctuation: true,
+        mediaTitle: '#novaforever',
         requiresCaptionToggle: true,
       },
     ])
@@ -253,6 +254,7 @@ describe('wolves intro overlay sequence', () => {
         start: 48,
         end: 70.5,
         preservePunctuation: true,
+        mediaTitle: '#novaforever',
         requiresCaptionToggle: true,
       },
     ])

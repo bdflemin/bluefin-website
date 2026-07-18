@@ -227,9 +227,9 @@ try {
     'Fighting for something greater than ourselves.',
   )
   assert(
-    'Destiny media plaque shows the Nova tag',
+    'Destiny media plaque retains the cinematic title',
     await page.locator('.wc-widget-title').textContent(),
-    '#novaforever',
+    'Destiny 2: Into the Light Cinematic',
   )
   const introPlayerIndex = await page.evaluate(() =>
     window.__mockWolvesPlayers.findIndex(player => player.videoId === 'BV3BZKbpBns'),

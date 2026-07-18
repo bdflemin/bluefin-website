@@ -366,7 +366,7 @@ describe('wolvesApp intro status handling', () => {
     expect(setCaptionsEnabled).toHaveBeenCalledWith(true)
   })
 
-  it('shows the Nova tag in the bottom music plaque throughout Destiny', async () => {
+  it('shows the Nova tag in the bottom music plaque during the candle sequence', async () => {
     const store = useCinematicStore()
     store.enterIntro()
 
@@ -393,7 +393,7 @@ describe('wolvesApp intro status handling', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|Fighting for something greater than ourselves.')
-    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('#novaforever')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
 
     intro.vm.$emit('status', {
       currentTime: 48,
@@ -401,6 +401,7 @@ describe('wolvesApp intro status handling', () => {
       paused: false,
       segmentId: 'wolves-intro',
       canGoPrevious: true,
+      mediaTitle: '#novaforever',
     })
     await wrapper.vm.$nextTick()
 
@@ -416,7 +417,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('#novaforever')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
   })
 
   it('normalizes intro native time into canonical segment/sequence progress and preserves overall continuity on handoff', async () => {
