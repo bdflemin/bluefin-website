@@ -707,7 +707,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.text()).not.toContain('GUARDIAN // MAINTAINER')
   })
 
-  it('renders Bob Killen with a paired Torosaurus panel instead of the old inline icon', async () => {
+  it('renders Bob Killen with the documented bonded-dinosaur icon', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
     await flushPromises()
     resolveIframeApi()
@@ -718,24 +718,25 @@ describe('wolvesIntroOverlay guardian plate', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Bob Killen')
-    expect(wrapper.text()).toContain('TOROSAURUS')
-    expect(wrapper.text()).toContain('Torosaurus latus')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur').exists()).toBe(true)
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur img').attributes('src')).toContain('bob-torosaurus.webp')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(true)
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').attributes('src')).toContain('bob-torosaurus.webp')
   })
 
-  it('keeps the recovered Weyland lower third and detailed mount treatment', () => {
+  it('keeps the original compact dinosaur icon treatment', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+    const nameRule = overlay.match(/\.wolves-guardian-plate-name \{([\s\S]*?)\n\}/)?.[1]
 
-    expect(overlay).toContain('font-family: var(--wc-font-weyland, \'Michroma\', sans-serif)')
-    expect(overlay).toContain('font-family: var(--wc-font-weyland-mono, \'Share Tech Mono\', monospace)')
-    expect(overlay).toContain('grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem)')
-    expect(overlay).toContain('width: clamp(6.8rem, 5rem + 4vw, 10rem)')
-    expect(overlay).toContain('height: clamp(6.8rem, 5rem + 4vw, 10rem)')
+    if (!nameRule) {
+      throw new Error('Expected the Guardian name CSS template')
+    }
+
+    expect(nameRule).toContain('font-size: clamp(2.6rem, 1.9rem + 1.6vw, 3.6rem)')
+    expect(nameRule).not.toContain('font-family:')
+    expect(overlay).toContain('wolves-guardian-plate-dinosaur-icon')
+    expect(overlay).not.toContain('class="wolves-guardian-plate-dinosaur"')
   })
 
-  it('switches to Kaslin\'s flipped Torosaurus artwork during her authored window', async () => {
+  it('switches to Kaslin\'s bonded-dinosaur icon during her authored window', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
     await flushPromises()
     resolveIframeApi()
@@ -746,12 +747,10 @@ describe('wolvesIntroOverlay guardian plate', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Kaslin Fields')
-    expect(wrapper.text()).toContain('TOROSAURUS')
-    expect(wrapper.text()).toContain('Torosaurus latus')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur img').attributes('src')).toContain('kaslin-torosaurus.webp')
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').attributes('src')).toContain('kaslin-torosaurus.webp')
   })
 
-  it('renders no dinosaur panel for a guardian with no documented dinosaur bond', async () => {
+  it('renders no dinosaur icon for a guardian with no documented dinosaur bond', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
     await flushPromises()
     resolveIframeApi()
@@ -762,6 +761,6 @@ describe('wolvesIntroOverlay guardian plate', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Laura Santamaria')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur').exists()).toBe(false)
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
   })
 })

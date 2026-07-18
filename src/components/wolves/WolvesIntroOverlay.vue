@@ -155,17 +155,10 @@ function titleTokens(title: string, blingTitle: string | undefined): TitleToken[
   return tokens
 }
 
-function guardianDinosaurProfile(guardianName: string): { artworkSource: string, label: string, scientificName: string } | undefined {
+function guardianDinosaurArtwork(guardianName: string): string | undefined {
   const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
   const species = bond && dinosaurSpecies.find(entry => entry.id === bond.dinosaurSpeciesId)
-  if (!species) {
-    return undefined
-  }
-  return {
-    artworkSource: `${baseUrl}${species.artwork.slice(2)}`,
-    label: species.scientificName.split(' ')[0]?.toUpperCase() ?? species.scientificName.toUpperCase(),
-    scientificName: species.scientificName,
-  }
+  return species && `${baseUrl}${species.artwork.slice(2)}`
 }
 
 /**
@@ -794,43 +787,25 @@ defineExpose({
           <p class="wolves-guardian-plate-class">
             {{ parseGuardianCue(cue.text)!.guardianClass }}
           </p>
-          <div
-            class="wolves-guardian-plate-body"
-            :class="{ 'wolves-guardian-plate-body-paired': guardianDinosaurProfile(parseGuardianCue(cue.text)!.name) }"
-          >
-            <div class="wolves-guardian-plate-identity">
-              <p class="wolves-guardian-plate-name">
-                {{ parseGuardianCue(cue.text)!.name }}
-              </p>
-              <p class="wolves-guardian-plate-title">
-                <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
-                  <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
-                  <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
-                  <template v-else>
-                    {{ token.text }}
-                  </template>
-                </template>
-              </p>
-            </div>
-            <div
-              v-if="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)"
-              class="wolves-guardian-plate-dinosaur"
+          <p class="wolves-guardian-plate-name">
+            {{ parseGuardianCue(cue.text)!.name }}
+            <img
+              v-if="guardianDinosaurArtwork(parseGuardianCue(cue.text)!.name)"
+              :src="guardianDinosaurArtwork(parseGuardianCue(cue.text)!.name)"
+              alt=""
+              aria-hidden="true"
+              class="wolves-guardian-plate-dinosaur-icon"
             >
-              <img
-                :src="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.artworkSource"
-                :alt="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.scientificName"
-                class="wolves-guardian-plate-dinosaur-art"
-              >
-              <div class="wolves-guardian-plate-dinosaur-copy">
-                <p class="wolves-guardian-plate-dinosaur-label">
-                  {{ guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.label }}
-                </p>
-                <p class="wolves-guardian-plate-dinosaur-species">
-                  {{ guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.scientificName }}
-                </p>
-              </div>
-            </div>
-          </div>
+          </p>
+          <p class="wolves-guardian-plate-title">
+            <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+              <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
+              <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
+              <template v-else>
+                {{ token.text }}
+              </template>
+            </template>
+          </p>
         </template>
         <p v-else class="wolves-guardian-plate-name">
           {{ cue.text }}
@@ -1625,7 +1600,6 @@ defineExpose({
 
 .wolves-guardian-plate-label {
   margin: 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.4rem, 1.1rem + 0.6vw, 1.8rem);
   letter-spacing: 0.35em;
   color: #93c5fd;
@@ -1633,7 +1607,6 @@ defineExpose({
 
 .wolves-guardian-plate-class {
   margin: 0.35rem 0 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.1rem);
   letter-spacing: 0.05em;
   color: #bfdbfe;
@@ -1642,9 +1615,8 @@ defineExpose({
 
 .wolves-guardian-plate-name {
   margin: 0.2rem 0 0;
-  font-family: var(--wc-font-weyland, 'Michroma', sans-serif);
-  font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.1rem);
-  font-weight: 400;
+  font-size: clamp(2.6rem, 1.9rem + 1.6vw, 3.6rem);
+  font-weight: 700;
   color: #f5f5f5;
   background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
   -webkit-background-clip: text;
@@ -1654,24 +1626,8 @@ defineExpose({
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.15s backwards;
 }
 
-.wolves-guardian-plate-body {
-  margin-top: 0.45rem;
-}
-
-.wolves-guardian-plate-body-paired {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem);
-  gap: 1rem;
-  align-items: center;
-}
-
-.wolves-guardian-plate-identity {
-  min-width: 0;
-}
-
 .wolves-guardian-plate-title {
   margin: 0.35rem 0 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
   color: #94a3b8;
 }
@@ -1708,64 +1664,14 @@ defineExpose({
     wolves-guardian-plate-bling-pulse 1.8s ease-in-out infinite;
 }
 
-.wolves-guardian-plate-dinosaur {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.8rem;
-  padding: 0.8rem 0.95rem;
-  border: 1px solid rgb(147 197 253 / 28%);
-  border-radius: 0.85rem;
-  background:
-    radial-gradient(circle at top left, rgb(147 197 253 / 16%), transparent 55%),
-    linear-gradient(135deg, rgb(15 23 42 / 92%), rgb(2 6 23 / 82%));
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+.wolves-guardian-plate-dinosaur-icon {
+  display: inline-block;
+  height: clamp(2.2rem, 1.6rem + 1.4vw, 3rem);
+  width: auto;
+  margin-left: 0.6rem;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 6px rgb(255 255 255 / 35%));
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
-}
-
-.wolves-guardian-plate-dinosaur-art {
-  flex: 0 0 auto;
-  width: clamp(6.8rem, 5rem + 4vw, 10rem);
-  height: clamp(6.8rem, 5rem + 4vw, 10rem);
-  object-fit: contain;
-  filter: drop-shadow(0 0 12px rgb(255 255 255 / 18%));
-}
-
-.wolves-guardian-plate-dinosaur-copy {
-  min-width: 0;
-  text-align: left;
-}
-
-.wolves-guardian-plate-dinosaur-label,
-.wolves-guardian-plate-dinosaur-species {
-  margin: 0;
-}
-
-.wolves-guardian-plate-dinosaur-label {
-  font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.2rem);
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: #bfdbfe;
-}
-
-.wolves-guardian-plate-dinosaur-species {
-  margin-top: 0.3rem;
-  font-size: clamp(1.25rem, 1rem + 0.45vw, 1.55rem);
-  color: #cbd5e1;
-}
-
-@media (max-width: 640px) {
-  .wolves-guardian-plate-body-paired {
-    grid-template-columns: 1fr;
-  }
-
-  .wolves-guardian-plate-dinosaur {
-    justify-content: center;
-  }
-
-  .wolves-guardian-plate-dinosaur-copy {
-    text-align: center;
-  }
 }
 
 @keyframes wolves-guardian-plate-ignite {
