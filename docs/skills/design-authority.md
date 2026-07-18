@@ -47,6 +47,7 @@ An explicit content, behavior, or bug-fix request does not authorize redesign.
 4. Capture desktop and mobile screenshots.
 5. Verify interaction, responsive behavior, console output, and bounds.
 6. Do not commit or push until the screenshots are approved.
+7. For a recovery, use the immediate pre-removal revision as the visual source and transplant only the affected hunks; keep later content, behavior, and unrelated fixes intact.
 
 ## Common Rationalizations
 
