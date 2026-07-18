@@ -246,6 +246,15 @@ try {
   await page.waitForTimeout(250)
   const comicHeroShotMid = await comicHeroShotStart.getAttribute('data-comic-hero-shot')
   assertTruthy('Comic Hero Shots title card advances to a later Chonky slide without repeating', comicHeroShotMid && comicHeroShotMid !== 'chonky-achillibator-pose1-post')
+  await page.evaluate((index) => {
+    window.__mockWolvesPlayers[index].seekTo(48.01, true)
+  }, introPlayerIndex)
+  await page.waitForSelector('.wolves-intro-overlay-burned-caption', { state: 'visible', timeout: 5_000 })
+  assert(
+    'Post-Kaslin status keeps the authored humanity line and Nova tag',
+    await page.locator('.wolves-intro-overlay-burned-caption').textContent(),
+    'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+  )
   await captureStage(page, 'destiny')
 
   // Complete the remaining intro stages before exercising the playlist handoff.

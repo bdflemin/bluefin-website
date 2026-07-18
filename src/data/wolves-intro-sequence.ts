@@ -318,6 +318,12 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   return [
     ...cues,
     { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
+    {
+      text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+      start: 48,
+      end: 70.5,
+      preservePunctuation: true,
+    },
   ]
 }
 

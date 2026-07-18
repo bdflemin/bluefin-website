@@ -215,10 +215,17 @@ describe('wolves intro overlay sequence', () => {
     ]))
   })
 
-  it('builds no Destiny caption cues when the caption file is empty', () => {
+  it('keeps only the authored post-Kaslin status when the caption file is empty', () => {
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
 
-    expect(cues).toEqual([])
+    expect(cues).toEqual([
+      {
+        text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+        start: 48,
+        end: 70.5,
+        preservePunctuation: true,
+      },
+    ])
   })
 
   it('does not surface any legacy Destiny caption lines', () => {
@@ -232,7 +239,7 @@ describe('wolves intro overlay sequence', () => {
     expect(texts).not.toContain('Define us in this moment for all time.')
   })
 
-  it('wires only the Comic Hero Shots title card into the Destiny segment', () => {
+  it('wires the Comic Hero card and post-Kaslin status into the Destiny segment', () => {
     const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
     if (!destiny || !isVideoSegment(destiny)) {
       throw new Error('Expected the Destiny segment to exist')
@@ -240,6 +247,12 @@ describe('wolves intro overlay sequence', () => {
 
     expect(destiny.burnedInCaptions).toEqual([
       { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
+      {
+        text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+        start: 48,
+        end: 70.5,
+        preservePunctuation: true,
+      },
     ])
   })
 
