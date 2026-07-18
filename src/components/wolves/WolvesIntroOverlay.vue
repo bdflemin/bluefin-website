@@ -42,6 +42,7 @@ const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
 const isPaused = ref(false)
 const destinyVoiceOverEnabled = ref(false)
+const destinyCaptionsEnabled = ref(false)
 /** The active segment's known duration, driving the hero widget's progress readout. */
 const activeSegmentDuration = ref(0)
 const mountHost = ref<HTMLDivElement | null>(null)
@@ -70,6 +71,10 @@ const canToggleDestinyVoiceOver = computed(() =>
   && isVideoSegment(currentSegment.value)
   && Boolean(currentSegment.value.alternateYoutubeVideoId),
 )
+const canToggleDestinyCaptions = computed(() =>
+  currentSegment.value?.id === 'wolves-intro'
+  && isVideoSegment(currentSegment.value),
+)
 const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => {
   const cues = burnedInCaptionCues.value ?? currentSegment.value?.overlays
   if (!cues) {
@@ -84,7 +89,7 @@ const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => act
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
 const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() =>
   activeOverlayCues(burnedInCaptionCues.value, currentTime.value)
-    .filter(cue => !cue.comicHeroTitleCard),
+    .filter(cue => !cue.comicHeroTitleCard && (!cue.requiresCaptionToggle || destinyCaptionsEnabled.value)),
 )
 const activeMediaTitle = computed(() => activeBurnedInCaptions.value.find(cue => cue.mediaTitle)?.mediaTitle)
 /**
@@ -557,6 +562,7 @@ function setVoiceOverEnabled(enabled: boolean) {
   if (!segment || !isVideoSegment(segment) || !canToggleDestinyVoiceOver.value) {
     return
   }
+
   if (destinyVoiceOverEnabled.value === enabled) {
     return
   }
@@ -578,6 +584,13 @@ function setVoiceOverEnabled(enabled: boolean) {
     videoId: activeVideoId(segment),
     startSeconds: preservedTime,
   })
+}
+
+function setCaptionsEnabled(enabled: boolean) {
+  if (!canToggleDestinyCaptions.value) {
+    return
+  }
+  destinyCaptionsEnabled.value = enabled
 }
 
 function handleTogglePlayback() {
@@ -617,6 +630,8 @@ watchEffect(() => {
     mediaTitle: activeMediaTitle.value,
     showVoiceOverToggle: canToggleDestinyVoiceOver.value,
     voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
+    showCaptionToggle: canToggleDestinyCaptions.value,
+    captionsEnabled: canToggleDestinyCaptions.value ? destinyCaptionsEnabled.value : false,
   })
 })
 
@@ -633,6 +648,7 @@ watchEffect(() => {
     getVideoId: () => (currentSegment.value && isVideoSegment(currentSegment.value) ? activeVideoId(currentSegment.value) : ''),
     isPaused: () => isPaused.value,
     setVoiceOverEnabled,
+    setCaptionsEnabled,
   }
 })
 
@@ -640,6 +656,7 @@ defineExpose({
   next: handleNext,
   previous: handlePrevious,
   setVoiceOverEnabled,
+  setCaptionsEnabled,
   toggle: handleTogglePlayback,
   seekToRatio,
 })

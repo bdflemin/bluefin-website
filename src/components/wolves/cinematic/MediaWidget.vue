@@ -7,10 +7,16 @@ const props = withDefaults(defineProps<{
   showVoiceOverToggle?: boolean
   voiceOverEnabled?: boolean
   voiceOverLabel?: string
+  showCaptionToggle?: boolean
+  captionsEnabled?: boolean
+  captionLabel?: string
 }>(), {
   showVoiceOverToggle: false,
   voiceOverEnabled: false,
   voiceOverLabel: 'Ikora voice over',
+  showCaptionToggle: false,
+  captionsEnabled: false,
+  captionLabel: 'CC',
 })
 
 // The widget is a pure store subscriber: playback intents are emitted upward and
@@ -18,6 +24,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   togglePlay: []
   toggleVoiceOver: [enabled: boolean]
+  toggleCaptions: [enabled: boolean]
   skip: [delta: number]
   seek: [ratio: number]
 }>()
@@ -62,6 +69,10 @@ function handleSeek(event: MouseEvent) {
 function handleVoiceOverChange(event: Event) {
   emit('toggleVoiceOver', (event.target as HTMLInputElement).checked)
 }
+
+function handleCaptionChange(event: Event) {
+  emit('toggleCaptions', (event.target as HTMLInputElement).checked)
+}
 </script>
 
 <template>
@@ -99,6 +110,16 @@ function handleVoiceOverChange(event: Event) {
           @change="handleVoiceOverChange"
         >
         <span class="wc-widget-toggle-text">{{ props.voiceOverLabel }}</span>
+      </label>
+      <label v-if="props.showCaptionToggle" class="wc-widget-toggle">
+        <input
+          class="wc-widget-toggle-input"
+          type="checkbox"
+          :checked="props.captionsEnabled"
+          :aria-label="props.captionLabel"
+          @change="handleCaptionChange"
+        >
+        <span class="wc-widget-toggle-text">{{ props.captionLabel }}</span>
       </label>
     </div>
     <div class="wc-widget-telemetry">

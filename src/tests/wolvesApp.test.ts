@@ -14,6 +14,7 @@ const CinematicLobbyStub = defineComponent({
 const handoffCalls: string[] = []
 let introMounts = 0
 let introNexts = 0
+let setCaptionsEnabled = vi.fn()
 let startStage = async () => {
   handoffCalls.push('start')
 }
@@ -57,30 +58,37 @@ const WolvesIntroOverlayStub = defineComponent({
   mounted() {
     introMounts++
   },
-  methods: {
-    next() {
-      introNexts++
-    },
-    previous: vi.fn(),
-    toggle: vi.fn(),
-    seekToRatio: vi.fn(),
-    setVoiceOverEnabled: vi.fn(),
+  setup(_, { expose }) {
+    expose({
+      next() {
+        introNexts++
+      },
+      previous: vi.fn(),
+      toggle: vi.fn(),
+      seekToRatio: vi.fn(),
+      setVoiceOverEnabled: vi.fn(),
+      setCaptionsEnabled,
+    })
+    return {}
   },
   template: '<div class="wolves-intro-overlay-stub" />',
 })
 
 const MediaWidgetStub = defineComponent({
   name: 'MediaWidget',
-  emits: ['seek', 'skip'],
+  emits: ['seek', 'skip', 'toggleCaptions'],
   props: {
     title: { type: String, default: '' },
     showVoiceOverToggle: { type: Boolean, default: false },
     voiceOverEnabled: { type: Boolean, default: false },
     voiceOverLabel: { type: String, default: '' },
+    showCaptionToggle: { type: Boolean, default: false },
+    captionsEnabled: { type: Boolean, default: false },
+    captionLabel: { type: String, default: '' },
   },
   template: `
     <div class="media-widget-stub">
-      {{ showVoiceOverToggle }}|{{ voiceOverEnabled }}|{{ voiceOverLabel }}
+      {{ showVoiceOverToggle }}|{{ voiceOverEnabled }}|{{ voiceOverLabel }}|{{ showCaptionToggle }}|{{ captionsEnabled }}|{{ captionLabel }}
     </div>
   `,
 })
@@ -100,6 +108,7 @@ describe('wolvesApp intro status handling', () => {
     handoffCalls.length = 0
     introMounts = 0
     introNexts = 0
+    setCaptionsEnabled = vi.fn()
     startStage = async () => {
       handoffCalls.push('start')
     }
@@ -311,7 +320,7 @@ describe('wolvesApp intro status handling', () => {
     expect(wrapper.find('.nameplate-stub').exists()).toBe(false)
   })
 
-  it('shows the Ikora voice-over toggle only during the Destiny intro segment', async () => {
+  it('shows the Destiny CC switch off by default and forwards its state to the intro overlay', async () => {
     const store = useCinematicStore()
     store.enterIntro()
 
@@ -335,7 +344,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(widget().text()).toBe('false|false|Ikora voice over')
+    expect(widget().text()).toBe('false|false|Ikora voice over|false|false|CC')
 
     intro.vm.$emit('status', {
       currentTime: 18,
@@ -345,10 +354,16 @@ describe('wolvesApp intro status handling', () => {
       canGoPrevious: true,
       showVoiceOverToggle: true,
       voiceOverEnabled: true,
+      showCaptionToggle: true,
+      captionsEnabled: false,
     })
     await wrapper.vm.$nextTick()
 
-    expect(widget().text()).toBe('true|true|Ikora voice over')
+    expect(widget().text()).toBe('true|true|Ikora voice over|true|false|CC')
+
+    widget().vm.$emit('toggleCaptions', true)
+
+    expect(setCaptionsEnabled).toHaveBeenCalledWith(true)
   })
 
   it('shows the Nova tag only in the bottom music plaque during the candle sequence', async () => {

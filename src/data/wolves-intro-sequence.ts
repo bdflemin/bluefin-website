@@ -28,6 +28,8 @@ export interface IntroOverlayTextCue {
   readonly nameplateTitle?: string
   /** Optional bottom music-plaque title to publish while this cue is active. */
   readonly mediaTitle?: string
+  /** Requires the user's CC switch before this burned-in caption is rendered. */
+  readonly requiresCaptionToggle?: boolean
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
@@ -163,6 +165,8 @@ export interface IntroStatusPayload {
   readonly mediaTitle?: string
   readonly showVoiceOverToggle?: boolean
   readonly voiceOverEnabled?: boolean
+  readonly showCaptionToggle?: boolean
+  readonly captionsEnabled?: boolean
 }
 
 export function createIntroSequenceState(): IntroSequenceState {
@@ -327,6 +331,7 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
       end: 70.5,
       preservePunctuation: true,
       mediaTitle: '#nova4ever',
+      requiresCaptionToggle: true,
     },
   ]
 }

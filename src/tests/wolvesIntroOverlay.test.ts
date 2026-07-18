@@ -385,7 +385,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(players[0].playVideo).not.toHaveBeenCalled()
   })
 
-  it('keeps canonical captions visible during the comic title-card cue', async () => {
+  it('keeps the Comic Hero card visible while the CC switch gates regular captions', async () => {
     const wrapper = mount(WolvesIntroOverlay, {
       props: {
         videos: [{
@@ -394,15 +394,22 @@ describe('wolvesIntroOverlay video segments', () => {
           youtubeVideoId: 'BV3BZKbpBns',
           burnedInCaptions: [
             { text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true },
-            { text: 'We built a city none of us dared', start: 0, end: 5 },
+            { text: 'We built a city none of us dared', start: 0, end: 5, requiresCaptionToggle: true },
           ],
         }],
       },
     })
 
     expect(wrapper.find('.wolves-intro-overlay-title-card').exists()).toBe(true)
-    expect(wrapper.findAll('.wolves-intro-overlay-burned-caption')).toHaveLength(1)
+    expect(wrapper.findAll('.wolves-intro-overlay-burned-caption')).toHaveLength(0)
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
+    expect(wrapper.text()).not.toContain('We built a city none of us dared')
+
+    wrapper.vm.setCaptionsEnabled(true)
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay-title-card').exists()).toBe(true)
+    expect(wrapper.findAll('.wolves-intro-overlay-burned-caption')).toHaveLength(1)
     expect(wrapper.text()).toContain('We built a city none of us dared')
   })
 

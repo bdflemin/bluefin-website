@@ -249,9 +249,13 @@ try {
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(48.01, true)
   }, introPlayerIndex)
+  const captionsToggle = page.getByLabel('CC')
+  assert('Destiny CC switch is visible and off by default', await captionsToggle.isChecked(), false)
+  assert('Post-Kaslin status stays hidden until CC is enabled', await page.locator('.wolves-intro-overlay-burned-caption').count(), 0)
+  await captionsToggle.check()
   await page.waitForSelector('.wolves-intro-overlay-burned-caption', { state: 'visible', timeout: 5_000 })
   assert(
-    'Post-Kaslin status keeps only the authored humanity line',
+    'Post-Kaslin status appears after CC is enabled',
     await page.locator('.wolves-intro-overlay-burned-caption').textContent(),
     'they serve humanity, they fight for their something greater than themselves',
   )

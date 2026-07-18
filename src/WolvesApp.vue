@@ -40,6 +40,8 @@ const introVideos = buildIntroVideoSequence()
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
+const introShowCaptionToggle = ref(false)
+const introCaptionsEnabled = ref(false)
 // Ordinary wolves-prologue status has no cue-level nameplateTitle: hide the top-left
 // nameplate entirely rather than showing a default plate. The authored 50s cue still
 // publishes its title via nameplateTitle, which shows the existing PROLOGUE plate.
@@ -71,6 +73,8 @@ async function enterIntro() {
   introTransparent.value = false
   store.enterIntro()
   introMediaTitle.value = INTRO_DISPLAY['wolves-prologue'].mediaTitle
+  introShowCaptionToggle.value = false
+  introCaptionsEnabled.value = false
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -127,6 +131,8 @@ function handleIntroStatus(payload: IntroStatusPayload) {
   introNameplateVisible.value = payload.segmentId !== 'wolves-prologue' || Boolean(payload.nameplateTitle)
   introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
   introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
+  introShowCaptionToggle.value = payload.showCaptionToggle ?? false
+  introCaptionsEnabled.value = payload.captionsEnabled ?? false
   store.syncIntroStatus(normalizeIntroStatus(payload))
   store.setPlaying(!payload.paused)
 }
@@ -135,6 +141,8 @@ function clearIntroUi() {
   store.setDisplayOverride(null)
   introShowVoiceOverToggle.value = false
   introVoiceOverEnabled.value = false
+  introShowCaptionToggle.value = false
+  introCaptionsEnabled.value = false
   introNameplateVisible.value = true
 }
 
@@ -378,8 +386,12 @@ onBeforeUnmount(() => {
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"
+          :show-caption-toggle="introShowCaptionToggle"
+          :captions-enabled="introCaptionsEnabled"
+          caption-label="CC"
           @toggle-play="intro?.toggle()"
           @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
+          @toggle-captions="(enabled: boolean) => intro?.setCaptionsEnabled(enabled)"
           @skip="handleIntroSkip"
           @seek="handleOverallSeek"
         />
