@@ -1,0 +1,60 @@
+import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
+import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
+import { useCinematicStore } from '@/stores/cinematic'
+
+vi.mock('@/composables/useDualBufferPlayer', () => ({
+  useDualBufferPlayer: () => ({
+    activeSide: ref<'a' | 'b'>('a'),
+    start: vi.fn(),
+    togglePlay: vi.fn(),
+    seekTo: vi.fn(),
+    seekToRatio: vi.fn(),
+    skip: vi.fn(),
+    destroy: vi.fn(),
+  }),
+}))
+
+describe('wolves cinematic stage status plate', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('keeps Track 0 communications when the slide deck reports a people title', async () => {
+    const store = useCinematicStore()
+    store.segmentIndex = 0
+    store.updateTime(192.279, 425, 192.279)
+
+    const wrapper = mount(CinematicStage, {
+      global: {
+        stubs: {
+          TheaterExperience: {
+            name: 'TheaterExperienceStub',
+            emits: ['statusPlate'],
+            template: '<div class="theater-experience-stub" />',
+            mounted() {
+              this.$emit('statusPlate', { detail: 'Title', label: 'The First Disciple | Upender of Antipatterns' })
+            },
+          },
+          Nameplate: {
+            name: 'NameplateStub',
+            props: {
+              detail: { type: String, default: '' },
+              label: { type: String, default: '' },
+            },
+            template: '<div class="nameplate-stub">{{ detail }}|{{ label }}</div>',
+          },
+          CinematicCaptions: true,
+          CinematicTransition: true,
+          WolvesOrgAds: true,
+        },
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.nameplate-stub').text()).toBe('7 Days to the Wolves|The Blue Delivers')
+  })
+})

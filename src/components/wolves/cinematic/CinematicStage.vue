@@ -22,10 +22,10 @@ const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 // segment it retains the static kubectl command as the large label and places the
 // time-varying incoming signal in the detail line; elsewhere it shows chapter + title.
 const plateLabel = computed(() =>
-  isTrackZero.value ? 'kubectl apply -f ublue.yaml -n k8s-community' : store.segment.title,
+  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
 )
 const plateDetail = computed(() =>
-  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.chapter,
+  isTrackZero.value ? store.segment.title : store.segment.chapter,
 )
 
 onBeforeUnmount(() => player.destroy())

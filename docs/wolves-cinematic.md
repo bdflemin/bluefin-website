@@ -352,9 +352,10 @@ related code.
   (The plate's flip — signal line as the large label during 7 Days — is a
   presentation change within the ticker layer, not cross-layer routing.)
 - Track 0's plate uses the owner-authored signal sequence from
-  `wolves-incoming-signal.txt`: `Incoming Signal` until the Bluefin group,
-  `The Blue Delivers` from 175.96–196.36s, then the pod, ImagePullBackOff,
-  and human-fallback lines at 196.36s, 229s, and 277s. Label changes fade
+  `wolves-incoming-signal.txt`: it rotates on 16-beat phrases until the
+  Bluefin group, holds `The Blue Delivers` from 175.96–196.36s, then shows
+  the pod, split ImagePullBackOff, and human-fallback lines through 345s.
+  The source resumes one message per phrase from 345–408s. Label changes fade
   over 1.5 seconds; the lower thesis text remains independent.
 - Slideshow additions remain zero-code: drop compressed WebP into
   `public/img/wallpapers/wolves/{wolves,showcase,people}/` and regenerate.

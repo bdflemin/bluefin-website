@@ -32,9 +32,12 @@ Fullscreen overlay engineering uses `wolves-fullscreen-overlays.md`. Any other W
    - thesis overlay: `src/data/wolves-thesis-sequence.ts`, locked
    - lore column: `src/data/lore/*.md`
    - later-track team chat: `src/data/wolves-team-chats.ts`
-5. Never hand-edit `src/components/wolves/wallpapers-list.ts`.
-6. Preserve Track 0, timeline anchors, fixed slide windows, playlist order, and gallery shuffle rules exactly as documented.
-7. Load `build-verify-deploy.md` and complete every Wolves-specific check from the canonical reference.
+5. When recovering missing top-bar communications, recover both the exact signal
+   source and its selection timing in `wolves-thesis-sequence.ts`; source text
+   alone may be unreachable.
+6. Never hand-edit `src/components/wolves/wallpapers-list.ts`.
+7. Preserve Track 0, timeline anchors, fixed slide windows, playlist order, and gallery shuffle rules exactly as documented.
+8. Load `build-verify-deploy.md` and complete every Wolves-specific check from the canonical reference.
 
 ## Common Rationalizations
 

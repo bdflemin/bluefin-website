@@ -215,12 +215,23 @@ describe('wolves intro overlay sequence', () => {
     ]))
   })
 
-  it('keeps only the authored post-Kaslin status and moves the Nova tag to the music plaque', () => {
+  it('keeps only the authored post-Kaslin status and the Nova nameplate', () => {
+    const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
+    if (!destiny || !isVideoSegment(destiny)) {
+      throw new Error('Expected the Destiny segment to exist')
+    }
+
+    expect(activeOverlayCue(destiny.overlays, 48)).toEqual(expect.objectContaining({
+      nameplateTitle: '#nova4ever',
+      text: 'Fighting for Something Greater',
+      start: 48,
+      end: 70.5,
+    }))
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
 
     expect(cues).toEqual([
       {
-        text: 'they serve humanity, they fight for their something greater than themselves',
+        text: 'Fighting for Something Greater',
         start: 48,
         end: 70.5,
         preservePunctuation: true,
@@ -250,7 +261,7 @@ describe('wolves intro overlay sequence', () => {
     expect(destiny.burnedInCaptions).toEqual([
       { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
       {
-        text: 'they serve humanity, they fight for their something greater than themselves',
+        text: 'Fighting for Something Greater',
         start: 48,
         end: 70.5,
         preservePunctuation: true,
@@ -351,59 +362,24 @@ And its will to survive is utterly Broken`,
     )).toBe(true)
   })
 
-  it('fades the Collapse to night with the armies line before the combined closing words', () => {
+  it('holds the Collapse image, then makes one dramatic fade to black', () => {
     const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
       throw new Error('Expected the first intro segment to be text-only')
     }
 
-    const serializedCues = JSON.stringify(prologue.overlays)
-    expect(serializedCues).not.toContain('bluefin-12')
-    expect(prologue.overlays).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        text: 'One day changed the Garden forever.',
-        backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
-      }),
-      expect.objectContaining({
-        text: 'Others came to claim a bountiful and unprotected Garden.',
-        start: 45,
-        end: 50,
-        backgroundCrossfade: [{
-          day: 'wolves-intro/bluefin-collapse-night.webp',
-          night: 'wolves-intro/bluefin-collapse-day.webp',
-        }],
-      }),
-      expect.objectContaining({
-        text: `In the space of a few days,
-humanity had lost its future`,
-        start: 50,
-        end: 59.375,
-        backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
-        textPosition: 'bottom',
-      }),
-      expect.objectContaining({
-        text: `For the heart of any race is destroyed
-And its will to survive is utterly Broken`,
-        start: 59.375,
-        end: 65,
-        backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
-        textPosition: 'bottom',
-      }),
-      expect.objectContaining({
-        text: 'When its children are taken from it',
-        start: 65,
-        end: 72.5,
-        backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
-        textPosition: 'bottom',
-      }),
-      expect.objectContaining({
-        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
-        start: 72.5,
-        end: 78.5,
-        backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
-        textPosition: 'bottom',
-      }),
-    ]))
+    const collapseCues = prologue.overlays?.filter(cue => cue.start >= 13.75 && cue.start < 45) ?? []
+    const blackCues = prologue.overlays?.filter(cue => cue.start >= 45) ?? []
+
+    expect(collapseCues).toHaveLength(4)
+    expect(collapseCues.every(cue =>
+      cue.backgroundImage === 'wolves-intro/bluefin-collapse-night.webp'
+      && cue.backgroundCrossfade === undefined,
+    )).toBe(true)
+    expect(blackCues.every(cue =>
+      cue.backgroundImage === undefined
+      && cue.backgroundCrossfade === undefined,
+    )).toBe(true)
   })
   it('does not retain a text slate after the prologue', () => {
     const sequence = buildIntroVideoSequence()
