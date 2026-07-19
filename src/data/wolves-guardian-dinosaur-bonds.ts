@@ -21,11 +21,18 @@ export interface WolvesGuardianDinosaurBond {
    * record). Omitted when no character sheet names the bonded dinosaur.
    */
   dinosaurName?: string
+  /**
+   * Where the companion plate sits relative to the guardian plate. Defaults to
+   * the bottom-right corner beside the plate; 'below' stacks the
+   * companion underneath the guardian plate (used for Natali Vlatko's
+   * right-anchored, raised cue where a side companion would crowd the frame).
+   */
+  companionPlacement?: 'below'
 }
 
 export const wolvesGuardianDinosaurBonds: readonly WolvesGuardianDinosaurBond[] = [
   { guardianName: 'Kat Cosgrove', dinosaurSpeciesId: 'karl', dinosaurName: 'Karl' },
-  { guardianName: 'Natali Vlatko', dinosaurSpeciesId: 'alamosaurus', dinosaurName: 'Alamo' },
+  { guardianName: 'Natali Vlatko', dinosaurSpeciesId: 'alamosaurus', dinosaurName: 'Alamo', companionPlacement: 'below' },
   { guardianName: 'Bob Killen', dinosaurSpeciesId: 'bob-torosaurus' },
   { guardianName: 'Kaslin Fields', dinosaurSpeciesId: 'kaslin-torosaurus' },
 ]

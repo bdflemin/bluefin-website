@@ -720,6 +720,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
         { text: 'Void Warlock — Bob Killen — Reconciler of the Arcane', start: 5, end: 10 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 10, end: 15 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 15, end: 20 },
+        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 20, end: 25, position: 'right' as const, raised: true },
       ],
     },
   ]
@@ -756,6 +757,24 @@ describe('wolvesIntroOverlay guardian plate', () => {
     // The pair share one anchored row so the plates sit side by side.
     expect(wrapper.find('.wolves-guardian-plate-row .wolves-guardian-plate').exists()).toBe(true)
     expect(wrapper.find('.wolves-guardian-plate-row .wolves-companion-plate').exists()).toBe(true)
+    // Bob's companion keeps the default bottom-right corner placement.
+    expect(wrapper.find('.wolves-guardian-plate-row').classes()).not.toContain('wolves-guardian-plate-row-companion-below')
+  })
+
+  it('stacks Alamo underneath Natali Vlatko\'s plate', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    players[0].getCurrentTime = vi.fn(() => 21)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Natali Vlatko')
+    expect(wrapper.find('.wolves-companion-plate-name').text()).toBe('Alamo')
+    expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('alamosaurus.webp')
+    expect(wrapper.find('.wolves-guardian-plate-row').classes()).toContain('wolves-guardian-plate-row-companion-below')
   })
 
   it('splits the dinosaur out of the guardian plate into its own companion card', () => {
@@ -773,8 +792,8 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the
     // clip-path while the art rides above it with a negative overlap.
-    const artRules = [...overlay.matchAll(/\.wolves-companion-plate-art \{([\s\S]*?)\n\s*\}/g)].map(m => m[1])
-    const cardRules = [...overlay.matchAll(/\.wolves-companion-plate-card \{([\s\S]*?)\n\s*\}/g)].map(m => m[1])
+    const artRules = [...overlay.matchAll(/\.wolves-companion-plate-art \{([^}]*)\}/g)].map(m => m[1])
+    const cardRules = [...overlay.matchAll(/\.wolves-companion-plate-card \{([^}]*)\}/g)].map(m => m[1])
     expect(artRules.some(rule => rule.includes('z-index: 1'))).toBe(true)
     expect(artRules.some(rule => rule.includes('-3.4rem'))).toBe(true)
     expect(cardRules.some(rule => rule.includes('clip-path'))).toBe(true)

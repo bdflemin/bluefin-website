@@ -189,6 +189,7 @@ interface GuardianDinosaurCompanion {
   name?: string
   scientificName: string
   artwork: string
+  placement?: 'below'
 }
 
 /**
@@ -206,6 +207,7 @@ function guardianDinosaurCompanion(guardianName: string): GuardianDinosaurCompan
     name: bond.dinosaurName,
     scientificName: species.scientificName,
     artwork: `${baseUrl}${species.artwork.slice(2)}`,
+    placement: bond.companionPlacement,
   }
 }
 
@@ -843,6 +845,7 @@ defineExpose({
             'wolves-guardian-plate-left': cue.position === 'left',
             'wolves-guardian-plate-right': cue.position === 'right',
             'wolves-guardian-plate-raised': cue.raised,
+            'wolves-guardian-plate-row-companion-below': parseGuardianCue(cue.text) && guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)?.placement === 'below',
           }"
         >
           <div
@@ -1608,7 +1611,8 @@ defineExpose({
 }
 
 /* Positioned anchor for a guardian plate plus its optional dinosaur companion
-   plate; the pair sit side by side, bottoms aligned, to show the partnership. */
+   plate. Default pairing: the companion sits in the row's bottom-right corner,
+   bottoms horizontally aligned with the name plate. */
 .wolves-guardian-plate-row {
   position: absolute;
   bottom: 10%;
@@ -1617,6 +1621,18 @@ defineExpose({
   align-items: flex-end;
   gap: 1.8rem;
   pointer-events: none;
+}
+
+/* Stacks the companion plate underneath the guardian plate instead of beside
+   it (Natali Vlatko's right-anchored, raised cue: Alamo rides below her name). */
+.wolves-guardian-plate-row-companion-below {
+  flex-direction: column;
+  align-items: center;
+}
+
+.wolves-guardian-plate-row-companion-below .wolves-companion-plate {
+  order: 0;
+  margin-top: 1.2rem;
 }
 
 /* Guardian trailer callout, redesigned as a Destiny 2 "Guardian Rank Up" style HUD burst:
@@ -1670,10 +1686,10 @@ defineExpose({
 }
 
 /* Dinosaur companion plate: the guardian's documented bonded dinosaur split out
-   into its own card beside the guardian plate. The artwork is the hero -- it
-   rides above the card and breaks out of the chamfered box for dramatic effect
-   (the card carries the clip-path, not the shared wrapper, so the art can
-   overflow freely). */
+   into its own card in the row's bottom-right corner, bottoms aligned with the
+   name plate. The artwork is the hero -- it rides above the card and breaks
+   out of the chamfered box for dramatic effect (the card carries the
+   clip-path, not the shared wrapper, so the art can overflow freely). */
 .wolves-companion-plate {
   position: relative;
   flex-shrink: 0;
