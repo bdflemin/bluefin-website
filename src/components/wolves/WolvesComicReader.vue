@@ -1056,7 +1056,7 @@ onBeforeUnmount(() => {
                   <div class="theater-guardian-horizon theater-guardian-horizon-right" />
                 </div>
                 <p class="theater-guardian-label">
-                  MAINTAINER // GUARDIAN
+                  TRUSTEE // GUARDIAN
                 </p>
                 <p class="theater-guardian-class">
                   {{ ghostsInTheMistOpeningSlide.guardianClass }}
@@ -1617,7 +1617,8 @@ onBeforeUnmount(() => {
 }
 
 /* Guardian nameplate treatment for the featured Ghosts In The Mist opening slide, mirroring
-   the intro video's guardian plates (crest, horizon lines, class label, gradient name). */
+   the intro video's guardian plates (crest, horizon lines, class label, gradient name) in the
+   burnished silver trustee palette shared with Bob Killen's intro plate. */
 .theater-guardian-header {
   display: flex;
   align-items: center;
@@ -1630,24 +1631,24 @@ onBeforeUnmount(() => {
   flex: 1 1 auto;
   height: 2px;
   min-width: 2rem;
-  background: linear-gradient(to right, transparent, #93c5fd 60%, #fff 100%);
-  box-shadow: 0 0 8px rgb(147 197 253 / 55%);
+  background: linear-gradient(to right, transparent, #d1d5db 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(226 232 240 / 55%);
 }
 
 .theater-guardian-horizon-right {
-  background: linear-gradient(to left, transparent, #93c5fd 60%, #fff 100%);
+  background: linear-gradient(to left, transparent, #d1d5db 60%, #fff 100%);
 }
 
 .theater-guardian-crest {
   width: 2.5rem;
   height: 2.5rem;
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 6px rgb(147 197 253 / 65%));
+  filter: drop-shadow(0 0 6px rgb(226 232 240 / 65%));
 }
 
 .theater-guardian-crest-outer {
   fill: none;
-  stroke: #93c5fd;
+  stroke: #d1d5db;
   stroke-width: 2;
 }
 
@@ -1659,7 +1660,7 @@ onBeforeUnmount(() => {
 
 .theater-guardian-crest-chevron {
   fill: none;
-  stroke: #93c5fd;
+  stroke: #d1d5db;
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1669,14 +1670,14 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: clamp(1.2rem, 1rem + 0.5vw, 1.6rem);
   letter-spacing: 0.35em;
-  color: #93c5fd;
+  color: #e5e7eb;
 }
 
 .theater-guardian-class {
   margin: 0.3rem 0 0;
   font-size: clamp(1.4rem, 1.1rem + 0.7vw, 1.9rem);
   letter-spacing: 0.05em;
-  color: #bfdbfe;
+  color: #e2e8f0;
   text-transform: uppercase;
 }
 
