@@ -2086,7 +2086,4 @@ defineExpose({
   }
 }
 
-/* Permanent progress bar for the whole intro sequence (Prologue + Guardian trailer +
-   Epilogue), so the runtime of the full experience is always visible, not just whichever
-   segment happens to be playing. */
 </style>

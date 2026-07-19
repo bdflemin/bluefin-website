@@ -1113,15 +1113,6 @@ function nearestBeatIndex(time: number): number {
 }
 
 /**
- * Number of measured beats between two timestamps (nearest-beat snapped).
- * Used to size the finale beat-barrage pool so every measured beat in the
- * window can carry its own slide.
- */
-export function trackZeroBeatSpan(startTime: number, endTime: number): number {
-  return Math.max(0, nearestBeatIndex(endTime) - nearestBeatIndex(startTime))
-}
-
-/**
  * Allocate `count` slide end times across the measured beats between
  * `startTime` and `endTime`.
  *
