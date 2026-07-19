@@ -58,7 +58,7 @@ export const dinosaurSpecies = [
     id: 'kaslin-torosaurus',
     scientificName: 'Torosaurus latus',
     documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--2',
-    artwork: './characters/kaslin-torosaurus.webp',
+    artwork: './characters/header/katharina.webp',
   },
   {
     id: 'alamosaurus',

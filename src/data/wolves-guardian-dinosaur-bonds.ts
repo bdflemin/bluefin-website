@@ -27,5 +27,5 @@ export const wolvesGuardianDinosaurBonds: readonly WolvesGuardianDinosaurBond[] 
   { guardianName: 'Kat Cosgrove', dinosaurSpeciesId: 'karl', dinosaurName: 'Karl' },
   { guardianName: 'Natali Vlatko', dinosaurSpeciesId: 'alamosaurus', dinosaurName: 'Alamo' },
   { guardianName: 'Bob Killen', dinosaurSpeciesId: 'bob-torosaurus' },
-  { guardianName: 'Kaslin Fields', dinosaurSpeciesId: 'kaslin-torosaurus' },
+  { guardianName: 'Kaslin Fields', dinosaurSpeciesId: 'kaslin-torosaurus', dinosaurName: 'Katerina' },
 ]

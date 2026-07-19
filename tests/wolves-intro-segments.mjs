@@ -197,8 +197,9 @@ try {
   await seekActiveDestinyPlayer(39)
   await assertGuardianPair({
     name: 'Kaslin Fields',
-    artwork: 'kaslin-torosaurus.webp',
+    artwork: 'header/katharina.webp',
   })
+  expectEqual('Kaslin companion name', await page.locator('.wolves-companion-plate-name').textContent(), 'Katerina')
   await capture(page, '10-destiny-kaslin-torosaurus')
 
   await seekActiveDestinyPlayer(90)

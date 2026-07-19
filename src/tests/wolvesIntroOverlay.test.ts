@@ -838,7 +838,8 @@ describe('wolvesIntroOverlay guardian plate', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Kaslin Fields')
-    expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('kaslin-torosaurus.webp')
+    expect(wrapper.find('.wolves-companion-plate-name').text()).toBe('Katerina')
+    expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('header/katharina.webp')
   })
 
   it('renders no companion plate for a guardian with no documented dinosaur bond', async () => {

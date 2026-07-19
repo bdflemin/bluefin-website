@@ -39,7 +39,7 @@ describe('wolves dinosaur species', () => {
       expect.objectContaining({
         id: 'kaslin-torosaurus',
         scientificName: 'Torosaurus latus',
-        artwork: './characters/kaslin-torosaurus.webp',
+        artwork: './characters/header/katharina.webp',
       }),
     ]))
   })
