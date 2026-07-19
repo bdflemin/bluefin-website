@@ -820,10 +820,8 @@ describe('wolvesComicReader', () => {
     const generator = readFileSync(generatorPath, 'utf8')
 
     expect(existsSync(resolve(process.cwd(), 'public/img/wallpapers/wolves/people/nova4ever.webp'))).toBe(true)
-    expect(generator).toContain('\'interview-clyde-seepersad-linux-foundation\': \'AI Is Not Killing Tech Jobs — The Data Says Otherwise | Clyde Seepersad, Linux Foundation\'')
+    expect(generator).toContain('\'interview-clyde-seepersad-linux-foundation\': \'Clyde Seepersad, Linux Foundation\'')
     expect(generator).toContain('\'nova4ever\': \'Jay Balamurugan\'')
-    expect(generator).toContain('\'interview-clyde-seepersad-linux-foundation\',')
-    expect(generator).toContain('\'nova4ever\',')
     expect(generator).toContain('const bluefinGroupSlideNames = [')
     expect(generator).toContain('\'bluefin-chicken\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
     expect(generator).toContain('\'bluefin-dusk\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
@@ -901,7 +899,7 @@ describe('wolvesComicReader', () => {
     }
   })
 
-  it('renders Clyde as a theater-scale title card', async () => {
+  it('renders Clyde with the compact caption pill, not a theater banner', async () => {
     mockGalleryData([coverTrack])
     const wrapper = mount(WolvesComicReader, {
       props: { trackIndex: 0, playlistCurrentTime: 0 },
@@ -913,7 +911,8 @@ describe('wolvesComicReader', () => {
     expect(clydeSlide).toBeDefined()
     await wrapper.setProps({ playlistCurrentTime: clydeSlide!.startTime + 0.1 })
 
-    const caption = wrapper.get('.wallpaper-theater-caption.is-title-only')
-    expect(caption.text()).toContain('Clyde Seepersad')
+    expect(wrapper.find('.wallpaper-theater-caption.is-title-only').exists()).toBe(false)
+    expect(wrapper.get('.flickr-caption').text()).toContain('Clyde Seepersad, Linux Foundation')
+    expect(wrapper.get('.flickr-caption').text()).not.toContain('AI Is Not Killing Tech Jobs')
   })
 })

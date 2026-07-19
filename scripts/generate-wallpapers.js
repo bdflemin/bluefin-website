@@ -57,7 +57,7 @@ const curatedTitles = {
   'showcase-20': 'Community Showcase by AlgoCompSynth by znmeb',
 
   // People / KubeCon / Flickr curated titles
-  'interview-clyde-seepersad-linux-foundation': 'AI Is Not Killing Tech Jobs — The Data Says Otherwise | Clyde Seepersad, Linux Foundation',
+  'interview-clyde-seepersad-linux-foundation': 'Clyde Seepersad, Linux Foundation',
   'interview-jono-bacon-cult-psychology-kubernetes': 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
   'interview-l4e-games-for-everyone-2-linux-gaming': 'Linux For Everyone — "Games For Everyone #2: Linux Gaming Is WINNING"',
   'nova4ever': 'Jay Balamurugan',
@@ -250,9 +250,7 @@ const curatedDescriptions = {
 
 // Owner-authorized title-only 10-foot theater banner for the Track 0 Jono cue.
 const titleOnlyTheaterCaptions = new Set([
-  'interview-clyde-seepersad-linux-foundation',
   'interview-jono-bacon-cult-psychology-kubernetes',
-  'nova4ever',
 ])
 
 function formatTitle(filename) {
