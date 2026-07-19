@@ -12,6 +12,7 @@ import LocationDossierView from './lore/LocationDossierView.vue'
 import NewsLoreView from './lore/NewsLoreView.vue'
 import QuoteLoreView from './lore/QuoteLoreView.vue'
 import SourceLoreView from './lore/SourceLoreView.vue'
+import './lore/lore-dossier.scss'
 
 const props = defineProps<{
   artifactId: string

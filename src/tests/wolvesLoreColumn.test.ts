@@ -382,7 +382,10 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(wrapper.find('[data-lore-view="dinosaur-dossier"]').exists()).toBe(true)
     expect(wrapper.get('[data-species-artwork]').attributes('src')).toContain('characters/achillobator.webp')
-    expect(wrapper.text()).toContain('GUARDIANBOND / guardian-dinosaur')
+    expect(wrapper.text()).toContain('bond: guardian-dinosaur')
+    // Bond identity renders exactly once: as the spec-list cross-reference.
+    expect(wrapper.text()).not.toContain('GUARDIANBOND /')
+    expect(wrapper.text()).not.toContain('BONDED RIDER /')
     expect(wrapper.find('.mascot-console-hud').exists()).toBe(false)
   })
 
@@ -394,7 +397,7 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('PROVENANCE / https://www.ishtar-collective.net/entries/gardener-and-winnower')
+    expect(wrapper.text()).toContain('provenance: https://www.ishtar-collective.net/entries/gardener-and-winnower')
   })
 
   it.each([405, 425])('renders the thesis warning beside the final news artifact at Track 0 %is', (time) => {

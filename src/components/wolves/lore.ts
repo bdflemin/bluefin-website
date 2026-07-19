@@ -148,3 +148,56 @@ export function getLoreEntriesForChapter(chapter: WolvesChapter | undefined): Wo
 export function formatQuoteSource(quote: BazziteQuote): string | null {
   return quote.context ?? null
 }
+
+function escapeLoreHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/**
+ * Render a lore record body as safe HTML paragraphs: escaped text with
+ * authored bold markers converted to <strong>. Shared by every dossier view.
+ */
+export function renderLoreParagraphs(body: string): string[] {
+  return body.split(/\n{2,}/).map(para =>
+    escapeLoreHtml(para).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+  )
+}
+
+export interface LoreSpeakerParagraph {
+  isSpeaker: boolean
+  speaker: string
+  text: string
+}
+
+/**
+ * Parse a lore record body into speaker-attributed paragraphs (safe HTML),
+ * for transcript-style views (news bulletins, source fragments).
+ */
+export function parseLoreSpeakerParagraphs(body: string): LoreSpeakerParagraph[] {
+  const cleanBody = body.replace(/\r\n/g, '\n')
+  const normalizedBody = cleanBody.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9\-/]+(?:\s+[A-Z0-9\-/]+)*)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
+  return normalizedBody
+    .split(/\n{2,}/)
+    .map(para => para.trim())
+    .filter(Boolean)
+    .map((para) => {
+      const match = para.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i)
+      if (match) {
+        return {
+          isSpeaker: true,
+          speaker: (match[1] || match[2]).trim(),
+          text: escapeLoreHtml(match[3].trim()).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+        }
+      }
+      return {
+        isSpeaker: false,
+        speaker: '',
+        text: escapeLoreHtml(para).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+      }
+    })
+}

@@ -2,83 +2,46 @@
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
 import { deriveLoreTelemetry } from '../../../data/wolves-lore-records'
+import { parseLoreSpeakerParagraphs } from '../lore'
 
 const props = defineProps<LoreViewProps>()
 
 const telemetry = computed(() => deriveLoreTelemetry(props.record))
 
-const parsedParagraphs = computed(() => {
-  const cleanBody = props.record.body.replace(/\r\n/g, '\n')
-  const normalizedBody = cleanBody.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9\-/]+(?:\s+[A-Z0-9\-/]+)*)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
-  return normalizedBody
-    .split(/\n{2,}/)
-    .map(para => para.trim())
-    .filter(Boolean)
-    .map((para) => {
-      const match = para.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i)
-      if (match) {
-        const speaker = (match[1] || match[2]).trim()
-        let text = match[3].trim()
-        text = text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        return {
-          isSpeaker: true,
-          speaker,
-          text,
-        }
-      }
-      const escaped = para
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
-      const text = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      return {
-        isSpeaker: false,
-        speaker: '',
-        text,
-      }
-    })
-})
+const parsedParagraphs = computed(() => parseLoreSpeakerParagraphs(props.record.body))
 </script>
 
 <template>
   <section
-    class="news-bulletin"
+    class="lore-dossier-panel"
     data-lore-view="news-bulletin"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         NEWS BULLETIN
       </p>
-      <h2 v-if="record.metadata.title" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.title" class="lore-dossier-title">
         {{ record.metadata.title }}
       </h2>
-      <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-base text-slate-300">
+      <div class="lore-spec lore-spec--inline">
         <time v-if="record.metadata.timestamp" :datetime="record.metadata.timestamp">
-          DATELINE / {{ record.metadata.timestamp }}
+          <span class="lore-spec-key">dateline:</span> {{ record.metadata.timestamp }}
         </time>
         <span v-if="record.metadata.classification">
-          CLASSIFICATION / {{ record.metadata.classification }}
+          <span class="lore-spec-key">classification:</span> {{ record.metadata.classification }}
         </span>
       </div>
     </header>
 
     <aside
       v-if="warning"
-      class="thesis-warning-fade mt-4 border-l-2 border-blue-300 pl-3 text-lg italic leading-6 text-blue-100"
+      class="lore-dossier-warning thesis-warning-fade"
       data-lore-warning
     >
       {{ warning }}
     </aside>
 
-    <div class="my-4 flex-1 news-body-content">
+    <div class="news-body-content">
       <div
         v-for="(para, index) in parsedParagraphs"
         :key="index"
@@ -97,60 +60,19 @@ const parsedParagraphs = computed(() => {
       </div>
     </div>
 
-    <footer class="mt-auto border-t border-blue-300/25 pt-3 text-base text-blue-200">
-      STATUS / {{ telemetry.phase }} · {{ telemetry.resourceName }} · {{ telemetry.recordFingerprint }}
+    <footer class="lore-dossier-footer">
+      <span class="lore-spec-key">status:</span> {{ telemetry.phase }} · {{ telemetry.resourceName }} · {{ telemetry.recordFingerprint }}
     </footer>
   </section>
 </template>
 
 <style scoped>
-.news-bulletin {
+.news-body-content {
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  border: 1px solid rgba(102, 179, 255, 0.25);
-  border-radius: 16px;
-  padding: 16px;
-  background: rgba(16, 21, 31, 0.45);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
-  color: rgba(255, 255, 255, 0.9);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-}
-
-.news-bulletin header {
-  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  padding-bottom: 12px;
-}
-
-.news-bulletin header > p {
-  margin: 0;
-  color: var(--color-blue-light);
-  font-size: 1.35rem;
-  letter-spacing: 0.2em;
-}
-
-.news-bulletin h2 {
-  margin: 8px 0 0;
-  color: #ffffff;
-  font-size: 1.95rem;
-}
-
-.news-bulletin header > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  margin-top: 12px;
-  color: rgba(226, 232, 240, 0.9);
-  font-size: 1.25rem;
-}
-
-.news-body-content {
-  display: flex;
-  flex-direction: column;
   gap: 16px;
+  margin: 16px 0;
 }
 
 .news-para-block {
@@ -166,8 +88,7 @@ const parsedParagraphs = computed(() => {
 .news-speaker-name {
   display: block;
   color: var(--color-blue-light);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: bold;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
@@ -178,18 +99,9 @@ const parsedParagraphs = computed(() => {
 .news-raw-text {
   margin: 0;
   color: #f1f5f9;
-  font-size: 1.65rem;
+  font-size: 1.25rem;
   line-height: 1.65;
   white-space: pre-wrap;
-}
-
-.news-bulletin footer {
-  margin-top: auto;
-  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  padding-top: 12px;
-  color: #bae6fd;
-  font-size: 1.25rem;
-  overflow-wrap: anywhere;
 }
 
 .thesis-warning-fade {

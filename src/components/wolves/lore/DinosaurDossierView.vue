@@ -27,64 +27,63 @@ const artworkSource = computed(() =>
 
 <template>
   <section
-    class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-[#272727] bg-[#10151f] p-4 font-mono shadow-xl"
+    class="lore-dossier-panel"
     data-lore-view="dinosaur-dossier"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         DINOSAUR // SUBJECT PROFILE
       </p>
-      <h2 v-if="record.metadata.epic_name" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.epic_name" class="lore-dossier-title">
         {{ record.metadata.epic_name }}
       </h2>
-      <p v-if="bond?.metadata.relations?.guardian" class="mb-0 mt-3 text-base text-slate-100">
-        GUARDIANBOND / {{ bond.id }}
-        <br>
-        {{ record.metadata.subject }} ↔ GUARDIAN {{ bond.metadata.relations.guardian }}
-      </p>
     </header>
 
-    <dl class="lore-spec my-4 grid gap-1 rounded-lg border border-blue-300/20 bg-black/20 p-3 text-base text-slate-200">
+    <dl class="lore-spec lore-spec--boxed">
       <div v-if="species">
-        <dt class="inline text-blue-200">
+        <dt>
           species:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ species.scientificName }}
         </dd>
       </div>
       <div v-if="guardian">
-        <dt class="inline text-blue-200">
+        <dt>
           rider:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ guardian.metadata.title || guardian.metadata.subject }}
         </dd>
       </div>
+      <div v-if="bond">
+        <dt>
+          bond:
+        </dt>
+        <dd>
+          {{ bond.id }}
+        </dd>
+      </div>
       <div v-if="record.metadata.titles?.length">
-        <dt class="inline text-blue-200">
+        <dt>
           titles:
         </dt>
-        <dd class="inline">
+        <dd>
           [{{ record.metadata.titles.join(', ') }}]
         </dd>
       </div>
     </dl>
 
-    <article class="whitespace-pre-wrap text-lg leading-6 text-slate-100">
-      {{ record.body }}
+    <article class="lore-dossier-body">
+      <p>{{ record.body }}</p>
     </article>
 
-    <figure v-if="species && artworkSource" class="mb-0 mt-auto pt-4">
+    <figure v-if="species && artworkSource" class="lore-dossier-figure">
       <img
         :src="artworkSource"
         :alt="species.scientificName"
-        class="mx-auto block max-h-56 w-full object-contain object-bottom"
         data-species-artwork
       >
-      <figcaption class="mt-2 text-center text-base text-slate-300">
-        BONDED RIDER / {{ guardian?.metadata.title || bond?.metadata.relations?.guardian }}
-      </figcaption>
     </figure>
   </section>
 </template>

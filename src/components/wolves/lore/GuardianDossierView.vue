@@ -2,6 +2,7 @@
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
 import { deriveLoreTelemetry } from '../../../data/wolves-lore-records'
+import { renderLoreParagraphs } from '../lore'
 
 const props = defineProps<LoreViewProps>()
 
@@ -15,98 +16,88 @@ const bond = computed(() =>
   ),
 )
 
-const paragraphs = computed(() => {
-  return props.record.body.split(/\n{2,}/).map((para) => {
-    const escaped = para
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  })
-})
+const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
 </script>
 
 <template>
   <section
-    class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-[#272727] bg-[#10151f] p-4 font-mono shadow-xl"
+    class="lore-dossier-panel"
     data-lore-view="guardian-dossier"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         MAINTAINER // GUARDIAN
       </p>
-      <h2 v-if="record.metadata.title" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.title" class="lore-dossier-title">
         {{ record.metadata.title }}
       </h2>
-      <p v-if="specializations.length" class="mb-0 mt-3 text-lg tracking-wide text-slate-100">
+      <p v-if="specializations.length" class="lore-dossier-subtitle">
         {{ specializations.join(' · ').toUpperCase() }}
       </p>
     </header>
 
-    <div class="my-4 grid gap-4">
-      <dl class="lore-spec grid gap-1 rounded-lg border border-blue-300/20 bg-black/20 p-3 text-base text-slate-200">
+    <div>
+      <dl class="lore-spec lore-spec--boxed">
         <div v-if="record.metadata.guardian?.class">
-          <dt class="inline text-blue-200">
+          <dt>
             class:
           </dt>
-          <dd class="inline">
+          <dd>
             {{ record.metadata.guardian.class }}
           </dd>
         </div>
         <div v-if="record.metadata.guardian?.super">
-          <dt class="inline text-blue-200">
+          <dt>
             super:
           </dt>
-          <dd class="inline">
+          <dd>
             {{ record.metadata.guardian.super }}
           </dd>
         </div>
         <div v-if="record.metadata.aliases?.length">
-          <dt class="inline text-blue-200">
+          <dt>
             aliases:
           </dt>
-          <dd class="inline">
+          <dd>
             [{{ record.metadata.aliases.join(', ') }}]
           </dd>
         </div>
         <div v-if="record.metadata.titles?.length">
-          <dt class="inline text-blue-200">
+          <dt>
             titles:
           </dt>
-          <dd class="inline">
+          <dd>
             [{{ record.metadata.titles.join(', ') }}]
           </dd>
         </div>
         <div v-if="bond">
-          <dt class="inline text-blue-200">
+          <dt>
             GuardianBond:
           </dt>
-          <dd class="inline">
+          <dd>
             {{ bond.id }}
           </dd>
         </div>
       </dl>
 
-      <aside class="border-l-2 border-blue-300/50 pl-3 text-base text-slate-300">
-        <p class="m-0 text-blue-200">
+      <aside class="lore-dossier-rail">
+        <p class="lore-dossier-rail-label">
           STATUS RAIL
         </p>
-        <p class="mb-0 mt-1">
+        <p>
           {{ telemetry.phase }} · {{ telemetry.controller }}
         </p>
-        <p class="mb-0 mt-1">
+        <p>
           {{ telemetry.recordFingerprint }}
         </p>
       </aside>
     </div>
 
-    <article class="my-4 text-lg leading-6 text-slate-100">
+    <article class="lore-dossier-body">
       <p
         v-for="(para, index) in paragraphs"
         :key="index"
-        class="mb-4 whitespace-pre-wrap"
+
         v-html="para"
       />
     </article>

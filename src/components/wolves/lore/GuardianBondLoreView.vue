@@ -2,6 +2,7 @@
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
 import { validateGuardianBonds } from '../../../data/wolves-lore-records'
+import { renderLoreParagraphs } from '../lore'
 
 const props = defineProps<LoreViewProps>()
 
@@ -31,76 +32,55 @@ const validationState = computed(() => {
   }
 })
 
-const paragraphs = computed(() => {
-  return props.record.body.split(/\n{2,}/).map((para) => {
-    const escaped = para
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  })
-})
+const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
 </script>
 
 <template>
   <section
-    class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-[#272727] bg-[#10151f] p-4 font-mono shadow-xl"
+    class="lore-dossier-panel"
     data-lore-view="guardian-bond"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         GUARDIANBOND
       </p>
-      <h2 v-if="record.metadata.title" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.title" class="lore-dossier-title">
         {{ record.metadata.title }}
       </h2>
     </header>
 
-    <dl class="my-4 grid gap-2 rounded-lg border border-blue-300/20 bg-black/20 p-3 text-base text-slate-200">
+    <dl class="lore-spec lore-spec--boxed">
       <div v-if="record.metadata.relations?.guardian">
-        <dt class="inline text-blue-200">
-          GUARDIAN /
+        <dt>
+          guardian:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ record.metadata.relations.guardian }}
         </dd>
       </div>
       <div v-if="record.metadata.relations?.dinosaur">
-        <dt class="inline text-blue-200">
-          DINOSAUR /
+        <dt>
+          dinosaur:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ record.metadata.relations.dinosaur }}
         </dd>
       </div>
-      <div v-if="guardian?.metadata.guardian?.class">
-        <dt class="inline text-blue-200">
-          CLASS /
+      <div>
+        <dt>
+          validation:
         </dt>
-        <dd class="inline">
-          {{ guardian.metadata.guardian.class }}
-        </dd>
-      </div>
-      <div v-if="guardian?.metadata.guardian?.super">
-        <dt class="inline text-blue-200">
-          SUPER /
-        </dt>
-        <dd class="inline">
-          {{ guardian.metadata.guardian.super }}
+        <dd>
+          {{ validationState }}
         </dd>
       </div>
     </dl>
 
-    <p class="m-0 border-l-2 border-blue-300/50 pl-3 text-base text-blue-100">
-      {{ validationState }}
-    </p>
-    <article class="my-4 text-lg leading-6 text-slate-100">
+    <article class="lore-dossier-body">
       <p
         v-for="(para, index) in paragraphs"
         :key="index"
-        class="mb-4 whitespace-pre-wrap"
+
         v-html="para"
       />
     </article>

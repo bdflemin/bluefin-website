@@ -1,68 +1,59 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
+import { renderLoreParagraphs } from '../lore'
 
 const props = defineProps<LoreViewProps>()
 
-const paragraphs = computed(() => {
-  return props.record.body.split(/\n{2,}/).map((para) => {
-    const escaped = para
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  })
-})
+const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
 </script>
 
 <template>
   <section
-    class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-[#272727] bg-[#10151f] p-4 font-mono shadow-xl"
+    class="lore-dossier-panel"
     data-lore-view="location-dossier"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         LOCATION DOSSIER
       </p>
-      <h2 v-if="record.metadata.title" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.title" class="lore-dossier-title">
         {{ record.metadata.title }}
       </h2>
     </header>
 
-    <dl class="my-4 grid gap-2 rounded-lg border border-blue-300/20 bg-black/20 p-3 text-base text-slate-200">
+    <dl class="lore-spec lore-spec--boxed">
       <div v-if="record.metadata.subject">
-        <dt class="inline text-blue-200">
-          SITE /
+        <dt>
+          site:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ record.metadata.subject }}
         </dd>
       </div>
       <div v-if="record.metadata.affiliation">
-        <dt class="inline text-blue-200">
-          CONTROL /
+        <dt>
+          control:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ record.metadata.affiliation }}
         </dd>
       </div>
       <div v-if="record.metadata.classification">
-        <dt class="inline text-blue-200">
-          CLASSIFICATION /
+        <dt>
+          classification:
         </dt>
-        <dd class="inline">
+        <dd>
           {{ record.metadata.classification }}
         </dd>
       </div>
     </dl>
 
-    <article class="my-4 text-lg leading-6 text-slate-100">
+    <article class="lore-dossier-body">
       <p
         v-for="(para, index) in paragraphs"
         :key="index"
-        class="mb-4 whitespace-pre-wrap"
+
         v-html="para"
       />
     </article>

@@ -2,87 +2,49 @@
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
 import { deriveLoreTelemetry } from '../../../data/wolves-lore-records'
-import { getSourceProvenance } from '../lore'
+import { getSourceProvenance, parseLoreSpeakerParagraphs } from '../lore'
 
 const props = defineProps<LoreViewProps>()
 
 const telemetry = computed(() => deriveLoreTelemetry(props.record))
 const provenance = computed(() => getSourceProvenance(props.record))
 
-const parsedParagraphs = computed(() => {
-  const cleanBody = props.record.body.replace(/\r\n/g, '\n')
-  const normalizedBody = cleanBody.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9\-/]+(?:\s+[A-Z0-9\-/]+)*)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
-  return normalizedBody
-    .split(/\n{2,}/)
-    .map(para => para.trim())
-    .filter(Boolean)
-    .map((para) => {
-      const match = para.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i)
-      if (match) {
-        const speaker = (match[1] || match[2]).trim()
-        let text = match[3].trim()
-        text = text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        return {
-          isSpeaker: true,
-          speaker,
-          text,
-        }
-      }
-      const escaped = para
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
-      const text = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      return {
-        isSpeaker: false,
-        speaker: '',
-        text,
-      }
-    })
-})
+const parsedParagraphs = computed(() => parseLoreSpeakerParagraphs(props.record.body))
 </script>
 
 <template>
   <section
-    class="source-fragment"
+    class="lore-dossier-panel"
     data-lore-view="source-fragment"
   >
-    <header class="border-b border-blue-300/25 pb-3">
-      <p class="m-0 text-base tracking-[0.2em] text-blue-300">
+    <header class="lore-dossier-header">
+      <p class="lore-dossier-eyebrow">
         SOURCE FRAGMENT
       </p>
-      <h2 v-if="record.metadata.title" class="mb-0 mt-2 text-3xl text-white">
+      <h2 v-if="record.metadata.title" class="lore-dossier-title">
         {{ record.metadata.title }}
       </h2>
-      <dl class="mb-0 mt-3 grid gap-1 text-base text-slate-300">
+      <dl class="lore-spec">
         <div v-if="provenance">
-          <dt class="inline text-blue-200">
-            PROVENANCE /
+          <dt>
+            provenance:
           </dt>
-          <dd class="inline">
+          <dd>
             {{ provenance }}
           </dd>
         </div>
         <div v-if="record.metadata.channel">
-          <dt class="inline text-blue-200">
-            COLLECTION /
+          <dt>
+            collection:
           </dt>
-          <dd class="inline">
+          <dd>
             {{ record.metadata.channel }}
           </dd>
         </div>
       </dl>
     </header>
 
-    <blockquote class="my-4 border-l-2 border-blue-300/50 pl-3 text-slate-100 source-body-content">
+    <blockquote class="source-body-content">
       <div
         v-for="(para, index) in parsedParagraphs"
         :key="index"
@@ -100,60 +62,13 @@ const parsedParagraphs = computed(() => {
       </div>
     </blockquote>
 
-    <footer class="mt-auto border-t border-blue-300/25 pt-3 text-base text-blue-200">
-      ARCHIVE FINGERPRINT / {{ telemetry.recordFingerprint }}
+    <footer class="lore-dossier-footer">
+      <span class="lore-spec-key">fingerprint:</span> {{ telemetry.recordFingerprint }}
     </footer>
   </section>
 </template>
 
 <style scoped lang="scss">
-.source-fragment {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  border: 1px solid rgba(102, 179, 255, 0.25);
-  border-radius: 16px;
-  padding: 16px;
-  background: rgba(16, 21, 31, 0.45);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
-  color: rgba(255, 255, 255, 0.9);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-}
-
-.source-fragment header {
-  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  padding-bottom: 12px;
-}
-
-.source-fragment header > p {
-  margin: 0;
-  color: var(--color-blue-light);
-  font-size: 1.35rem;
-  letter-spacing: 0.2em;
-}
-
-.source-fragment h2 {
-  margin: 8px 0 0;
-  color: #ffffff;
-  font-size: 1.95rem;
-}
-
-.source-fragment dl {
-  display: grid;
-  gap: 4px;
-  margin: 12px 0 0;
-  color: rgba(226, 232, 240, 0.9);
-  font-size: 1.25rem;
-  overflow-wrap: anywhere;
-}
-
-.source-fragment dt {
-  color: #bae6fd;
-}
-
 .source-body-content {
   display: flex;
   flex-direction: column;
@@ -174,8 +89,7 @@ const parsedParagraphs = computed(() => {
 .source-speaker-name {
   display: block;
   color: var(--color-blue-light);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: bold;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
@@ -186,17 +100,8 @@ const parsedParagraphs = computed(() => {
 .source-raw-text {
   margin: 0;
   color: #f1f5f9;
-  font-size: 1.65rem;
+  font-size: 1.25rem;
   line-height: 1.65;
   white-space: pre-wrap;
-}
-
-.source-fragment footer {
-  margin-top: auto;
-  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  padding-top: 12px;
-  color: #bae6fd;
-  font-size: 1.25rem;
-  overflow-wrap: anywhere;
 }
 </style>
