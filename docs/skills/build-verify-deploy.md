@@ -1,7 +1,7 @@
 ---
 name: build-verify-deploy
-version: "1.0"
-last_updated: 2026-07-17
+version: "1.1"
+last_updated: 2026-07-18
 tags: [validation, deployment, github-pages]
 description: Use when validating changes, preparing a commit or push, checking GitHub Pages, or deciding whether website work is complete or live.
 metadata:
@@ -30,6 +30,8 @@ Do not run every application suite for a documentation-only change.
 | Build | `npm run build` |
 | Preview | `npm run preview` |
 | Navbar browser assertions | `node tests/navbar-visual.mjs` |
+| Wolves CI oracle | `WOLVES_BASE_URL=http://localhost:5174 node tests/wolves-movie-flow.mjs` |
+| Wolves manual oracles | same env: `tests/wolves-lobby-progress.mjs`, `tests/wolves-intro-segments.mjs`, `tests/wolves-transition-chat.mjs` |
 
 Use the smallest relevant checks. Documentation-only changes need path/link checks and `git diff --check`, not unrelated application test suites.
 
@@ -56,6 +58,15 @@ Use the smallest relevant checks. Documentation-only changes need path/link chec
 - CI runs Vitest and `tests/wolves-movie-flow.mjs`. Other browser scripts, including navbar and timestamp-specific Wolves oracles, remain manual unless the workflow source shows otherwise.
 - If the browser cannot exercise the changed visual flow, stop before pushing. A historical snapshot, unit test, or successful build is not a substitute for browser evidence.
 - When Playwright captures screenshots, set `TMPDIR` and `WOLVES_SCREENSHOT_DIR` to a persistent filesystem with adequate free space instead of a full `/tmp` tmpfs. `page.screenshot({ path })` writes the image at the supplied path.
+
+## Wolves Browser Oracles
+
+- Run oracles against `npm run dev` (the `window.__wolvesCinematic.seekTo` hook is dev-only). `npm run preview` binds IPv6 `::1`; use `localhost`, never `127.0.0.1`, in `WOLVES_BASE_URL`.
+- Any change to Wolves content, plate wiring, intro stage count, or component markup must update the affected browser oracles in the same change. Stale oracle expectations have turned CI red without any product bug.
+- The Track 0 nameplate label slow-fades (1.5s `out-in`). Never assert its text by instant `textContent()` equality; wait for the expected value:
+  `await page.waitForFunction(text => document.querySelector('.wc-stage-nameplate .wc-nameplate-label')?.textContent === text, expected, { timeout: 5_000 })`.
+- `window.__mockWolvesPlayers` accumulates destroyed instances. Always select the newest match: `[...window.__mockWolvesPlayers].reverse().find(entry => entry.videoId === id)`.
+- Transition overlays render the terminal block on every handoff; `transitionLore` conversations are hidden from the overlay but still drive the transition SFX.
 
 ## Production Completion
 
@@ -87,6 +98,9 @@ Production is complete only when the run for the exact pushed SHA is `completed`
 - A Pages run for a different SHA is cited.
 - `git add .` or `git add -A`.
 - Pushing a visual change without browser evidence.
+- Asserting slow-fading text with instant equality instead of a wait.
+- Reading the first `__mockWolvesPlayers` entry instead of the newest match.
+- Changing Wolves content or markup without updating the browser oracles in the same change.
 
 ## Verification
 

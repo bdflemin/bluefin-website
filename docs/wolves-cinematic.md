@@ -12,23 +12,18 @@ simplicity audit). Verified live at commit `9d78d25`.
 
 ## 1. System overview
 
-The experience is a single Vue 3 + Pinia page with four phases, held in one
+The experience is a single Vue 3 + Pinia page with three phases, held in one
 store field (`useCinematicStore().phase`), no router:
 
 ```
-lobby -> intro -> cinematic Part I -> creator-shorts -> cinematic Parts II-VI
+lobby -> intro -> cinematic Parts I-VI
 ```
-
-`creator-shorts` is a one-time forward-only branch: `store.creatorShortsDueFor()`
-only fires it on the natural or manual Part I -> Part II boundary, and
-`shortsConsumed` prevents it firing again on any later return to Part I.
 
 | Phase | Component | Role |
 |---|---|---|
 | lobby | `cinematic/CinematicLobby.vue` | Destiny-styled gate. No account, no OAuth; the click is the browser autoplay gesture. |
-| intro | `WolvesIntroOverlay.vue` | The locked 94s Gayane prologue and Destiny guardian trailer, driven by `src/data/wolves-intro-sequence.ts`. |
+| intro | `WolvesIntroOverlay.vue` | The Destiny guardian trailer, driven by `src/data/wolves-intro-sequence.ts`. |
 | cinematic | `cinematic/CinematicStage.vue` | Dual-buffer YouTube playback of the six musical parts, with the theater layer above. The final part remains in this phase, paused and available to the normal transport. |
-| creator-shorts | `WolvesCreatorShortsInterstitial.vue` | One-time fullscreen bridge between Part I and Part II. `CinematicStage.vue` (and its two `YT.Player` instances) is unmounted for the duration, not merely hidden; see section 2. |
 
 Three invariants hold everywhere:
 
@@ -51,9 +46,15 @@ intro plus all six cinematic parts. Segment time remains secondary. The
 entire show, including the compact mobile layout.
 
 Track handoffs can carry structured authored speaker, cue, static, and SFX
-lines through `CinematicSegment.transitionLore`. Static, bulkhead knocks, and
+lines through `CinematicSegment.transitionLore`. The lore conversations are
+currently hidden from the overlay — every handoff renders the authored
+terminal block instead — but the lines still drive the transition sound
+effects. Static, bulkhead knocks, and
 the explosion are generated locally with Web Audio and are keyed once per
-transition entry; blocked audio never delays the six-second visual handoff.
+transition entry; blocked audio never delays the eleven-second visual handoff.
+The handoff overlay (`CinematicTransition.vue`) raises for 11 seconds
+(`HOLD_MS`), and its status terminal renders steadily — the earlier flicker
+animation was removed by owner request; do not reintroduce it.
 
 ## 2. The dual-buffer player (`composables/useDualBufferPlayer.ts`)
 
@@ -77,23 +78,6 @@ is constructed and cues Parts I and II before the overlay handoff. The handoff:
 
 Segments live in `src/config/wolves-cinematic.ts`. Adding/reordering parts is
 a data change only.
-
-**Creator Shorts destroy/remount**: the Part I -> Part II boundary (natural
-handoff in `beginSwap()` or manual `skip()`) first calls
-`enterCreatorShortsIfDue()`. When `store.creatorShortsDueFor(targetIndex)` is
-true (still on segment 0, target is segment 1, `shortsConsumed` not yet set),
-both players are paused, polling stops, and `store.enterCreatorShorts()` sets
-`segmentIndex = 1`, resets the segment clock, marks `shortsConsumed`, and flips
-`phase` to `creator-shorts`. `WolvesApp.vue`'s phase branch (`v-else-if`) then
-unmounts `CinematicStage.vue` entirely, so `useDualBufferPlayer`'s
-`CinematicStage.vue`'s `onBeforeUnmount` hook runs `player.destroy()` and both
-`YT.Player` instances are
-destroyed, not merely paused. When the interstitial's `complete` handler calls
-`store.completeCreatorShorts()`, `WolvesApp.vue` remounts `CinematicStage` and
-calls `stage.value.start()` again: a fresh `useDualBufferPlayer` instance reads
-`store.segmentIndex` (already `1`) as its `startIndex`, so the rebuilt dual
-buffer loads Part II on side A and cues Part III on side B. The players are
-never reused across the interstitial.
 
 ## 3. The theater layer (`cinematic/TheaterExperience.vue`)
 
@@ -140,30 +124,16 @@ make the viewport large; without them the reader letterboxes small.
 
 ## 4. The intro overlay (`WolvesIntroOverlay.vue`)
 
-Two authored segments from `buildIntroVideoSequence()`:
-
-1. **`wolves-prologue`** — 94s text cold open over authored backgrounds, with
-   the Gayane Ballet Suite (Adagio) as a background-only YouTube audio embed.
-   The 94s figure is not arbitrary: per-second RMS loudness analysis of the
-   track showed the final swell building from 89s, cresting at 92-94s, and
-   resolving to near-silence by 98s. A flat 90s cut slices mid-crescendo;
-   94s with the `audioFadeOutSeconds: 2.5` ramp rides the phrase's own decay.
-   Cue clock = the audio embed's `getCurrentTime()` (not wall clock), and the
-   fade window is recomputed every tick so seeking back out of it restores
-   full volume. Cue-level `nameplateTitle` can temporarily replace the top HUD
-   title while a specific line is active.
-2. **`wolves-intro`** — the Destiny 2 guardian trailer with the six guardian
-   nameplates. It defaults to the unvoiced source (`BV3BZKbpBns`) and exposes
-   an intro-widget-only `Ikora voice over` toggle to the voiced cut
-   (`BKm0TPqeOjY`) using object-form `loadVideoById({ videoId, startSeconds })`
-   so native time and pause state survive the swap. The local Destiny caption
-   file is intentionally empty and no timed dialogue caption overlay is
-   rendered; the Guardian nameplates are the only timed overlay on this
-   segment. The default unvoiced source keeps its black-frame cutoff
-   (`maxDuration: 121.5`) and the voiced cutoff remains
-   `alternateMaxDuration: 120.2`. A documented guardian bond renders a small
-   dinosaur icon next to the Guardian name, never a separate dinosaur panel;
-   `leader: true` gilds Christoph Blecker's plate only.
+The `wolves-intro` Destiny 2 guardian trailer comes from
+`buildIntroVideoSequence()`. It defaults to the unvoiced source
+(`BV3BZKbpBns`) and exposes an intro-widget-only `Ikora voice over` toggle to
+the voiced cut (`BKm0TPqeOjY`) using object-form
+`loadVideoById({ videoId, startSeconds })` so native time and pause state
+survive the swap. The default unvoiced source keeps its black-frame cutoff
+(`maxDuration: 121.5`) and the voiced cutoff remains
+`alternateMaxDuration: 120.2`. A documented guardian bond renders a small
+dinosaur icon next to the Guardian name, never a separate dinosaur panel;
+`leader: true` gilds Christoph Blecker's plate only.
 
 Typography (intro only, by owner direction): **Michroma** for theater text
 (the Microgramma/Eurostile Bold Extended stand-in from the Alien/Prometheus
@@ -235,8 +205,8 @@ A desktop-only, Parts II-VI-only rotation of open-source project donation
 tiles, mounted inside `CinematicStage.vue` alongside the theater layer:
 
 - **Visibility**: `store.phase === 'cinematic' && store.segmentIndex > 0` —
-  never rendered on Part I (`segmentIndex === 0`) or during `creator-shorts`/
-  `intro`/`lobby`. Hidden entirely below 1024px (`display: none`),
+  never rendered on Part I (`segmentIndex === 0`) or during `intro`/`lobby`.
+  Hidden entirely below 1024px (`display: none`),
   same breakpoint as `WolvesTeamChat.vue`.
 - **Exactly two visible ads at rest**: ads are authored as two fixed pairs in
   `src/data/wolves-org-ads.ts` (`WOLVES_ORG_AD_PAIRS`) — Pair A is
@@ -277,7 +247,7 @@ clocks:
 - Mid-roll ads: the main clock freezes — slideshow, ticker, thesis, captions,
   and widget all freeze identically and resume in perfect sync (verified by
   freezing the player and diffing all surfaces across a 3s window).
-- The prologue's cues follow the audio embed's clock for the same reason.
+- The Destiny intro's cues follow the player clock for the same reason.
 
 This is also why Spotify was removed entirely: the Web Playback SDK requires
 Premium (excludes viewers), its policy prohibits synchronizing recordings with
@@ -330,7 +300,7 @@ related code.
   `vi.useFakeTimers({ toFake: [... 'requestAnimationFrame', 'performance'] })`
   to drive rAF volume ramps deterministically.
 - **Verify with the real player, not unit tests alone**: browser verification
-  caught the prologue seek desync (seek didn't move the audio clock), the
+  caught intro seek desync, the
   fade not restoring volume after seek-back, the scrim regression, and cue
   double-wrapping — none of which unit tests saw. Seek every changed
   timestamp on the live player before calling work done.
