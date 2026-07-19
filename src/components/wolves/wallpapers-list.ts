@@ -20,1071 +20,1071 @@ export interface Wallpaper {
 
 export const wallpapers: Wallpaper[] = [
   {
-    "type": "single",
-    "name": "wolves/wolves/bluefin-chicken.webp",
-    "title": "Bluefin created by Andy Frazer and Jacob Schnurr",
-    "fit": "cover"
+    type: 'single',
+    name: 'wolves/wolves/bluefin-chicken.webp',
+    title: 'Bluefin created by Andy Frazer and Jacob Schnurr',
+    fit: 'cover',
   },
   {
-    "type": "single",
-    "name": "wolves/wolves/bluefin-huntress.webp",
-    "title": "Bluefin created by Andy Frazer and Jacob Schnurr",
-    "fit": "cover"
+    type: 'single',
+    name: 'wolves/wolves/bluefin-huntress.webp',
+    title: 'Bluefin created by Andy Frazer and Jacob Schnurr',
+    fit: 'cover',
   },
   {
-    "type": "single",
-    "name": "wolves/wolves/bluefin-lazy-days.webp",
-    "title": "Lazy Days by Jay Balamurugan",
-    "fit": "cover"
+    type: 'single',
+    name: 'wolves/wolves/bluefin-lazy-days.webp',
+    title: 'Lazy Days by Jay Balamurugan',
+    fit: 'cover',
   },
   {
-    "type": "daynight",
-    "name": "bluefin-duality",
-    "dayName": "wolves/wolves/bluefin-duality-day.webp",
-    "nightName": "wolves/wolves/bluefin-duality-night.webp",
-    "title": "Duality (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)",
-    "fit": "cover"
+    type: 'daynight',
+    name: 'bluefin-duality',
+    dayName: 'wolves/wolves/bluefin-duality-day.webp',
+    nightName: 'wolves/wolves/bluefin-duality-night.webp',
+    title: 'Duality (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)',
+    fit: 'cover',
   },
   {
-    "type": "daynight",
-    "name": "bluefin-dusk",
-    "dayName": "wolves/wolves/bluefin-dusk-day.webp",
-    "nightName": "wolves/wolves/bluefin-dusk-night.webp",
-    "title": "Bluefin created by Andy Frazer and Jacob Schnurr"
+    type: 'daynight',
+    name: 'bluefin-dusk',
+    dayName: 'wolves/wolves/bluefin-dusk-day.webp',
+    nightName: 'wolves/wolves/bluefin-dusk-night.webp',
+    title: 'Bluefin created by Andy Frazer and Jacob Schnurr',
   },
   {
-    "type": "single",
-    "name": "wolves/wolves/bluefin-eyes.webp",
-    "title": "Eyes by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)"
+    type: 'single',
+    name: 'wolves/wolves/bluefin-eyes.webp',
+    title: 'Eyes by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)',
   },
   {
-    "type": "daynight",
-    "name": "bluefin-prey",
-    "dayName": "wolves/wolves/bluefin-prey-day.webp",
-    "nightName": "wolves/wolves/bluefin-prey-night.webp",
-    "title": "Prey (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)"
+    type: 'daynight',
+    name: 'bluefin-prey',
+    dayName: 'wolves/wolves/bluefin-prey-day.webp',
+    nightName: 'wolves/wolves/bluefin-prey-night.webp',
+    title: 'Prey (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)',
   },
   {
-    "type": "daynight",
-    "name": "bluefin-tenacious",
-    "dayName": "wolves/wolves/bluefin-tenacious-day.webp",
-    "nightName": "wolves/wolves/bluefin-tenacious-night.webp",
-    "title": "Tenacious Pterosaur (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)"
+    type: 'daynight',
+    name: 'bluefin-tenacious',
+    dayName: 'wolves/wolves/bluefin-tenacious-day.webp',
+    nightName: 'wolves/wolves/bluefin-tenacious-night.webp',
+    title: 'Tenacious Pterosaur (Day & Night) by Dr. Natalia Jagielska and Delphic Melody (M. Gopal)',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Bluefin Microraptor by Dr. Natalia Jagielska.webp",
-    "title": "Bluefin Microraptor by Dr"
+    type: 'single',
+    name: 'wolves/showcase/Bluefin Microraptor by Dr. Natalia Jagielska.webp',
+    title: 'Bluefin Microraptor by Dr',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Bluefin is Born.webp",
-    "title": "Bluefin is Born"
+    type: 'single',
+    name: 'wolves/showcase/Bluefin is Born.webp',
+    title: 'Bluefin is Born',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Early Bazzite Prototype from EyeCantCU.webp",
-    "title": "Early Bazzite Prototype from EyeCantCU"
+    type: 'single',
+    name: 'wolves/showcase/Early Bazzite Prototype from EyeCantCU.webp',
+    title: 'Early Bazzite Prototype from EyeCantCU',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20220405_235648938.webp",
-    "title": "PXL 20220405 235648938"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20220405_235648938.webp',
+    title: 'PXL 20220405 235648938',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20230724_132635290.webp",
-    "title": "PXL 20230724 132635290"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20230724_132635290.webp',
+    title: 'PXL 20230724 132635290',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20230922_194447643.webp",
-    "title": "PXL 20230922 194447643"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20230922_194447643.webp',
+    title: 'PXL 20230922 194447643',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20230922_195227218.webp",
-    "title": "PXL 20230922 195227218"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20230922_195227218.webp',
+    title: 'PXL 20230922 195227218',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20231030_165334938.webp",
-    "title": "PXL 20231030 165334938"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20231030_165334938.webp',
+    title: 'PXL 20231030 165334938',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20240720_181225593.webp",
-    "title": "PXL 20240720 181225593"
+    type: 'single',
+    name: 'wolves/showcase/PXL_20240720_181225593.webp',
+    title: 'PXL 20240720 181225593',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Pasted image (2).webp",
-    "title": "Pasted image (2)"
+    type: 'single',
+    name: 'wolves/showcase/Pasted image (2).webp',
+    title: 'Pasted image (2)',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Pasted image (3).webp",
-    "title": "Pasted image (3)"
+    type: 'single',
+    name: 'wolves/showcase/Pasted image (3).webp',
+    title: 'Pasted image (3)',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Pasted image (4).webp",
-    "title": "Pasted image (4)"
+    type: 'single',
+    name: 'wolves/showcase/Pasted image (4).webp',
+    title: 'Pasted image (4)',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Pasted image (5).webp",
-    "title": "Pasted image (5)"
+    type: 'single',
+    name: 'wolves/showcase/Pasted image (5).webp',
+    title: 'Pasted image (5)',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Pasted image.webp",
-    "title": "Pasted image"
+    type: 'single',
+    name: 'wolves/showcase/Pasted image.webp',
+    title: 'Pasted image',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/Screenshot From 2026-02-03 17-43-17.webp",
-    "title": "Screenshot From 2026 02 03 17 43 17"
+    type: 'single',
+    name: 'wolves/showcase/Screenshot From 2026-02-03 17-43-17.webp',
+    title: 'Screenshot From 2026 02 03 17 43 17',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/bazaar.png",
-    "title": "Bazaar"
+    type: 'single',
+    name: 'wolves/showcase/bazaar.png',
+    title: 'Bazaar',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/bluespeed-cpu.webp",
-    "title": "Bluespeed Cpu"
+    type: 'single',
+    name: 'wolves/showcase/bluespeed-cpu.webp',
+    title: 'Bluespeed Cpu',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/claw.gif",
-    "title": "Claw"
+    type: 'single',
+    name: 'wolves/showcase/claw.gif',
+    title: 'Claw',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/deinonychus_wallpaper_option.jpg",
-    "title": "Deinonychus Wallpaper Option"
+    type: 'single',
+    name: 'wolves/showcase/deinonychus_wallpaper_option.jpg',
+    title: 'Deinonychus Wallpaper Option',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/goose-quick-launch.png",
-    "title": "Goose Quick Launch"
+    type: 'single',
+    name: 'wolves/showcase/goose-quick-launch.png',
+    title: 'Goose Quick Launch',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/knuckle-progress.webp",
-    "title": "Knuckle Progress"
+    type: 'single',
+    name: 'wolves/showcase/knuckle-progress.webp',
+    title: 'Knuckle Progress',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/kubestellar-dashboard.webp",
-    "title": "Kubestellar Dashboard"
+    type: 'single',
+    name: 'wolves/showcase/kubestellar-dashboard.webp',
+    title: 'Kubestellar Dashboard',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/sherman.webp",
-    "title": "Sherman"
+    type: 'single',
+    name: 'wolves/showcase/sherman.webp',
+    title: 'Sherman',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-1.webp",
-    "title": "Community Showcase by ki"
+    type: 'single',
+    name: 'wolves/showcase/showcase-1.webp',
+    title: 'Community Showcase by ki',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-12.webp",
-    "title": "Community Showcase by Falco404"
+    type: 'single',
+    name: 'wolves/showcase/showcase-12.webp',
+    title: 'Community Showcase by Falco404',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-16.webp",
-    "title": "Community Showcase by G. Murdzheff"
+    type: 'single',
+    name: 'wolves/showcase/showcase-16.webp',
+    title: 'Community Showcase by G. Murdzheff',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-18.webp",
-    "title": "Community Showcase by Giklab"
+    type: 'single',
+    name: 'wolves/showcase/showcase-18.webp',
+    title: 'Community Showcase by Giklab',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-19.webp",
-    "title": "Community Showcase by CTW"
+    type: 'single',
+    name: 'wolves/showcase/showcase-19.webp',
+    title: 'Community Showcase by CTW',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/showcase-20.webp",
-    "title": "Community Showcase by AlgoCompSynth by znmeb"
+    type: 'single',
+    name: 'wolves/showcase/showcase-20.webp',
+    title: 'Community Showcase by AlgoCompSynth by znmeb',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/stellar.webp",
-    "title": "Stellar"
+    type: 'single',
+    name: 'wolves/showcase/stellar.webp',
+    title: 'Stellar',
   },
   {
-    "type": "single",
-    "name": "wolves/showcase/tulip.png",
-    "title": "Tulip"
+    type: 'single',
+    name: 'wolves/showcase/tulip.png',
+    title: 'Tulip',
   },
   {
-    "type": "single",
-    "name": "wolves/people/20260709-osc26-distrobox-1.webp",
-    "title": "20260709 Osc26 Distrobox 1"
+    type: 'single',
+    name: 'wolves/people/20260709-osc26-distrobox-1.webp',
+    title: '20260709 Osc26 Distrobox 1',
   },
   {
-    "type": "single",
-    "name": "wolves/people/32433026808_c8529aca08_k.jpg",
-    "title": "32433026808 C8529aca08 K"
+    type: 'single',
+    name: 'wolves/people/32433026808_c8529aca08_k.jpg',
+    title: '32433026808 C8529aca08 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/33662742092_09c3f81574_b.jpg",
-    "title": "33662742092 09c3f81574 B"
+    type: 'single',
+    name: 'wolves/people/33662742092_09c3f81574_b.jpg',
+    title: '33662742092 09c3f81574 B',
   },
   {
-    "type": "single",
-    "name": "wolves/people/44488379080_1ca549538e_k.jpg",
-    "title": "44488379080 1ca549538e K"
+    type: 'single',
+    name: 'wolves/people/44488379080_1ca549538e_k.jpg',
+    title: '44488379080 1ca549538e K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/44541983690_6e8f7d8e0f_k.jpg",
-    "title": "44541983690 6e8f7d8e0f K"
+    type: 'single',
+    name: 'wolves/people/44541983690_6e8f7d8e0f_k.jpg',
+    title: '44541983690 6e8f7d8e0f K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/53322730377_ca5b65a035_k.jpg",
-    "title": "53322730377 Ca5b65a035 K"
+    type: 'single',
+    name: 'wolves/people/53322730377_ca5b65a035_k.jpg',
+    title: '53322730377 Ca5b65a035 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/53322730537_46ffb64d93_k.jpg",
-    "title": "53322730537 46ffb64d93 K"
+    type: 'single',
+    name: 'wolves/people/53322730537_46ffb64d93_k.jpg',
+    title: '53322730537 46ffb64d93 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/53324063295_08e12670ec_k.jpg",
-    "title": "53324063295 08e12670ec K"
+    type: 'single',
+    name: 'wolves/people/53324063295_08e12670ec_k.jpg',
+    title: '53324063295 08e12670ec K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54136632708_ed8adfe6c4_k.jpg",
-    "title": "54136632708 Ed8adfe6c4 K"
+    type: 'single',
+    name: 'wolves/people/54136632708_ed8adfe6c4_k.jpg',
+    title: '54136632708 Ed8adfe6c4 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54140268266_5efd756dca_k.jpg",
-    "title": "54140268266 5efd756dca K"
+    type: 'single',
+    name: 'wolves/people/54140268266_5efd756dca_k.jpg',
+    title: '54140268266 5efd756dca K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54140547938_609cbc8649_k.jpg",
-    "title": "54140547938 609cbc8649 K"
+    type: 'single',
+    name: 'wolves/people/54140547938_609cbc8649_k.jpg',
+    title: '54140547938 609cbc8649 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54141643371_b32edeccc1_k.jpg",
-    "title": "54141643371 B32edeccc1 K"
+    type: 'single',
+    name: 'wolves/people/54141643371_b32edeccc1_k.jpg',
+    title: '54141643371 B32edeccc1 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54143042464_23a61420c9_k.jpg",
-    "title": "54143042464 23a61420c9 K"
+    type: 'single',
+    name: 'wolves/people/54143042464_23a61420c9_k.jpg',
+    title: '54143042464 23a61420c9 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54154316847_251f094425_k.jpg",
-    "title": "54154316847 251f094425 K"
+    type: 'single',
+    name: 'wolves/people/54154316847_251f094425_k.jpg',
+    title: '54154316847 251f094425 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54155165501_12dd659466_k.jpg",
-    "title": "54155165501 12dd659466 K"
+    type: 'single',
+    name: 'wolves/people/54155165501_12dd659466_k.jpg',
+    title: '54155165501 12dd659466 K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/54155449578_2152642f9d_k.jpg",
-    "title": "54155449578 2152642f9d K"
+    type: 'single',
+    name: 'wolves/people/54155449578_2152642f9d_k.jpg',
+    title: '54155449578 2152642f9d K',
   },
   {
-    "type": "single",
-    "name": "wolves/people/AlexK - Beacon of The Final Shape.png",
-    "title": "AlexK   Beacon of The Final Shape"
+    type: 'single',
+    name: 'wolves/people/AlexK - Beacon of The Final Shape.png',
+    title: 'AlexK   Beacon of The Final Shape',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Always There.webp",
-    "title": "Always There"
+    type: 'single',
+    name: 'wolves/people/Always There.webp',
+    title: 'Always There',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Assisted-by: gregkh_clanker_t1000.webp",
-    "title": "Assisted By: gregkh Clanker T1000"
+    type: 'single',
+    name: 'wolves/people/Assisted-by: gregkh_clanker_t1000.webp',
+    title: 'Assisted By: gregkh Clanker T1000',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Bluefin Advisor Chris Aniszczyk.webp",
-    "title": "Bluefin Advisor Chris Aniszczyk"
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Chris Aniszczyk.webp',
+    title: 'Bluefin Advisor Chris Aniszczyk',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Bluefin Advisor Craig McLuckie.webp",
-    "title": "Bluefin Advisor Craig McLuckie"
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Craig McLuckie.webp',
+    title: 'Bluefin Advisor Craig McLuckie',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Bluefin Advisor Michael Tunnell.png",
-    "title": "Bluefin Advisor Michael Tunnell"
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Michael Tunnell.png',
+    title: 'Bluefin Advisor Michael Tunnell',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Bluefin Advisor Sarah Novotny.webp",
-    "title": "Bluefin Advisor Sarah Novotny"
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Sarah Novotny.webp',
+    title: 'Bluefin Advisor Sarah Novotny',
   },
   {
-    "type": "single",
-    "name": "wolves/people/CNCF Executive Directory Jonathan Bryce.webp",
-    "title": "CNCF Executive Directory Jonathan Bryce"
+    type: 'single',
+    name: 'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
+    title: 'CNCF Executive Directory Jonathan Bryce',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Give use KubeVirt, or give us death!.webp",
-    "title": "Give use KubeVirt, or give us death!"
+    type: 'single',
+    name: 'wolves/people/Give use KubeVirt, or give us death!.webp',
+    title: 'Give use KubeVirt, or give us death!',
   },
   {
-    "type": "single",
-    "name": "wolves/people/IMG_7295.jpeg",
-    "title": "IMG 7295"
+    type: 'single',
+    name: 'wolves/people/IMG_7295.jpeg',
+    title: 'IMG 7295',
   },
   {
-    "type": "single",
-    "name": "wolves/people/James Strong - This Man does not give applications root to his computers..webp",
-    "title": "James Strong   This Man does not give applications root to his computers."
+    type: 'single',
+    name: 'wolves/people/James Strong - This Man does not give applications root to his computers..webp',
+    title: 'James Strong   This Man does not give applications root to his computers.',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Keepers of the Helm of Sorrow.jpg",
-    "title": "Keepers of the Helm of Sorrow"
+    type: 'single',
+    name: 'wolves/people/Keepers of the Helm of Sorrow.jpg',
+    title: 'Keepers of the Helm of Sorrow',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Klues, K8s, and Metal.webp",
-    "title": "Klues, K8s, and Metal"
+    type: 'single',
+    name: 'wolves/people/Klues, K8s, and Metal.webp',
+    title: 'Klues, K8s, and Metal',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Ralph Squillace - High Administrator of the Final Shape.webp",
-    "title": "Ralph Squillace   High Administrator of the Final Shape"
+    type: 'single',
+    name: 'wolves/people/Ralph Squillace - High Administrator of the Final Shape.webp',
+    title: 'Ralph Squillace   High Administrator of the Final Shape',
   },
   {
-    "type": "single",
-    "name": "wolves/people/These three idiots.webp",
-    "title": "These three idiots"
+    type: 'single',
+    name: 'wolves/people/These three idiots.webp',
+    title: 'These three idiots',
   },
   {
-    "type": "single",
-    "name": "wolves/people/We dine like Lords of Old!.webp",
-    "title": "We dine like Lords of Old!"
+    type: 'single',
+    name: 'wolves/people/We dine like Lords of Old!.webp',
+    title: 'We dine like Lords of Old!',
   },
   {
-    "type": "single",
-    "name": "wolves/people/Yikes!.webp",
-    "title": "Yikes!"
+    type: 'single',
+    name: 'wolves/people/Yikes!.webp',
+    title: 'Yikes!',
   },
   {
-    "type": "single",
-    "name": "wolves/people/abigailcabunoc30360.web_.webp",
-    "title": "Abigailcabunoc30360"
+    type: 'single',
+    name: 'wolves/people/abigailcabunoc30360.web_.webp',
+    title: 'Abigailcabunoc30360',
   },
   {
-    "type": "single",
-    "name": "wolves/people/amberleighruth_reference.webp",
-    "title": "Amberleighruth Reference"
+    type: 'single',
+    name: 'wolves/people/amberleighruth_reference.webp',
+    title: 'Amberleighruth Reference',
   },
   {
-    "type": "single",
-    "name": "wolves/people/ashleymcnamara35365.webp",
-    "title": "Bluefin Advisor Ashley McNamara"
+    type: 'single',
+    name: 'wolves/people/ashleymcnamara35365.webp',
+    title: 'Bluefin Advisor Ashley McNamara',
   },
   {
-    "type": "single",
-    "name": "wolves/people/bketelsen.webp",
-    "title": "Bketelsen"
+    type: 'single',
+    name: 'wolves/people/bketelsen.webp',
+    title: 'Bketelsen',
   },
   {
-    "type": "single",
-    "name": "wolves/people/brazil-homage.webp",
-    "title": "Brazil we see you! #diolinux #tulip"
+    type: 'single',
+    name: 'wolves/people/brazil-homage.webp',
+    title: 'Brazil we see you! #diolinux #tulip',
   },
   {
-    "type": "single",
-    "name": "wolves/people/chen.jpg",
-    "title": "Chen"
+    type: 'single',
+    name: 'wolves/people/chen.jpg',
+    title: 'Chen',
   },
   {
-    "type": "single",
-    "name": "wolves/people/coreos.jpg",
-    "title": "Coreos"
+    type: 'single',
+    name: 'wolves/people/coreos.jpg',
+    title: 'Coreos',
   },
   {
-    "type": "single",
-    "name": "wolves/people/dirkhohndel.faces21994.web_.webp",
-    "title": "Dirkhohndel.faces21994"
+    type: 'single',
+    name: 'wolves/people/dirkhohndel.faces21994.web_.webp',
+    title: 'Dirkhohndel.faces21994',
   },
   {
-    "type": "single",
-    "name": "wolves/people/distrobox.png",
-    "title": "Distrobox"
+    type: 'single',
+    name: 'wolves/people/distrobox.png',
+    title: 'Distrobox',
   },
   {
-    "type": "single",
-    "name": "wolves/people/faces.jessiefrazella25358.web_.webp",
-    "title": "Faces.jessiefrazella25358"
+    type: 'single',
+    name: 'wolves/people/faces.jessiefrazella25358.web_.webp',
+    title: 'Faces.jessiefrazella25358',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53608872377.webp",
-    "title": "KC+CNC_EU_240319_KCS_Breakouts_MN_024"
+    type: 'single',
+    name: 'wolves/people/flickr-53608872377.webp',
+    title: 'KC+CNC_EU_240319_KCS_Breakouts_MN_024',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53608873387.webp",
-    "title": "KC+CNC_EU_240319_KCS_Welcome_MN_034"
+    type: 'single',
+    name: 'wolves/people/flickr-53608873387.webp',
+    title: 'KC+CNC_EU_240319_KCS_Welcome_MN_034',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53608873717.webp",
-    "title": "KC+CNC_EU_240319_KCS_MN_030"
+    type: 'single',
+    name: 'wolves/people/flickr-53608873717.webp',
+    title: 'KC+CNC_EU_240319_KCS_MN_030',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53609959643.webp",
-    "title": "KC+CNC_EU_240319_KCS_BreaksLunch_MN_002"
+    type: 'single',
+    name: 'wolves/people/flickr-53609959643.webp',
+    title: 'KC+CNC_EU_240319_KCS_BreaksLunch_MN_002',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53610085829.webp",
-    "title": "KC+CNC_EU_240319_KCS_Breakouts_MN_056"
+    type: 'single',
+    name: 'wolves/people/flickr-53610085829.webp',
+    title: 'KC+CNC_EU_240319_KCS_Breakouts_MN_056',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53610201620.webp",
-    "title": "KC+CNC_EU_240319_KCS_Breakouts_MN_034"
+    type: 'single',
+    name: 'wolves/people/flickr-53610201620.webp',
+    title: 'KC+CNC_EU_240319_KCS_Breakouts_MN_034',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53610202870.webp",
-    "title": "KC+CNC_EU_240319_KCS_MN_001"
+    type: 'single',
+    name: 'wolves/people/flickr-53610202870.webp',
+    title: 'KC+CNC_EU_240319_KCS_MN_001',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53776677826.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0038"
+    type: 'single',
+    name: 'wolves/people/flickr-53776677826.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0038',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53776677906.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0057"
+    type: 'single',
+    name: 'wolves/people/flickr-53776677906.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0057',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53776678026.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0096"
+    type: 'single',
+    name: 'wolves/people/flickr-53776678026.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0096',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53777005074.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0029"
+    type: 'single',
+    name: 'wolves/people/flickr-53777005074.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0029',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53777101875.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0034"
+    type: 'single',
+    name: 'wolves/people/flickr-53777101875.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0034',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-53777102280.webp",
-    "title": "2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0120"
+    type: 'single',
+    name: 'wolves/people/flickr-53777102280.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0120',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54136482862.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_evening_218"
+    type: 'single',
+    name: 'wolves/people/flickr-54136482862.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_evening_218',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137323246.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_003"
+    type: 'single',
+    name: 'wolves/people/flickr-54137323246.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_003',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137326101.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_088"
+    type: 'single',
+    name: 'wolves/people/flickr-54137326101.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_088',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137330521.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_185"
+    type: 'single',
+    name: 'wolves/people/flickr-54137330521.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_185',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137613073.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_evening_240"
+    type: 'single',
+    name: 'wolves/people/flickr-54137613073.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_evening_240',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137616178.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_181"
+    type: 'single',
+    name: 'wolves/people/flickr-54137616178.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_181',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137617973.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_evening_220"
+    type: 'single',
+    name: 'wolves/people/flickr-54137617973.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_evening_220',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137658664.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_119"
+    type: 'single',
+    name: 'wolves/people/flickr-54137658664.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_119',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137664384.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_evening_229"
+    type: 'single',
+    name: 'wolves/people/flickr-54137664384.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_evening_229',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137782045.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_012"
+    type: 'single',
+    name: 'wolves/people/flickr-54137782045.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137782365.webp",
-    "title": "Christoph Blecker - First Amongst Equals - Platinum Member"
+    type: 'single',
+    name: 'wolves/people/flickr-54137782365.webp',
+    title: 'Christoph Blecker - First Amongst Equals - Platinum Member',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54137791405.webp",
-    "title": "KC+CNC_NA_241111_BF_KCS_evening_227"
+    type: 'single',
+    name: 'wolves/people/flickr-54137791405.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_evening_227',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54434769392.webp",
-    "title": "KC+CNC_EU_2025_Top12_010"
+    type: 'single',
+    name: 'wolves/people/flickr-54434769392.webp',
+    title: 'KC+CNC_EU_2025_Top12_010',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54435630036.webp",
-    "title": "KC+CNC_EU_2025_Top12_011"
+    type: 'single',
+    name: 'wolves/people/flickr-54435630036.webp',
+    title: 'KC+CNC_EU_2025_Top12_011',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54435630091.webp",
-    "title": "KC+CNC_EU_2025_Top12_004"
+    type: 'single',
+    name: 'wolves/people/flickr-54435630091.webp',
+    title: 'KC+CNC_EU_2025_Top12_004',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54435873223.webp",
-    "title": "KC+CNC_EU_2025_Top12_007"
+    type: 'single',
+    name: 'wolves/people/flickr-54435873223.webp',
+    title: 'KC+CNC_EU_2025_Top12_007',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54435998180.webp",
-    "title": "KC+CNC_EU_2025_Top12_006"
+    type: 'single',
+    name: 'wolves/people/flickr-54435998180.webp',
+    title: 'KC+CNC_EU_2025_Top12_006',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-54435998240.webp",
-    "title": "KC+CNC_EU_2025_Top12_002"
+    type: 'single',
+    name: 'wolves/people/flickr-54435998240.webp',
+    title: 'KC+CNC_EU_2025_Top12_002',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-55343975781.webp",
-    "title": "0R0A9083"
+    type: 'single',
+    name: 'wolves/people/flickr-55343975781.webp',
+    title: '0R0A9083',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-55343977496.webp",
-    "title": "0R0A9009"
+    type: 'single',
+    name: 'wolves/people/flickr-55343977496.webp',
+    title: '0R0A9009',
   },
   {
-    "type": "single",
-    "name": "wolves/people/flickr-55344186409.webp",
-    "title": "DSC04181"
+    type: 'single',
+    name: 'wolves/people/flickr-55344186409.webp',
+    title: 'DSC04181',
   },
   {
-    "type": "single",
-    "name": "wolves/people/giklab.webp",
-    "title": "Giklab"
+    type: 'single',
+    name: 'wolves/people/giklab.webp',
+    title: 'Giklab',
   },
   {
-    "type": "single",
-    "name": "wolves/people/hikari.JPG",
-    "title": "Hikari"
+    type: 'single',
+    name: 'wolves/people/hikari.JPG',
+    title: 'Hikari',
   },
   {
-    "type": "single",
-    "name": "wolves/people/hikari2.JPG",
-    "title": "Hikari2"
+    type: 'single',
+    name: 'wolves/people/hikari2.JPG',
+    title: 'Hikari2',
   },
   {
-    "type": "single",
-    "name": "wolves/people/interview-clyde-seepersad-linux-foundation.webp",
-    "title": "Clyde Seepersad, Linux Foundation"
+    type: 'single',
+    name: 'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
+    title: 'Clyde Seepersad, Linux Foundation',
   },
   {
-    "type": "single",
-    "name": "wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp",
-    "title": "Jono Bacon, Stateshift — \"The Cult Psychology of Kubernetes\"",
-    "theaterTitleOnly": true
+    type: 'single',
+    name: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp',
+    title: 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
+    theaterTitleOnly: true,
   },
   {
-    "type": "single",
-    "name": "wolves/people/interview-l4e-games-for-everyone-2-linux-gaming.webp",
-    "title": "Linux For Everyone — \"Games For Everyone #2: Linux Gaming Is WINNING\""
+    type: 'single',
+    name: 'wolves/people/interview-l4e-games-for-everyone-2-linux-gaming.webp',
+    title: 'Linux For Everyone — "Games For Everyone #2: Linux Gaming Is WINNING"',
   },
   {
-    "type": "single",
-    "name": "wolves/people/jorge-bluefin.webp",
-    "title": "Together we can save humanity from the tyranny of Linux Distributions. Forever."
+    type: 'single',
+    name: 'wolves/people/jorge-bluefin.webp',
+    title: 'Together we can save humanity from the tyranny of Linux Distributions. Forever.',
   },
   {
-    "type": "single",
-    "name": "wolves/people/jorge.webp",
-    "title": "Jorge"
+    type: 'single',
+    name: 'wolves/people/jorge.webp',
+    title: 'Jorge',
   },
   {
-    "type": "single",
-    "name": "wolves/people/juju.webp",
-    "title": "Juju"
+    type: 'single',
+    name: 'wolves/people/juju.webp',
+    title: 'Juju',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kirkland.png",
-    "title": "Bluefin Advisor Dustin Kirkland"
+    type: 'single',
+    name: 'wolves/people/kirkland.png',
+    title: 'Bluefin Advisor Dustin Kirkland',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54924155702.webp",
-    "title": "KubeCon North America 2025 TOP12 012"
+    type: 'single',
+    name: 'wolves/people/kubecon-54924155702.webp',
+    title: 'KubeCon North America 2025 TOP12 012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54924155737.webp",
-    "title": "KubeCon North America 2025 TOP12 004"
+    type: 'single',
+    name: 'wolves/people/kubecon-54924155737.webp',
+    title: 'KubeCon North America 2025 TOP12 004',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54925330750.webp",
-    "title": "KubeCon North America 2025 TOP12 005"
+    type: 'single',
+    name: 'wolves/people/kubecon-54925330750.webp',
+    title: 'KubeCon North America 2025 TOP12 005',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54926533692.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Badgepickup+Welcome ML-MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-54926533692.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Badgepickup+Welcome ML-MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54926555137.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 009"
+    type: 'single',
+    name: 'wolves/people/kubecon-54926555137.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 009',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54926587622.webp",
-    "title": "ArgoCon North America 2025 ArgoCon BF 001"
+    type: 'single',
+    name: 'wolves/people/kubecon-54926587622.webp',
+    title: 'ArgoCon North America 2025 ArgoCon BF 001',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927401811.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 006"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927401811.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 006',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927401871.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 004"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927401871.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 004',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927402146.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 008"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927402146.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 008',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927422306.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit EveningReception ML-MN 05"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927422306.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit EveningReception ML-MN 05',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927600273.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 005"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927600273.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Keynote ML-MN 005',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927620483.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 012"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927620483.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927620538.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit EveningReception ML-MN 04"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927620538.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit EveningReception ML-MN 04',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927705495.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit Badgepickup+Welcome ML-MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927705495.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit Badgepickup+Welcome ML-MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927727820.webp",
-    "title": "Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 010"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927727820.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 010',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-54927728075.webp",
-    "title": "Maintainer Summit North America 2025"
+    type: 'single',
+    name: 'wolves/people/kubecon-54927728075.webp',
+    title: 'Maintainer Summit North America 2025',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55163324057.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 014"
+    type: 'single',
+    name: 'wolves/people/kubecon-55163324057.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 014',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55163325182.webp",
-    "title": "Maintainer Summit Evening Reception - 030 MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-55163325182.webp',
+    title: 'Maintainer Summit Evening Reception - 030 MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164222611.webp",
-    "title": "Maintainer Summit Breakouts - MN 041"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164222611.webp',
+    title: 'Maintainer Summit Breakouts - MN 041',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164224866.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 023"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164224866.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 023',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164225526.webp",
-    "title": "Maintainer Summit Group Photo - LM 003"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164225526.webp',
+    title: 'Maintainer Summit Group Photo - LM 003',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164225551.webp",
-    "title": "Maintainer Summit Group Photo - LM 006"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164225551.webp',
+    title: 'Maintainer Summit Group Photo - LM 006',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164225566.webp",
-    "title": "Maintainer Summit Group Photo - LM 004"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164225566.webp',
+    title: 'Maintainer Summit Group Photo - LM 004',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164225841.webp",
-    "title": "Maintainer Summit Evening Reception - 043 MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164225841.webp',
+    title: 'Maintainer Summit Evening Reception - 043 MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164226026.webp",
-    "title": "Maintainer Summit Evening Reception - 029 MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164226026.webp',
+    title: 'Maintainer Summit Evening Reception - 029 MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164384988.webp",
-    "title": "Maintainer Summit Breakouts - LM 009"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164384988.webp',
+    title: 'Maintainer Summit Breakouts - LM 009',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164387143.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 041"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164387143.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 041',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164387268.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 022"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164387268.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 022',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164387493.webp",
-    "title": "Maintainer Summit Breaks & Lunch - LM 024"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164387493.webp',
+    title: 'Maintainer Summit Breaks & Lunch - LM 024',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164388368.webp",
-    "title": "Maintainer Summit Evening Reception - 040 MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164388368.webp',
+    title: 'Maintainer Summit Evening Reception - 040 MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164388473.webp",
-    "title": "Maintainer Summit Evening Reception - 026 MN"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164388473.webp',
+    title: 'Maintainer Summit Evening Reception - 026 MN',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164464359.webp",
-    "title": "Maintainer Summit Breakouts - LM 025"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164464359.webp',
+    title: 'Maintainer Summit Breakouts - LM 025',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164466314.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 025"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164466314.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 025',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164466574.webp",
-    "title": "Maintainer Summit Breaks & Lunch - LM 018"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164466574.webp',
+    title: 'Maintainer Summit Breaks & Lunch - LM 018',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164467009.webp",
-    "title": "Maintainer Summit Group Photo - LM 005"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164467009.webp',
+    title: 'Maintainer Summit Group Photo - LM 005',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164467034.webp",
-    "title": "Maintainer Summit Group Photo - LM 002"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164467034.webp',
+    title: 'Maintainer Summit Group Photo - LM 002',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55164603055.webp",
-    "title": "Maintainer Summit Breaks & Lunch - MN 031"
+    type: 'single',
+    name: 'wolves/people/kubecon-55164603055.webp',
+    title: 'Maintainer Summit Breaks & Lunch - MN 031',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55167395267.webp",
-    "title": "Daily Highlights - 005"
+    type: 'single',
+    name: 'wolves/people/kubecon-55167395267.webp',
+    title: 'Daily Highlights - 005',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168295426.webp",
-    "title": "KubeCon + CloudNativeCon Europe 2026"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168295426.webp',
+    title: 'KubeCon + CloudNativeCon Europe 2026',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168460833.webp",
-    "title": "Daily Highlights - 027"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168460833.webp',
+    title: 'Daily Highlights - 027',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168460993.webp",
-    "title": "Daily Highlights - 021"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168460993.webp',
+    title: 'Daily Highlights - 021',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168545279.webp",
-    "title": "Daily Highlights - 052"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168545279.webp',
+    title: 'Daily Highlights - 052',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168545299.webp",
-    "title": "KubeCon Europe 2026 Daily Highlights - 053"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168545299.webp',
+    title: 'KubeCon Europe 2026 Daily Highlights - 053',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168684055.webp",
-    "title": "Marina Moore"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168684055.webp',
+    title: 'Marina Moore',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168973742.webp",
-    "title": "KubeCon Europe 2026 TOP12 012"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168973742.webp',
+    title: 'KubeCon Europe 2026 TOP12 012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55168973792.webp",
-    "title": "KubeCon Europe 2026 TOP12 006"
+    type: 'single',
+    name: 'wolves/people/kubecon-55168973792.webp',
+    title: 'KubeCon Europe 2026 TOP12 006',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55169871616.webp",
-    "title": "KubeCon Europe 2026 TOP12 011"
+    type: 'single',
+    name: 'wolves/people/kubecon-55169871616.webp',
+    title: 'KubeCon Europe 2026 TOP12 011',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55169871651.webp",
-    "title": "KubeCon Europe 2026 TOP12 008"
+    type: 'single',
+    name: 'wolves/people/kubecon-55169871651.webp',
+    title: 'KubeCon Europe 2026 TOP12 008',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55170037858.webp",
-    "title": "KubeCon Europe 2026 TOP12 005"
+    type: 'single',
+    name: 'wolves/people/kubecon-55170037858.webp',
+    title: 'KubeCon Europe 2026 TOP12 005',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55170264275.webp",
-    "title": "KubeCon Europe 2026 TOP12 010"
+    type: 'single',
+    name: 'wolves/people/kubecon-55170264275.webp',
+    title: 'KubeCon Europe 2026 TOP12 010',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176035967.webp",
-    "title": "Keynote DK 104"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176035967.webp',
+    title: 'Keynote DK 104',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176036272.webp",
-    "title": "Keynote DK 068"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176036272.webp',
+    title: 'Keynote DK 068',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176925196.webp",
-    "title": "Keynote DK 102"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176925196.webp',
+    title: 'Keynote DK 102',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176938461.webp",
-    "title": "Project Pavilion LM 032"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176938461.webp',
+    title: 'Project Pavilion LM 032',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176938596.webp",
-    "title": "Learning Lounge MN 030"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176938596.webp',
+    title: 'Learning Lounge MN 030',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55176943506.webp",
-    "title": "T-Shirt Pick-up DN 011"
+    type: 'single',
+    name: 'wolves/people/kubecon-55176943506.webp',
+    title: 'T-Shirt Pick-up DN 011',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177097253.webp",
-    "title": "Keynote DK 019"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177097253.webp',
+    title: 'Keynote DK 019',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177098053.webp",
-    "title": "Keynote DK 012"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177098053.webp',
+    title: 'Keynote DK 012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177108798.webp",
-    "title": "Project PavilionTours LM 012"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177108798.webp',
+    title: 'Project PavilionTours LM 012',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177109048.webp",
-    "title": "Project PavilionTours LM 006"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177109048.webp',
+    title: 'Project PavilionTours LM 006',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177109118.webp",
-    "title": "Project Pavilion Tours DN 013"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177109118.webp',
+    title: 'Project Pavilion Tours DN 013',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177110598.webp",
-    "title": "Learning Lounge MN 028"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177110598.webp',
+    title: 'Learning Lounge MN 028',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177329325.webp",
-    "title": "Keynote DK 105"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177329325.webp',
+    title: 'Keynote DK 105',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177342795.webp",
-    "title": "Project Pavilion LM 030"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177342795.webp',
+    title: 'Project Pavilion LM 030',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55177342820.webp",
-    "title": "Project Pavilion LM 027"
+    type: 'single',
+    name: 'wolves/people/kubecon-55177342820.webp',
+    title: 'Project Pavilion LM 027',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55386056978.webp",
-    "title": "KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre"
+    type: 'single',
+    name: 'wolves/people/kubecon-55386056978.webp',
+    title: 'KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55386311935.webp",
-    "title": "KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre"
+    type: 'single',
+    name: 'wolves/people/kubecon-55386311935.webp',
+    title: 'KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kubecon-55386335785.webp",
-    "title": "KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre"
+    type: 'single',
+    name: 'wolves/people/kubecon-55386335785.webp',
+    title: 'KubeCon + CloudNativeCon India 2026 - Day 2 at Jio World Convention Centre',
   },
   {
-    "type": "single",
-    "name": "wolves/people/kyle.jpg",
-    "title": "NOT John Bazzite"
+    type: 'single',
+    name: 'wolves/people/kyle.jpg',
+    title: 'NOT John Bazzite',
   },
   {
-    "type": "single",
-    "name": "wolves/people/laura.png",
-    "title": "Laura"
+    type: 'single',
+    name: 'wolves/people/laura.png',
+    title: 'Laura',
   },
   {
-    "type": "single",
-    "name": "wolves/people/liz.webp",
-    "title": "Liz"
+    type: 'single',
+    name: 'wolves/people/liz.webp',
+    title: 'Liz',
   },
   {
-    "type": "single",
-    "name": "wolves/people/meuiss.jpg",
-    "title": "Meuiss"
+    type: 'single',
+    name: 'wolves/people/meuiss.jpg',
+    title: 'Meuiss',
   },
   {
-    "type": "single",
-    "name": "wolves/people/nova4ever.webp",
-    "title": "Jay Balamurugan"
+    type: 'single',
+    name: 'wolves/people/nova4ever.webp',
+    title: 'Jay Balamurugan',
   },
   {
-    "type": "single",
-    "name": "wolves/people/nuno.webp",
-    "title": "Nuno"
+    type: 'single',
+    name: 'wolves/people/nuno.webp',
+    title: 'Nuno',
   },
   {
-    "type": "single",
-    "name": "wolves/people/r2.png",
-    "title": "R2"
+    type: 'single',
+    name: 'wolves/people/r2.png',
+    title: 'R2',
   },
   {
-    "type": "single",
-    "name": "wolves/people/reza.jpg",
-    "title": "Reza"
+    type: 'single',
+    name: 'wolves/people/reza.jpg',
+    title: 'Reza',
   },
   {
-    "type": "single",
-    "name": "wolves/people/rikkiendsley28095-2.webp",
-    "title": "Rikkiendsley28095 2"
+    type: 'single',
+    name: 'wolves/people/rikkiendsley28095-2.webp',
+    title: 'Rikkiendsley28095 2',
   },
   {
-    "type": "single",
-    "name": "wolves/people/sherman-m2.webp",
-    "title": "Sherman + M2"
+    type: 'single',
+    name: 'wolves/people/sherman-m2.webp',
+    title: 'Sherman + M2',
   },
   {
-    "type": "single",
-    "name": "wolves/people/stormy.faces23764.web_.webp",
-    "title": "Bluefin Advisor Stormy Peters"
+    type: 'single',
+    name: 'wolves/people/stormy.faces23764.web_.webp',
+    title: 'Bluefin Advisor Stormy Peters',
   },
   {
-    "type": "single",
-    "name": "wolves/people/summit-03.webp",
-    "title": "Summit 03"
+    type: 'single',
+    name: 'wolves/people/summit-03.webp',
+    title: 'Summit 03',
   },
   {
-    "type": "single",
-    "name": "wolves/people/summit-11.webp",
-    "title": "Summit 11"
+    type: 'single',
+    name: 'wolves/people/summit-11.webp',
+    title: 'Summit 11',
   },
   {
-    "type": "single",
-    "name": "wolves/people/summit-15.webp",
-    "title": "Summit 15"
+    type: 'single',
+    name: 'wolves/people/summit-15.webp',
+    title: 'Summit 15',
   },
   {
-    "type": "single",
-    "name": "wolves/people/tle.png",
-    "title": "Tle"
+    type: 'single',
+    name: 'wolves/people/tle.png',
+    title: 'Tle',
   },
   {
-    "type": "single",
-    "name": "wolves/people/vmbrasseur.webp",
-    "title": "Vmbrasseur"
+    type: 'single',
+    name: 'wolves/people/vmbrasseur.webp',
+    title: 'Vmbrasseur',
   },
   {
-    "type": "single",
-    "name": "wolves/people/walters.JPG",
-    "title": "bootc creator Colin Walters"
-  }
+    type: 'single',
+    name: 'wolves/people/walters.JPG',
+    title: 'bootc creator Colin Walters',
+  },
 ]
