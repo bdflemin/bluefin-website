@@ -78,9 +78,9 @@ export const wolvesEarlySignalMessages = parseEarlySignalMessages(incomingSignal
 
 export function getWolvesHudLabel(time: number): string {
   if (time < 175.96) {
-    // Only the bare "INCOMING SIGNAL:" teaser holds from load. The remaining
-    // ambient signals name heroes who haven't appeared yet, so they are
-    // reserved until after the Jorge Bluefin hero window ends (196.36).
+    // Only the first authored line holds from load. The remaining ambient
+    // signals name heroes who haven't appeared yet, so they are reserved
+    // until after the Jorge Bluefin hero window ends (196.36).
     return wolvesEarlySignalMessages[0] ?? DEFAULT_HUD_LABEL
   }
   if (time < 196.36) {

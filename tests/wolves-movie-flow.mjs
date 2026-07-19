@@ -390,10 +390,10 @@ try {
     assert(label, ok ? expected : await trackZeroNameplateLabel.textContent(), expected)
   }
   assert('Track 0 nameplate enables slow signal fades', await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--slow-fade')), true)
-  await assertSignal('Track 0 holds the bare signal teaser before the hero run', 'INCOMING SIGNAL:')
+  await assertSignal('Track 0 holds the opening signal line before the hero run', 'Welcome to Indie Cloud Native')
   assert('Track 0 keeps the authored track title in the detail line', await trackZeroSignal.textContent(), '7 Days to the Wolves')
   await seekStage(44.211)
-  await assertSignal('Teaser holds through the early stretch without spoilers', 'INCOMING SIGNAL:')
+  await assertSignal('Opening line holds through the early stretch without spoilers', 'Welcome to Indie Cloud Native')
   await seekStage(167.8)
   const jonoAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
@@ -442,7 +442,7 @@ try {
   assert('Track 0 lower thesis overlay remains inactive during Marina Moore', await page.locator('.wc-thesis').count(), 0)
 
   await seekStage(175.958)
-  await assertSignal('Teaser holds until the Bluefin group', 'INCOMING SIGNAL:')
+  await assertSignal('Opening line holds until the Bluefin group', 'Welcome to Indie Cloud Native')
   const marinaBeforeComposite = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
@@ -519,7 +519,7 @@ try {
   assert('Second Hikari slide hands off at 3:12.279', hikariAtHandoff?.includes('hikari2.JPG'), false)
 
   await seekStage(196.36)
-  await assertSignal('Ambient signals begin after the Jorge hero window', 'Welcome to indie cloud native')
+  await assertSignal('Ambient signals begin after the Jorge hero window', 'Hikari Protocol: Initialized')
   assert('Lower thesis remains separate after the Bluefin group', await page.locator('.wc-thesis').count(), 0)
 
   await seekStage(228.9)
@@ -568,11 +568,11 @@ try {
 
   await seekStage(365)
   await page.waitForTimeout(250)
-  await assertSignal('Signal messages restart after the thesis lines', 'INCOMING SIGNAL:')
+  await assertSignal('Signal messages restart after the thesis lines', 'Welcome to Indie Cloud Native')
 
-  await seekStage(403.7)
+  await seekStage(407.5)
   await page.waitForTimeout(250)
-  await assertSignal('Compressed signal cycle reaches its final message before Titanfall', 'Projected Joining: Salt Lake City, Utah, Circa 2026')
+  await assertSignal('Compressed signal cycle reaches its final message before Titanfall', 'Software is Supposed to Die')
 
   await seekStage(408)
   await assertSignal('Titanfall signal remains the locked finale handoff', 'Bazzite Mk6 Units: Prepare for Titanfall')

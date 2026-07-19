@@ -17,6 +17,7 @@ import {
   jonoBaconTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
+  pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
   splitTrackZeroFastFinaleSlides,
@@ -321,7 +322,8 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   }
 
   const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
-  const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
+  // The Microraptor lock keeps its slide at a fixed slot even as the pool drifts.
+  const shuffledNormalShowcase = pinBluefinMicroraptorSlide(deterministicShuffle(normalShowcase, 202))
   const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides(localPeople)
   // Locked post-hero opening (Walters -> Tophee -> Kirkland -> 0R0A9083 -> 052)
   // sits at the head of the People pool; the hero locks are extracted by id below.

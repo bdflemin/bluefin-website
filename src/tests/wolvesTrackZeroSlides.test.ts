@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   bluefinGroupSlides,
+  bluefinMicroraptorSlideId,
+  bluefinMicroraptorTrackZeroIndex,
   hikari2SlideId,
   hikari2TrackZeroWindow,
   hikariSlideId,
@@ -13,6 +15,7 @@ import {
   kyleTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
+  pinBluefinMicroraptorSlide,
   pinJonoBaconAtTrackZeroWindow,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
@@ -173,5 +176,28 @@ describe('wolves Track 0 slide locks', () => {
 
     expect(pinTrackZeroPostHeroOpening([regular, walters])).toEqual([walters, regular])
     expect(pinTrackZeroPostHeroOpening([regular])).toEqual([regular])
+  })
+
+  it('locks the Bluefin Microraptor to its fixed showcase slot regardless of shuffle order', () => {
+    const microraptor = { id: bluefinMicroraptorSlideId }
+    const pool = Array.from({ length: 34 }, (_, index) => ({ id: `showcase-${index}` }))
+
+    const fromFront = pinBluefinMicroraptorSlide([microraptor, ...pool])
+    expect(fromFront[bluefinMicroraptorTrackZeroIndex]).toEqual(microraptor)
+    expect(fromFront.filter(slide => slide.id === bluefinMicroraptorSlideId)).toHaveLength(1)
+
+    const fromBack = pinBluefinMicroraptorSlide([...pool, microraptor])
+    expect(fromBack[bluefinMicroraptorTrackZeroIndex]).toEqual(microraptor)
+    // Every other slide keeps its relative order.
+    expect(fromBack.filter(slide => slide.id !== bluefinMicroraptorSlideId)).toEqual(pool)
+  })
+
+  it('clamps the Microraptor lock into small pools and skips it when the slide is missing', () => {
+    const microraptor = { id: bluefinMicroraptorSlideId }
+    const small = [{ id: 'showcase-a' }, microraptor, { id: 'showcase-b' }]
+
+    const pinnedSmall = pinBluefinMicroraptorSlide(small)
+    expect(pinnedSmall[pinnedSmall.length - 1]).toEqual(microraptor)
+    expect(pinBluefinMicroraptorSlide([{ id: 'showcase-a' }])).toEqual([{ id: 'showcase-a' }])
   })
 })

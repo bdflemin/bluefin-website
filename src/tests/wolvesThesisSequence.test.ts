@@ -12,24 +12,23 @@ const THESIS_START_SECONDS = 345
 
 describe('wolves thesis sequence', () => {
   it('reads ordered non-empty messages from the editable source', () => {
-    expect(wolvesIncomingSignalMessages).toEqual([
-      'INCOMING SIGNAL:',
-      'Welcome to indie cloud native',
+    expect(wolvesIncomingSignalMessages.slice(0, 8)).toEqual([
+      'Welcome to Indie Cloud Native',
       'Hikari Protocol: Initialized',
       'KDE Plasma Couplings: ENGAGED',
       'Mechaphippy Deployment: [UNAUTHORIZED]',
       'M2 Status: [ Unknown ]',
       'Field Medical Exoskeleton: [ Missing ]',
-      'TARGET ACQUIRED: GOSPO, KYLE. Earth',
-      'Kube of Destiny location: Earth',
-      'Projected Joining: Salt Lake City, Utah, Circa 2026',
+      'TARGET ACQUIRED: GOSPO, KYLE',
+      'TARGET ACQUIRED: EGGROLL, GLORIOUS',
     ])
+    expect(wolvesIncomingSignalMessages[wolvesIncomingSignalMessages.length - 1]).toBe('Software is Supposed to Die')
+    expect(wolvesIncomingSignalMessages.every(message => message.length > 0)).toBe(true)
   })
 
   it('splits the early ambient signals from the climax reports at the delimiter', () => {
     expect(wolvesEarlySignalMessages).toEqual([
-      'INCOMING SIGNAL:',
-      'Welcome to indie cloud native',
+      'Welcome to Indie Cloud Native',
       'Hikari Protocol: Initialized',
       'KDE Plasma Couplings: ENGAGED',
       'Mechaphippy Deployment: [UNAUTHORIZED]',
@@ -92,22 +91,21 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(350.5)).toBe('We are Universal Blue.')
     expect(getWolvesHudLabel(359)).toBe('Evolve or die ...')
     expect(getWolvesHudLabel(364.999)).toBe('Evolve or die ...')
-    expect(getWolvesHudLabel(365)).toBe('INCOMING SIGNAL:')
-    expect(getWolvesHudLabel(369.3)).toBe('Welcome to indie cloud native')
-    expect(getWolvesHudLabel(373.6)).toBe('Hikari Protocol: Initialized')
-    expect(getWolvesHudLabel(386.5)).toBe('M2 Status: [ Unknown ]')
-    expect(getWolvesHudLabel(403.7)).toBe('Projected Joining: Salt Lake City, Utah, Circa 2026')
-    expect(getWolvesHudLabel(407.999)).toBe('Projected Joining: Salt Lake City, Utah, Circa 2026')
+    const finaleSpan = (408 - 365) / wolvesIncomingSignalMessages.length
+    expect(getWolvesHudLabel(365)).toBe(wolvesIncomingSignalMessages[0])
+    expect(getWolvesHudLabel(365 + finaleSpan)).toBe(wolvesIncomingSignalMessages[1])
+    expect(getWolvesHudLabel(365 + 6 * finaleSpan)).toBe(wolvesIncomingSignalMessages[6])
+    expect(getWolvesHudLabel(407.999)).toBe(wolvesIncomingSignalMessages[wolvesIncomingSignalMessages.length - 1])
     expect(getWolvesHudLabel(408)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
   })
 
   it('keeps authored HUD notifications active through thesis-overlay gaps', () => {
-    expect(getWolvesHudLabel(12.632)).toBe('INCOMING SIGNAL:')
+    expect(getWolvesHudLabel(12.632)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(175.96)).toBe('The Blue Delivers')
     expect(getWolvesHudLabel(196.359)).toBe('The Blue Delivers')
-    expect(getWolvesHudLabel(196.36)).toBe('Welcome to indie cloud native')
+    expect(getWolvesHudLabel(196.36)).toBe('Hikari Protocol: Initialized')
     expect(getWolvesHudLabel(228.999)).toBe('pod/thriving-community created')
     expect(getWolvesHudLabel(229)).toBe('Warning: ImagePullBackOff')
     expect(getWolvesHudLabel(276.999)).toBe('"humans/collaboration:latest" is currently experimental.')
@@ -115,25 +113,25 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(357.632)).toBe('We are Universal Blue.')
   })
 
-  it('holds the bare signal teaser before the hero run and plays the ambient signals after it', () => {
-    // Before the Jorge Bluefin hero window ends (196.36), only the teaser and
-    // "The Blue Delivers" may show — no ambient signals that name heroes, and
-    // no climax reports.
+  it('holds the opening signal line before the hero run and plays the ambient signals after it', () => {
+    // Before the Jorge Bluefin hero window ends (196.36), only the opening
+    // line and "The Blue Delivers" may show — no ambient signals that name
+    // heroes, and no climax reports.
     for (let time = 0; time < 196.36; time += 1) {
       const label = getWolvesHudLabel(time)
-      expect(['INCOMING SIGNAL:', 'The Blue Delivers']).toContain(label)
+      expect(['Welcome to Indie Cloud Native', 'The Blue Delivers']).toContain(label)
     }
     // The remaining ambient signals compress evenly into the post-hero window,
     // ending on the pod status at the ImagePullBackOff handoff.
-    const span = (229 - 196.36) / 7
-    expect(getWolvesHudLabel(196.36)).toBe('Welcome to indie cloud native')
-    expect(getWolvesHudLabel(196.36 + span)).toBe('Hikari Protocol: Initialized')
-    expect(getWolvesHudLabel(196.36 + 4 * span)).toBe('M2 Status: [ Unknown ]')
-    expect(getWolvesHudLabel(196.36 + 5 * span)).toBe('Field Medical Exoskeleton: [ Missing ]')
-    expect(getWolvesHudLabel(196.36 + 6 * span)).toBe('pod/thriving-community created')
+    const span = (229 - 196.36) / 6
+    expect(getWolvesHudLabel(196.36)).toBe('Hikari Protocol: Initialized')
+    expect(getWolvesHudLabel(196.36 + span)).toBe('KDE Plasma Couplings: ENGAGED')
+    expect(getWolvesHudLabel(196.36 + 3 * span)).toBe('M2 Status: [ Unknown ]')
+    expect(getWolvesHudLabel(196.36 + 4 * span)).toBe('Field Medical Exoskeleton: [ Missing ]')
+    expect(getWolvesHudLabel(196.36 + 5 * span)).toBe('pod/thriving-community created')
     // The climax reports stay reserved for the finale compression window.
     for (let time = 196.36; time < 345; time += 0.5) {
-      expect(getWolvesHudLabel(time)).not.toMatch(/TARGET ACQUIRED|Kube of Destiny|Projected Joining/)
+      expect(getWolvesHudLabel(time)).not.toMatch(/TARGET ACQUIRED|Kube of Destiny|Projected Joining|Software is Supposed to Die/)
     }
   })
 
@@ -161,7 +159,7 @@ describe('wolves thesis sequence', () => {
       mode: 'legend',
       warning: 'truly a great loss for humanity.',
     })
-    expect(getWolvesThesisState(407.999).hudLabel).toBe('Projected Joining: Salt Lake City, Utah, Circa 2026')
+    expect(getWolvesThesisState(407.999).hudLabel).toBe('Software is Supposed to Die')
     expect(getWolvesThesisState(408)).toMatchObject({
       text: 'Become Legend',
       hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall',
