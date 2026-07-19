@@ -143,32 +143,6 @@ Each `wolves-intro` cue in the form `"{class} — {name} — {title}"` (parsed b
 - **Natali Vlatko's title reads "Punch first, document later."** Keep this exact authored text and the existing `position: 'right'` / `raised: true` cue behavior.
 - **Multi-segment titles render with a blue vertical bar (`|`) between segments instead of the literal em-dash text**, per explicit user request (2026-07-15). The cue's authored `text` still uses ` — ` joins in `wolves-intro-sequence.ts` (that convention is unchanged), but `WolvesIntroOverlay.vue`'s `titleTokens()` helper now splits the assembled title on ` — ` and renders each em-dash join as a `wolves-guardian-plate-title-sep` span (color `#93c5fd`, the same blue accent already used for the plate's crest/horizon lines/class label) instead of the raw punctuation. This only affects guardians with more than one title segment (currently Christopher Blecker's two and Natali Vlatko's two); single-title guardians (Robert Killen, Kat Cosgrove, Kaslin Fields, Laura Santamaria) are unaffected since there is nothing to separate.
 
-## Creator Shorts Interstitial
-
-The Creator Shorts component and source data are currently inactive. Do not restore its
-runtime transition without an explicit user request.
-
-**Authorized exception to the "WolvesSoundtrack.vue is locked" rule above**, added by explicit, repeatedly-confirmed user request (not agent-initiated). Before touching this surface again, re-read this section; the boundary above still applies to everything not described here.
-
-A one-time, fullscreen bridge between Track 0 ("7 Days to the Wolves") and Track 1 ("Ghosts In The Mist") plays a fixed four-video chapter: the first three Cassidy Williams (`@cassidoo`) entries, then the first Lindsay Nikole (`@LindsayNikole`) entry. It automatically continues to Track 1 when that Lindsay turn ends. The four-video order is deliberate; do not extend it with the remaining source-list entries without a fresh user request.
-
-Architecture:
-
-- `src/data/wolves-creator-shorts.ts`: the **content surface** — two independent typed, ordered arrays, `wolvesCreatorShortsLindsayNikole` and `wolvesCreatorShortsCassidyWilliams`, each of `{ videoId, title, creatorName, channelUrl, orientation }`, plus `wolvesCreatorShortsChapter`, which derives the first three Cassidy and first Lindsay entries. `orientation` is `'vertical'` for normal 9:16 Shorts and `'horizontal'` for the rare real 16:9 video (see below).
-- `src/components/wolves/WolvesCreatorShortsInterstitial.vue`: fullscreen, `<Teleport to="body">` player that creates exactly two persistent `YT.Player` instances. It pre-cues inactive sources, advances the fixed chapter on an active player's `ENDED` or `onError`, and emits `complete` immediately after the single Lindsay chapter turn. Each side keeps its title and creator attribution. The current-month wallpaper backdrop, scrim, and Pause/Resume and Skip controls are locked design.
-- The Creator Shorts runtime transition is inactive. The preserved source data has no effect on the Track 0 → Track 1 handoff.
-- `src/composables/useYoutubeIframeApi.ts`: the shared player contract includes optional volume methods and a cancellable volume-fade helper. Keep volume control progressive: unsupported browsers must still advance cleanly.
-
-**Note on the one horizontal exception**: "Animals that are METAL AS F*CK" (`hqbR6Kt2McY`) is a real, verified Lindsay Nikole video but is a horizontal long-form upload, not a vertical Short — confirmed via YouTube's oEmbed API (`width:200,height:113` vs. a real Short's `width:113,height:200`) since no literal vertical "metal af animals" Short exists on her channel. Kept per explicit user decision; embeds and plays correctly, letterboxed automatically by YouTube's player.
-
-**Removed entries**: Lindsay Nikole's "Hammerheads are getting hammered" (`K1DJNw2zHlo`), Cassidy Williams's "React is like paella" (`cIaNRGkZQdM`), and Cassidy Williams's "I accidentally discovered a clustering algorithm with Magna-Tiles" (`xCjuz1Q4qbE`) were removed from the rotation per explicit user request.
-
-**Added entries**: four more real, verified Cassidy Williams Shorts were added per explicit user request (2026-07-15) — "Friday deploys" (`gpoT1YH9deM`), "Legacy code" (`VBqh13NOYLQ`), "Every team has that one issue that everyone avoids" (`q4Sg8WjSIJE`), and "Interviewing is all a game" (`q_EsHzjmx-4`) — all pulled from her actual `@cassidoo` channel and verified real via YouTube's oEmbed API (confirmed vertical, `width:113,height:200`, `author_name: Cassidy Williams`). Cassidy's list is now **9 entries** (was 5), two longer than Lindsay's 7 -- the "longer list continue solo" test now expects Lindsay's list to run out first and Cassidy to finish solo on her last entry, the reverse of before.
-
-**What agents may touch**: only the two video lists in `src/data/wolves-creator-shorts.ts`, with exact real, non-fictional video ids/titles/creator credit — same editorial rule as everywhere else on this page (verify any new entry via YouTube's oEmbed API before adding it, never invent an id). The component remains inactive unless the user explicitly re-authorizes its runtime transition.
-
-**What agents must not touch without a fresh, explicit user request**: `WolvesIntroOverlay.vue` markup/styles/logic, `useYoutubeIframeApi.ts`, the `handlePrimaryAction`/`props.playing` watcher/`handleIntroOverlayComplete` wiring in `WolvesSoundtrack.vue`, or the pure functions in `wolves-intro-sequence.ts` (only its `buildIntroVideoSequence()` data payload is content). The `video`/`text` segment kinds, `maxDuration`/`duration` auto-advance mechanics, and background-crossfade rendering were added by explicit, confirmed user request; re-confirm before extending them further.
-
 ## Slideshows
 
 This is the feature users depend on most. Its whole value is that adding a slide requires zero code.
