@@ -1218,7 +1218,9 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(11rem, 17vh, 14rem) clamp(1.6rem, 4vw, 4rem) clamp(2rem, 7vh, 5rem);
+  /* Top/bottom padding reserves the pinned text bands (title above, pill
+     below) so the centered art region can never reach them. */
+  padding: clamp(17rem, 26vh, 21rem) clamp(1.6rem, 4vw, 4rem) 19rem;
   background: #000;
   color: #fff;
   text-align: center;
@@ -1228,7 +1230,7 @@ defineExpose({
 .wolves-intro-overlay-title-card-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  align-items: center;
   gap: clamp(1.2rem, 2.5vw, 2.4rem);
   width: min(100%, 100rem);
 }
@@ -1237,21 +1239,18 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Extra distance between the words and the art box so the cycling dinosaurs
-     never read as crowding the text. */
-  gap: clamp(1.4rem, 3vh, 2.4rem);
+  justify-content: center;
   min-width: 0;
 }
 
 .wolves-intro-overlay-title-card-art {
-  /* Fixed box, bigger art: every hero shot renders inside the same reserved
-     width and height (object-fit: contain), so the fast cycle through
-     different aspect ratios can never shift the title or the pill. */
-  width: min(68vw, 46rem);
-  /* Viewport-aware height: grows on tall screens (40rem cap) but shrinks on
-     short ones so the "Made by Paid Artists" pill never collides with the
-     fixed footer widget dock. */
-  height: clamp(15rem, calc(90vh - 41rem), 40rem);
+  /* The art is the only in-flow occupant of the card's center: the title and
+     pill are pinned to the screen (position: absolute below), fully out of
+     the art's layout flow, so the cycling dinosaurs can render big and
+     resize freely without ever shifting the text. */
+  width: min(72vw, 60rem);
+  height: auto;
+  max-height: min(42vh, 44rem);
   object-fit: contain;
   filter: drop-shadow(0 0 24px rgb(0 0 0 / 70%));
 }
@@ -1276,10 +1275,22 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
-  width: 100%;
+  /* Pinned to the screen, out of the art's layout flow: the cycling art can
+     never move the title. */
+  position: absolute;
+  top: clamp(11rem, 17vh, 14rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 96rem);
 }
 
 .wolves-intro-overlay-title-card-line-small {
+  /* Pinned to the screen above the fixed footer widget dock, out of the
+     art's layout flow. */
+  position: absolute;
+  bottom: clamp(12rem, 14vh, 15rem);
+  left: 50%;
+  transform: translateX(-50%);
   display: inline-block;
   padding: 0.25em 0.6em;
   border: 1px solid rgb(255 244 200 / 45%);
@@ -1358,13 +1369,13 @@ defineExpose({
 
 @media (max-width: 700px) {
   .wolves-intro-overlay-title-card {
-    justify-content: flex-start;
-    padding-top: clamp(11rem, 19vh, 13rem);
+    justify-content: center;
+    padding: 21rem 1.2rem 24rem;
   }
 
   .wolves-intro-overlay-title-card-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
     align-items: center;
     justify-items: center;
     gap: 0.8rem;
@@ -1376,24 +1387,27 @@ defineExpose({
   }
 
   .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
-    grid-column: 1 / -1;
-    grid-row: 1;
+    /* Below the taller two-line mobile nameplate. */
+    top: 17rem;
+    width: 94vw;
   }
 
   .wolves-intro-overlay-title-card-art {
     grid-column: 1;
-    grid-row: 2;
-    /* Same fixed-box treatment as desktop, scaled for the phone grid. */
-    width: min(46vw, 22rem);
-    height: 28vh;
+    grid-row: 1;
+    /* Bigger art on phones too; the pinned text cannot be moved by it. */
+    width: min(48vw, 26rem);
+    height: auto;
+    max-height: 34vh;
   }
 
   .wolves-intro-overlay-title-card-line-small {
-    grid-column: 1;
-    grid-row: 3;
+    /* Above the taller mobile footer widget dock. */
+    bottom: 19rem;
     z-index: 1;
     color: #fff4c8;
-    width: 100%;
+    width: max-content;
+    max-width: 94vw;
     padding: 0.4em 0.5em;
     font-size: 1rem;
     letter-spacing: 0.08em;
@@ -1404,7 +1418,7 @@ defineExpose({
 
   .wolves-intro-overlay-title-card-qr {
     grid-column: 2;
-    grid-row: 2 / 4;
+    grid-row: 1;
     width: min(48vw, 18.5rem);
     padding: 1rem;
     transform: none;
