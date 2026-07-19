@@ -1,15 +1,20 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import https from 'node:https'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import { parseBackCatalogue } from '@/config/experience-manifest'
 import { resolveOverallRatioTarget, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 // @ts-expect-error script module is intentionally plain Node ESM
 import * as catalogueGenerator from '../../scripts/update-back-catalogue.js'
 
-const { buildExperience, buildSegments, cleanArtist, cleanTitle, stripArtistPrefix } = catalogueGenerator as typeof catalogueGenerator & {
+const { auditExperience, buildExperience, buildSegments, cleanArtist, cleanTitle, readPlaylistEntries, shouldIncludeAlbum, stripArtistPrefix } = catalogueGenerator as typeof catalogueGenerator & {
+  auditExperience: (album: { id: string, title: string }, entries: Array<{ id: string, title: string }>, experience: { segments: Array<{ id: string, durationSeconds: number, youtubeId: string }> }) => void
+  buildExperience: (album: { id: string, title: string, description?: string, playlistUrl?: string }, entries: Array<{ id: string, title: string, duration?: number, uploader?: string, thumbnails?: Array<{ url?: string }> }>) => { segments: Array<{ id: string, durationSeconds: number, youtubeId: string }> }
   cleanArtist: (value: string) => string
   cleanTitle: (value: string) => string
+  readPlaylistEntries: (playlistUrl: string) => Array<{ id: string, title: string }>
+  shouldIncludeAlbum: (album: { id: string, title: string }) => boolean
   stripArtistPrefix: (title: string, artist: string) => string
 }
 
@@ -111,6 +116,57 @@ describe('back catalogue experiences', () => {
     expect(segments[0].title).toBe('All Shall Burn')
     expect(segments[1].title).toBe('Mein Herz brennt (Piano Instrumental)')
   })
+
+  it('skips featured albums from the generated catalogue', () => {
+    expect(shouldIncludeAlbum({ id: 'PLA78oiE-RGAE', title: 'Seven Days to the Wolves' })).toBe(false)
+    expect(shouldIncludeAlbum({ id: 'PL123', title: 'More Music' })).toBe(true)
+  })
+
+  it('audits generated experiences against the source playlist entries', () => {
+    const album = { id: 'PL123', title: 'Album', description: 'Sub', playlistUrl: 'u' }
+    const entries = [
+      { id: 'v1', title: 'A - B', duration: 10, thumbnails: [{ url: 'https://example.com/a.jpg' }] },
+      { id: 'v2', title: 'C - D', duration: 20, thumbnails: [{ url: 'https://example.com/c.jpg' }] },
+    ]
+    const experience = buildExperience(album, entries)
+
+    expect(() => auditExperience(album, entries, experience)).not.toThrow()
+    expect(() => auditExperience(album, entries, { ...experience, segments: [experience.segments[0]] })).toThrow('Back catalogue audit failed')
+  })
+
+  it('audits every non-featured album from the published playlist metadata', async () => {
+    const albums = await new Promise<Array<{ id: string, title: string, playlistUrl: string }>>((resolve, reject) => {
+      https.get('https://docs.projectbluefin.io/data/playlist-metadata.json', (response) => {
+        if (response.statusCode && response.statusCode >= 400) {
+          reject(new Error(`Failed to fetch playlist metadata: ${response.statusCode}`))
+          response.resume()
+          return
+        }
+
+        let body = ''
+        response.setEncoding('utf8')
+        response.on('data', chunk => { body += chunk })
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body) as Array<{ id: string, title: string, playlistUrl: string }>)
+          }
+          catch (error) {
+            reject(error)
+          }
+        })
+      }).on('error', reject)
+    })
+
+    const nonFeaturedAlbums = albums.filter(album => shouldIncludeAlbum(album))
+
+    expect(nonFeaturedAlbums.length).toBeGreaterThan(0)
+
+    for (const album of nonFeaturedAlbums) {
+      const entries = readPlaylistEntries(album.playlistUrl)
+      const experience = buildExperience(album, entries)
+      expect(() => auditExperience(album, entries, experience)).not.toThrow()
+    }
+  }, 30000)
 
   it('cleans uploader noise from titles and artists', () => {
     expect(cleanTitle).toBeTypeOf('function')

@@ -33,6 +33,8 @@ import { fileURLToPath } from 'node:url'
 
 const METADATA_URL = 'https://docs.projectbluefin.io/data/playlist-metadata.json'
 const COVER_URL = id => `https://docs.projectbluefin.io/img/playlists/${id}.jpg`
+const FEATURED_ALBUM_IDS = new Set(['PLA78oiE-RGAE'])
+const FEATURED_ALBUM_TITLES = new Set(['Seven Days to the Wolves'])
 const MODULE_PATH = import.meta.url.startsWith('file:')
   ? fileURLToPath(import.meta.url)
   : null
@@ -177,12 +179,52 @@ export function buildExperience(album, entries) {
   }
 }
 
-function readPlaylistEntries(playlistUrl) {
+export function shouldIncludeAlbum(album) {
+  if (!album || typeof album !== 'object') {
+    return false
+  }
+  const id = typeof album.id === 'string' ? album.id : ''
+  const title = typeof album.title === 'string' ? album.title : ''
+  return id.length > 0 && !FEATURED_ALBUM_IDS.has(id) && !FEATURED_ALBUM_TITLES.has(title)
+}
+
+export function readPlaylistEntries(playlistUrl) {
   const output = execFileSync('yt-dlp', ['--flat-playlist', '--dump-single-json', playlistUrl], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   })
   return JSON.parse(output).entries
+}
+
+export function auditExperience(album, entries, experience) {
+  const playableEntries = (Array.isArray(entries) ? entries : []).filter(isPlayableEntry)
+  const generatedSegments = Array.isArray(experience?.segments) ? experience.segments : []
+
+  if (playableEntries.length === 0) {
+    throw new Error(`Back catalogue audit failed for ${album.title}: no playable entries found`)
+  }
+
+  if (generatedSegments.length !== playableEntries.length) {
+    throw new Error(`Back catalogue audit failed for ${album.title}: expected ${playableEntries.length} segments, got ${generatedSegments.length}`)
+  }
+
+  const expectedIds = playableEntries.map(entry => entry.id)
+  const actualIds = generatedSegments.map(segment => segment.id)
+
+  for (const [index, expectedId] of expectedIds.entries()) {
+    if (actualIds[index] !== expectedId) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: expected ${expectedId} at index ${index}, got ${actualIds[index] ?? 'missing'}`)
+    }
+  }
+
+  for (const segment of generatedSegments) {
+    if (typeof segment.durationSeconds !== 'number' || segment.durationSeconds <= 0) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: bad duration for ${segment.id}`)
+    }
+    if (typeof segment.youtubeId !== 'string' || segment.youtubeId.trim().length === 0) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: bad youtubeId for ${segment.id}`)
+    }
+  }
 }
 
 async function download(url) {
@@ -202,9 +244,15 @@ export async function main() {
   await mkdir(EXPERIENCES_DIR, { recursive: true })
   const experiences = []
   for (const album of albums) {
+    if (!shouldIncludeAlbum(album)) {
+      console.info(`Skipping featured album ${album.title} (${album.id})`)
+      continue
+    }
     console.info(`Reading ${album.title} (${album.id})`)
     const entries = readPlaylistEntries(album.playlistUrl)
-    experiences.push(buildExperience(album, entries))
+    const experience = buildExperience(album, entries)
+    auditExperience(album, entries, experience)
+    experiences.push(experience)
     await writeFile(join(EXPERIENCES_DIR, `${album.id}.jpg`), await download(COVER_URL(album.id)))
   }
 

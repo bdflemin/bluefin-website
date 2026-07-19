@@ -48,6 +48,7 @@ Fullscreen overlay engineering uses `wolves-fullscreen-overlays.md`. Any other W
 - Never hand-edit `public/experiences/catalogue.json` or its album covers. Regenerate them with `npm run update:back-catalogue`.
 - The documentation repository's published `data/playlist-metadata.json` is the album index and single source of truth. `music.projectbluefin.io` redirects to that documentation page; do not scrape it.
 - The generator reads each YouTube playlist with `yt-dlp --flat-playlist --dump-single-json`, copies covers byte-for-byte from the documentation site, and rewrites `public/experiences/catalogue.json`.
+- Every generated experience is audited against the source playlist entries before the catalogue is written: the script throws if any playable source entry is dropped, reordered, or loses a valid `youtubeId`/duration. Treat that failure as a content bug and fix the generator or override table rather than editing the generated JSON.
 - Keep irreducible per-video title or artist corrections in the generator's small `TRACK_METADATA_OVERRIDES` table; do not patch generated JSON.
 - The generator filters unavailable/private entries, removes presentation noise, and deduplicates by YouTube video ID plus normalized artist/title identity. Preserve version-defining descriptors such as live, cover, instrumental, and featured artist labels.
 - Generated segments use their album title as the runtime chapter/status label; the runtime supplies each track's position counter.
