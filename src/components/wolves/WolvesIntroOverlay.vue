@@ -190,6 +190,7 @@ interface GuardianDinosaurCompanion {
   scientificName: string
   artwork: string
   placement?: 'below'
+  artworkPositionClass?: 'wolves-companion-plate-art-lower-right'
 }
 
 /**
@@ -208,6 +209,9 @@ function guardianDinosaurCompanion(guardianName: string): GuardianDinosaurCompan
     scientificName: species.scientificName,
     artwork: `${baseUrl}${species.artwork.slice(2)}`,
     placement: bond.companionPlacement,
+    artworkPositionClass: ['bob-torosaurus', 'karl', 'kaslin-torosaurus'].includes(bond.dinosaurSpeciesId)
+      ? 'wolves-companion-plate-art-lower-right'
+      : undefined,
   }
 }
 
@@ -898,6 +902,7 @@ defineExpose({
               alt=""
               aria-hidden="true"
               class="wolves-companion-plate-art"
+              :class="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artworkPositionClass"
             >
             <div class="wolves-companion-plate-card">
               <p class="wolves-companion-plate-label">
@@ -1646,7 +1651,9 @@ defineExpose({
 
 .wolves-guardian-plate-row-companion-below .wolves-companion-plate {
   order: 0;
-  margin-top: 1.2rem;
+  position: fixed;
+  right: 5%;
+  bottom: 10%;
 }
 
 /* Guardian trailer callout, redesigned as a Destiny 2 "Guardian Rank Up" style HUD burst:
@@ -1721,6 +1728,11 @@ defineExpose({
   margin: 0 -4% -3.4rem;
   filter: drop-shadow(0 8px 16px rgb(0 0 0 / 65%)) drop-shadow(0 0 12px rgb(147 197 253 / 30%));
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
+}
+
+.wolves-companion-plate-art-lower-right {
+  width: 100%;
+  margin: 0 0 -3.4rem auto;
 }
 
 .wolves-companion-plate-card {

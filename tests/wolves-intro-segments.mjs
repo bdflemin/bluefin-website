@@ -166,6 +166,11 @@ try {
       expectTruthy(`${name} companion sits in the bottom-right corner beside the plate`, companionBox.x > box.x + box.width - 1)
       expectTruthy(`${name} companion bottom aligns with the name plate`, Math.abs((companionBox.y + companionBox.height) - (box.y + box.height)) < 8)
     }
+    const artworkBox = await page.locator('.wolves-companion-plate-art').boundingBox()
+    expectTruthy(`${name} companion artwork bounds`, artworkBox)
+    if (artworkBox && companionBox) {
+      expectTruthy(`${name} companion artwork reaches the card's right edge`, Math.abs((artworkBox.x + artworkBox.width) - (companionBox.x + companionBox.width)) < 8)
+    }
 
     if (lowerThird) {
       expectTruthy(`${name} remains in the lower third`, box.y > VIEWPORT.height * 0.4)
@@ -186,6 +191,13 @@ try {
     artwork: 'bob-torosaurus.webp',
   })
   await capture(page, '09-destiny-bob-torosaurus')
+
+  await seekActiveDestinyPlayer(20)
+  await assertGuardianPair({
+    name: 'Kat Cosgrove',
+    artwork: 'karl.webp',
+  })
+  await capture(page, '10-destiny-karl')
 
   await seekActiveDestinyPlayer(39)
   await assertGuardianPair({
@@ -210,6 +222,11 @@ try {
   expectTruthy('Alamo companion plate bounds', alamoBox)
   if (natBox && alamoBox) {
     expectTruthy('Alamo sits underneath Natali\'s plate', alamoBox.y > natBox.y + natBox.height - 1)
+  }
+  const christophBox = await page.locator('.wolves-guardian-plate').filter({ hasText: 'Christoph Blecker' }).boundingBox()
+  expectTruthy('Christoph Blecker guardian plate bounds', christophBox)
+  if (christophBox && alamoBox) {
+    expectTruthy('Alamo shares Christoph Blecker\'s lower baseline', Math.abs((alamoBox.y + alamoBox.height) - (christophBox.y + christophBox.height)) < 8)
   }
   await capture(page, '11-destiny-natali-alamo')
 }

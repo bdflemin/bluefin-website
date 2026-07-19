@@ -777,6 +777,27 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.find('.wolves-guardian-plate-row').classes()).toContain('wolves-guardian-plate-row-companion-below')
   })
 
+  it('anchors Alamo to the lower nameplate baseline during Natali and Christoph\'s shared cue', () => {
+    const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+    const alamoRule = overlay.match(/\.wolves-guardian-plate-row-companion-below \.wolves-companion-plate \{([\s\S]*?)\n\}/)?.[1]
+
+    expect(alamoRule).toContain('position: fixed')
+    expect(alamoRule).toContain('right: 5%')
+    expect(alamoRule).toContain('bottom: 10%')
+  })
+
+  it('pins Bob, Karl, and Kaslin companion art to the lower-right card edge', () => {
+    const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+    const lowerRightRule = overlay.match(/\.wolves-companion-plate-art-lower-right \{([\s\S]*?)\n\}/)?.[1]
+
+    expect(overlay).toContain('\'bob-torosaurus\'')
+    expect(overlay).toContain('\'karl\'')
+    expect(overlay).toContain('\'kaslin-torosaurus\'')
+    expect(overlay).toContain(':class="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artworkPositionClass"')
+    expect(lowerRightRule).toContain('width: 100%')
+    expect(lowerRightRule).toContain('margin: 0 0 -3.4rem auto')
+  })
+
   it('splits the dinosaur out of the guardian plate into its own companion card', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
     const nameRule = overlay.match(/\.wolves-guardian-plate-name \{([\s\S]*?)\n\}/)?.[1]
