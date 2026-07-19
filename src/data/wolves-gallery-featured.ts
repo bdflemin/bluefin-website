@@ -3,7 +3,7 @@ export const ghostsInTheMistOpeningSlide = {
   photoId: '55164222671',
   imageSizeSuffix: 'c',
   title: 'Jorge Castro',
-  guardianClass: 'Sentinel Titan',
+  guardianClass: 'Harbinger Titan',
   guardianTitle: 'Upender of Antipatterns | The First Disciple',
   holdSeconds: 38.4,
   // The quote plays in two sequential parts across the hold so the plate

@@ -397,7 +397,7 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
     expect(wrapper.find('.flickr-photo-layer[style*="z-index: 2"] .flickr-img').attributes('style')).toContain('object-position: center top')
     expect(wrapper.get('.theater-guardian-name').text()).toBe('Jorge Castro')
-    expect(wrapper.get('.theater-guardian-class').text()).toBe('Sentinel Titan')
+    expect(wrapper.get('.theater-guardian-class').text()).toBe('Harbinger Titan')
     expect(wrapper.get('.theater-guardian-title').text()).toContain('Upender of Antipatterns')
     expect(wrapper.get('.theater-guardian-title').text()).toContain('The First Disciple')
     expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuotePartOne)

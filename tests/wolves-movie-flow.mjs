@@ -512,7 +512,7 @@ try {
     .map(paragraph => paragraph.replace(/\s+/g, ' ').trim())
     .join(' ')
   assert('Ghosts opener identifies Jorge Castro', await ghostsCaption.locator('.theater-guardian-name').textContent(), 'Jorge Castro')
-  assert('Ghosts opener carries the Sentinel Titan class', await ghostsCaption.locator('.theater-guardian-class').textContent(), 'Sentinel Titan')
+  assert('Ghosts opener carries the Harbinger Titan class', await ghostsCaption.locator('.theater-guardian-class').textContent(), 'Harbinger Titan')
   assertTruthy('Ghosts opener carries the guardian titles', (await ghostsCaption.locator('.theater-guardian-title').textContent())?.includes('Upender of Antipatterns'))
   assert('Ghosts opener preserves Jorge quote part one', ghostsCaptionText, JORGE_GHOSTS_QUOTE_PART_ONE)
   const ghostsCaptionMetrics = await ghostsCaption.evaluate((caption) => {
