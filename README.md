@@ -74,13 +74,7 @@ npm run update:back-catalogue
 
 This requires `yt-dlp`. It reads the album index from the documentation repo's published `playlist-metadata.json`, copies each cover byte-for-byte to `public/experiences/<playlistId>.jpg`, resolves each playlist's tracks, and writes the checked-in `public/experiences/catalogue.json`. Re-run it to pick up new albums; the frontend consumes the checked-in file directly.
 
-Each catalogue entry is an experience manifest — the declarative format the cinematic runtime plays. The schema lives in `src/config/experience-manifest.ts` with three complete inline examples covering the canonical shapes:
-
-- **Image-based album**: `kind: 'image'` segments with `imageUrl`, `durationSeconds`, and per-slide text via `captionsText`.
-- **YouTube playlist with synced text**: `kind: 'youtube'` segments with `youtubeId`, authored `durationSeconds`, and `seconds|text` caption cues keyed to the video's native timeline.
-- **Mixed media**: stills interleaved with trimmed video (`startSeconds`/`endSeconds`, per-segment `crossfadeMs`).
-
-A manifest also carries launcher metadata (`title`, `subtitle`, `artwork`, `credits`). The Wolves tour itself is the default manifest (`WOLVES_EXPERIENCE` in `src/stores/cinematic.ts`); albums load through the same `loadExperience()` store action and render through the identical stage, transitions, transport, and seek behavior. New experiences are authored by writing a manifest — no renderer changes.
+Each catalogue entry is an experience manifest — the declarative format the cinematic runtime plays. Generated entries are YouTube playlists with `youtubeId`, authored `durationSeconds`, and launcher metadata (`title`, `subtitle`, `artwork`). The Wolves tour itself is the default manifest (`WOLVES_EXPERIENCE` in `src/stores/cinematic.ts`); its canonical generated playlist card routes to that authored experience so it retains the intro and Track 0 presentation. Other albums load through the same `loadExperience()` store action and render through the identical stage, transitions, transport, and seek behavior.
 
 The `/wolves` player starts only after a visitor clicks the control. Its YouTube iframe is retained as a hidden 200x200 audio player because the IFrame API requires that minimum viewport; do not replace it with a visible video widget or shrink it to 1px. The visible panel includes a YouTube Music deep link and sign-in/Premium guidance.
 
