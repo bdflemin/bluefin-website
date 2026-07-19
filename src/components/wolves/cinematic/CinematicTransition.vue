@@ -51,10 +51,13 @@ if (typeof window !== 'undefined' && 'matchMedia' in window) {
 
 // Every segment handoff (natural or manual skip) raises the overlay for six
 // seconds — it doubles as cover for the brief buffering gap on manual skips.
+// Ghosts In The Mist opens on the Jorge guardian plate, so its handoff skips
+// the title slide instead of covering the plate.
 watch(
   () => store.segmentIndex,
   () => {
-    if (store.phase !== 'cinematic' || store.segmentIndex === 0) {
+    if (store.phase !== 'cinematic' || store.segmentIndex === 0
+      || segment.value?.id === 'ghosts-in-the-mist') {
       return
     }
     active.value = true

@@ -22,8 +22,8 @@ describe('cinematicTransition overlay duration', () => {
     const wrapper = mount(CinematicTransition)
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
 
-    // Trigger transition by changing segmentIndex
-    store.segmentIndex = 1
+    // Trigger transition by changing segmentIndex (segment 2 carries a title slide)
+    store.segmentIndex = 2
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(true)
@@ -58,6 +58,19 @@ describe('cinematicTransition overlay duration', () => {
 
     const wrapper = mount(CinematicTransition)
     store.segmentIndex = 0
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
+  })
+
+  it('does not show a title slide for the Ghosts In The Mist handoff', async () => {
+    const store = useCinematicStore()
+    store.phase = 'cinematic'
+    store.segmentIndex = 0
+
+    const wrapper = mount(CinematicTransition)
+    // Segment 1 is ghosts-in-the-mist; its opening guardian plate must stay clear.
+    store.segmentIndex = 1
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
