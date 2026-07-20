@@ -104,13 +104,13 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
 }
 
 .wc-lobby-brand {
-  font-size: clamp(1.2rem, 1.2vw, 1.8rem);
+  font-size: clamp(1rem, 0.9vw, 1.35rem);
   letter-spacing: 0.44em;
   margin-bottom: -1.2rem;
 }
 
 .wc-lobby-title {
-  font-size: clamp(3rem, 5vw, 5rem);
+  font-size: clamp(3.6rem, 6vw, 6.4rem);
   font-weight: 800;
   letter-spacing: 0.22em;
   margin-right: -0.22em; // optically recenters tracked uppercase
@@ -203,13 +203,13 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
   }
 
   .wc-lobby-brand {
-    font-size: clamp(1.2rem, 3vw, 1.6rem);
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
     letter-spacing: 0.34em;
     margin-bottom: -0.9rem;
   }
 
   .wc-lobby-title {
-    font-size: clamp(2.8rem, 10vw, 4rem);
+    font-size: clamp(3.2rem, 11vw, 4.8rem);
     letter-spacing: 0.18em;
     margin-right: -0.18em;
   }
