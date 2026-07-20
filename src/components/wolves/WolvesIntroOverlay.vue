@@ -3,7 +3,7 @@ import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
 import type { IntroOverlayTextCue, IntroStatusPayload, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
-import { getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
+import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import { getActiveComicHeroShot } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
@@ -424,13 +424,7 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
     width: '1',
     height: '1',
     videoId: youtubeVideoId,
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      playsinline: 1,
-      rel: 0,
-      modestbranding: 1,
-    },
+    playerVars: getChromeFreeYoutubePlayerVars({ autoplay: 1 }),
     events: {},
   })
 }
@@ -520,16 +514,12 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
   const mountNode = document.createElement('div')
   mountHost.value.appendChild(mountNode)
 
-  const playerVars = {
+  const playerVars = getChromeFreeYoutubePlayerVars({
     autoplay: 1,
-    controls: 0,
-    playsinline: 1,
-    rel: 0,
-    modestbranding: 1,
     // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
     cc_load_policy: 0,
     ...(segment.startOffset ? { start: Math.round(segment.startOffset) } : {}),
-  }
+  })
 
   player = new PlayerCtor(mountNode, {
     width: '100%',
@@ -730,250 +720,253 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    v-if="currentSegment && (!sequenceState.done || handoffPending)"
-    class="wolves-intro-overlay"
-    :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
-  >
-    <div v-if="currentSegment.kind === 'video'" ref="mountHost" class="wolves-intro-overlay-player" />
-    <Transition name="wolves-intro-overlay-boot-cover-fade">
-      <div
-        v-if="currentSegment.kind === 'video' && !bootCoverReleased"
-        class="wolves-intro-overlay-boot-cover"
-        aria-hidden="true"
-      />
-    </Transition>
+  <Teleport to="body">
     <div
-      v-if="currentSegment.kind === 'video'"
-      class="wolves-intro-overlay-top-left-mask"
-      aria-hidden="true"
-    />
-    <div
-      v-if="currentSegment.kind === 'video'"
-      class="wolves-intro-overlay-pause-veil"
-      :class="{ 'wolves-intro-overlay-pause-veil-active': isPaused }"
-      aria-hidden="true"
-    />
-
-    <template v-else>
-      <div class="wolves-intro-overlay-blackscreen">
-        <Transition name="wolves-scene-crossfade">
+      v-if="currentSegment && (!sequenceState.done || handoffPending)"
+      class="wolves-intro-overlay"
+      :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+    >
+      <template v-if="currentSegment.kind === 'video'">
+        <div ref="mountHost" class="wolves-intro-overlay-player" />
+        <Transition name="wolves-intro-overlay-boot-cover-fade">
           <div
-            :key="activeSceneKey"
-            class="wolves-intro-overlay-scene"
-            :style="{ transitionDuration: `${PROLOGUE_SCENE_CROSSFADE_SECONDS}s` }"
-          >
-            <img
-              v-if="activeCue?.backgroundImage"
-              class="wolves-intro-overlay-background"
-              :class="{ 'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns' }"
-              :style="activeCue.backgroundMotion === 'kenburns' ? { animationDuration: `${activeCue.end - activeCue.start}s` } : undefined"
-              :src="`${baseUrl}${activeCue.backgroundImage}`"
-              alt=""
-            >
-            <template v-else-if="activeCrossfadeStage">
-              <img
-                class="wolves-intro-overlay-background wolves-intro-overlay-background-day"
-                :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
-                :src="`${baseUrl}${activeCrossfadeStage.crossfade.day}`"
-                alt=""
-              >
-              <img
-                class="wolves-intro-overlay-background wolves-intro-overlay-background-night"
-                :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
-                :src="`${baseUrl}${activeCrossfadeStage.crossfade.night}`"
-                alt=""
-              >
-              <div
-                v-if="activeCue?.calamity"
-                class="wolves-intro-overlay-calamity-vignette"
-                :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
-              />
-            </template>
-          </div>
+            v-if="!bootCoverReleased"
+            class="wolves-intro-overlay-boot-cover"
+            aria-hidden="true"
+          />
         </Transition>
-      </div>
-      <div ref="audioMountHost" class="wolves-intro-overlay-audio-mount" />
-    </template>
-
-    <template v-if="!isSomberTextSegment">
-      <div v-if="activeComicTitleCardCue" class="wolves-intro-overlay-title-card">
-        <div class="wolves-intro-overlay-title-card-layout">
-          <div class="wolves-intro-overlay-title-card-main">
-            <p class="wolves-intro-overlay-title-card-line">
-              {{ activeComicTitleCardCue.text }}
-            </p>
-            <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">
-              <img
-                :src="`${baseUrl}${activeComicHeroShot.src}`"
-                :alt="activeComicHeroShot.label"
-                :data-comic-hero-shot="activeComicHeroShot.id"
-                :style="{
-                  width: `${activeComicHeroShot.contentFrame.width}%`,
-                  left: `${activeComicHeroShot.contentFrame.left}%`,
-                  top: `${activeComicHeroShot.contentFrame.top}%`,
-                }"
-                class="wolves-intro-overlay-title-card-art"
-              >
-            </div>
-            <p
-              class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
-              data-comic-hero-paid-artists
+        <div
+          class="wolves-intro-overlay-top-left-mask"
+          aria-hidden="true"
+        />
+        <Transition name="wolves-intro-overlay-pause-veil-fade">
+          <div
+            v-if="isPaused"
+            class="wolves-intro-overlay-pause-veil"
+            aria-hidden="true"
+          />
+        </Transition>
+      </template>
+      <template v-else>
+        <div class="wolves-intro-overlay-blackscreen">
+          <Transition name="wolves-scene-crossfade">
+            <div
+              :key="activeSceneKey"
+              class="wolves-intro-overlay-scene"
+              :style="{ transitionDuration: `${PROLOGUE_SCENE_CROSSFADE_SECONDS}s` }"
             >
-              Made by Paid Artists
-            </p>
+              <img
+                v-if="activeCue?.backgroundImage"
+                class="wolves-intro-overlay-background"
+                :class="{ 'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns' }"
+                :style="activeCue.backgroundMotion === 'kenburns' ? { animationDuration: `${activeCue.end - activeCue.start}s` } : undefined"
+                :src="`${baseUrl}${activeCue.backgroundImage}`"
+                alt=""
+              >
+              <template v-else-if="activeCrossfadeStage">
+                <img
+                  class="wolves-intro-overlay-background wolves-intro-overlay-background-day"
+                  :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
+                  :src="`${baseUrl}${activeCrossfadeStage.crossfade.day}`"
+                  alt=""
+                >
+                <img
+                  class="wolves-intro-overlay-background wolves-intro-overlay-background-night"
+                  :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
+                  :src="`${baseUrl}${activeCrossfadeStage.crossfade.night}`"
+                  alt=""
+                >
+                <div
+                  v-if="activeCue?.calamity"
+                  class="wolves-intro-overlay-calamity-vignette"
+                  :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
+                />
+              </template>
+            </div>
+          </Transition>
+        </div>
+        <div ref="audioMountHost" class="wolves-intro-overlay-audio-mount" />
+      </template>
+
+      <template v-if="!isSomberTextSegment">
+        <div v-if="activeComicTitleCardCue" class="wolves-intro-overlay-title-card">
+          <div class="wolves-intro-overlay-title-card-layout">
+            <div class="wolves-intro-overlay-title-card-main">
+              <p class="wolves-intro-overlay-title-card-line">
+                {{ activeComicTitleCardCue.text }}
+              </p>
+              <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">
+                <img
+                  :src="`${baseUrl}${activeComicHeroShot.src}`"
+                  :alt="activeComicHeroShot.label"
+                  :data-comic-hero-shot="activeComicHeroShot.id"
+                  :style="{
+                    width: `${activeComicHeroShot.contentFrame.width}%`,
+                    left: `${activeComicHeroShot.contentFrame.left}%`,
+                    top: `${activeComicHeroShot.contentFrame.top}%`,
+                  }"
+                  class="wolves-intro-overlay-title-card-art"
+                >
+              </div>
+              <p
+                class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
+                data-comic-hero-paid-artists
+              >
+                Made by Paid Artists
+              </p>
+            </div>
+
+            <a
+              :href="comicHeroQrUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open makemeacomic.com"
+              class="wolves-intro-overlay-title-card-qr"
+              data-comic-hero-qr-link
+            >
+              <div class="wolves-intro-overlay-title-card-qr-frame" data-comic-hero-qr-card>
+                <img
+                  :src="qrMakeMeAComic"
+                  alt="QR code linking to makemeacomic.com"
+                  class="wolves-intro-overlay-title-card-qr-image"
+                  data-comic-hero-qr-image
+                >
+              </div>
+              <span
+                class="wolves-intro-overlay-title-card-qr-dialogue"
+                data-comic-hero-qr-dialogue
+              >
+                {{ comicHeroQrDialogue }}
+              </span>
+              <span class="wolves-intro-overlay-title-card-qr-domain" data-comic-hero-qr-domain>
+                {{ comicHeroQrDomain }}
+              </span>
+            </a>
           </div>
-
-          <a
-            :href="comicHeroQrUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open makemeacomic.com"
-            class="wolves-intro-overlay-title-card-qr"
-            data-comic-hero-qr-link
-          >
-            <div class="wolves-intro-overlay-title-card-qr-frame" data-comic-hero-qr-card>
-              <img
-                :src="qrMakeMeAComic"
-                alt="QR code linking to makemeacomic.com"
-                class="wolves-intro-overlay-title-card-qr-image"
-                data-comic-hero-qr-image
-              >
-            </div>
-            <span
-              class="wolves-intro-overlay-title-card-qr-dialogue"
-              data-comic-hero-qr-dialogue
-            >
-              {{ comicHeroQrDialogue }}
-            </span>
-            <span class="wolves-intro-overlay-title-card-qr-domain" data-comic-hero-qr-domain>
-              {{ comicHeroQrDomain }}
-            </span>
-          </a>
         </div>
-      </div>
-      <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
-        <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
-          {{ formatIntroCueText(cue.text, cue.preservePunctuation) }}
+        <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
+          <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
+            {{ formatIntroCueText(cue.text, cue.preservePunctuation) }}
+          </div>
         </div>
-      </div>
 
-      <!-- Quick fade when one centered plate replaces another (e.g. Bob Killen -> Kat
+        <!-- Quick fade when one centered plate replaces another (e.g. Bob Killen -> Kat
            Cosgrove at 14.5s); the entering plate keeps its authored impact animation.
            Each row anchors the guardian plate plus, for documented dinosaur bonds, the
            companion plate that shows the partnership beside the guardian's name. -->
-      <TransitionGroup name="wolves-guardian-plate-swap">
-        <div
-          v-for="cue in activeGuardianCues"
-          :key="cue.text"
-          class="wolves-guardian-plate-row"
-          :class="{
-            'wolves-guardian-plate-left': cue.position === 'left',
-            'wolves-guardian-plate-right': cue.position === 'right',
-            'wolves-guardian-plate-raised': cue.raised,
-          }"
-        >
+        <TransitionGroup name="wolves-guardian-plate-swap">
           <div
-            class="wolves-guardian-plate font-mono"
+            v-for="cue in activeGuardianCues"
+            :key="cue.text"
+            class="wolves-guardian-plate-row"
             :class="{
-              'wolves-guardian-plate-trustee': cue.trustee,
-              'wolves-guardian-plate-leader': cue.leader,
+              'wolves-guardian-plate-left': cue.position === 'left',
+              'wolves-guardian-plate-right': cue.position === 'right',
+              'wolves-guardian-plate-raised': cue.raised,
             }"
           >
-            <template v-if="parseGuardianCue(cue.text)">
-              <div class="wolves-guardian-plate-burst" aria-hidden="true" />
-              <div class="wolves-guardian-plate-header">
-                <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-left" aria-hidden="true" />
-                <svg class="wolves-guardian-plate-crest" viewBox="0 0 100 100" aria-hidden="true">
-                  <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-guardian-plate-crest-outer" />
-                  <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-guardian-plate-crest-inner" />
-                  <path d="M35,45 L50,60 L65,45" class="wolves-guardian-plate-crest-chevron" />
-                </svg>
-                <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-right" aria-hidden="true" />
-              </div>
-              <p class="wolves-guardian-plate-label">
-                {{ cue.trustee ? 'TRUSTEE // GUARDIAN' : 'MAINTAINER // GUARDIAN' }}
-              </p>
-              <p class="wolves-guardian-plate-class">
-                {{ parseGuardianCue(cue.text)!.guardianClass }}
-              </p>
-              <p class="wolves-guardian-plate-name">
-                {{ parseGuardianCue(cue.text)!.name }}
-              </p>
-              <p class="wolves-guardian-plate-title">
-                <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
-                  <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
-                  <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
-                  <template v-else>
-                    {{ token.text }}
-                  </template>
-                </template>
-              </p>
-            </template>
-            <p v-else class="wolves-guardian-plate-name">
-              {{ cue.text }}
-            </p>
-          </div>
-          <div
-            v-if="parseGuardianCue(cue.text) && guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)"
-            class="wolves-companion-plate font-mono"
-          >
-            <img
-              :src="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artwork"
-              alt=""
-              aria-hidden="true"
-              class="wolves-companion-plate-art"
-              :class="{ 'wolves-companion-plate-art-alamo': guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name === 'Alamo' }"
+            <div
+              class="wolves-guardian-plate font-mono"
+              :class="{
+                'wolves-guardian-plate-trustee': cue.trustee,
+                'wolves-guardian-plate-leader': cue.leader,
+              }"
             >
-            <div class="wolves-companion-plate-card">
-              <p class="wolves-companion-plate-label">
-                GUARDIAN BOND
-              </p>
-              <p
-                v-if="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name"
-                class="wolves-companion-plate-name"
-              >
-                {{ guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name }}
-              </p>
-              <p class="wolves-companion-plate-species">
-                {{ guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.scientificName }}
+              <template v-if="parseGuardianCue(cue.text)">
+                <div class="wolves-guardian-plate-burst" aria-hidden="true" />
+                <div class="wolves-guardian-plate-header">
+                  <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-left" aria-hidden="true" />
+                  <svg class="wolves-guardian-plate-crest" viewBox="0 0 100 100" aria-hidden="true">
+                    <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-guardian-plate-crest-outer" />
+                    <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-guardian-plate-crest-inner" />
+                    <path d="M35,45 L50,60 L65,45" class="wolves-guardian-plate-crest-chevron" />
+                  </svg>
+                  <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-right" aria-hidden="true" />
+                </div>
+                <p class="wolves-guardian-plate-label">
+                  {{ cue.trustee ? 'TRUSTEE // GUARDIAN' : 'MAINTAINER // GUARDIAN' }}
+                </p>
+                <p class="wolves-guardian-plate-class">
+                  {{ parseGuardianCue(cue.text)!.guardianClass }}
+                </p>
+                <p class="wolves-guardian-plate-name">
+                  {{ parseGuardianCue(cue.text)!.name }}
+                </p>
+                <p class="wolves-guardian-plate-title">
+                  <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+                    <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
+                    <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
+                    <template v-else>
+                      {{ token.text }}
+                    </template>
+                  </template>
+                </p>
+              </template>
+              <p v-else class="wolves-guardian-plate-name">
+                {{ cue.text }}
               </p>
             </div>
+            <div
+              v-if="parseGuardianCue(cue.text) && guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)"
+              class="wolves-companion-plate font-mono"
+            >
+              <img
+                :src="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artwork"
+                alt=""
+                aria-hidden="true"
+                class="wolves-companion-plate-art"
+                :class="{ 'wolves-companion-plate-art-alamo': guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name === 'Alamo' }"
+              >
+              <div class="wolves-companion-plate-card">
+                <p class="wolves-companion-plate-label">
+                  GUARDIAN BOND
+                </p>
+                <p
+                  v-if="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name"
+                  class="wolves-companion-plate-name"
+                >
+                  {{ guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name }}
+                </p>
+                <p class="wolves-companion-plate-species">
+                  {{ guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.scientificName }}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </TransitionGroup>
-    </template>
+        </TransitionGroup>
+      </template>
 
-    <p
-      v-else-if="overlayText"
-      :key="overlayText"
-      class="wolves-intro-overlay-text font-mono"
-      :class="{
-        'wolves-intro-overlay-text-somber': isSomberTextSegment,
-        'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
-        'wolves-intro-overlay-text-terminal': overlayCueForDisplay?.presentation === 'terminal',
-        'wolves-intro-overlay-text-slim': overlayCueForDisplay?.slim,
-        'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
-        'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
-      }"
-      :style="isSomberTextSegment ? { animationDuration: `${somberFadeDuration}s` } : undefined"
-    >
-      <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
-        <span class="wolves-intro-overlay-text-slim-line1">{{ overlayText.split('\n')[0] }}</span>
-        <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
-      </template>
-      <template v-else>
-        <span
-          v-for="(part, index) in overlayTextParts"
-          :key="index"
-          :class="{ 'wolves-intro-letter-highlight': part.highlight }"
-        >{{ part.char }}</span>
-      </template>
-    </p>
+      <p
+        v-else-if="overlayText"
+        :key="overlayText"
+        class="wolves-intro-overlay-text font-mono"
+        :class="{
+          'wolves-intro-overlay-text-somber': isSomberTextSegment,
+          'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
+          'wolves-intro-overlay-text-terminal': overlayCueForDisplay?.presentation === 'terminal',
+          'wolves-intro-overlay-text-slim': overlayCueForDisplay?.slim,
+          'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
+          'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
+        }"
+        :style="isSomberTextSegment ? { animationDuration: `${somberFadeDuration}s` } : undefined"
+      >
+        <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
+          <span class="wolves-intro-overlay-text-slim-line1">{{ overlayText.split('\n')[0] }}</span>
+          <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
+        </template>
+        <template v-else>
+          <span
+            v-for="(part, index) in overlayTextParts"
+            :key="index"
+            :class="{ 'wolves-intro-letter-highlight': part.highlight }"
+          >{{ part.char }}</span>
+        </template>
+      </p>
 
     <!-- Transport now lives in the app-level Destiny hero widget; the overlay
          exposes next/previous/toggle/seekToRatio and emits status instead. -->
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -1019,12 +1012,6 @@ defineExpose({
   opacity: 0;
 }
 
-/* Full-width band over YouTube's top chrome: the embed paints its own video
-   title (plus channel avatar) across the top of the frame at playback start
-   and after every resume, and no player parameter can remove it. The band must
-   be fully opaque where the title paints: semi-transparent black does not
-   darken the iframe's composited video layer reliably, so alpha-only masks
-   leak the title. The fade may only begin below the chrome row (~60px). */
 .wolves-intro-overlay-top-left-mask {
   position: absolute;
   top: 0;
@@ -1039,15 +1026,19 @@ defineExpose({
 .wolves-intro-overlay-pause-veil {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  background: radial-gradient(circle at center, rgb(0 0 0 / 10%) 0%, rgb(0 0 0 / 22%) 35%, rgb(0 0 0 / 78%) 100%);
+  background: rgb(0 0 0 / 80%);
   pointer-events: none;
-  transition: opacity 0.18s ease-out;
   z-index: 3;
 }
 
-.wolves-intro-overlay-pause-veil-active {
-  opacity: 1;
+.wolves-intro-overlay-pause-veil-fade-enter-active,
+.wolves-intro-overlay-pause-veil-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.wolves-intro-overlay-pause-veil-fade-enter-from,
+.wolves-intro-overlay-pause-veil-fade-leave-to {
+  opacity: 0;
 }
 
 .wolves-intro-overlay-blackscreen {
@@ -1674,7 +1665,7 @@ defineExpose({
   color: #e2e8f0;
   text-align: center;
   text-shadow: 0 2px 10px rgb(0 0 0 / 80%);
-  animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: wolves-guardian-plate-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Quick fade-out when one plate is replaced by the next (Bob Killen -> Kat Cosgrove). */
@@ -1719,7 +1710,7 @@ defineExpose({
   flex-shrink: 0;
   width: clamp(17rem, 14rem + 5vw, 24rem);
   text-align: center;
-  animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+  animation: wolves-guardian-plate-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
 }
 
 .wolves-companion-plate-art {
@@ -1729,7 +1720,6 @@ defineExpose({
   width: 108%;
   max-width: none;
   margin: 0 -4% -3.4rem;
-  filter: drop-shadow(0 8px 16px rgb(0 0 0 / 65%)) drop-shadow(0 0 12px rgb(147 197 253 / 30%));
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
 }
 
@@ -1767,7 +1757,6 @@ defineExpose({
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
 }
 
 .wolves-companion-plate-species {
@@ -1863,8 +1852,6 @@ defineExpose({
   height: 90px;
   border-radius: 50%;
   background: radial-gradient(circle, #fff 0%, #93c5fd 45%, transparent 70%);
-  mix-blend-mode: color-dodge;
-  filter: blur(8px);
   transform: translate(-50%, -50%) scale(0.1);
   animation: wolves-guardian-plate-ignite 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
 }
@@ -1901,7 +1888,6 @@ defineExpose({
   width: 2.5rem;
   height: 2.5rem;
   flex: 0 0 auto;
-  filter: drop-shadow(0 0 6px rgb(147 197 253 / 65%));
   opacity: 0;
   animation: wolves-guardian-plate-crest-drop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15) 0.05s forwards;
 }
@@ -1950,7 +1936,6 @@ defineExpose({
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.15s backwards;
 }
 
@@ -2033,16 +2018,15 @@ defineExpose({
   0% {
     opacity: 0;
     letter-spacing: -0.05em;
-    filter: blur(4px);
+    transform: translateY(0.2rem);
   }
   25% {
     opacity: 1;
-    filter: blur(0);
   }
   100% {
     opacity: 1;
     letter-spacing: normal;
-    filter: blur(0);
+    transform: none;
   }
 }
 
@@ -2065,16 +2049,14 @@ defineExpose({
   }
 }
 
-@keyframes wolves-guardian-plate-impact {
+@keyframes wolves-guardian-plate-enter {
   0% {
-    filter: contrast(1) saturate(1);
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.98);
   }
-  12% {
-    filter: contrast(1.2) saturate(1.4) drop-shadow(2px 0 0 rgb(255 0 100 / 50%))
-      drop-shadow(-2px 0 0 rgb(0 255 255 / 50%));
-  }
-  35% {
-    filter: contrast(1) saturate(1);
+  100% {
+    opacity: 1;
+    transform: none;
   }
 }
 </style>
