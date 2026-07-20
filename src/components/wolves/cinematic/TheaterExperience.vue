@@ -41,6 +41,9 @@ const trackZeroSidecarSrc = computed(() => {
     autoplay: '1',
     mute: '1',
     loop: '1',
+    // Explicitly reset the documentary to its first frame instead of allowing
+    // YouTube's embed state to resume at a previously watched position.
+    start: '0',
     playlist: TRACKZERO_SIDECAR_VIDEO_IDS.join(','),
   })
   return `https://www.youtube.com/embed/${firstVideoId}?${params.toString()}`
