@@ -161,8 +161,8 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
 }
 
 .wc-nameplate-detail--compact {
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
 }
 
 .wc-nameplate-label {
