@@ -48,7 +48,10 @@ const opacities = computed(() => {
             <span class="wc-org-ad-qr-maintainer">{{ option.maintainer }}</span>
           </div>
         </template>
-        <img v-else class="wc-org-ad-qr" :src="ad.qr" :alt="ad.qrAlt">
+        <template v-else>
+          <img class="wc-org-ad-qr" :src="ad.qr" :alt="ad.qrAlt">
+          <span v-if="ad.supportLabel" class="wc-org-ad-qr-maintainer">{{ ad.supportLabel }}</span>
+        </template>
       </a>
     </div>
   </div>

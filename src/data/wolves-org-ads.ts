@@ -1,9 +1,9 @@
 import gnomeQr from '@/assets/svg/qr-gnome-donate.svg'
+import kdeQr from '@/assets/svg/qr-kde-donate.svg'
 import qrKofiAlexanderVanHee from '@/assets/svg/qr-kofi-alexandervanhee.svg'
 import qrKofiKolunmi from '@/assets/svg/qr-kofi-kolunmi.svg'
-import kubeconQr from '@/assets/svg/qr-kubecon-japan-2026.svg'
 import gnomeImage from '@/assets/wolves/org-ads/gnome.svg'
-import kubeconImage from '@/assets/wolves/org-ads/kubecon-japan-2026.png'
+import kdeImage from '@/assets/wolves/org-ads/kde.svg'
 
 const bazaarImage = `${import.meta.env.BASE_URL}img/bazaar.svg`
 
@@ -14,13 +14,14 @@ export interface WolvesOrgAdQr {
 }
 
 export interface WolvesOrgAd {
-  id: 'gnome' | 'kubecon' | 'bazaar'
+  id: 'gnome' | 'kde' | 'bazaar'
   name: string
   href: string
   image: string
   imageAlt: string
   qr: string
   qrAlt: string
+  supportLabel?: string
   qrOptions?: readonly WolvesOrgAdQr[]
 }
 
@@ -37,16 +38,18 @@ export const WOLVES_ORG_AD_PAIRS = [
       imageAlt: 'GNOME',
       qr: gnomeQr,
       qrAlt: 'QR code for GNOME donations',
+      supportLabel: 'Support GNOME',
       qrOptions: undefined,
     },
     {
-      id: 'kubecon',
-      name: 'KubeCon CloudNativeCon Japan 2026',
-      href: 'https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/?utm_source=artifacthub&utm_campaign=KubeCon-Japan-2026',
-      image: kubeconImage,
-      imageAlt: 'KubeCon CloudNativeCon Japan 2026',
-      qr: kubeconQr,
-      qrAlt: 'QR code for KubeCon CloudNativeCon Japan 2026',
+      id: 'kde',
+      name: 'KDE',
+      href: 'https://kde.org/donate/',
+      image: kdeImage,
+      imageAlt: 'KDE',
+      qr: kdeQr,
+      qrAlt: 'QR code for KDE donations',
+      supportLabel: 'Support KDE',
       qrOptions: undefined,
     },
   ],
@@ -59,9 +62,10 @@ export const WOLVES_ORG_AD_PAIRS = [
       imageAlt: 'Bazaar app store',
       qr: qrKofiKolunmi,
       qrAlt: 'QR code for Kolunmi on Ko-fi',
+      supportLabel: undefined,
       qrOptions: [
-        { qr: qrKofiKolunmi, qrAlt: 'QR code for Kolunmi on Ko-fi', maintainer: 'Kolunmi' },
-        { qr: qrKofiAlexanderVanHee, qrAlt: 'QR code for Alexander van Hee on Ko-fi', maintainer: 'Alexander van Hee' },
+        { qr: qrKofiKolunmi, qrAlt: 'QR code for Eva on Ko-fi', maintainer: 'Support Eva' },
+        { qr: qrKofiAlexanderVanHee, qrAlt: 'QR code for Alex on Ko-fi', maintainer: 'Support Alex' },
       ],
     },
   ],
