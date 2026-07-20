@@ -589,7 +589,7 @@ const trackZeroCarryForwardPhotos = computed(() => {
 })
 
 const activeTimelineSlide = computed(() => {
-  if (props.trackIndex !== 0 || !isExperimental.value || timelineSlides.value.length === 0) {
+  if (!isWolvesExperience.value || props.trackIndex !== 0 || !isExperimental.value || timelineSlides.value.length === 0) {
     return null
   }
   const curTime = props.playlistCurrentTime ?? 0
@@ -674,7 +674,7 @@ const activeTimelineSlideIndex = computed(() => {
 })
 
 const activeFlickrIndex = computed(() => {
-  if (mixedPhotos.value.length === 0 || !currentTrack.value) {
+  if (mixedPhotos.value.length === 0) {
     return 0
   }
 

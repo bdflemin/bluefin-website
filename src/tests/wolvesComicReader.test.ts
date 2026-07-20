@@ -77,6 +77,23 @@ describe('wolvesComicReader', () => {
     expect(wrapper.find('.cover-container img').attributes('src')).toContain('color-with-bluefin-cover.webp')
   })
 
+  it('advances the generic album slideshow by playback time', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    const firstSlide = activeTimelineImage(wrapper)
+    await wrapper.setProps({ playlistCurrentTime: 128 })
+
+    expect(activeTimelineImage(wrapper)).not.toBe(firstSlide)
+  })
+
   it('does not render manual page navigation', () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
