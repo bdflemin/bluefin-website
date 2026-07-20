@@ -134,7 +134,9 @@ describe('back catalogue experiences', () => {
     expect(() => auditExperience(album, entries, { ...experience, segments: [experience.segments[0]] })).toThrow('Back catalogue audit failed')
   })
 
-  it('audits every non-featured album from the published playlist metadata', async () => {
+  // This test exercises live YouTube and documentation data. Keep it manual;
+  // deterministic fixture coverage is above and CI has no external media contract.
+  it.skipIf(process.env.CI)('audits every non-featured album from the published playlist metadata', async () => {
     const albums = await new Promise<Array<{ id: string, title: string, playlistUrl: string }>>((resolve, reject) => {
       https.get('https://docs.projectbluefin.io/data/playlist-metadata.json', (response) => {
         if (response.statusCode && response.statusCode >= 400) {
