@@ -1,43 +1,39 @@
-# Security Policy — projectbluefin/website
+# Security policy
 
 ## Scope
 
-This repository contains the **projectbluefin.io** marketing website — a
-static Vite/Vue 3 SPA. It serves no user authentication, processes no secrets,
-and stores no user data. The primary security-relevant surfaces are:
+This repository builds a static website. Security-relevant areas include
+third-party dependencies, GitHub Actions, build tooling, deployment, and content
+rendered into HTML.
 
-- **Supply chain** — npm dependencies, GitHub Actions, and build tooling.
-- **CI/CD pipeline** — GitHub Actions workflows that build and deploy the site.
-- **Deployed content** — XSS vectors in translated strings or user-supplied
-  content injected into HTML at build time.
+## Boundary
 
-## Reporting a Vulnerability
+**Agents edit content. Agents never edit design.**
 
-**Do not open a public issue for security vulnerabilities.**
+Security work does not authorize changes to layout, markup, component behavior,
+styles, typography, responsive behavior, navigation prominence, or animation.
 
-Report privately via GitHub's built-in advisory tooling:
+## Report a vulnerability
 
-1. Go to the [Security Advisories](https://github.com/projectbluefin/website/security/advisories) page.
-2. Click **Report a vulnerability**.
-3. Describe the issue, reproduction steps, and impact.
+Do not open a public issue for a security vulnerability. Use the repository's
+private GitHub Security Advisory workflow and include:
 
-We will acknowledge within **5 business days** and aim for coordinated
-disclosure within 90 days.
+- affected path or dependency
+- reproduction steps
+- impact
+- proposed mitigation, if known
 
-For issues affecting Project Bluefin broadly (not specific to this repo), see
-the [main project security policy](https://github.com/projectbluefin/bluefin/security/policy).
+For issues affecting a wider project, use that project's security policy.
 
-## Supply Chain Controls
+## Supply-chain rules
 
-- **Dependency review** — `dependency-review-action` blocks PRs that introduce
-  high-severity CVEs.
-- **Renovate** — automated dependency updates keep npm packages current.
-- **GitHub Actions pinning** — action steps should reference pinned commit SHAs
-  for third-party actions; PRs that introduce floating tags should be flagged.
+- Review dependency changes for known vulnerabilities.
+- Pin third-party GitHub Actions according to repository policy.
+- Keep generated content reviewable in pull requests.
+- Treat translated and HTML-rendered content as untrusted input.
 
-## Known Limitations
+## Limits
 
-- i18n locale files are community-contributed and are not cryptographically
-  signed. Content is reviewed in PRs before merge.
-- The site is a static build; no server-side execution or user data processing
-  occurs at runtime.
+The site has no runtime authentication, server-side application state, or user
+data store. Locale files and generated assets are still reviewed as shipped
+content.

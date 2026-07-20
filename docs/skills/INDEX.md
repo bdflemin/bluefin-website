@@ -1,20 +1,17 @@
-# Website Skills Index
+# Skill index
 
-Reusable operational knowledge for `projectbluefin/website`.
+**Agents edit content. Agents never edit design.**
 
-| Skill | Owns |
+Load `AGENTS.md` first, then load one matching skill. Do not load every skill.
+
+| Trigger | Skill |
 |---|---|
-| `site-maintenance.md` | Routine content, assets, data, downloads, and unlisted sub-apps |
-| `design-authority.md` | Visual authority and human approval gates |
-| `build-verify-deploy.md` | Validation and production completion |
-| `editorial-policy.md` | User-authored creative and editorial prose |
-| `wolves-content-maintenance.md` | Wolves content-only work |
-| `wolves-fullscreen-overlays.md` | Wolves overlay and YouTube IFrame engineering |
-| `skill-improvement.md` | Updating the factory knowledge base |
+| Text, links, translations, data, or approved assets | `content-maintenance/SKILL.md` |
+| Layout, styling, component, animation, or navigation request | `design-gate/SKILL.md` |
+| Lore, fiction, quotes, or attribution | `editorial-provenance/SKILL.md` |
+| Tests, builds, staging, deployment, or live status | `validation/SKILL.md` |
+| Wolves content or assets | `wolves-content/SKILL.md` |
+| Explicitly approved Wolves runtime engineering | `wolves-runtime-engineering/SKILL.md` |
+| Creating or correcting skills | `skill-authoring/SKILL.md` |
 
-Deep references:
-
-- `docs/wolves-maintenance.md`: canonical Wolves production boundaries.
-- `docs/wolves-cinematic.md`: canonical Wolves cinematic architecture.
-
-Each rule has one owner. Other documents should link to it, not restate it.
+Supporting references are in `docs/reference/` and `docs/architecture/`.

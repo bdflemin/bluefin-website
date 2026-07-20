@@ -1,108 +1,49 @@
-# projectbluefin/website
+# Website
 
-The marketing website for [Project Bluefin](https://projectbluefin.io) — a collection of landing pages built with [Vite](https://vitejs.dev/) and [Vue 3](https://vuejs.org/).
+This repository builds a production website and separately mounted
+sub-applications with Vue 3, TypeScript, Vite, SCSS, and Tailwind.
 
-## What's in this repo
+## Boundary
 
-| Directory | Live at | Purpose |
-|-----------|---------|---------|
-| root (`index.html`) | [projectbluefin.io](https://projectbluefin.io) | Main Bluefin landing page |
-| `dakota/` | [projectbluefin.io/dakota](https://projectbluefin.io/dakota) | Dakota variant landing page |
-| `knuckle/` | [projectbluefin.io/knuckle](https://projectbluefin.io/knuckle) | Knuckle bare-metal installer page |
-| `bluespeed/` | unlisted / `noindex` | Bluespeed sub-app; hidden from nav and search engines |
+**Agents edit content. Agents never edit design.**
 
-For user-facing documentation, see [docs.projectbluefin.io](https://docs.projectbluefin.io).
+Read `AGENTS.md` before editing. Use `docs/skills/INDEX.md` to load only the
+workflow needed for the task.
 
-## Quick start
+## Production entries
 
-### Prerequisites
+| Path | Entry | Status |
+|---|---|---|
+| `/` | `index.html` | Public main site |
+| `/wolves/` | `wolves/index.html` | Public experience |
+| `/dakota/` | `dakota/index.html` | Unlisted |
+| `/knuckle/` | `knuckle/index.html` | Unlisted |
+| `/bluespeed/` | `bluespeed/index.html` | Unlisted |
+| `/server/` | `server/index.html` | Separate entry |
 
-- [Node.js](https://nodejs.org/) 24 or higher (current LTS)
-- [npm](https://www.npmjs.com/)
-- Optional: [just](https://github.com/casey/just) (`brew install just` or `cargo install just`)
-
-### Setup
-
-```bash
-git clone https://github.com/projectbluefin/website
-cd website
-npm install
-```
-
-### Dev server
+## Local development
 
 ```bash
-npm run dev        # Start development server with hot reload
-npm run build      # Build for production
-npm run preview    # Preview production build locally
-```
-
-With `just`:
-
-```bash
-just build    # Build for production
-just serve    # Preview the production build locally
-```
-
-### Linting and formatting
-
-Uses [`@antfu/eslint-config`](https://github.com/antfu/eslint-config) for both linting and formatting. Run before every PR:
-
-```bash
-npm run lint        # Check for lint errors
-npm run lint:fix    # Auto-fix lint errors
-npm run typecheck   # Type-check with vue-tsc
-```
-
-## Wolves soundtrack metadata
-
-The Wolves soundtrack metadata is refreshed locally with:
-
-```bash
-npm run update:wolves-playlist
-```
-
-This workflow requires [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) to read the public YouTube playlist and writes the checked-in manifest to `public/wolves-playlist.json`. The frontend consumes that checked-in file directly, so no YouTube Data API key is exposed to browsers.
-
-## Back catalogue and experience manifests
-
-The Wolves lobby's Back Catalogue grid (below the QR codes) lists every album from `music.projectbluefin.io`. It is regenerated locally with:
-
-```bash
-npm run update:back-catalogue
-```
-
-This requires `yt-dlp`. It reads the album index from the documentation repo's published `playlist-metadata.json`, copies each cover byte-for-byte to `public/experiences/<playlistId>.jpg`, resolves each playlist's tracks, and writes the checked-in `public/experiences/catalogue.json`. Re-run it to pick up new albums; the frontend consumes the checked-in file directly.
-
-Each catalogue entry is an experience manifest — the declarative format the cinematic runtime plays. Generated entries are YouTube playlists with `youtubeId`, authored `durationSeconds`, and launcher metadata (`title`, `subtitle`, `artwork`). The Wolves tour itself is the default manifest (`WOLVES_EXPERIENCE` in `src/stores/cinematic.ts`); its canonical generated playlist card routes to that authored experience so it retains the intro and Track 0 presentation. Other albums load through the same `loadExperience()` store action and render through the identical stage, transitions, transport, and seek behavior.
-
-The `/wolves` player starts only after a visitor clicks the control. Its YouTube iframe is retained as a hidden 200x200 audio player because the IFrame API requires that minimum viewport; do not replace it with a visible video widget or shrink it to 1px. The visible panel includes a YouTube Music deep link and sign-in/Premium guidance.
-
-## Wolves local video capture
-
-For deterministic, repeatable local Track 0 rendering (manual upload flow):
-
-```bash
+npm install --include=dev
 npm run dev
-npm run record:wolves
 ```
 
-Defaults:
-- local-only URL: `http://127.0.0.1:5173/wolves/`
-- output: `recordings/wolves-first-song-1440p.mp4`
-- 1440p at 25fps (matching Playwright capture), CPU-capped FFmpeg encode for lower OOM risk
-
-Optional overrides:
+Available checks:
 
 ```bash
-node record-wolves.cjs \
-  --url http://127.0.0.1:5174/wolves/ \
-  --output /tmp/wolves.mp4 \
-  --threads 4 \
-  --fps 30 \
-  --duration 424
+npm run lint
+npm run typecheck
+npm run test:run
+npm run build
+npm run preview
 ```
 
-## Contributing
+## Documentation
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide — including the PR workflow, i18n instructions, and linting requirements.
+- `AGENTS.md`: agent entry point and repository boundaries.
+- `docs/skills/INDEX.md`: lazy-loaded task workflows.
+- `docs/reference/content-map.md`: production content sources.
+- `docs/reference/wolves-runtime.md`: Wolves content and runtime boundaries.
+- `CONTRIBUTING.md`: contributor workflow.
+- `TRANSLATION-GUIDE.md`: locale editing rules.
+- `SECURITY.md`: vulnerability reporting.

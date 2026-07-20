@@ -1,15 +1,47 @@
-# CONTRIBUTING
+# Contributing
 
-Thanks for helping out!
+## Boundary
 
-## Dev setup
+**Agents edit content. Agents never edit design.**
 
-Install dependencies with dev packages before working on the site:
+Content changes may update prose, translations, URLs, data values, registered
+records, and approved assets inside existing structures. They do not authorize
+layout, markup, component behavior, styles, typography, responsive behavior,
+navigation prominence, or animation changes.
+
+## Setup
 
 ```bash
 npm install --include=dev
+npm run dev
 ```
 
-Check the [Contributing Guide](https://docs.projectbluefin.io/contributing) for contribution information.
+Read `AGENTS.md` and `docs/skills/INDEX.md` before editing. Read the source file
+that owns the requested content.
 
-This repository is for building the images, you are probably looking for [@projectbluefin/common](https://github.com/projectbluefin/common) to change something in Bluefin. Make sure you check [the architecture diagram](https://docs.projectbluefin.io/contributing#understanding-bluefins-architecture).
+## Checks
+
+Documentation-only changes:
+
+```bash
+git diff --check
+```
+
+Content or data changes:
+
+```bash
+npm run typecheck
+npm run test:run
+npm run build
+```
+
+Code or runtime changes require explicit design or engineering approval and the
+full relevant validation workflow.
+
+## Git
+
+Use a Conventional Commit. Stage explicit paths only. Do not use `git add .` or
+`git add -A`. Do not modify, restore, or commit unrelated dirty files.
+
+Before reporting completion, follow `docs/skills/validation/SKILL.md`. A local
+build does not prove deployment; verify the exact pushed commit's deployment run.

@@ -405,7 +405,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
       // toggle. Guardian window timings below were re-verified frame-by-frame
       // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
-      // ~1-2s) per docs/wolves-maintenance.md's verification checklist, replacing the
+      // ~1-2s) per the Wolves content verification checklist, replacing the
       // original automated hue/brightness pass that had mismatched two of the six windows:
       // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
       //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens

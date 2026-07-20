@@ -22,7 +22,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.github-pages.outputs.url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner

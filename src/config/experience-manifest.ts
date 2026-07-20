@@ -1,70 +1,9 @@
 /**
- * Generic multimedia experience manifest.
+ * Manifest schema consumed by the cinematic runtime.
  *
- * One schema describes any tour the cinematic runtime can play: the authored
- * Wolves cinematic, a back-catalogue album, or a hand-written mix of media.
- * The runtime (stores/cinematic.ts + CinematicStage + MediaWidget) consumes a
- * manifest; it never hardcodes content. Modeled on the CinematicSegment
- * pattern in src/config/wolves-cinematic.ts.
- *
- * Media types:
- * - 'youtube' (default): segment.youtubeId plays through the dual-buffer
- *   player with optional startSeconds/endSeconds trims.
- * - 'image': a still image URL shown for durationSeconds.
- *   ponytail: schema-level only today; the renderer plays youtube segments
- *   (every shipped experience is a YouTube playlist). Implement an image
- *   layer in CinematicStage when the first image-based experience is authored.
- *
- * Synced text: segment.captionsText carries `seconds|text` cues on the source
- * media's native timeline (same format as src/data/wolves-destiny-captions.txt),
- * rendered by CinematicCaptions. For image segments the cue clock is the
- * segment's own elapsed time.
- *
- * Example manifests (the three canonical shapes):
- *
- * // 1. Image-based album (per-slide text binding via captionsText at 0s)
- * const imageAlbum: ExperienceManifest = {
- *   id: 'field-notes',
- *   title: 'Field Notes',
- *   subtitle: 'Expedition stills',
- *   artwork: 'experiences/field-notes.jpg',
- *   segments: [
- *     { id: 'plate-1', kind: 'image', imageUrl: 'experiences/plate-1.jpg',
- *       chapter: 'PLATE 1', title: 'Ridge line', artist: 'Bluefin',
- *       artwork: 'experiences/plate-1.jpg', durationSeconds: 12,
- *       captionsText: '0|North face, first light' },
- *   ],
- * }
- *
- * // 2. YouTube playlist with synced text overlays
- * const youtubeAlbum: ExperienceManifest = {
- *   id: 'requiem',
- *   title: 'Harbringer: Requiem',
- *   artwork: 'experiences/PLhiPP9M5fgWE.jpg',
- *   segments: [
- *     { id: 'track-1', kind: 'youtube', youtubeId: 'dQw4w9WgXcQ',
- *       chapter: 'TRACK 1', title: 'Opening', artist: 'Artist',
- *       artwork: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
- *       durationSeconds: 213, captionsText: '4.5|First cue\n12|Second cue' },
- *   ],
- * }
- *
- * // 3. Mixed media (stills interleaved with video, trims applied)
- * const mixed: ExperienceManifest = {
- *   id: 'launch-recap',
- *   title: 'Launch Recap',
- *   artwork: 'experiences/launch.jpg',
- *   segments: [
- *     { id: 'cold-open', kind: 'image', imageUrl: 'experiences/cold-open.jpg',
- *       chapter: 'PART I', title: 'Cold open', artist: 'Bluefin',
- *       artwork: 'experiences/cold-open.jpg', durationSeconds: 8 },
- *     { id: 'keynote', kind: 'youtube', youtubeId: 'abc123xyz00',
- *       chapter: 'PART II', title: 'Keynote', artist: 'Bluefin',
- *       artwork: 'https://i.ytimg.com/vi/abc123xyz00/hqdefault.jpg',
- *       durationSeconds: 95, startSeconds: 30, endSeconds: 125,
- *       crossfadeMs: 1500 },
- *   ],
- * }
+ * Shipped manifests are generated YouTube experiences. The optional image kind
+ * remains part of the validated schema, but no shipped manifest uses it.
+ * Synced text uses `seconds|text` cues on the source media timeline.
  */
 
 import type { CinematicSegment } from '@/config/wolves-cinematic'

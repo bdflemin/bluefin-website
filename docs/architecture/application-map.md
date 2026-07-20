@@ -1,0 +1,34 @@
+# Application map
+
+**Agents edit content. Agents never edit design.**
+
+## Production entries
+
+| Path | Entry | Mount |
+|---|---|---|
+| `/` | `index.html` | `src/main.ts` -> `src/App.vue` |
+| `/wolves/` | `wolves/index.html` | `src/wolves-main.ts` -> `src/WolvesApp.vue` |
+| `/dakota/` | `dakota/index.html` | `src/dakota-main.ts` |
+| `/knuckle/` | `knuckle/index.html` | `src/knuckle-main.ts` |
+| `/bluespeed/` | `bluespeed/index.html` | current entry script in `bluespeed/index.html` |
+| `/server/` | `server/index.html` | current entry script in `server/index.html` |
+
+Dakota, Knuckle, and Bluespeed are unlisted. Do not promote them through
+navigation, metadata, or sitemaps.
+
+## Main page areas
+
+`src/App.vue` renders the main page through these existing components:
+
+- Scenes: `src/components/scenes/`
+- Sections: `src/components/sections/`
+- Navigation: `src/components/Navigation.vue` and `TopNavbar.vue`
+- Shared content: `src/components/common/`
+
+Main-site copy lives in `src/locales/`. Fixed links, credits, artwork paths, and
+lists live in `src/content.ts`.
+
+## Wolves areas
+
+The Wolves runtime is documented in `docs/reference/wolves-runtime.md`. Do not
+infer its content surfaces from this overview.
