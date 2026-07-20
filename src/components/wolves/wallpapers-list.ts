@@ -168,7 +168,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/showcase/goose-quick-launch.png',
+    name: 'wolves/showcase/goose-quick-launch.webp',
     title: 'Goose Quick Launch',
   },
   {
@@ -223,7 +223,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/showcase/tulip.png',
+    name: 'wolves/showcase/tulip.webp',
     title: 'Tulip',
   },
   {
@@ -308,7 +308,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/AlexK - Beacon of The Final Shape.png',
+    name: 'wolves/people/AlexK - Beacon of The Final Shape.webp',
     title: 'AlexK   Beacon of The Final Shape',
   },
   {
@@ -333,7 +333,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/Bluefin Advisor Michael Tunnell.png',
+    name: 'wolves/people/Bluefin Advisor Michael Tunnell.webp',
     title: 'Bluefin Advisor Michael Tunnell',
   },
   {
@@ -433,7 +433,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/distrobox.png',
+    name: 'wolves/people/distrobox.webp',
     title: 'Distrobox',
   },
   {
@@ -659,7 +659,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/kirkland.png',
+    name: 'wolves/people/kirkland.webp',
     title: 'Bluefin Advisor Dustin Kirkland',
   },
   {
@@ -1009,7 +1009,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/laura.png',
+    name: 'wolves/people/laura.webp',
     title: 'Laura',
   },
   {
@@ -1074,7 +1074,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/tle.png',
+    name: 'wolves/people/tle.webp',
     title: 'Tle',
   },
   {

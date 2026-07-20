@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
+import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
 import { useCinematicStore } from '@/stores/cinematic'
@@ -36,12 +37,10 @@ const TRACKZERO_SIDECAR_VIDEO_IDS = [
 
 const trackZeroSidecarSrc = computed(() => {
   const [firstVideoId] = TRACKZERO_SIDECAR_VIDEO_IDS
-  const params = new URLSearchParams({
+  const params = getChromeFreeYoutubeEmbedParams({
     autoplay: '1',
     mute: '1',
     loop: '1',
-    controls: '0',
-    playsinline: '1',
     playlist: TRACKZERO_SIDECAR_VIDEO_IDS.join(','),
   })
   return `https://www.youtube.com/embed/${firstVideoId}?${params.toString()}`
@@ -68,7 +67,41 @@ if (typeof window !== 'undefined' && 'matchMedia' in window) {
   desktopMedia.addListener?.(syncDesktopViewport)
 }
 
-const showTrackZeroSidecar = computed(() => isTrackZero.value && isDesktopViewport.value)
+/**
+ * Defer the Track 0 documentary sidecar so its heavy YouTube iframe doesn't
+ * fight the cinematic handoff/dual-buffer players for network and GPU during
+ * the first second of the immersive transition. The lore column is the main
+ * focus; the sidecar is decorative accompaniment.
+ */
+const SIDECAR_MOUNT_DELAY_MS = 1000
+const sidecarReady = ref(false)
+let sidecarReadyTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearSidecarTimer() {
+  if (sidecarReadyTimer) {
+    clearTimeout(sidecarReadyTimer)
+    sidecarReadyTimer = null
+  }
+}
+
+watch([isTrackZero, isDesktopViewport], ([trackZero, desktop]) => {
+  if (sidecarReady.value) {
+    return
+  }
+  if (trackZero && desktop) {
+    if (!sidecarReadyTimer) {
+      sidecarReadyTimer = setTimeout(() => {
+        sidecarReady.value = true
+        sidecarReadyTimer = null
+      }, SIDECAR_MOUNT_DELAY_MS)
+    }
+  }
+  else {
+    clearSidecarTimer()
+  }
+}, { immediate: true })
+
+const showTrackZeroSidecar = computed(() => isTrackZero.value && isDesktopViewport.value && sidecarReady.value)
 
 // Background wallpaper layers, carried over from the original immersive
 // theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
@@ -162,6 +195,7 @@ onBeforeUnmount(() => {
   if (wallpaperTimeout) {
     clearTimeout(wallpaperTimeout)
   }
+  clearSidecarTimer()
   desktopMedia?.removeEventListener?.('change', syncDesktopViewport)
   desktopMedia?.removeListener?.(syncDesktopViewport)
 })
@@ -229,11 +263,6 @@ onBeforeUnmount(() => {
               allow="autoplay; encrypted-media"
               frameborder="0"
             />
-            <div
-              class="wc-trackzero-video-chrome-mask"
-              data-trackzero-video-chrome-mask
-              aria-hidden="true"
-            />
           </div>
         </section>
       </aside>
@@ -247,6 +276,7 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 10;
   background: var(--wc-bg);
+  contain: layout paint;
 }
 
 .wc-wallpaper-container {
@@ -263,6 +293,8 @@ onBeforeUnmount(() => {
   pointer-events: none;
   will-change: opacity;
   transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout paint;
 
   &.fading-out {
     animation: wc-wallpaper-fade-out 1.5s linear forwards;
@@ -280,6 +312,8 @@ onBeforeUnmount(() => {
   inset: 0;
   background-size: cover;
   background-position: center;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes wc-wallpaper-fade-in {
@@ -304,7 +338,7 @@ onBeforeUnmount(() => {
 
 .wc-trackzero-grid {
   position: absolute;
-  inset: 9rem 0 10.5rem; // clears the top plate and the hero widget budgets
+  inset: 11rem 0 10.5rem; // clears the full top plate and the hero widget budgets
   display: grid;
   grid-template-columns: 2fr 1fr; // authored desktop content split
   align-items: stretch;
@@ -332,6 +366,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  contain: layout paint;
 
   // Original immersive sizing: the comic reader portal fills the full column.
   :deep(#comic-reader) {
@@ -424,16 +459,6 @@ onBeforeUnmount(() => {
   height: 100%;
   border: 0;
   pointer-events: none;
-}
-
-.wc-trackzero-video-chrome-mask {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, #000 0 3.5rem, transparent 5rem),
-    linear-gradient(to top, #000 0 2.5rem, transparent 4rem);
 }
 
 .wc-thesis {

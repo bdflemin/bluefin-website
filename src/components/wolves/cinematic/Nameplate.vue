@@ -39,7 +39,25 @@ const avatarUrls = dinosaurSpecies.map(
 )
 const avatarIndex = ref(0)
 let avatarTimer: number | undefined
+
+/**
+ * Pre-decode the full dinosaur roster so the emblem never blocks on first
+ * paint while the user is watching the immersive theater. This mirrors the
+ * guardian-companion prewarm in WolvesIntroOverlay.vue.
+ */
+function predecodeAvatarArtwork() {
+  for (const url of avatarUrls) {
+    const image = new Image()
+    image.src = url
+    void image.decode().catch(() => {
+      // Browser doesn't support decode() or image failed; fall back to normal
+      // lazy loading. Visuals stay unchanged.
+    })
+  }
+}
+
 onMounted(() => {
+  predecodeAvatarArtwork()
   avatarTimer = window.setInterval(() => {
     avatarIndex.value = (avatarIndex.value + 1) % avatarUrls.length
   }, AVATAR_ROTATE_MS)
@@ -138,6 +156,8 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
 }
 
 .wc-nameplate-label {
+  display: block;
+  overflow: hidden;
   font-size: 2.2rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -145,6 +165,7 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
   color: var(--wc-white);
   line-height: 1.1;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Quoted technical tokens in authored labels (e.g. humans/trying-their-best:v1)

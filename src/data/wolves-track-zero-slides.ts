@@ -91,7 +91,7 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
 export const postHeroOpeningSequenceIds = [
   'wolves/people/walters.JPG',
   'wolves/people/flickr-54137782365.webp',
-  'wolves/people/kirkland.png',
+  'wolves/people/kirkland.webp',
   'wolves/people/flickr-55343975781.webp',
   'wolves/people/kubecon-55168545279.webp',
 ] as const

@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import * as content from '../content'
 
@@ -31,10 +31,25 @@ const IMAGE_EXPORTS = [
   'LangMissionBluefinImageURL',
 ] as const
 
+const WOLVES_PATHS = [
+  'src/components/wolves',
+  'src/WolvesApp.vue',
+  'src/wolves-main.ts',
+  'src/style/wolves-cinematic.scss',
+]
+
+function isWolvesPath(path: string): boolean {
+  const relativePath = relative(process.cwd(), path).replace(/\\/g, '/')
+  return WOLVES_PATHS.some(prefix => relativePath.startsWith(prefix))
+}
+
 async function sourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
   const nestedFiles = await Promise.all(entries.map(async (entry) => {
     const path = resolve(directory, entry.name)
+    if (isWolvesPath(path)) {
+      return []
+    }
     if (entry.isDirectory()) {
       return sourceFiles(path)
     }

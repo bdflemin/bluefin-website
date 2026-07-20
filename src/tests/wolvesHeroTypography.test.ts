@@ -89,7 +89,9 @@ describe('wolves track zero video sidecar', () => {
   }
 
   it('mounts a chrome-masked, static, titled, muted, autoplaying, looping, controls-free 16:9 iframe with the exact ordered video IDs on desktop Track 0', async () => {
+    vi.useFakeTimers()
     const wrapper = await renderTrackZeroAt(1280)
+    await vi.advanceTimersByTimeAsync(1100)
 
     const sidecar = wrapper.find('[data-trackzero-video-sidecar]')
     expect(sidecar.exists()).toBe(true)
@@ -103,9 +105,29 @@ describe('wolves track zero video sidecar', () => {
     expect(src.searchParams.get('loop')).toBe('1')
     expect(src.searchParams.get('controls')).toBe('0')
     expect(src.searchParams.get('playsinline')).toBe('1')
+    expect(src.searchParams.get('rel')).toBe('0')
+    expect(src.searchParams.get('showinfo')).toBe('0')
+    expect(src.searchParams.get('iv_load_policy')).toBe('3')
+    expect(src.searchParams.get('modestbranding')).toBe('1')
+    expect(src.searchParams.get('autohide')).toBe('1')
+    expect(src.searchParams.get('fs')).toBe('0')
     expect(src.searchParams.get('playlist')?.split(',')).toEqual(EXPECTED_VIDEO_IDS)
     expect(iframe.attributes('title')).toBeTruthy()
-    expect(sidecar.get('[data-trackzero-video-chrome-mask]').attributes('aria-hidden')).toBe('true')
+    vi.useRealTimers()
+  })
+
+  it('builds an embed URL that suppresses YouTube title, related, and end-screen chrome', async () => {
+    vi.useFakeTimers()
+    const wrapper = await renderTrackZeroAt(1280)
+    await vi.advanceTimersByTimeAsync(1100)
+    const iframe = wrapper.get('iframe')
+    const src = new URL(iframe.attributes('src') ?? '')
+
+    expect(src.searchParams.get('rel')).toBe('0')
+    expect(src.searchParams.get('showinfo')).toBe('0')
+    expect(src.searchParams.get('iv_load_policy')).toBe('3')
+    expect(src.searchParams.get('modestbranding')).toBe('1')
+    vi.useRealTimers()
   })
 
   it('renders the sidecar only for Track 0', async () => {

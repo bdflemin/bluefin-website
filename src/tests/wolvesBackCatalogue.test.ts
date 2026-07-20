@@ -1,7 +1,7 @@
+import https from 'node:https'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import https from 'node:https'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import { parseBackCatalogue } from '@/config/experience-manifest'
 import { resolveOverallRatioTarget, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
@@ -145,7 +145,9 @@ describe('back catalogue experiences', () => {
 
         let body = ''
         response.setEncoding('utf8')
-        response.on('data', chunk => { body += chunk })
+        response.on('data', (chunk) => {
+          body += chunk
+        })
         response.on('end', () => {
           try {
             resolve(JSON.parse(body) as Array<{ id: string, title: string, playlistUrl: string }>)
@@ -154,7 +156,8 @@ describe('back catalogue experiences', () => {
             reject(error)
           }
         })
-      }).on('error', reject)
+      })
+        .on('error', reject)
     })
 
     const nonFeaturedAlbums = albums.filter(album => shouldIncludeAlbum(album))

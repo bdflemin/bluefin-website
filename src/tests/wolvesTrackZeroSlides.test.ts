@@ -147,7 +147,7 @@ describe('wolves Track 0 slide locks', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
       'wolves/people/walters.JPG',
       'wolves/people/flickr-54137782365.webp',
-      'wolves/people/kirkland.png',
+      'wolves/people/kirkland.webp',
       'wolves/people/flickr-55343975781.webp',
       'wolves/people/kubecon-55168545279.webp',
     ])
