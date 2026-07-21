@@ -138,11 +138,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/showcase/Screenshot From 2026-01-23 09-32-12.webp',
-    title: 'Screenshot From 2026 01 23 09 32 12',
-  },
-  {
-    type: 'single',
     name: 'wolves/showcase/Screenshot From 2026-02-03 17-43-17.webp',
     title: 'Screenshot From 2026 02 03 17 43 17',
   },
