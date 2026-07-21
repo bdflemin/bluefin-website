@@ -37,9 +37,12 @@ runtime, or hands work to another agent.
    transport, ads, and controls must remain generic. Never use only a numeric
    track index to identify Wolves content.
 
-5. **Commit the complete fix.** Stage explicit paths only. Include regression
-   coverage in the same commit. Use the repository's Conventional Commits
-   format (`type(scope): description`). Do not leave a tested fix uncommitted.
+5. **Commit the complete fix.** First classify every dirty path; never bundle
+   unrelated local deletions into the task. For deleted content, search all
+   manifests, imports, timelines, and generated-data sources before committing.
+   Stage explicit paths only. Include regression coverage in the same commit.
+   Use the repository's Conventional Commits format (`type(scope): description`).
+   Do not leave a tested fix uncommitted.
 
 6. **Push the production remote.**
    ```bash
@@ -49,7 +52,10 @@ runtime, or hands work to another agent.
    Verify the deployment workflow for that exact SHA before calling it live.
 
 7. **Verify production, not just localhost.** Check the deployed URL after the
-   workflow succeeds. Use a hard refresh when testing changed bundles.
+   workflow succeeds. Use a hard refresh when testing changed bundles. For a
+   route with eager manifest loading, open it in Chromium and assert there are
+   no page errors or failed module requests; a successful Vite build is not
+   sufficient.
 
 ## Temporary artifacts
 
@@ -81,12 +87,17 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - A generic album is gated out because it shares a component with Wolves.
 - A custom Worker is deployed to solve a DNS request without approval.
 - A full suite failure is omitted from the completion report.
+- A deleted file remains referenced by `import.meta.glob()`, a manifest, or a
+  narrative timeline.
+- A local build is treated as proof that route initialization succeeds.
 
 ## Verification
 
 - [ ] `git status --short` is clean or remaining files are explicitly explained.
 - [ ] The exact commit is on `upstream/main`.
 - [ ] Relevant unit and browser tests pass.
+- [ ] A browser smoke check opened every affected route with no page errors or
+      failed module requests.
 - [ ] Desktop and mobile rendered bounds were checked for design changes.
 - [ ] Cloudflare changes used `wrangler` and documented permissions.
 - [ ] The exact commit's CI/deploy status is reported.

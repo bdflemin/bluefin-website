@@ -23,9 +23,13 @@ Do not run the full application suite for documentation-only changes.
 
 1. Match checks to changed paths.
 2. Run `git diff --check`.
-3. Inspect `git status --short` and the diff.
-4. Stage explicit paths only.
-5. For a push, verify the exact commit's deployment workflow.
+3. Inspect `git status --short` and the diff; classify unrelated dirty files
+   before staging.
+4. For deletions, search manifest, import, timeline, and generated-data
+   references before committing.
+5. Stage explicit paths only.
+6. For a push, verify the exact commit's deployment workflow and smoke-test the
+   affected route in Chromium for page errors.
 
 Documentation-only check:
 
@@ -55,6 +59,8 @@ npm run build
 - Completion is based only on a local build.
 - A different commit's deployment is cited.
 - Unrelated generated changes are staged.
+- A deletion is committed while a manifest still references the missing file.
+- Only a build is checked for a route that eagerly loads runtime data.
 - `git add .` or `git add -A` is used.
 
 ## Verification
@@ -72,6 +78,8 @@ Production is complete only when the run has the same SHA, status `completed`,
 and conclusion `success`. For multi-entry builds, also smoke-test every path
 listed in `../../reference/production-entrypoints.md`; adding an HTML entry alone
 is insufficient unless the Vite Rollup input and directory redirect include it.
+For runtime manifests, the browser smoke must assert both a non-empty rendered
+body and zero `pageerror` events.
 
 ## References
 

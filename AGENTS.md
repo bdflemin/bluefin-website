@@ -75,14 +75,18 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
 
 ## Worktree safety
 
-- Do not modify unrelated dirty files.
+- Do not modify unrelated dirty files. Before committing local work, classify
+  every dirty path and confirm each deletion has no remaining manifest, import,
+  timeline, or generated-data references.
 - Stage explicit paths only.
 - Never use `git add .` or `git add -A`.
 - Do not use destructive reset or restore commands.
 - Do not hand-edit generated files.
-- Do not claim production completion from a local build.
-- Verify the exact pushed commit's deployment workflow before saying the change
-  is live.
+- Do not claim production completion from a local build. Start the affected
+  route and exercise it in Chromium; build success does not catch eager runtime
+  loaders such as `import.meta.glob()` manifest failures.
+- Verify the exact pushed commit's deployment workflow and affected live route
+  before saying the change is live.
 
 ## Authored content
 

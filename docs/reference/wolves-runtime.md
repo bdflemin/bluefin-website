@@ -22,7 +22,10 @@ player synchronization, or generated files for content work.
 ## Open content surfaces
 
 - Lore: `src/data/lore/*.md` plus a manifest entry in
-  `src/data/wolves-lore-records.ts`.
+  `src/data/wolves-lore-records.ts`. These are coupled records: when deleting a
+  lore file, remove its manifest entry and any
+  `src/data/wolves-narrative-timeline.ts` artifact entry in the same change, or
+  route initialization will fail.
 - Incoming signals: `src/data/wolves-incoming-signal.txt`.
 - Dinosaur registry: `src/data/wolves-dinosaur-species.ts`.
 - Guardian bond data: `src/data/wolves-guardian-dinosaur-bonds.ts`.
@@ -58,5 +61,7 @@ Change source inputs and run the owning generator.
 
 Run the relevant typecheck, tests, and build. For intro, soundtrack, slideshow,
 timeline, or player-synchronized content, verify the affected timestamps with the
-Wolves browser flow and real player. Finish with
+Wolves browser flow and real player. For lore deletions, open `/wolves/` in
+Chromium and assert the page has rendered text with no `pageerror` events; a
+successful build does not prove eager lore loading succeeds. Finish with
 `docs/skills/validation/SKILL.md` before any production claim.
