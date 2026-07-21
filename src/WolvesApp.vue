@@ -292,4 +292,12 @@ onBeforeUnmount(() => {
   width: calc(100vw - 6rem);
   pointer-events: none;
 }
+
+@media (max-width: 640px) {
+  // Keep the mobile intro focused on the transport and the footage. The
+  // desktop plates, captions, and title cards do not fit the narrow viewport.
+  .wc-intro-nameplate {
+    display: none;
+  }
+}
 </style>

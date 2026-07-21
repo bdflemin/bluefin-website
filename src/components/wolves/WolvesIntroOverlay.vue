@@ -1575,6 +1575,14 @@ defineExpose({
   .wolves-companion-plate {
     bottom: max(18%, 12rem);
   }
+
+  /* Mobile keeps the footage and the app-level playback widget only. */
+  .wolves-intro-overlay-burned-captions,
+  .wolves-intro-overlay-title-card,
+  .wolves-guardian-plate-row,
+  .wolves-intro-overlay-text {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
