@@ -153,6 +153,24 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.find('video').exists()).toBe(false)
   })
 
+  it('resets a revisited video to its authored opening offset after YouTube is ready', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          ...videoOnlySequence[0],
+          startOffset: 2,
+        }],
+      },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+
+    expect(players[0].seekTo).toHaveBeenCalledWith(2, true)
+    await wrapper.unmount()
+  })
+
   it('pre-decodes companion artwork before its guardian cue appears', async () => {
     const images: Array<{ src: string, decode: ReturnType<typeof vi.fn> }> = []
 

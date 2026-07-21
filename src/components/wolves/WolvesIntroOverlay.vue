@@ -528,6 +528,12 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
     playerVars,
     events: {
       onReady: () => {
+        // YouTube may restore a prior watch position for a reused video ID even
+        // when playerVars.start is present. Reassert the authored opening frame
+        // after readiness so revisiting Wolves always begins at the beginning.
+        const openingTime = segment.startOffset ?? 0
+        player?.seekTo?.(openingTime, true)
+        currentTime.value = openingTime
         activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
         segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
         stopPolling()
