@@ -22,6 +22,25 @@ describe('wolves cinematic stage status plate', () => {
     setActivePinia(createPinia())
   })
 
+  it('does not mount the authored theater during the intro handoff', () => {
+    const store = useCinematicStore()
+    store.enterIntro()
+
+    const wrapper = mount(CinematicStage, {
+      global: {
+        stubs: {
+          TheaterExperience: { template: '<div class="theater-experience-stub" />' },
+          WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
+          Nameplate: true,
+          CinematicCaptions: true,
+          CinematicTransition: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.theater-experience-stub').exists()).toBe(false)
+  })
+
   it('keeps the generic theater and ads while hiding Wolves-only presentation', async () => {
     const store = useCinematicStore()
     store.loadExperience({

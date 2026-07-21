@@ -68,7 +68,10 @@ defineExpose({
 
     <!-- Authored theater layer over the audio-source video: the 7 Days grid
          (slideshow + lore + thesis) and the later-part CNCF galleries. -->
-    <TheaterExperience />
+    <!-- The authored theater and its documentary embeds belong only to the live
+         cinematic phase. Keep them out of the intro so no companion videos or
+         YouTube chrome can appear beneath the Destiny overlay. -->
+    <TheaterExperience v-if="store.phase === 'cinematic'" />
 
     <WolvesOrgAds />
 

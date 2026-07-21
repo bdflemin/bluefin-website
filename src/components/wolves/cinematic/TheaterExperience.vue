@@ -44,6 +44,9 @@ const trackZeroSidecarSrc = computed(() => {
     // Explicitly reset the documentary to its first frame instead of allowing
     // YouTube's embed state to resume at a previously watched position.
     start: '0',
+    // Pin the playlist cursor as well as the timestamp; otherwise YouTube can
+    // resume a previously watched item when the theater remounts.
+    index: '0',
     playlist: TRACKZERO_SIDECAR_VIDEO_IDS.join(','),
   })
   return `https://www.youtube.com/embed/${firstVideoId}?${params.toString()}`
@@ -104,7 +107,10 @@ watch([isTrackZero, isDesktopViewport], ([trackZero, desktop]) => {
   }
 }, { immediate: true })
 
-const showTrackZeroSidecar = computed(() => isTrackZero.value && isDesktopViewport.value && sidecarReady.value)
+const showTrackZeroSidecar = computed(() => store.phase === 'cinematic'
+  && isTrackZero.value
+  && isDesktopViewport.value
+  && sidecarReady.value)
 
 // Background wallpaper layers, carried over from the original immersive
 // theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack

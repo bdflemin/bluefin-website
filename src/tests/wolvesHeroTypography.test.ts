@@ -74,6 +74,7 @@ describe('wolves track zero video sidecar', () => {
   async function renderTrackZeroAt(viewportWidth: number, segmentIndex = 0) {
     ;(window as any).happyDOM.setViewport({ width: viewportWidth })
     const store = useCinematicStore()
+    store.enterCinematic()
     store.segmentIndex = segmentIndex
     store.updateTime(10, 425, 10)
     const wrapper = mount(TheaterExperience, {
@@ -103,6 +104,7 @@ describe('wolves track zero video sidecar', () => {
     expect(src.searchParams.get('autoplay')).toBe('1')
     expect(src.searchParams.get('mute')).toBe('1')
     expect(src.searchParams.get('loop')).toBe('1')
+    expect(src.searchParams.get('index')).toBe('0')
     expect(src.searchParams.get('controls')).toBe('0')
     expect(src.searchParams.get('playsinline')).toBe('1')
     expect(src.searchParams.get('rel')).toBe('0')
@@ -138,6 +140,27 @@ describe('wolves track zero video sidecar', () => {
     expect(wrapper.find('iframe').exists()).toBe(false)
   })
 
+  it('does not mount the sidecar during the intro phase', async () => {
+    vi.useFakeTimers()
+    ;(window as any).happyDOM.setViewport({ width: 1280 })
+    const store = useCinematicStore()
+    store.enterIntro()
+    store.updateTime(10, 425, 10)
+    const wrapper = mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: true,
+          WolvesLoreColumn: true,
+        },
+      },
+    })
+    await vi.advanceTimersByTimeAsync(1100)
+
+    expect(wrapper.find('[data-trackzero-video-sidecar]').exists()).toBe(false)
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    vi.useRealTimers()
+  })
+
   it('does not mount or render the iframe beneath 1024px, even for Track 0', async () => {
     const wrapper = await renderTrackZeroAt(900)
 
@@ -158,6 +181,7 @@ describe('wolves track zero video sidecar', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue(mediaQueryList as unknown as MediaQueryList)
 
     const store = useCinematicStore()
+    store.enterCinematic()
     store.segmentIndex = 0
     store.updateTime(10, 425, 10)
     const wrapper = mount(TheaterExperience, {
