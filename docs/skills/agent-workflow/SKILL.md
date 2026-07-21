@@ -38,7 +38,8 @@ runtime, or hands work to another agent.
    track index to identify Wolves content.
 
 5. **Commit the complete fix.** Stage explicit paths only. Include regression
-   coverage in the same commit. Do not leave a tested fix uncommitted.
+   coverage in the same commit. Use the repository's Conventional Commits
+   format (`type(scope): description`). Do not leave a tested fix uncommitted.
 
 6. **Push the production remote.**
    ```bash
