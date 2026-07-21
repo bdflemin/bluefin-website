@@ -532,6 +532,7 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         // when playerVars.start is present. Reassert the authored opening frame
         // after readiness so revisiting Wolves always begins at the beginning.
         const openingTime = segment.startOffset ?? 0
+        player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
         player?.seekTo?.(openingTime, true)
         currentTime.value = openingTime
         activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
