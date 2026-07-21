@@ -7,14 +7,8 @@ import kdeImage from '@/assets/wolves/org-ads/kde.svg'
 
 const bazaarImage = `${import.meta.env.BASE_URL}img/bazaar.svg`
 
-export interface WolvesOrgAdQr {
-  qr: string
-  qrAlt: string
-  maintainer: string
-}
-
 export interface WolvesOrgAd {
-  id: 'gnome' | 'kde' | 'bazaar'
+  id: 'gnome' | 'kde' | 'bazaar-eva' | 'bazaar-alex'
   name: string
   href: string
   image: string
@@ -22,7 +16,6 @@ export interface WolvesOrgAd {
   qr: string
   qrAlt: string
   supportLabel?: string
-  qrOptions?: readonly WolvesOrgAdQr[]
 }
 
 export const WOLVES_AD_ROTATION_SECONDS = 30
@@ -39,7 +32,6 @@ export const WOLVES_ORG_AD_PAIRS = [
       qr: gnomeQr,
       qrAlt: 'QR code for GNOME donations',
       supportLabel: 'Support GNOME',
-      qrOptions: undefined,
     },
     {
       id: 'kde',
@@ -50,23 +42,28 @@ export const WOLVES_ORG_AD_PAIRS = [
       qr: kdeQr,
       qrAlt: 'QR code for KDE donations',
       supportLabel: 'Support KDE',
-      qrOptions: undefined,
     },
   ],
   [
     {
-      id: 'bazaar',
-      name: 'Bazaar',
-      href: 'https://usebazaar.com',
+      id: 'bazaar-eva',
+      name: 'Bazaar // Eva',
+      href: 'https://ko-fi.com/kolunmi',
       image: bazaarImage,
       imageAlt: 'Bazaar app store',
       qr: qrKofiKolunmi,
-      qrAlt: 'QR code for Kolunmi on Ko-fi',
-      supportLabel: undefined,
-      qrOptions: [
-        { qr: qrKofiKolunmi, qrAlt: 'QR code for Eva on Ko-fi', maintainer: 'Support Eva' },
-        { qr: qrKofiAlexanderVanHee, qrAlt: 'QR code for Alex on Ko-fi', maintainer: 'Support Alex' },
-      ],
+      qrAlt: 'QR code for Eva on Ko-fi',
+      supportLabel: 'Support Eva',
+    },
+    {
+      id: 'bazaar-alex',
+      name: 'Bazaar // Alex',
+      href: 'https://ko-fi.com/alexandervanhee',
+      image: bazaarImage,
+      imageAlt: 'Bazaar app store',
+      qr: qrKofiAlexanderVanHee,
+      qrAlt: 'QR code for Alex on Ko-fi',
+      supportLabel: 'Support Alex',
     },
   ],
 ] as const satisfies readonly (readonly WolvesOrgAd[])[]

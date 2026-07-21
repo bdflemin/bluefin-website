@@ -42,16 +42,8 @@ const opacities = computed(() => {
         :tabindex="blend.interactivePairIndex === pairIndex ? 0 : -1"
       >
         <img class="wc-org-ad-image" :src="ad.image" :alt="ad.imageAlt">
-        <template v-if="ad.qrOptions?.length">
-          <div v-for="option in ad.qrOptions" :key="option.maintainer" class="wc-org-ad-qr-option">
-            <img class="wc-org-ad-qr" :src="option.qr" :alt="option.qrAlt">
-            <span class="wc-org-ad-qr-maintainer">{{ option.maintainer }}</span>
-          </div>
-        </template>
-        <template v-else>
-          <img class="wc-org-ad-qr" :src="ad.qr" :alt="ad.qrAlt">
-          <span v-if="ad.supportLabel" class="wc-org-ad-qr-maintainer">{{ ad.supportLabel }}</span>
-        </template>
+        <img class="wc-org-ad-qr" :src="ad.qr" :alt="ad.qrAlt">
+        <span v-if="ad.supportLabel" class="wc-org-ad-qr-maintainer">{{ ad.supportLabel }}</span>
       </a>
     </div>
   </div>
@@ -111,24 +103,6 @@ const opacities = computed(() => {
   width: 100%;
   max-height: 45%;
   object-fit: contain;
-}
-
-.wc-org-ad-qr-option {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
-}
-
-.wc-org-ad-qr-option .wc-org-ad-qr {
-  width: min(100%, 12rem);
-  max-height: none;
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
 .wc-org-ad-qr-maintainer {
