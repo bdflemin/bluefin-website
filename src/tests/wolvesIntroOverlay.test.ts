@@ -219,7 +219,7 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
 
     expect(players[0].config.playerVars.cc_load_policy).toBe(0)
-    expect(players[0].config.playerVars.autohide).toBe(1)
+    expect(players[0].config.playerVars.controls).toBe(0)
   })
 
   it('advances to done and emits complete when the video ends', async () => {

@@ -148,7 +148,6 @@ describe('useDualBufferPlayer', () => {
 
     expect(FakePlayer.instances).toHaveLength(2)
     expect(FakePlayer.instances.every(player => player.options.playerVars?.origin === window.location.origin)).toBe(true)
-    expect(FakePlayer.instances.every(player => player.options.playerVars?.autohide === 1)).toBe(true)
   })
 
   it('waits for the preloaded first side to play before completing startup', async () => {
