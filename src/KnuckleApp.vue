@@ -18,14 +18,19 @@ const isLoading = ref(true)
 const whyBox1Open = ref(true)
 const whyBox2Open = ref(true)
 onBeforeMount(() => {
-  const img = new Image()
-  img.src = `${baseUrl}characters/karl.webp`
-  img.onload = () => setTimeout(() => {
-    isLoading.value = false
-  }, 100)
-  img.onerror = () => {
-    isLoading.value = false
-  }
+  const artwork = ['karl.webp', 'alamosaurus.webp'].map((name) => {
+    const img = new Image()
+    img.src = `${baseUrl}characters/${name}`
+    return new Promise<void>((resolve) => {
+      img.onload = () => resolve()
+      img.onerror = () => resolve()
+    })
+  })
+  Promise.all(artwork).finally(() => {
+    setTimeout(() => {
+      isLoading.value = false
+    }, 100)
+  })
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -40,6 +45,14 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     <PageLoading v-if="isLoading" />
     <TopNavbar v-show="!isLoading" />
 
+    <img
+      v-show="!isLoading"
+      class="alamo"
+      :src="`${baseUrl}characters/alamosaurus.webp`"
+      alt=""
+      fetchpriority="high"
+      aria-hidden="true"
+    >
     <img
       v-show="!isLoading"
       class="karl"
@@ -194,11 +207,11 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   }
 }
 
-// Karl: right side, original orientation (faces left, towards content)
+// The server dinosaurs bookend the centered content column and face each other.
+.alamo,
 .karl {
   position: fixed;
   bottom: -10px;
-  right: 0;
   height: 50vh;
   width: auto;
   z-index: 3;
@@ -206,11 +219,19 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   user-select: none;
   filter: drop-shadow(0 0 40px rgba(var(--color-blue-rgb), 0.3));
   object-fit: contain;
-  object-position: bottom right;
+  object-position: bottom center;
 
   @media (max-width: 1023px) {
     display: none;
   }
+}
+
+.alamo {
+  left: 0;
+}
+
+.karl {
+  right: 0;
 }
 
 %col-glass {

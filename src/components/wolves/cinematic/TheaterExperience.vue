@@ -448,10 +448,18 @@ onBeforeUnmount(() => {
 }
 
 .wc-trackzero-video-title {
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-left: 2px solid #38bdf8;
+  border-radius: 0.25rem;
+  background: rgb(8 9 12 / 78%);
   color: #38bdf8;
   font-size: 0.9rem;
   letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
 .wc-trackzero-video-frame {

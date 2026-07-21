@@ -10,7 +10,7 @@ const template = templateMatch?.[1] ?? ''
 const styleMatch = src.match(/<style[^>]*>([\s\S]*?)<\/style>/)
 const style = styleMatch?.[1] ?? ''
 
-describe('knuckleApp layout — single-column centered layout with Karl fixed on the right', () => {
+describe('knuckleApp layout — single-column centered layout with server dinosaurs bookending the page', () => {
   it('col-left-stack is the main column container', () => {
     expect(template).toContain('col-left-stack')
   })
@@ -38,6 +38,13 @@ describe('knuckleApp layout — single-column centered layout with Karl fixed on
   it('knuckle-layout centers content with align-items: center', () => {
     const layoutBlock = style.slice(style.indexOf('.knuckle-layout'))
     expect(layoutBlock).toContain('align-items: center')
+  })
+
+  it('adds Alamo opposite Karl in the page artwork', () => {
+    expect(template).toContain('class="alamo"')
+    expect(template).toContain('characters/alamosaurus.webp')
+    expect(style).toContain('.alamo')
+    expect(style).toContain('left: 0')
   })
 
   it('karl uses position: fixed so it stays on the right side while scrolling', () => {
