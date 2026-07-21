@@ -474,7 +474,14 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // 4. Chanting Bridge [~229, ~277] -> 24 people wallpapers; 6-beat holds
   // tightening to 4-beat as the chant gathers.
   const peoplePool2 = shuffledPeople.slice(15, 39)
-  const sec4Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.buildStart, peoplePool2.length, [6, 4])
+  const sec4Cuts = trackZeroBeatCutsWithPickup(
+    currentTime,
+    244,
+    TRACK_ZERO_SECTIONS.buildStart,
+    peoplePool2.length,
+    6,
+    4,
+  )
   peoplePool2.forEach((item, index) => {
     const endTime = sec4Cuts[index]
     result.push({
