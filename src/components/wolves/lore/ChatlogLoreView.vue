@@ -36,10 +36,10 @@ function scrollViewport() {
   void nextTick(() => {
     const viewport = quoteViewportRef.value
     if (viewport) {
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior: 'smooth',
-      })
+      // Smooth scrolling queues animations faster than the typewriter can
+      // finish them, leaving the lore visibly behind. Set the scroll position
+      // after layout so every authored beat stays pinned to the latest text.
+      viewport.scrollTop = viewport.scrollHeight
     }
     scrollPending = false
   })
@@ -525,8 +525,8 @@ onBeforeUnmount(clearTypewriter)
   margin: 6px 0 0;
   color: rgba(255, 255, 255, 0.9);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.15rem;
-  line-height: 1.65;
+  font-size: 1.35rem;
+  line-height: 1.55;
   white-space: pre-wrap;
 }
 
