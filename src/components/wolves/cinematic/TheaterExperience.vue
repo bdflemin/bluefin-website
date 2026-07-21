@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
             <iframe
               :src="trackZeroSidecarSrc"
               title="Track 0 companion video loop"
-              allow="autoplay; encrypted-media"
+              allow="autoplay; encrypted-media; picture-in-picture"
               frameborder="0"
             />
           </div>
@@ -471,7 +471,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   border: 0;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .wc-thesis {
