@@ -54,16 +54,17 @@ const IFRAME_API_SRC = 'https://www.youtube.com/iframe_api'
 
 let apiPromise: Promise<void> | null = null
 
+// Supported YouTube IFrame parameters. Deprecated branding/UI flags such as
+// `showinfo`, `autohide`, and `modestbranding` are intentionally omitted: the
+// current API ignores them and they do not remove YouTube branding overlays.
 const CHROME_FREE_YOUTUBE_PLAYER_VARS = {
   controls: 0,
-  rel: 0,
-  iv_load_policy: 3,
+  cc_load_policy: 0,
   disablekb: 1,
   fs: 0,
+  iv_load_policy: 3,
   playsinline: 1,
-  modestbranding: 1,
-  showinfo: 0,
-  autohide: 1,
+  rel: 0,
 } as const
 
 export function getChromeFreeYoutubePlayerVars(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -77,7 +78,8 @@ export function getChromeFreeYoutubePlayerVars(overrides: Record<string, unknown
 
 export function getChromeFreeYoutubeEmbedParams(overrides: Record<string, unknown> = {}): URLSearchParams {
   const params = new URLSearchParams()
-  for (const [key, value] of Object.entries({ ...CHROME_FREE_YOUTUBE_PLAYER_VARS, ...overrides })) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : undefined
+  for (const [key, value] of Object.entries({ ...CHROME_FREE_YOUTUBE_PLAYER_VARS, ...overrides, ...(origin ? { origin } : {}) })) {
     if (value == null) {
       continue
     }
