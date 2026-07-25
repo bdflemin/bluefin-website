@@ -1,0 +1,81 @@
+{
+  "characters": [
+    {
+      "slug": "bob",
+      "shortName": "Bob",
+      "label": "TRUSTEE // GUARDIAN",
+      "class": "Voidwalker Warlock",
+      "name": "Bob Killen",
+      "title": "Reconciler of the Plane",
+      "card": "wolves/characters/bob.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=5",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "kat",
+      "shortName": "Kat",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Sentinel Titan",
+      "name": "Kat Cosgrove",
+      "title": "Defender Queen of the Lost",
+      "card": "wolves/characters/kat.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=14",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "kaslin",
+      "shortName": "Kaslin",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Stormcaller Warlock",
+      "name": "Kaslin Fields",
+      "title": "Rage of the Paradox",
+      "card": "wolves/characters/kaslin.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=38",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "laura",
+      "shortName": "Laura",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Gunslinger Hunter",
+      "name": "Laura Santamaria",
+      "title": "The Order of Seven",
+      "card": "wolves/characters/laura.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=70",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "christoph",
+      "shortName": "Christoph",
+      "label": "TRUSTEE // GUARDIAN",
+      "class": "Broodweaver Warlock",
+      "name": "Christoph Blecker",
+      "title": "First Among Equals — The North Star",
+      "card": "wolves/characters/christoph.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=83",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "natali",
+      "shortName": "Natali",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Behemoth Titan",
+      "name": "Natali Vlatko",
+      "title": "Shipwright of Kubernetes",
+      "card": "wolves/characters/natali.png",
+      "watchUrl": "https://youtu.be/BV3BZKbpBns?t=87",
+      "videoTitle": "Destiny 2: Into the Light Cinematic"
+    },
+    {
+      "slug": "andy",
+      "shortName": "Andy",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Shadebinder Warlock",
+      "name": "Doctor Andy Anderson",
+      "title": "Foundry of the Forbidden",
+      "card": "wolves/characters/andy.png",
+      "watchUrl": "https://youtu.be/Mcwyz09Q--o?t=12",
+      "videoTitle": "Destiny 2: Beyond Light – Warlock Shadebinder Gameplay Trailer"
+    }
+  ]
+}

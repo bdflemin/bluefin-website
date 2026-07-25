@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
+import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
 const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest] }>()
@@ -57,6 +58,7 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       </blockquote>
       <WolvesQrCodes />
       <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
+      <WolvesCharacterGallery />
     </div>
   </div>
 </template>

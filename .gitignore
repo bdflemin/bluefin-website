@@ -24,3 +24,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Guardian card intermediates: scene stills are re-capturable from the official embeds
+scripts/guardian-cards/scenes/
