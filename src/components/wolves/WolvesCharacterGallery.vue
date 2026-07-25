@@ -207,6 +207,17 @@ onMounted(async () => {
         </ul>
         <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-fund">Incoming option</span>
+        <span class="wc-character-tier-name">Bluefin and Mechaphippy Kids Coloring Adventure</span>
+        <img
+          class="wc-character-tier-shirt wc-character-tier-shirt--wide"
+          :src="`${baseUrl}wolves/characters/mechaphippy.jpg`"
+          alt="Mechaphippy model kit sample for the Bluefin and Mechaphippy Kids Coloring Adventure"
+          loading="lazy"
+        >
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
       Destiny 2 © Bungie, Inc. Fan-made, non-commercial community art — not affiliated with or endorsed by Bungie.
@@ -381,6 +392,10 @@ onMounted(async () => {
   aspect-ratio: 1 / 1;
   object-fit: cover;
   display: block;
+}
+
+.wc-character-tier-shirt--wide {
+  aspect-ratio: auto;
 }
 
 .wc-character-tier-amount {
