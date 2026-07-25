@@ -23,6 +23,44 @@ interface CharacterCard {
 
 const characters = ref<CharacterCard[]>([])
 
+interface DonationTier {
+  amount: string
+  fund: string
+  name: string
+  perks: string[]
+}
+
+const donationTiers: DonationTier[] = [
+  {
+    amount: '$1,000',
+    fund: 'Corporate donation to Wolves',
+    name: 'Fireteam Hero',
+    perks: ['Entire team two-page hero shot in the comic.'],
+  },
+  {
+    amount: '$1,000',
+    fund: 'Donation to the Dan Kohn Fund',
+    name: 'Livery Sponsor',
+    perks: ['The team is branded in your org\u2019s livery.'],
+  },
+  {
+    amount: '$10,000',
+    fund: 'Donation to the Dan Kohn Fund',
+    name: 'Founding Funder',
+    perks: ['Founding Funder of the Bluefin Universe.'],
+  },
+  {
+    amount: '$15,000',
+    fund: 'Dan Kohn Donation',
+    name: 'Childhood\u2019s End',
+    perks: [
+      'Chris Aniszczyk wears your company\u2019s shirt when meeting his demise at the business end of a T-Rex at KubeCon.',
+      'Special Edition, Limited Print Launch Edition, signed by CNCF Maintainers of Great Renown.',
+      'Exclusive rights to print distribution at your booth for a two-year exclusivity period.',
+    ],
+  },
+]
+
 function resolveCard(card: string): string {
   return `${import.meta.env.BASE_URL}${card}`
 }
@@ -48,6 +86,10 @@ onMounted(async () => {
       IMMORTALIZE A MAINTAINER
     </p>
     <div class="wc-hairline" />
+    <blockquote class="wc-character-gallery-rally">
+      “We need as many Guardians as we can. The Toilmaster is coming, open
+      source needs your help. Our Childhood’s End. Open Source fights back!”
+    </blockquote>
     <p class="wc-character-gallery-intro">
       Every donation immortalizes the maintainers who inspired this project. Real
       artists will work directly with each maintainer to represent their vision of
@@ -84,6 +126,34 @@ onMounted(async () => {
         </a>
       </article>
     </div>
+    <p class="wc-label wc-character-gallery-subheading">
+      CORPORATE DONATION TIERS
+    </p>
+    <div class="wc-hairline" />
+    <div class="wc-character-tiers">
+      <article
+        v-for="tier in donationTiers"
+        :key="`${tier.amount}-${tier.name}`"
+        class="wc-character-tier wc-plate"
+      >
+        <span class="wc-character-tier-amount">{{ tier.amount }}</span>
+        <span class="wc-character-tier-fund">{{ tier.fund }}</span>
+        <span class="wc-character-tier-name">{{ tier.name }}</span>
+        <ul class="wc-character-tier-perks">
+          <li v-for="perk in tier.perks" :key="perk">
+            {{ perk }}
+          </li>
+        </ul>
+        <a
+          class="wc-character-card-donate"
+          :href="DONATE_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DONATE {{ tier.amount }}
+        </a>
+      </article>
+    </div>
     <p class="wc-character-gallery-disclaimer">
       Destiny 2 © Bungie, Inc. Fan-made, non-commercial community art — not affiliated with or endorsed by Bungie.
     </p>
@@ -101,6 +171,17 @@ onMounted(async () => {
 .wc-character-gallery-heading {
   font-size: clamp(1.3rem, 1.3vw, 1.6rem);
   letter-spacing: 0.4em;
+}
+
+.wc-character-gallery-rally {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.6vw, 1.9rem);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: var(--wc-white);
+  max-width: 56ch;
 }
 
 .wc-character-gallery-intro {
@@ -182,6 +263,63 @@ onMounted(async () => {
   font-family: var(--wc-font-mono);
   font-size: 1rem;
   line-height: 1.5;
+  color: var(--wc-grey);
+}
+
+.wc-character-gallery-subheading {
+  margin-top: 1.6rem;
+  font-size: clamp(1.2rem, 1.2vw, 1.5rem);
+  letter-spacing: 0.4em;
+}
+
+.wc-character-tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  gap: 1.6rem;
+}
+
+.wc-character-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.6rem;
+  text-align: left;
+  transition: border-color 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--wc-gold);
+  }
+}
+
+.wc-character-tier-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--wc-gold);
+}
+
+.wc-character-tier-fund {
+  font-family: var(--wc-font-mono);
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wc-grey);
+}
+
+.wc-character-tier-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--wc-white);
+}
+
+.wc-character-tier-perks {
+  margin: 0;
+  padding-left: 1.6rem;
+  font-family: var(--wc-font-mono);
+  font-size: 1.1rem;
+  line-height: 1.6;
   color: var(--wc-grey);
 }
 </style>
