@@ -88,7 +88,7 @@ onMounted(async () => {
 <template>
   <section class="wc-character-gallery" aria-label="Character Gallery">
     <p class="wc-label wc-character-gallery-heading">
-      IMMORTALIZE A MAINTAINER
+      LEVEL UP A MAINTAINER
     </p>
     <div class="wc-hairline" />
     <blockquote class="wc-character-gallery-rally">
@@ -96,10 +96,11 @@ onMounted(async () => {
       source needs your help. Our Childhood’s End. Open Source fights back!”
     </blockquote>
     <p class="wc-character-gallery-intro">
-      Every donation commissions real comic book pages: artists will work
-      directly with each maintainer to represent their vision of themselves in
-      the Bluefin universe. The more maintainers you sponsor, the more the
-      comic book comes together — page by page, guardian by guardian.
+      Every donation levels up a guardian — raising their power level and
+      commissioning real comic book pages: artists will work directly with
+      each maintainer to represent their vision of themselves in the Bluefin
+      universe. The more maintainers you sponsor, the more the comic book
+      comes together — page by page, guardian by guardian.
     </p>
     <div v-if="characters.length > 0" class="wc-character-gallery-grid">
       <article
@@ -128,7 +129,7 @@ onMounted(async () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          DONATE TO IMMORTALIZE {{ character.shortName.toUpperCase() }}
+          DONATE TO LEVEL UP {{ character.shortName.toUpperCase() }}
         </a>
       </article>
     </div>

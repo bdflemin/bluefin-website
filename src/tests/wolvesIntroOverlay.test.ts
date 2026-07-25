@@ -272,7 +272,7 @@ describe('wolvesIntroOverlay video segments', () => {
 
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
     expect(wrapper.text()).toContain('Made by Paid Artists')
-    expect(wrapper.get('[data-comic-hero-qr-dialogue]').text()).toBe('Immortalize a Maintainer')
+    expect(wrapper.get('[data-comic-hero-qr-dialogue]').text()).toBe('Level Up a Maintainer')
     expect(wrapper.text()).toContain('makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-link]').attributes('aria-label')).toBe('Open makemeacomic.com')
