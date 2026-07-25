@@ -185,6 +185,11 @@ onMounted(async () => {
         </a>
         <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-fund">Incoming option</span>
+        <span class="wc-character-tier-name">Buy a CNCF Store Coupon for a Maintainer</span>
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
       Destiny 2 © Bungie, Inc. Fan-made, non-commercial community art — not affiliated with or endorsed by Bungie.
