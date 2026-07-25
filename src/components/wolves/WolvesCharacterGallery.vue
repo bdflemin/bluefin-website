@@ -208,6 +208,12 @@ onMounted(async () => {
         <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
       <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-amount">$30</span>
+        <span class="wc-character-tier-fund">Incoming option · to Natali</span>
+        <span class="wc-character-tier-name">Natali "Boss Bitch" &amp; Alamo Tshirt</span>
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
         <span class="wc-character-tier-fund">Incoming option</span>
         <span class="wc-character-tier-name">Bluefin and Mechaphippy Kids Coloring Adventure</span>
         <img
