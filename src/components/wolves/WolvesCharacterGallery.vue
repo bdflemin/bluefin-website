@@ -190,6 +190,23 @@ onMounted(async () => {
         <span class="wc-character-tier-name">Buy a CNCF Store Coupon for a Maintainer</span>
         <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-amount">$15</span>
+        <span class="wc-character-tier-fund">Incoming option · to Nat/Kat</span>
+        <span class="wc-character-tier-name">"Harbringer: Sisters of War" Limited Edition Concert Tshirt</span>
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-amount">$5</span>
+        <span class="wc-character-tier-fund">Incoming option · Donation</span>
+        <span class="wc-character-tier-name">nimbatus // laura santa maria — Bluefin and the Forbidden Factory Gold Foil Collectible</span>
+        <ul class="wc-character-tier-perks">
+          <li>Signed by Laura, Limited Edition.</li>
+          <li>bootc booth, Project Pavilion.</li>
+          <li>Limited to 100.</li>
+        </ul>
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
       Destiny 2 © Bungie, Inc. Fan-made, non-commercial community art — not affiliated with or endorsed by Bungie.
