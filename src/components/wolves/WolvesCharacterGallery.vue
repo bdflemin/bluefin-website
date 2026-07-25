@@ -6,8 +6,11 @@
  * scene in the official Destiny 2 trailer on YouTube.
  */
 import { onMounted, ref } from 'vue'
+import qrDonate from '@/assets/svg/qr-donate.svg'
+import qrStore from '@/assets/svg/qr-store.svg'
 
 const DONATE_URL = 'https://github.com/sponsors/castrojo'
+const GUARDIAN_DONATE_URL = 'https://makemeacomic.com'
 
 interface CharacterCard {
   slug: string
@@ -83,7 +86,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section v-if="characters.length > 0" class="wc-character-gallery" aria-label="Character Gallery">
+  <section class="wc-character-gallery" aria-label="Character Gallery">
     <p class="wc-label wc-character-gallery-heading">
       IMMORTALIZE A MAINTAINER
     </p>
@@ -98,7 +101,7 @@ onMounted(async () => {
       the Bluefin universe. The more maintainers you sponsor, the more the
       comic book comes together — page by page, guardian by guardian.
     </p>
-    <div class="wc-character-gallery-grid">
+    <div v-if="characters.length > 0" class="wc-character-gallery-grid">
       <article
         v-for="character in characters"
         :key="character.slug"
@@ -121,12 +124,46 @@ onMounted(async () => {
         <span class="wc-character-card-sub">{{ character.class }} · {{ character.title }}</span>
         <a
           class="wc-character-card-donate"
-          :href="DONATE_URL"
+          :href="GUARDIAN_DONATE_URL"
           target="_blank"
           rel="noopener noreferrer"
         >
           DONATE TO IMMORTALIZE {{ character.shortName.toUpperCase() }}
         </a>
+      </article>
+    </div>
+    <div class="wc-character-qr">
+      <article class="wc-character-tier wc-character-tier--qr wc-plate">
+        <span class="wc-character-tier-fund">Support the mission</span>
+        <span class="wc-character-tier-name">Donate to Project Bluefin</span>
+        <div class="wc-character-qr-box">
+          <img :src="qrDonate" alt="QR code for Project Bluefin donations">
+        </div>
+        <a
+          class="wc-character-card-donate"
+          :href="DONATE_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DONATE
+        </a>
+        <span class="wc-character-qr-domain">github.com/sponsors/castrojo</span>
+      </article>
+      <article class="wc-character-tier wc-character-tier--qr wc-plate">
+        <span class="wc-character-tier-fund">Support the mission</span>
+        <span class="wc-character-tier-name">Store</span>
+        <div class="wc-character-qr-box">
+          <img :src="qrStore" alt="QR code for the Project Bluefin store">
+        </div>
+        <a
+          class="wc-character-card-donate"
+          href="https://store.projectbluefin.io"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          VISIT STORE
+        </a>
+        <span class="wc-character-qr-domain">store.projectbluefin.io</span>
       </article>
     </div>
     <p class="wc-label wc-character-gallery-subheading">
@@ -337,6 +374,44 @@ onMounted(async () => {
   margin-top: 1.6rem;
   font-size: clamp(1.2rem, 1.2vw, 1.5rem);
   letter-spacing: 0.4em;
+}
+
+// Store and donate QR plates, directly under the guardians.
+.wc-character-qr {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1.6rem;
+}
+
+.wc-character-tier--qr {
+  align-items: center;
+  text-align: center;
+
+  .wc-character-card-donate {
+    align-self: center;
+  }
+}
+
+.wc-character-qr-box {
+  align-self: center;
+  width: 16rem;
+  height: 16rem;
+  padding: 1.2rem;
+  background: #0c1016;
+  border: 1px solid var(--wc-line);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.wc-character-qr-domain {
+  font-family: var(--wc-font-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: var(--wc-grey);
 }
 
 .wc-character-gallery-proveit {
