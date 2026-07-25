@@ -166,15 +166,19 @@ onMounted(async () => {
           DONATE {{ tier.amount }}
         </a>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
-        <span class="wc-character-tier-amount">OPENROUTER TOKENS</span>
+    </div>
+    <p class="wc-label wc-character-gallery-subheading wc-character-incoming-heading">
+      MORE OPTIONS — COMING SOON
+    </p>
+    <div class="wc-hairline wc-hairline--dashed" />
+    <div class="wc-character-incoming">
+      <article class="wc-character-incoming-item wc-plate">
         <span class="wc-character-tier-fund">Incoming option</span>
-        <span class="wc-character-tier-name">Donate OpenRouter tokens to Hive for an OSS project</span>
-        <span class="wc-character-tier-coming">COMING SOON</span>
+        <span class="wc-character-incoming-name">Donate OpenRouter tokens to Hive for an OSS project</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+      <article class="wc-character-incoming-item wc-plate">
         <span class="wc-character-tier-fund">Incoming option</span>
-        <span class="wc-character-tier-name">Buy a maintainer a Bluefin Shirt</span>
+        <span class="wc-character-incoming-name">Buy a maintainer a Bluefin Shirt</span>
         <a href="https://store.projectbluefin.io" target="_blank" rel="noopener noreferrer">
           <img
             class="wc-character-tier-shirt"
@@ -183,46 +187,33 @@ onMounted(async () => {
             loading="lazy"
           >
         </a>
-        <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+      <article class="wc-character-incoming-item wc-plate">
         <span class="wc-character-tier-fund">Incoming option</span>
-        <span class="wc-character-tier-name">Buy a CNCF Store Coupon for a Maintainer</span>
-        <span class="wc-character-tier-coming">COMING SOON</span>
+        <span class="wc-character-incoming-name">Buy a CNCF Store Coupon for a Maintainer</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
-        <span class="wc-character-tier-amount">$15</span>
-        <span class="wc-character-tier-fund">Incoming option · to Nat/Kat</span>
-        <span class="wc-character-tier-name">"Harbringer: Sisters of War" Limited Edition Concert Tshirt</span>
-        <span class="wc-character-tier-coming">COMING SOON</span>
+      <article class="wc-character-incoming-item wc-plate">
+        <span class="wc-character-tier-fund">$15 · to Nat/Kat</span>
+        <span class="wc-character-incoming-name">"Harbringer: Sisters of War" Limited Edition Concert Tshirt</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
-        <span class="wc-character-tier-amount">$5</span>
-        <span class="wc-character-tier-fund">Incoming option · Donation</span>
-        <span class="wc-character-tier-name">nimbatus // laura santa maria — Bluefin and the Forbidden Factory Gold Foil Collectible</span>
-        <ul class="wc-character-tier-perks">
-          <li>Signed by Laura, Limited Edition.</li>
-          <li>bootc booth, Project Pavilion.</li>
-          <li>Limited to 100.</li>
-        </ul>
-        <span class="wc-character-tier-coming">COMING SOON</span>
+      <article class="wc-character-incoming-item wc-plate">
+        <span class="wc-character-tier-fund">$5 · Donation</span>
+        <span class="wc-character-incoming-name">nimbatus // laura santa maria — Bluefin and the Forbidden Factory Gold Foil Collectible</span>
+        <span class="wc-character-incoming-detail">Signed by Laura, Limited Edition. bootc booth, Project Pavilion. Limited to 100.</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
-        <span class="wc-character-tier-amount">$30</span>
-        <span class="wc-character-tier-fund">Incoming option · to Natali</span>
-        <span class="wc-character-tier-name">Natali "Boss Bitch" &amp; Alamo Tshirt</span>
-        <span class="wc-character-tier-coming">COMING SOON</span>
+      <article class="wc-character-incoming-item wc-plate">
+        <span class="wc-character-tier-fund">$30 · to Natali</span>
+        <span class="wc-character-incoming-name">Natali "Boss Bitch" &amp; Alamo Tshirt</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+      <article class="wc-character-incoming-item wc-plate">
         <span class="wc-character-tier-fund">Incoming option</span>
-        <span class="wc-character-tier-name">Bluefin and Mechaphippy Kids Coloring Adventure</span>
+        <span class="wc-character-incoming-name">Bluefin and Mechaphippy Kids Coloring Adventure</span>
         <img
           class="wc-character-tier-shirt wc-character-tier-shirt--wide"
           :src="`${baseUrl}wolves/characters/mechaphippy.jpg`"
           alt="Mechaphippy model kit sample for the Bluefin and Mechaphippy Kids Coloring Adventure"
           loading="lazy"
         >
-        <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
@@ -371,25 +362,45 @@ onMounted(async () => {
   }
 }
 
-.wc-character-tier--placeholder {
-  opacity: 0.55;
-  filter: grayscale(1);
-
-  &:hover,
-  &:focus-within {
-    border-color: inherit;
-  }
+.wc-character-incoming-heading {
+  color: var(--wc-grey);
 }
 
-.wc-character-tier-coming {
-  align-self: flex-start;
-  margin-top: 0.4rem;
-  padding: 0.6rem 1.4rem;
-  border: 1px dashed var(--wc-grey);
-  font-family: var(--wc-font-mono);
-  font-size: 1.1rem;
+.wc-hairline--dashed {
+  height: 0;
+  background: none;
+  border-top: 1px dashed var(--wc-line);
+}
+
+// Incoming options: deliberately quieter than the live tiers.
+.wc-character-incoming {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.wc-character-incoming-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.2rem;
+  text-align: left;
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.wc-character-incoming-name {
+  font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
+  color: var(--wc-white);
+}
+
+.wc-character-incoming-detail {
+  font-family: var(--wc-font-mono);
+  font-size: 1rem;
+  line-height: 1.5;
   color: var(--wc-grey);
 }
 

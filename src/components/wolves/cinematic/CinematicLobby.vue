@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
@@ -7,10 +8,39 @@ import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest] }>()
 
 const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.webp`
+
+// Mission waypoint: once the hero enter button scrolls away, a thin HUD bar
+// keeps the trip through Wolves one click away above the maintainer dispatch.
+const enterButton = ref<HTMLElement | null>(null)
+const waypointVisible = ref(false)
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  if (!enterButton.value || typeof IntersectionObserver === 'undefined') {
+    return
+  }
+  observer = new IntersectionObserver(([entry]) => {
+    waypointVisible.value = !entry.isIntersecting
+  })
+  observer.observe(enterButton.value)
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+})
 </script>
 
 <template>
   <div class="wc-lobby" :style="{ '--wc-lobby-background': `url('${lobbyBackground}')` }">
+    <Transition name="wc-waypoint">
+      <div v-if="waypointVisible" class="wc-waypoint wc-plate">
+        <span class="wc-waypoint-title">SEVEN DAYS TO THE WOLVES</span>
+        <span class="wc-label wc-waypoint-status">COMING IN 2027</span>
+        <button class="wc-waypoint-enter" type="button" @click="emit('enter')">
+          MEET YOUR TEAMMATES
+        </button>
+      </div>
+    </Transition>
     <div class="wc-lobby-frame">
       <p class="wc-label wc-lobby-brand">
         PROJECT BLUEFIN PRESENTS
@@ -28,12 +58,20 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       </p>
 
       <button
+        ref="enterButton"
         class="wc-lobby-enter wc-plate"
         type="button"
         @click="emit('enter')"
       >
         MEET YOUR TEAMMATES
       </button>
+
+      <div class="wc-lobby-dispatch">
+        <span class="wc-lobby-dispatch-dot" aria-hidden="true" />
+        <span class="wc-label">PRIORITY DISPATCH // MAINTAINERS NEEDED</span>
+      </div>
+
+      <WolvesCharacterGallery />
 
       <blockquote class="wc-lobby-quote wc-plate wc-plate--sheen">
         <p>
@@ -58,7 +96,6 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       </blockquote>
       <WolvesQrCodes />
       <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
-      <WolvesCharacterGallery />
     </div>
   </div>
 </template>
@@ -105,6 +142,97 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
   gap: clamp(1.6rem, 2.4vh, 2.6rem);
   width: min(78rem, 100%);
   text-align: center;
+}
+
+// Tactical HUD bar pinned once the hero enter button scrolls away.
+.wc-waypoint {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  width: min(78rem, calc(100% - 2rem));
+  margin-top: 0.6rem;
+  padding: 0.7rem 1.6rem;
+}
+
+.wc-waypoint-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--wc-white);
+  white-space: nowrap;
+}
+
+.wc-waypoint-status {
+  font-size: 1rem;
+}
+
+.wc-waypoint-enter {
+  padding: 0.5rem 1.6rem;
+  border: 1px solid var(--wc-gold);
+  background: none;
+  font-family: var(--wc-font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--wc-gold);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--wc-gold);
+    color: var(--wc-bg);
+  }
+}
+
+.wc-waypoint-enter-active,
+.wc-waypoint-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.wc-waypoint-enter-from,
+.wc-waypoint-leave-to {
+  opacity: 0;
+}
+
+// Dispatch strip: hands the reader from the trip to the maintainer call.
+.wc-lobby-dispatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.wc-lobby-dispatch-dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--wc-gold);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: wc-dispatch-pulse 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes wc-dispatch-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .wc-lobby-brand {
@@ -230,6 +358,20 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
 
   .wc-lobby-quote {
     padding: 1.8rem;
+  }
+
+  .wc-waypoint {
+    gap: 0.8rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .wc-waypoint-title {
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+  }
+
+  .wc-waypoint-status {
+    display: none;
   }
 }
 </style>
