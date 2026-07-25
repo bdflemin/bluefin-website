@@ -106,6 +106,13 @@ const upcomingGuardians: UpcomingGuardian[] = [
     class: '[Redacted]',
     donateUrl: 'https://donate.gnome.org',
   },
+  {
+    slug: 'zachriel',
+    shortName: 'Zachriel',
+    name: 'Zachriel',
+    class: '[Coming soon]',
+    donateUrl: GUARDIAN_DONATE_URL,
+  },
 ]
 
 onMounted(async () => {
