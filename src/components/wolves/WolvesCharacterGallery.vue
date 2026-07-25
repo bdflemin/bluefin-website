@@ -336,6 +336,10 @@ onMounted(async () => {
         <span class="wc-character-incoming-name">"Doctor Andy Anderson" Forbidden Factory Standard Issue Coffee Mug</span>
         <span class="wc-character-incoming-detail">"I'm actually on the beach."</span>
       </article>
+      <article class="wc-character-incoming-item wc-plate">
+        <span class="wc-character-tier-fund">Incoming option</span>
+        <span class="wc-character-incoming-name">Buy an OGC Maintainer Steam Gift Card</span>
+      </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
       Destiny 2 © Bungie, Inc. Fan-made, non-commercial community art — not affiliated with or endorsed by Bungie.
