@@ -131,6 +131,16 @@ onMounted(async () => {
       CORPORATE DONATION TIERS
     </p>
     <div class="wc-hairline" />
+    <p class="wc-character-gallery-intro">
+      The Dan Kohn Fund is the simplest way your organization can help a
+      maintainer accomplish the thing that helps them do this job the most.
+      Meet with their colleagues, in real life. At a time where AI is
+      challenging our human connections - now more than ever, help us. We need
+      each other, we can't do this alone.
+    </p>
+    <p class="wc-character-gallery-proveit">
+      You all say "We support maintainers." Prove it.
+    </p>
     <div class="wc-character-tiers">
       <article
         v-for="tier in donationTiers"
@@ -153,6 +163,12 @@ onMounted(async () => {
         >
           DONATE {{ tier.amount }}
         </a>
+      </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-amount">OPENROUTER TOKENS</span>
+        <span class="wc-character-tier-fund">Incoming option</span>
+        <span class="wc-character-tier-name">Donate OpenRouter tokens to Hive for an OSS project</span>
+        <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
     </div>
     <p class="wc-character-gallery-disclaimer">
@@ -273,6 +289,14 @@ onMounted(async () => {
   letter-spacing: 0.4em;
 }
 
+.wc-character-gallery-proveit {
+  margin: 3.2rem 0 1.6rem;
+  font-size: clamp(1.5rem, 1.6vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--wc-white);
+}
+
 .wc-character-tiers {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
@@ -291,6 +315,28 @@ onMounted(async () => {
   &:focus-within {
     border-color: var(--wc-gold);
   }
+}
+
+.wc-character-tier--placeholder {
+  opacity: 0.55;
+  filter: grayscale(1);
+
+  &:hover,
+  &:focus-within {
+    border-color: inherit;
+  }
+}
+
+.wc-character-tier-coming {
+  align-self: flex-start;
+  margin-top: 0.4rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px dashed var(--wc-grey);
+  font-family: var(--wc-font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--wc-grey);
 }
 
 .wc-character-tier-amount {
