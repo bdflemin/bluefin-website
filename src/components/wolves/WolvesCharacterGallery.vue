@@ -81,6 +81,7 @@ interface UpcomingGuardian {
   shortName: string
   name: string
   class: string
+  title?: string
   donateUrl: string
 }
 
@@ -111,6 +112,14 @@ const upcomingGuardians: UpcomingGuardian[] = [
     shortName: 'Zachriel',
     name: 'Zachriel',
     class: '[Coming soon]',
+    donateUrl: GUARDIAN_DONATE_URL,
+  },
+  {
+    slug: 'eggroll',
+    shortName: 'Eggroll',
+    name: 'Glorious Eggroll',
+    class: 'Nightstalker Hunter',
+    title: 'Legendary Mentor — Master of the Arcane',
     donateUrl: GUARDIAN_DONATE_URL,
   },
 ]
@@ -186,7 +195,7 @@ onMounted(async () => {
           <span class="wc-label">COMING SOON</span>
         </div>
         <span class="wc-character-card-name">{{ guardian.name }} inspired me</span>
-        <span class="wc-character-card-sub">{{ guardian.class }}</span>
+        <span class="wc-character-card-sub">{{ guardian.class }}{{ guardian.title ? ` · ${guardian.title}` : '' }}</span>
         <a
           class="wc-character-card-donate"
           :href="guardian.donateUrl"
