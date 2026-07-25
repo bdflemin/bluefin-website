@@ -35,13 +35,13 @@ const donationTiers: DonationTier[] = [
     amount: '$1,000',
     fund: 'Corporate donation to Wolves',
     name: 'Fireteam Hero',
-    perks: ['Entire team two-page hero shot in the comic.'],
+    perks: ['Your entire team drawn into the comic book as a two-page hero shot.'],
   },
   {
     amount: '$1,000',
     fund: 'Donation to the Dan Kohn Fund',
     name: 'Livery Sponsor',
-    perks: ['The team is branded in your org\u2019s livery.'],
+    perks: ['The team is branded in your org\u2019s livery on their comic book pages.'],
   },
   {
     amount: '$10,000',
@@ -91,9 +91,10 @@ onMounted(async () => {
       source needs your help. Our Childhood’s End. Open Source fights back!”
     </blockquote>
     <p class="wc-character-gallery-intro">
-      Every donation immortalizes the maintainers who inspired this project. Real
-      artists will work directly with each maintainer to represent their vision of
-      themselves in the Bluefin universe.
+      Every donation commissions real comic book pages: artists will work
+      directly with each maintainer to represent their vision of themselves in
+      the Bluefin universe. The more maintainers you sponsor, the more the
+      comic book comes together — page by page, guardian by guardian.
     </p>
     <div class="wc-character-gallery-grid">
       <article
