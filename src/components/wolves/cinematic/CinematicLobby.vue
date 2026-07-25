@@ -5,7 +5,7 @@ import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
-const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest] }>()
+const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
 
 const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.webp`
 
@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
         <span class="wc-label">PRIORITY DISPATCH // MAINTAINERS NEEDED</span>
       </div>
 
-      <WolvesCharacterGallery />
+      <WolvesCharacterGallery @watch-guardian="name => emit('watchGuardian', name)" />
 
       <blockquote class="wc-lobby-quote wc-plate wc-plate--sheen">
         <p>

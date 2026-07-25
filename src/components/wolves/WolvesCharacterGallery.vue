@@ -2,12 +2,15 @@
 /**
  * Guardian character gallery, appended below the Back Catalogue on the Wolves
  * lobby. Cards come from public/wolves/characters/characters.json, generated
- * by scripts/guardian-cards/generate.mjs. Each card links to that Guardian's
- * scene in the official Destiny 2 trailer on YouTube.
+ * by scripts/guardian-cards/generate.mjs. Each card's thumbnail starts the
+ * wolves intro at that Guardian's own nameplate cue (handled by WolvesApp via
+ * the `watchGuardian` event).
  */
 import { onMounted, ref } from 'vue'
 import qrDonate from '@/assets/svg/qr-donate.svg'
 import qrStore from '@/assets/svg/qr-store.svg'
+
+const emit = defineEmits<{ watchGuardian: [name: string] }>()
 
 const DONATE_URL = 'https://github.com/sponsors/castrojo'
 const GUARDIAN_DONATE_URL = 'https://makemeacomic.com'
@@ -33,6 +36,7 @@ interface DonationTier {
   fund: string
   name: string
   perks: string[]
+  donateUrl?: string
 }
 
 const donationTiers: DonationTier[] = [
@@ -41,6 +45,7 @@ const donationTiers: DonationTier[] = [
     fund: 'Corporate donation to Wolves',
     name: 'Fireteam Hero',
     perks: ['Your entire team drawn into the comic book as a two-page hero shot.'],
+    donateUrl: 'https://makemeacomic.com',
   },
   {
     amount: '$1,000',
@@ -141,11 +146,11 @@ onMounted(async () => {
         :key="character.slug"
         class="wc-character-card wc-plate"
       >
-        <a
+        <button
           class="wc-character-card-watch"
-          :href="character.watchUrl"
-          target="_blank"
-          rel="noopener"
+          type="button"
+          :aria-label="`Watch ${character.name}'s section of the wolves intro`"
+          @click="emit('watchGuardian', character.name)"
         >
           <img
             class="wc-character-card-art"
@@ -153,7 +158,7 @@ onMounted(async () => {
             :alt="`${character.class} — ${character.name} character card`"
             loading="lazy"
           >
-        </a>
+        </button>
         <span class="wc-character-card-name">{{ character.name }} inspired me</span>
         <span class="wc-character-card-sub">{{ character.class }} · {{ character.title }}</span>
         <a
@@ -249,7 +254,7 @@ onMounted(async () => {
         </ul>
         <a
           class="wc-character-card-donate"
-          :href="DONATE_URL"
+          :href="tier.donateUrl ?? DONATE_URL"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -371,6 +376,10 @@ onMounted(async () => {
 
 .wc-character-card-watch {
   display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
 .wc-character-card-art {

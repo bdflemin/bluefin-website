@@ -360,6 +360,23 @@ export function isTextSegmentComplete(segment: IntroTextSegment, elapsed: number
 }
 
 /**
+ * Native start time (seconds, video-absolute) of a Guardian's nameplate cue in the wolves
+ * intro, looked up by the Guardian's full display name against the authored overlay cues.
+ * Returns `null` for Guardians without a section in the intro (their thumbnails fall back
+ * to starting the intro from the beginning).
+ */
+export function guardianIntroStartTime(guardianName: string): number | null {
+  for (const segment of buildIntroVideoSequence()) {
+    for (const cue of segment.overlays ?? []) {
+      if (cue.text.includes(guardianName)) {
+        return cue.start
+      }
+    }
+  }
+  return null
+}
+
+/**
  * Slow, somber text fade-in duration (seconds) for the Prologue/Epilogue text cards, derived
  * from the Gayane Ballet Suite (Adagio) track's actual tempo rather than an arbitrary constant.
  *

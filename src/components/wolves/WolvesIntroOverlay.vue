@@ -27,6 +27,12 @@ const props = defineProps<{
   videos: readonly IntroVideoSpec[]
   holdForHandoff?: boolean
   transparentHandoff?: boolean
+  /**
+   * Native (video-absolute) seconds to open the first video segment at, e.g. a Guardian's
+   * nameplate cue when deep-linked from the lobby character gallery. Only applied once, on
+   * that segment's initial `onReady`; ignored when it falls before the authored startOffset.
+   */
+  startAtNativeTime?: number
 }>()
 
 const emit = defineEmits<{
@@ -387,6 +393,8 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
+/** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
+let deepLinkStartConsumed = false
 const handoffPending = ref(false)
 
 /** Seek within the active segment by 0..1 ratio, driven by the hero widget's progress bar. */
@@ -567,11 +575,16 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
   const mountNode = document.createElement('div')
   mountHost.value.appendChild(mountNode)
 
+  // A gallery deep link overrides the authored opening frame, once, for the first player.
+  const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
+  deepLinkStartConsumed = true
+  const startTime = Math.max(segment.startOffset ?? 0, deepLinkTime ?? 0)
+
   const playerVars = getChromeFreeYoutubePlayerVars({
     autoplay: 1,
     // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
     cc_load_policy: 0,
-    ...(segment.startOffset ? { start: Math.round(segment.startOffset) } : {}),
+    ...(startTime ? { start: Math.round(startTime) } : {}),
   })
 
   player = new PlayerCtor(mountNode, {
@@ -584,8 +597,12 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         // YouTube may restore a prior watch position for a reused video ID even
         // when playerVars.start is present. Reassert the authored opening frame
         // after readiness so revisiting Wolves always begins at the beginning.
-        const openingTime = segment.startOffset ?? 0
-        player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+        const openingTime = startTime
+        if (deepLinkTime == null) {
+          // Reload only for front-door entries: loadVideoById restarts playback from the
+          // buffered beginning, which would discard a deep-linked Guardian opening time.
+          player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+        }
         player?.seekTo?.(openingTime, true)
         currentTime.value = openingTime
         activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0

@@ -7,7 +7,7 @@ import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
-import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
+import { buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
 import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
@@ -76,9 +76,16 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
 }
 const introMediaTitle = ref(INTRO_DISPLAY['wolves-intro'].mediaTitle)
 
-async function enterIntro() {
+/**
+ * Native start time forwarded to the intro overlay when a gallery thumbnail deep-links
+ * into a Guardian's section; null for a normal front-door entry.
+ */
+const introStartAt = ref<number | null>(null)
+
+async function enterIntro(startAtNativeTime: number | null = null) {
   const token = ++handoffToken
   introHandoff.value = false
+  introStartAt.value = startAtNativeTime
   introTransparent.value = false
   store.enterIntro()
   introMediaTitle.value = INTRO_DISPLAY['wolves-intro'].mediaTitle
@@ -92,6 +99,14 @@ async function enterIntro() {
   catch {
     // `start()` retries the shared loader at the handoff; prewarming must not block the intro.
   }
+}
+
+/**
+ * Gallery thumbnail deep link: start the intro at the Guardian's own nameplate cue.
+ * Guardians without a section in the intro fall back to the normal opening.
+ */
+async function watchGuardian(name: string) {
+  await enterIntro(guardianIntroStartTime(name))
 }
 
 function normalizeIntroStatus(payload: IntroStatusPayload) {
@@ -181,6 +196,8 @@ async function restoreIntroForNavigation(): Promise<number | null> {
   stage.value?.destroy?.()
   introHandoff.value = false
   introTransparent.value = false
+  // Back-navigation into the intro is a fresh front-door entry, not a deep link.
+  introStartAt.value = null
   await nextTick()
   if (unmounted || token !== handoffToken) {
     return null
@@ -235,7 +252,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wolves-cinematic">
-    <CinematicLobby v-if="store.phase === 'lobby'" @enter="enterIntro" @launch-experience="launchExperience" />
+    <CinematicLobby v-if="store.phase === 'lobby'" @enter="enterIntro()" @launch-experience="launchExperience" @watch-guardian="watchGuardian" />
 
     <!-- The Destiny intro shares the cinematic transport and universal top title placard. -->
     <div v-else-if="store.phase === 'intro' || store.phase === 'cinematic'" class="wc-runtime">
@@ -247,6 +264,7 @@ onBeforeUnmount(() => {
           hold-for-handoff
           :transparent-handoff="introTransparent"
           :videos="introVideos"
+          :start-at-native-time="introStartAt ?? undefined"
           @status="handleIntroStatus"
           @complete="handleIntroComplete"
         />
