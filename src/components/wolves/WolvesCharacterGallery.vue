@@ -23,6 +23,8 @@ interface CharacterCard {
 
 const characters = ref<CharacterCard[]>([])
 
+const baseUrl = import.meta.env.BASE_URL
+
 interface DonationTier {
   amount: string
   fund: string
@@ -168,6 +170,19 @@ onMounted(async () => {
         <span class="wc-character-tier-amount">OPENROUTER TOKENS</span>
         <span class="wc-character-tier-fund">Incoming option</span>
         <span class="wc-character-tier-name">Donate OpenRouter tokens to Hive for an OSS project</span>
+        <span class="wc-character-tier-coming">COMING SOON</span>
+      </article>
+      <article class="wc-character-tier wc-character-tier--placeholder wc-plate">
+        <span class="wc-character-tier-fund">Incoming option</span>
+        <span class="wc-character-tier-name">Buy a maintainer a Bluefin Shirt</span>
+        <a href="https://store.projectbluefin.io" target="_blank" rel="noopener noreferrer">
+          <img
+            class="wc-character-tier-shirt"
+            :src="`${baseUrl}wolves/characters/bluefin-womens-rawr.webp`"
+            alt="Bluefin Women's Rawr shirt sample from the Bluefin store"
+            loading="lazy"
+          >
+        </a>
         <span class="wc-character-tier-coming">COMING SOON</span>
       </article>
     </div>
@@ -337,6 +352,13 @@ onMounted(async () => {
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--wc-grey);
+}
+
+.wc-character-tier-shirt {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
 }
 
 .wc-character-tier-amount {
