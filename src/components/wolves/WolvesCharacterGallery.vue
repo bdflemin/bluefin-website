@@ -14,6 +14,8 @@ const emit = defineEmits<{ watchGuardian: [name: string] }>()
 
 const DONATE_URL = 'https://github.com/sponsors/castrojo'
 const GUARDIAN_DONATE_URL = 'https://makemeacomic.com'
+/** Official LF Events page for the Dan Kohn scholarship + travel funding program. */
+const DAN_KOHN_FUND_URL = 'https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/attend/scholarships-travel-funding/'
 
 interface CharacterCard {
   slug: string
@@ -52,12 +54,14 @@ const donationTiers: DonationTier[] = [
     fund: 'Donation to the Dan Kohn Fund',
     name: 'Livery Sponsor',
     perks: ['The team is branded in your org\u2019s livery on their comic book pages.'],
+    donateUrl: DAN_KOHN_FUND_URL,
   },
   {
     amount: '$10,000',
     fund: 'Donation to the Dan Kohn Fund',
     name: 'Founding Funder',
     perks: ['Founding Funder of the Bluefin Universe.'],
+    donateUrl: DAN_KOHN_FUND_URL,
   },
   {
     amount: '$15,000',
@@ -68,6 +72,7 @@ const donationTiers: DonationTier[] = [
       'Special Edition, Limited Print Launch Edition, signed by CNCF Maintainers of Great Renown.',
       'Exclusive rights to print distribution at your booth for a two-year exclusivity period.',
     ],
+    donateUrl: DAN_KOHN_FUND_URL,
   },
 ]
 
