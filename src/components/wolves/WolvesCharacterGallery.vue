@@ -70,6 +70,39 @@ function resolveCard(card: string): string {
   return `${import.meta.env.BASE_URL}${card}`
 }
 
+/** Guardians without a finished character card yet, shown as greyed placeholders. */
+interface UpcomingGuardian {
+  slug: string
+  shortName: string
+  name: string
+  class: string
+  donateUrl: string
+}
+
+const upcomingGuardians: UpcomingGuardian[] = [
+  {
+    slug: 'marco',
+    shortName: 'Marco',
+    name: 'Marco Ceppi',
+    class: 'Sunbreaker Titan',
+    donateUrl: GUARDIAN_DONATE_URL,
+  },
+  {
+    slug: 'wayne',
+    shortName: 'Wayne',
+    name: 'Wayne Witzel',
+    class: 'Striker Titan',
+    donateUrl: GUARDIAN_DONATE_URL,
+  },
+  {
+    slug: 'jordan',
+    shortName: 'Jordan',
+    name: 'Jordan Petridis',
+    class: '[Redacted]',
+    donateUrl: 'https://donate.gnome.org',
+  },
+]
+
 onMounted(async () => {
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}wolves/characters/characters.json`)
@@ -130,6 +163,25 @@ onMounted(async () => {
           rel="noopener noreferrer"
         >
           DONATE TO LEVEL UP {{ character.shortName.toUpperCase() }}
+        </a>
+      </article>
+      <article
+        v-for="guardian in upcomingGuardians"
+        :key="guardian.slug"
+        class="wc-character-card wc-character-card--upcoming wc-plate"
+      >
+        <div class="wc-character-card-art wc-character-card-art--pending" aria-hidden="true">
+          <span class="wc-label">COMING SOON</span>
+        </div>
+        <span class="wc-character-card-name">{{ guardian.name }} inspired me</span>
+        <span class="wc-character-card-sub">{{ guardian.class }}</span>
+        <a
+          class="wc-character-card-donate"
+          :href="guardian.donateUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DONATE TO LEVEL UP {{ guardian.shortName.toUpperCase() }}
         </a>
       </article>
     </div>
@@ -326,6 +378,27 @@ onMounted(async () => {
   aspect-ratio: 1200 / 630;
   object-fit: cover;
   display: block;
+}
+
+// Greyed placeholder cards for guardians whose character art isn't ready yet.
+// The donate button stays live — sponsoring is what brings the card to life.
+.wc-character-card--upcoming {
+  opacity: 0.55;
+  filter: grayscale(1);
+
+  &:hover,
+  &:focus-within {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.wc-character-card-art--pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--wc-line);
+  background: rgb(0 0 0 / 35%);
 }
 
 .wc-character-card-name {
