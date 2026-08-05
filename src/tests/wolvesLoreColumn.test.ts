@@ -228,21 +228,6 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.text()).toContain('Where\'s your sense of fun?')
   })
 
-  it('reports chat lifecycle events for timeline hold coordination', async () => {
-    const wrapper = mount(WolvesLoreColumn, {
-      props: {
-        artifactId: 'lorem-prologue-1',
-        duration: 20,
-      },
-    })
-
-    expect(wrapper.emitted('chatStarted')).toEqual([[]])
-
-    await wrapper.get('.quote-viewport').trigger('click')
-
-    expect(wrapper.emitted('chatComplete')).toEqual([[]])
-  })
-
   it('renders The Children sound effects with the established SFX treatment', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {

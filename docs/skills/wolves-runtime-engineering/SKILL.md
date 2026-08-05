@@ -58,9 +58,8 @@ Do not introduce a second transport or wall-clock synchronization.
   message boundaries or after an explicit skip.
 - Fast music or slideshow slots must not accelerate ordinary chat typing; keep
   explicitly approved dialogue cadence anchors unchanged.
-- When a chat must outlive a short timeline slot, hold that chat until it
-  completes, then resume at the current player-clock record without replaying
-  expired records.
+- When a narrative range is constrained, allocate chatlog readability before
+  static quote or source records; preserve explicitly approved cadence locks.
 - Preserve locked anchors and recompute only unlocked intervals.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.

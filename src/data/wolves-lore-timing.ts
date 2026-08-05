@@ -28,12 +28,25 @@ export function allocateLoreSlots(
 ): LoreTimingSlot[] {
   const minimumDurations = entries.map(entry => estimateLoreReadDuration(entry))
   const available = Math.max(0, endTime - startTime)
-  const minimumTotal = minimumDurations.reduce((sum, duration) => sum + duration, 0)
-  const scale = minimumTotal > available && minimumTotal > 0 ? available / minimumTotal : 1
+  const chatMinimumTotal = entries.reduce(
+    (sum, entry, index) => sum + (entry.kind === 'chatlog' ? minimumDurations[index]! : 0),
+    0,
+  )
+  const chatScale = chatMinimumTotal > available && chatMinimumTotal > 0
+    ? available / chatMinimumTotal
+    : 1
+  const chatAllocated = chatMinimumTotal * chatScale
+  const staticMinimumTotal = entries.reduce(
+    (sum, entry, index) => sum + (entry.kind === 'chatlog' ? 0 : minimumDurations[index]!),
+    0,
+  )
+  const staticScale = staticMinimumTotal > 0
+    ? Math.max(0, available - chatAllocated) / staticMinimumTotal
+    : 0
   let cursor = startTime
   return entries.map((entry, index) => {
     const minimumDuration = minimumDurations[index]
-    const duration = minimumDuration * scale
+    const duration = minimumDuration * (entry.kind === 'chatlog' ? chatScale : staticScale)
     const slot = { id: entry.id, startTime: cursor, endTime: cursor + duration, duration, minimumDuration }
     cursor += duration
     return slot

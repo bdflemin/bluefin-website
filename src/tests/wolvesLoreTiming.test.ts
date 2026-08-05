@@ -27,4 +27,17 @@ describe('wolves lore timing', () => {
       expect(slot.duration).toBeGreaterThanOrEqual(slot.minimumDuration)
     }
   })
+
+  it('prioritizes chat readability over static records when a range is constrained', () => {
+    const slots = allocateLoreSlots(
+      [
+        { id: 'quote', kind: 'quote', body: 'A'.repeat(300), attribution: 'ARCHIVE' },
+        { id: 'chat', kind: 'chatlog', body: 'B'.repeat(300), attribution: 'ARCHIVE' },
+      ],
+      0,
+      20,
+    )
+
+    expect(slots[1]?.duration).toBeGreaterThan(slots[0]?.duration ?? 0)
+  })
 })
