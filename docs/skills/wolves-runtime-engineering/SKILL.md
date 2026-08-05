@@ -56,6 +56,9 @@ Do not introduce a second transport or wall-clock synchronization.
 - Keep scheduler and renderer on one content-cost timing model.
 - Do not scroll a chat viewport for every typewriter character; scroll only at
   message boundaries or after an explicit skip.
+- Treat Wolves lore as a self-paced video presentation, not an interactive
+  document: the renderer must advance and hold readable content automatically;
+  viewers must never need to scroll to follow a conversation or its climax.
 - Fast music or slideshow slots must not accelerate ordinary chat typing; keep
   explicitly approved dialogue cadence anchors unchanged.
 - When a narrative range is constrained, allocate chatlog readability before

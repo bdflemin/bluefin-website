@@ -16,6 +16,7 @@ const CHARACTERS_PER_SECOND = 15
 const QUOTE_CHARACTERS_PER_SECOND = 10
 const BASE_SECONDS = 3
 const QUOTE_BASE_SECONDS = 15
+export const CHAT_COMPLETION_PAUSE_SECONDS = 5
 
 export function estimateLoreReadDuration(input: LoreTimingInput): number {
   const characters = input.body.trim().length + (input.attribution?.trim().length ?? 0)
@@ -37,20 +38,29 @@ export function allocateLoreSlots(
     0,
   )
   const chatCount = entries.filter(entry => entry.kind === 'chatlog').length
-  const quoteAvailable = Math.max(0, available - chatCount * BASE_SECONDS)
+  const chatFloorTotal = chatCount * CHAT_COMPLETION_PAUSE_SECONDS
+  const quoteAvailable = Math.max(0, available - chatFloorTotal)
   const quoteScale = quoteMinimumTotal > quoteAvailable && quoteMinimumTotal > 0
     ? quoteAvailable / quoteMinimumTotal
     : 1
   const quoteAllocated = quoteMinimumTotal * quoteScale
-  const chatMinimumTotal = entries.reduce(
-    (sum, entry, index) => sum + (entry.kind === 'chatlog' ? minimumDurations[index]! : 0),
+  const chatExtraTotal = entries.reduce(
+    (sum, entry, index) => sum + (entry.kind === 'chatlog'
+      ? Math.max(0, minimumDurations[index]! - CHAT_COMPLETION_PAUSE_SECONDS)
+      : 0),
     0,
   )
-  const chatScale = chatMinimumTotal > 0
-    ? Math.max(0, available - quoteAllocated) / chatMinimumTotal
+  const chatExtraAvailable = Math.max(0, available - quoteAllocated - chatFloorTotal)
+  const chatExtraScale = chatExtraTotal > 0
+    ? chatExtraAvailable / chatExtraTotal
     : 0
-  const durations = entries.map((entry, index) =>
-    minimumDurations[index]! * (entry.kind === 'quote' ? quoteScale : chatScale))
+  const durations = entries.map((entry, index) => {
+    if (entry.kind === 'quote') {
+      return minimumDurations[index]! * quoteScale
+    }
+    return CHAT_COMPLETION_PAUSE_SECONDS
+      + Math.max(0, minimumDurations[index]! - CHAT_COMPLETION_PAUSE_SECONDS) * chatExtraScale
+  })
 
   let cursor = startTime
   return entries.map((entry, index) => {

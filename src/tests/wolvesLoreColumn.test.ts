@@ -406,6 +406,25 @@ describe('wolvesLoreColumn Logic', () => {
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
+  it('holds a completed conversation for five seconds before its slot ends', async () => {
+    vi.useFakeTimers()
+    const record = loreRecords.find(record => record.id === 'lorem-prologue-1')
+    if (!record || record.kind !== 'chatlog') {
+      throw new Error('Expected a chatlog fixture')
+    }
+    const chatlog = getChatlogLore(record)
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: record.id,
+        duration: 30,
+      },
+    })
+
+    await vi.advanceTimersByTimeAsync(25_000)
+
+    expect(wrapper.text()).toContain(chatlog.messages[chatlog.messages.length - 1]!.text)
+  })
+
   it('replaces the full lore column with a vertical dinosaur dossier', () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {

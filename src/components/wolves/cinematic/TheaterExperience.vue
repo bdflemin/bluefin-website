@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
-import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
+import { getNarrativeSlotForTime, type WolvesNarrativeSlot } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
 import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -15,9 +15,19 @@ const store = useCinematicStore()
 
 const time = computed(() => store.nativeTime)
 const narrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
-const slotDuration = computed(() => Math.max(1, narrativeSlot.value.endTime - narrativeSlot.value.startTime))
+const activeChatSlot = ref<WolvesNarrativeSlot | null>(null)
+const displayedNarrativeSlot = computed(() => activeChatSlot.value ?? narrativeSlot.value)
+const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
+
+function holdActiveChat() {
+  activeChatSlot.value = narrativeSlot.value
+}
+
+function releaseActiveChat() {
+  activeChatSlot.value = null
+}
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
 // the scheduled lore panel. This is a plain native <iframe> embed (no IFrame
@@ -256,9 +266,11 @@ onBeforeUnmount(() => {
       <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
         <div class="wc-trackzero-lore-row">
           <WolvesLoreColumn
-            :artifact-id="narrativeSlot.artifactId"
+            :artifact-id="displayedNarrativeSlot.artifactId"
             :duration="slotDuration"
             :warning="thesis.warning"
+            @chat-started="holdActiveChat"
+            @chat-complete="releaseActiveChat"
           />
         </div>
 

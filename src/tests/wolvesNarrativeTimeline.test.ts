@@ -4,6 +4,8 @@ import {
   lockedNarrativeSlots,
   wolvesNarrativeTimeline,
 } from '../data/wolves-narrative-timeline'
+import { loadAllLoreRecords } from '../data/wolves-lore-records'
+import { CHAT_COMPLETION_PAUSE_SECONDS } from '../data/wolves-lore-timing'
 
 
 describe('wolves narrative timeline', () => {
@@ -48,6 +50,20 @@ describe('wolves narrative timeline', () => {
       if (lock.endTime !== undefined) {
         expect(slot?.endTime).toBe(lock.endTime)
       }
+    }
+  })
+
+  it('reserves a five-second completion pause for every unlocked conversation', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+    const lockedIds = new Set(lockedNarrativeSlots.map(slot => slot.artifactId))
+
+    for (const slot of wolvesNarrativeTimeline) {
+      const record = records.get(slot.artifactId)
+      if (!record || record.kind !== 'chatlog' || lockedIds.has(record.id)) {
+        continue
+      }
+
+      expect(slot.endTime - slot.startTime).toBeGreaterThanOrEqual(CHAT_COMPLETION_PAUSE_SECONDS - 1e-8)
     }
   })
 

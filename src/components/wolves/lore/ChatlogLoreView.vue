@@ -2,9 +2,13 @@
 import type { LoreViewProps } from '../lore'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { getChatlogLore } from '../lore'
-import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
+import { CHAT_COMPLETION_PAUSE_SECONDS, estimateLoreReadDuration } from '@/data/wolves-lore-timing'
 
 const props = defineProps<LoreViewProps>()
+const emit = defineEmits<{
+  started: []
+  complete: []
+}>()
 
 const conversation = computed(() => getChatlogLore(props.record))
 const quoteViewportRef = ref<HTMLElement | null>(null)
@@ -49,6 +53,7 @@ function scrollViewport() {
 
 function runTypewriter() {
   clearTypewriter()
+  emit('started')
 
   activeMessageIndex.value = 0
   typedMessagesText.value = conversation.value.messages.map(() => '')
@@ -64,7 +69,8 @@ function runTypewriter() {
       body: conversation.value.messages.map(message => message.text).join(' '),
       attribution: conversation.value.channel,
     })
-    const readableBudgetMs = Math.max(1, Math.min(props.duration, minimumReadSeconds) * 1000 * 0.7)
+    const contentBudgetSeconds = Math.max(0, props.duration - CHAT_COMPLETION_PAUSE_SECONDS)
+    const readableBudgetMs = Math.max(1, Math.min(contentBudgetSeconds, minimumReadSeconds) * 1000 * 0.7)
     const climaxCueDuration = props.record.id === CLIMAX_ARTIFACT_ID
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
       : 0
@@ -92,6 +98,7 @@ function runTypewriter() {
 
   let currentLength = 0
   let pauseTicks = 0
+  let completionPending = false
   let climaxStage: 'typing' | 'holding' | 'fading' = 'typing'
 
   typewriterTimer = setInterval(() => {
@@ -101,6 +108,9 @@ function runTypewriter() {
     }
 
     if (activeMessageIndex.value >= conversation.value.messages.length) {
+      if (completionPending) {
+        emit('complete')
+      }
       clearTypewriter()
       return
     }
@@ -172,7 +182,13 @@ function runTypewriter() {
       }
       activeMessageIndex.value++
       currentLength = 0
-      pauseTicks = isSlowSpeaker ? 50 : 20
+      if (activeMessageIndex.value >= conversation.value.messages.length) {
+        completionPending = true
+        pauseTicks = Math.ceil(CHAT_COMPLETION_PAUSE_SECONDS * 1000 / stepTime)
+      }
+      else {
+        pauseTicks = isSlowSpeaker ? 50 : 20
+      }
     }
   }, stepTime)
 }
