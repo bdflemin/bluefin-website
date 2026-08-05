@@ -20,7 +20,13 @@ export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
 ]
 
-const authoredArtifactIds = wolvesRelease.artifacts.map(artifact => artifact.id)
+const hiddenFromWolvesVideoArtifactIds = new Set([
+  'lorem-prologue-2',
+  'john-seager',
+])
+const authoredArtifactIds = wolvesRelease.artifacts
+  .map(artifact => artifact.id)
+  .filter(id => !hiddenFromWolvesVideoArtifactIds.has(id))
 const recordsById = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
 function timingInput(id: string) {
   const record = recordsById.get(id)
@@ -32,7 +38,8 @@ function timingInput(id: string) {
   }
 }
 function allocateRange(ids: readonly string[], startTime: number, endTime: number): WolvesNarrativeSlot[] {
-  return allocateLoreSlots(ids.map(timingInput), startTime, endTime).map(slot => ({ artifactId: slot.id, startTime: slot.startTime, endTime: slot.endTime }))
+  return allocateLoreSlots(ids.map(timingInput), startTime, endTime, new Map(), 30)
+    .map(slot => ({ artifactId: slot.id, startTime: slot.startTime, endTime: slot.endTime }))
 }
 const pursuitIndex = authoredArtifactIds.indexOf('lorem-pursuit-1')
 const finalIndex = authoredArtifactIds.indexOf('blue-universal-acquires-wayland-yutani')

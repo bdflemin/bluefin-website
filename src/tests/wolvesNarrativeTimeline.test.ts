@@ -7,17 +7,19 @@ import {
 
 
 describe('wolves narrative timeline', () => {
-  it('contains every release artifact exactly once', () => {
+  it('contains every visible release artifact exactly once', () => {
     const ids = wolvesNarrativeTimeline.map(slot => slot.artifactId)
     expect(new Set(ids).size).toBe(ids.length)
     expect(ids).toContain('lorem-pursuit-1')
     expect(ids).toContain('blue-universal-acquires-wayland-yutani')
+    expect(ids).not.toContain('lorem-prologue-2')
+    expect(ids).not.toContain('john-seager')
   })
 
   it('keeps unlocked lore in authored timeline order', () => {
     const ids = wolvesNarrativeTimeline.map(slot => slot.artifactId)
     expect(ids.indexOf('lorem-pursuit-1')).toBeGreaterThan(ids.indexOf('arthur-c-clarke-1'))
-    expect(ids).toContain('john-seager')
+    expect(ids).not.toContain('john-seager')
     expect(ids[ids.length - 1]).toBe('blue-universal-acquires-wayland-yutani')
   })
 
@@ -87,9 +89,9 @@ describe('wolves narrative timeline', () => {
     expect(getNarrativeSlotForTime(1_000)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
   })
 
-  it('gives longer lore entries longer non-anchor slots', () => {
+  it('gives longer visible lore entries longer non-anchor slots', () => {
     const short = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'quote-natasha-woods')!
-    const long = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'john-seager')!
+    const long = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'glorious-eggroll')!
 
     expect(long.endTime - long.startTime).toBeGreaterThan(short.endTime - short.startTime)
   })

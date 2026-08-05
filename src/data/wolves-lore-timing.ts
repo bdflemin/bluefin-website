@@ -25,6 +25,7 @@ export function allocateLoreSlots(
   startTime: number,
   endTime: number,
   _lockedAnchors: ReadonlyMap<string, number> = new Map(),
+  maxSlotSeconds = Infinity,
 ): LoreTimingSlot[] {
   const minimumDurations = entries.map(entry => estimateLoreReadDuration(entry))
   const available = Math.max(0, endTime - startTime)
@@ -43,10 +44,32 @@ export function allocateLoreSlots(
   const staticScale = staticMinimumTotal > 0
     ? Math.max(0, available - chatAllocated) / staticMinimumTotal
     : 0
+  const durations = entries.map((entry, index) =>
+    minimumDurations[index]! * (entry.kind === 'chatlog' ? chatScale : staticScale))
+  const slotCap = maxSlotSeconds
+  let remaining = available - durations.reduce((total, duration) => total + Math.min(duration, slotCap), 0)
+  const cappedDurations = durations.map(duration => Math.min(duration, slotCap))
+
+  while (remaining > 1e-9) {
+    const eligible = cappedDurations
+      .map((duration, index) => ({ duration, index }))
+      .filter(({ duration }) => duration < slotCap)
+    if (eligible.length === 0) {
+      break
+    }
+
+    const additionalDuration = remaining / eligible.length
+    for (const { index } of eligible) {
+      const increase = Math.min(additionalDuration, slotCap - cappedDurations[index]!)
+      cappedDurations[index]! += increase
+      remaining -= increase
+    }
+  }
+
   let cursor = startTime
   return entries.map((entry, index) => {
     const minimumDuration = minimumDurations[index]
-    const duration = minimumDuration * (entry.kind === 'chatlog' ? chatScale : staticScale)
+    const duration = cappedDurations[index]!
     const slot = { id: entry.id, startTime: cursor, endTime: cursor + duration, duration, minimumDuration }
     cursor += duration
     return slot

@@ -60,7 +60,7 @@ export const bluefinGroupSlides = [
 
 export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
 
-const REZA_HOLD_SECONDS = 3.08
+const REZA_HOLD_SECONDS = 6.16
 export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
 export const rezaContributorTrackZeroWindow = {
   startTime: lauraTrackZeroWindow.endTime,
