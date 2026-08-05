@@ -69,8 +69,7 @@ function runTypewriter() {
       body: conversation.value.messages.map(message => message.text).join(' '),
       attribution: conversation.value.channel,
     })
-    const contentBudgetSeconds = Math.max(0, props.duration - CHAT_COMPLETION_PAUSE_SECONDS)
-    const readableBudgetMs = Math.max(1, Math.min(contentBudgetSeconds, minimumReadSeconds) * 1000 * 0.7)
+    const readableBudgetMs = Math.max(1, minimumReadSeconds * 1000 * 0.7)
     const climaxCueDuration = props.record.id === CLIMAX_ARTIFACT_ID
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
       : 0

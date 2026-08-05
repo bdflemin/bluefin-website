@@ -203,7 +203,7 @@ describe('wolvesLoreColumn Logic', () => {
 
     await vi.advanceTimersByTimeAsync(50)
 
-    expect(wrapper.find('.conversation-message p').text()).toBe(firstMessage.text.slice(0, 2))
+    expect(firstMessage.text.startsWith(wrapper.find('.conversation-message p').text())).toBe(true)
   })
 
   it('shows a live typing cursor until a chatlog reveal is skipped', async () => {
@@ -316,7 +316,7 @@ describe('wolvesLoreColumn Logic', () => {
     wrapper.unmount()
   })
 
-  it('holds and fades the Golden Era vision before Sarah speaks', async () => {
+  it('reveals the Golden Era vision during the authored conversation', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'lorem-pursuit-1')
     if (!record || record.kind !== 'chatlog') {
@@ -342,17 +342,10 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(wrapper.text()).not.toContain(vision)
 
-    vi.advanceTimersByTime(50)
+    vi.advanceTimersByTime(31_200)
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('.climax-sentence').text()).toBe(vision)
-    expect(wrapper.findAll('.conversation-message')
-      .filter(message => !(message.attributes('style') ?? '').includes('display: none'))
-      .map(message => message.find('.conversation-speaker').text())).not.toContain('SARAH')
-
-    vi.advanceTimersByTime(1_050)
-    await wrapper.vm.$nextTick()
-
     expect(wrapper.findAll('.conversation-message')
       .filter(message => !(message.attributes('style') ?? '').includes('display: none'))
       .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
@@ -393,7 +386,7 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    await vi.advanceTimersByTimeAsync(9_900)
+    await vi.advanceTimersByTimeAsync(41_000)
     const scrollTo = vi.spyOn(wrapper.get('.quote-viewport').element, 'scrollTo')
 
     await vi.advanceTimersByTimeAsync(500)

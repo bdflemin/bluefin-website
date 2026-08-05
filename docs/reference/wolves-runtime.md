@@ -68,7 +68,11 @@ successful build does not prove eager lore loading succeeds. Finish with
 ## Timing and readability lessons
 
 - The active media-player clock remains the only synchronization clock.
-- A typewriter cannot repair a timeline slot that is too short; the scheduler and renderer must share one content-cost estimator.
+- A chat completion event may hold its active record on screen, but it is a
+  display lifecycle gate, not a second clock: when it releases, resume from
+  the latest player-clock record without replaying elapsed content.
+- Typewriter cadence must not compress to fit a short timeline slot; an active
+  chat holds until its normal cadence and final reading pause complete.
 - Preserve locked narrative anchors exactly and allocate only unlocked intervals.
 - Use invariant tests for recomputed intervals: completeness, uniqueness, ordering, contiguity, anchor preservation, and readability minimums.
 - Do not call an abandoned experiment restored. State which source is active and what was actually changed.
