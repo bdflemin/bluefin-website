@@ -123,7 +123,7 @@ export const TRACK_ZERO_PRESENTATION_SECTIONS = {
   contributorChorus: { startTime: TRACK_ZERO_SECTIONS.chorusStart, endTime: TRACK_ZERO_SECTIONS.bridgeStart, beatGroups: [8, 4] as const },
   chantingBridge: { startTime: TRACK_ZERO_SECTIONS.bridgeStart, pickupTime: 244, endTime: TRACK_ZERO_SECTIONS.buildStart, beatGroups: [6, 4] as const },
   heavyBuild: { startTime: TRACK_ZERO_SECTIONS.buildStart, endTime: TRACK_ZERO_SECTIONS.pivotalStart, beatGroups: [8, 4] as const },
-  finaleBarrage: { startTime: TRACK_ZERO_SECTIONS.bkEnd, pickupTime: 360, endTime: TRACK_ZERO_SECTIONS.finaleStart, beatGroups: [8, 8] as const },
+  finaleBarrage: { startTime: TRACK_ZERO_SECTIONS.bkEnd, endTime: TRACK_ZERO_SECTIONS.finaleStart },
 } as const
 
 const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'

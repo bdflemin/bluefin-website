@@ -14,6 +14,7 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
+  trackZeroEvenBeatCuts,
   trackZeroBeatCutsWithPickup,
 } from '@/data/wolves-track-zero-beats'
 import { TRACK_ZERO_PRESENTATION_SECTIONS } from '@/data/wolves-track-zero-manifest'
@@ -605,12 +606,10 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     ...finaleSlides,
   ]
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
-  const sec6Cuts = trackZeroBeatCutsWithPickup(
+  const sec6Cuts = trackZeroEvenBeatCuts(
     currentTime,
-    TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.pickupTime,
     TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime,
     peoplePool4.length,
-    ...TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.beatGroups,
   )
   peoplePool4.forEach((item, index) => {
     const endTime = sec6Cuts[index]
