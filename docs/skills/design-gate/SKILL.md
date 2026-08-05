@@ -34,6 +34,14 @@ For a visual size or collision request, assert the affected elements'
 proof of the rendered result because containing blocks and responsive rules can
 constrain them.
 
+## Common Rationalizations
+
+- "The CSS width is larger, so the rendered element must be larger." A grid,
+  flex item, transform, or containing block can still constrain it; measure
+  the rendered bounds.
+- "A local build proves the visual change." Builds do not expose overlaps,
+  clipping, or viewport-bound failures; check the affected route in a browser.
+
 ## Red Flags
 
 - "Small" spacing or typography changes without approval.
