@@ -9,6 +9,10 @@
   "targetTotalPhotos": 200,
   "albums": [
     {
+      "id": "72177720334578730",
+      "title": "KubeCon + CloudNativeCon Japan 2026"
+    },
+    {
       "id": "72177720332630036",
       "title": "Maintainer Summit Europe 2026"
     },
@@ -50,7 +54,9 @@
       "headshot",
       "networking",
       "social",
-      "welcome"
+      "welcome",
+      "a7v",
+      "crj"
     ],
     "blockPatterns": [
       "graphics",

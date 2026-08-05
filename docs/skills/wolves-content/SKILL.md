@@ -33,6 +33,11 @@ approved source at identical dimensions. Recover only demonstrated high-loss
 PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
 source is already low resolution.
 
+When an official event album uses camera filenames instead of descriptive
+titles, add its distinctive prefixes to `peopleFirst.allowPatterns`, run
+`node scripts/update-flickr-photos.js`, and verify it adds photos before
+claiming the presentation refresh is complete.
+
 For a dinosaur addition, use the registry, supplied artwork, and supplied lore
 record. Do not invent names, scientific facts, pairings, or provenance.
 
