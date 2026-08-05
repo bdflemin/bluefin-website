@@ -182,6 +182,30 @@ describe('wolvesLoreColumn Logic', () => {
     expect(chatlog.messages[0].text.startsWith(renderedMessage)).toBe(true)
   })
 
+  it('keeps chat typing at a readable pace in a short narrative slot', async () => {
+    vi.useFakeTimers()
+    const record = loreRecords.find(record => record.id === 'lorem-prologue-1')
+    if (!record || record.kind !== 'chatlog') {
+      throw new Error('Expected a chatlog fixture')
+    }
+    const chatlog = getChatlogLore(record)
+    const firstMessage = chatlog.messages[0]
+    if (!firstMessage) {
+      throw new Error('Expected the chatlog fixture to contain a message')
+    }
+
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: record.id,
+        duration: 0.01,
+      },
+    })
+
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(wrapper.find('.conversation-message p').text()).toBe(firstMessage.text.slice(0, 2))
+  })
+
   it('shows a live typing cursor until a chatlog reveal is skipped', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {

@@ -157,6 +157,12 @@ function runTypewriter() {
       else if (lastChar === ',') {
         pauseTicks = 5
       }
+
+      // The Golden Era conversation's existing cadence is an authored anchor;
+      // other chats must not accelerate just because their music slot is short.
+      if (!isSlowSpeaker && props.record.id !== CLIMAX_ARTIFACT_ID) {
+        pauseTicks = Math.max(pauseTicks, Math.ceil(35 / stepTime) - 1)
+      }
     }
     else {
       typedMessagesText.value[activeMessageIndex.value] = targetText

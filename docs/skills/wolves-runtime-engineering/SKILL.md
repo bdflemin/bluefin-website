@@ -56,6 +56,8 @@ Do not introduce a second transport or wall-clock synchronization.
 - Keep scheduler and renderer on one content-cost timing model.
 - Do not scroll a chat viewport for every typewriter character; scroll only at
   message boundaries or after an explicit skip.
+- Fast music or slideshow slots must not accelerate ordinary chat typing; keep
+  explicitly approved dialogue cadence anchors unchanged.
 - Preserve locked anchors and recompute only unlocked intervals.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
