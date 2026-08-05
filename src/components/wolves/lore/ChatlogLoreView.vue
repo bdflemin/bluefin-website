@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { getChatlogLore } from '../lore'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { CHAT_COMPLETION_PAUSE_SECONDS, estimateLoreReadDuration } from '@/data/wolves-lore-timing'
+import { getChatlogLore } from '../lore'
+import { splitReadableBeats } from './readable-beats'
 
 const props = defineProps<LoreViewProps>()
 const emit = defineEmits<{
@@ -11,20 +12,43 @@ const emit = defineEmits<{
 }>()
 
 const conversation = computed(() => getChatlogLore(props.record))
-const quoteViewportRef = ref<HTMLElement | null>(null)
-const activeMessageIndex = ref(0)
-const typedMessagesText = ref<string[]>([])
-const climaxMessageIndex = ref<number | null>(null)
+const activeBeatIndex = ref(0)
+const typedBeatText = ref('')
 const revealedClimaxSentence = ref('')
 const activePanel = ref<'chatlog' | string>('chatlog')
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
-let scrollPending = false
 
 const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
 const CLIMAX_SPEAKER = 'BUR//S'
 const CLIMAX_HOLD_MS = 3000
 const CLIMAX_FADE_MS = 1000
-const FINAL_CHAT_ARTIFACT_ID = 'committee-report-personal-transmission'
+const CHATLOG_BEAT_MAXIMUM_CHARACTERS = 120
+
+interface ChatlogBeat {
+  messageIndex: number
+  beatIndex: number
+  isContinuation: boolean
+  speaker?: string
+  text: string
+  timestamp?: string
+  isSfx?: boolean
+}
+
+const chatlogBeats = computed<ChatlogBeat[]>(() =>
+  conversation.value.messages.flatMap((message, messageIndex) =>
+    splitReadableBeats(message.text, CHATLOG_BEAT_MAXIMUM_CHARACTERS).map((text, beatIndex) => ({
+      ...message,
+      text,
+      messageIndex,
+      beatIndex,
+      isContinuation: beatIndex > 0,
+    })),
+  ),
+)
+const activeBeat = computed(() => chatlogBeats.value[activeBeatIndex.value] ?? null)
+const climaxMessageIndex = computed(() => props.record.id === CLIMAX_ARTIFACT_ID
+  ? conversation.value.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
+  : -1)
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -33,33 +57,12 @@ function clearTypewriter() {
   }
 }
 
-function scrollViewport() {
-  if (scrollPending) {
-    return
-  }
-
-  scrollPending = true
-  void nextTick(() => {
-    const viewport = quoteViewportRef.value
-    if (viewport) {
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior: 'auto',
-      })
-    }
-    scrollPending = false
-  })
-}
-
 function runTypewriter() {
   clearTypewriter()
   emit('started')
 
-  activeMessageIndex.value = 0
-  typedMessagesText.value = conversation.value.messages.map(() => '')
-  climaxMessageIndex.value = props.record.id === CLIMAX_ARTIFACT_ID
-    ? conversation.value.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
-    : null
+  activeBeatIndex.value = 0
+  typedBeatText.value = ''
   revealedClimaxSentence.value = ''
 
   let stepTime = 35
@@ -74,10 +77,10 @@ function runTypewriter() {
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
       : 0
     let totalTicks = 0
-    conversation.value.messages.forEach((message) => {
-      const isSlow = message.speaker === 'BUR//S' || message.speaker === 'SARAH'
-      totalTicks += message.text.length
-      const text = message.text
+    chatlogBeats.value.forEach((beat) => {
+      const isSlow = beat.speaker === 'BUR//S' || beat.speaker === 'SARAH'
+      totalTicks += beat.text.length
+      const text = beat.text
       for (let i = 0; i < text.length; i++) {
         const char = text[i]
         if (char === '.' || char === '?' || char === '!') {
@@ -106,19 +109,23 @@ function runTypewriter() {
       return
     }
 
-    if (activeMessageIndex.value >= conversation.value.messages.length) {
-      if (completionPending) {
-        emit('complete')
-      }
+    if (completionPending) {
+      emit('complete')
       clearTypewriter()
       return
     }
 
-    const currentMessage = conversation.value.messages[activeMessageIndex.value]
-    const targetText = currentMessage.text
-    const speaker = currentMessage.speaker
+    const currentBeat = activeBeat.value
+    if (!currentBeat) {
+      clearTypewriter()
+      return
+    }
+
+    const targetText = currentBeat.text
+    const speaker = currentBeat.speaker
     const isSlowSpeaker = speaker === 'BUR//S' || speaker === 'SARAH'
-    const isClimaxMessage = activeMessageIndex.value === climaxMessageIndex.value
+    const isClimaxMessage = currentBeat.messageIndex === climaxMessageIndex.value
+      && currentBeat.beatIndex === 0
     const climaxOpeningEnd = targetText.indexOf('. ') + 2
 
     if (isClimaxMessage && climaxStage === 'holding') {
@@ -129,7 +136,8 @@ function runTypewriter() {
     }
 
     if (isClimaxMessage && climaxStage === 'fading') {
-      activeMessageIndex.value++
+      activeBeatIndex.value++
+      typedBeatText.value = ''
       currentLength = 0
       return
     }
@@ -137,7 +145,7 @@ function runTypewriter() {
     currentLength++
 
     if (currentLength <= targetText.length) {
-      typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength)
+      typedBeatText.value = targetText.slice(0, currentLength)
 
       if (isClimaxMessage && currentLength === climaxOpeningEnd) {
         climaxStage = 'holding'
@@ -173,31 +181,25 @@ function runTypewriter() {
       if (!isSlowSpeaker && props.record.id !== CLIMAX_ARTIFACT_ID) {
         pauseTicks = Math.max(pauseTicks, Math.ceil(35 / stepTime) - 1)
       }
+
+      if (currentLength === targetText.length) {
+        pauseTicks = Math.max(pauseTicks, isSlowSpeaker ? 50 : 20)
+      }
     }
     else {
-      typedMessagesText.value[activeMessageIndex.value] = targetText
-      if (props.record.id !== FINAL_CHAT_ARTIFACT_ID) {
-        scrollViewport()
-      }
-      activeMessageIndex.value++
-      currentLength = 0
-      if (activeMessageIndex.value >= conversation.value.messages.length) {
+      typedBeatText.value = targetText
+      if (activeBeatIndex.value === chatlogBeats.value.length - 1) {
         completionPending = true
         pauseTicks = Math.ceil(CHAT_COMPLETION_PAUSE_SECONDS * 1000 / stepTime)
       }
       else {
+        activeBeatIndex.value++
+        typedBeatText.value = ''
+        currentLength = 0
         pauseTicks = isSlowSpeaker ? 50 : 20
       }
     }
   }, stepTime)
-}
-
-function skipTypewriter() {
-  clearTypewriter()
-
-  activeMessageIndex.value = conversation.value.messages.length - 1
-  typedMessagesText.value = conversation.value.messages.map(message => message.text)
-  scrollViewport()
 }
 
 const activeProject = computed(() =>
@@ -219,11 +221,7 @@ onBeforeUnmount(clearTypewriter)
     data-lore-view-kind="chatlog"
   >
     <div class="dispatch-quote-card">
-      <div
-        ref="quoteViewportRef"
-        class="quote-viewport"
-        @click="activePanel === 'chatlog' ? skipTypewriter() : undefined"
-      >
+      <div class="quote-viewport">
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
         </p>
@@ -262,25 +260,27 @@ onBeforeUnmount(clearTypewriter)
             </h3>
             <ol class="conversation-messages">
               <li
-                v-for="(message, index) in conversation.messages"
-                v-show="index <= activeMessageIndex"
-                :key="`${record.id}-${index}`"
+                v-if="activeBeat"
+                :key="`${record.id}-${activeBeat.messageIndex}-${activeBeat.beatIndex}`"
                 class="conversation-message"
-                :class="{ 'sfx-message': message.isSfx }"
+                :class="{ 'sfx-message': activeBeat.isSfx }"
+                :data-chatlog-beat-index="activeBeatIndex"
+                :data-chatlog-message-index="activeBeat.messageIndex"
+                :data-chatlog-beat-continuation="activeBeat.isContinuation"
               >
-                <p v-if="message.isSfx" class="sfx-text">
-                  {{ typedMessagesText[index] ?? '' }}
+                <p v-if="activeBeat.isSfx" class="sfx-text">
+                  {{ typedBeatText }}
                 </p>
                 <template v-else>
                   <div class="conversation-message-header">
-                    <span class="conversation-speaker">{{ message.speaker }}</span>
-                    <time v-if="message.timestamp">{{ message.timestamp }}</time>
+                    <span class="conversation-speaker">{{ activeBeat.speaker }}</span>
+                    <time v-if="activeBeat.timestamp">{{ activeBeat.timestamp }}</time>
                   </div>
-                  <p v-if="typedMessagesText[index] || (index === climaxMessageIndex && revealedClimaxSentence)">
-                    {{ typedMessagesText[index] ?? '' }}
+                  <p v-if="typedBeatText || (activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence)">
+                    {{ typedBeatText }}
                     <Transition name="climax-fade">
                       <span
-                        v-if="index === climaxMessageIndex && revealedClimaxSentence"
+                        v-if="activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence"
                         class="climax-sentence"
                       >{{ revealedClimaxSentence }}</span>
                     </Transition>
@@ -391,14 +391,8 @@ onBeforeUnmount(clearTypewriter)
 .quote-viewport {
   position: relative;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: 0;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 
   .thesis-warning {
     margin: 0 0 18px;
@@ -421,7 +415,6 @@ onBeforeUnmount(clearTypewriter)
       opacity: 0.35;
     }
   }
-
 }
 
 .conversation-rotator {

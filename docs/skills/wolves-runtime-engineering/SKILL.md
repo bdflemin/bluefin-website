@@ -54,17 +54,21 @@ Do not introduce a second transport or wall-clock synchronization.
 ## Timing lessons
 
 - Keep scheduler and renderer on one content-cost timing model.
-- Do not scroll a chat viewport for every typewriter character; scroll only at
-  message boundaries or after an explicit skip.
 - Treat Wolves lore as a self-paced video presentation, not an interactive
-  document: the renderer must advance and hold readable content automatically;
-  viewers must never need to scroll to follow a conversation or its climax.
+  document: the renderer must advance and hold readable content automatically.
+  Do not require, offer, or depend on pointer, click, touch, keyboard, or
+  scrolling interaction; viewers must never need to operate the experience to
+  follow a conversation or its climax.
+- Render chatlogs and quotes as noninteractive, sentence- or word-bounded
+  pages. Show one complete readable beat at a time, retain the speaker header
+  on continued chat beats, and automatically type, hold, then replace it; do
+  not accumulate important text behind an overflow viewport.
 - Fast music or slideshow slots must not accelerate ordinary chat typing; keep
   explicitly approved dialogue cadence anchors unchanged.
 - When a narrative range is constrained, allocate chatlog readability before
   static quote or source records; preserve explicitly approved cadence locks.
-- Do not auto-scroll an explicitly authored final conversation after its key
-  line is revealed; only an explicit user skip may move that viewport.
+- The authored final conversation remains noninteractive after its key line is
+  revealed; it must advance and hold without scroll or skip controls.
 - Add a locked hero photo as a contiguous timed window and shift only the
   following unlocked window; do not move the established hero anchors.
 - Preserve locked anchors and recompute only unlocked intervals.

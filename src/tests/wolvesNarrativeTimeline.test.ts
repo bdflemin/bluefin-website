@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { loadAllLoreRecords } from '../data/wolves-lore-records'
+import { CHAT_COMPLETION_PAUSE_SECONDS } from '../data/wolves-lore-timing'
 import {
   getNarrativeSlotForTime,
   lockedNarrativeSlots,
   wolvesNarrativeTimeline,
 } from '../data/wolves-narrative-timeline'
-import { loadAllLoreRecords } from '../data/wolves-lore-records'
-import { CHAT_COMPLETION_PAUSE_SECONDS } from '../data/wolves-lore-timing'
-
 
 describe('wolves narrative timeline', () => {
   it('contains every visible release artifact exactly once', () => {
@@ -15,8 +14,19 @@ describe('wolves narrative timeline', () => {
     expect(ids).toContain('lorem-pursuit-1')
     expect(ids).toContain('blue-universal-acquires-wayland-yutani')
     expect(ids).not.toContain('lorem-prologue-2')
+    expect(ids).not.toContain('lorem-prologue-1')
     expect(ids).not.toContain('john-seager')
     expect(ids).not.toContain('do-not-reply')
+  })
+
+  it('keeps The Artifact source record available while hiding it from the video', () => {
+    const artifact = loadAllLoreRecords().find(record => record.id === 'lorem-prologue-1')
+
+    expect(artifact).toMatchObject({
+      id: 'lorem-prologue-1',
+      metadata: { title: 'The Artifact' },
+    })
+    expect(wolvesNarrativeTimeline.map(slot => slot.artifactId)).not.toContain(artifact?.id)
   })
 
   it('keeps unlocked lore in authored timeline order', () => {
@@ -28,7 +38,7 @@ describe('wolves narrative timeline', () => {
 
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
-      artifactId: 'lorem-prologue-1',
+      artifactId: 'arthur-c-clarke-1',
       startTime: 0,
     })
     expect(getNarrativeSlotForTime(180)).toMatchObject({

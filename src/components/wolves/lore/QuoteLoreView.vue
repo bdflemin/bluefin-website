@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { getQuoteLore } from '../lore'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
+import { getQuoteLore } from '../lore'
+import { splitReadableBeats } from './readable-beats'
 
 const props = defineProps<LoreViewProps>()
 
 const quote = computed(() => getQuoteLore(props.record))
-const quoteViewportRef = ref<HTMLElement | null>(null)
 const typedQuoteText = ref('')
+const activeBeatIndex = ref(0)
+const quoteBeats = computed(() => splitReadableBeats(quote.value.quote, 110))
+const QUOTE_BEAT_HOLD_MS = 1500
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
-let scrollPending = false
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -19,61 +21,52 @@ function clearTypewriter() {
   }
 }
 
-function scrollViewport() {
-  if (scrollPending) {
-    return
-  }
-
-  scrollPending = true
-  void nextTick(() => {
-    const viewport = quoteViewportRef.value
-    if (viewport) {
-      // The typewriter advances faster than a smooth animation can settle.
-      // Use an immediate scroll after layout so the latest authored text stays
-      // readable instead of accumulating a scroll backlog.
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior: 'auto',
-      })
-    }
-    scrollPending = false
-  })
-}
-
 function runTypewriter() {
   clearTypewriter()
   typedQuoteText.value = ''
+  activeBeatIndex.value = 0
 
   const targetText = quote.value.quote
   const minimumReadSeconds = estimateLoreReadDuration({ kind: 'quote', body: targetText, attribution: quote.value.attribution })
   const readableBudgetMs = Math.max(1, Math.min(props.duration, minimumReadSeconds) * 1000 * 0.7)
-  const stepTime = Math.max(5, Math.min(50, readableBudgetMs / Math.max(1, targetText.length)))
+  const stepTime = Math.max(5, Math.min(50, readableBudgetMs / Math.max(1, targetText.length + quoteBeats.value.length - 1)))
   let index = 0
+  let pauseTicks = 0
+  let beatComplete = false
 
   typewriterTimer = setInterval(() => {
-    index++
-    typedQuoteText.value = targetText.slice(0, index)
-    // Keep the newest line visible continuously; punctuation-only scrolling
-    // leaves long authored sentences stranded below the viewport.
-    scrollViewport()
-
-    const currentChar = targetText[index - 1]
-    if (currentChar === '.' || currentChar === '?' || currentChar === '!' || currentChar === '…') {
-      scrollViewport()
+    if (pauseTicks > 0) {
+      pauseTicks--
+      return
     }
 
-    if (index >= targetText.length) {
+    if (beatComplete) {
+      activeBeatIndex.value++
+      typedQuoteText.value = ''
+      index = 0
+      beatComplete = false
+      return
+    }
+
+    const activeBeat = quoteBeats.value[activeBeatIndex.value]
+    if (!activeBeat) {
       clearTypewriter()
-      scrollViewport()
+      return
+    }
+
+    index++
+    typedQuoteText.value = activeBeat.slice(0, index)
+
+    if (index >= activeBeat.length) {
+      if (activeBeatIndex.value === quoteBeats.value.length - 1) {
+        clearTypewriter()
+        return
+      }
+
+      beatComplete = true
+      pauseTicks = Math.ceil(QUOTE_BEAT_HOLD_MS / stepTime)
     }
   }, stepTime)
-}
-
-function skipTypewriter() {
-  clearTypewriter()
-  typedQuoteText.value = quote.value.quote
-
-  scrollViewport()
 }
 
 watch(() => props.record, runTypewriter, { immediate: true })
@@ -88,7 +81,7 @@ onBeforeUnmount(clearTypewriter)
     data-lore-view-kind="quote"
   >
     <div class="dispatch-quote-card">
-      <div ref="quoteViewportRef" class="quote-viewport" :aria-label="quote.quote + ' — ' + quote.attribution" role="article" @click="skipTypewriter">
+      <div class="quote-viewport" :aria-label="`${quote.quote} — ${quote.attribution}`" role="article">
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
         </p>
@@ -98,7 +91,7 @@ onBeforeUnmount(clearTypewriter)
               <div class="lore-quote-mark">
                 &ldquo;
               </div>
-              <p class="lore-quote-text">
+              <p class="lore-quote-text" :data-quote-beat-index="activeBeatIndex">
                 {{ typedQuoteText }}
               </p>
               <div class="lore-quote-meta">
@@ -158,17 +151,9 @@ onBeforeUnmount(clearTypewriter)
 .quote-viewport {
   position: relative;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   min-height: 0;
   padding-right: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(102, 179, 255, 0.3) transparent;
-  scroll-behavior: auto;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
 
   .thesis-warning {
     margin: 0 0 18px;
@@ -190,11 +175,6 @@ onBeforeUnmount(clearTypewriter)
     to {
       opacity: 0.35;
     }
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(102, 179, 255, 0.3);
-    border-radius: 3px;
   }
 }
 

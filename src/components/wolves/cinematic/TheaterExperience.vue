@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { WolvesNarrativeSlot } from '@/data/wolves-narrative-timeline'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
-import { getNarrativeSlotForTime, type WolvesNarrativeSlot } from '@/data/wolves-narrative-timeline'
+import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
 import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -440,7 +441,7 @@ onBeforeUnmount(() => {
 .wc-trackzero-lore-row {
   display: flex;
   min-height: 0;
-  overflow: hidden auto;
+  overflow: hidden;
 }
 
 .wc-trackzero-lore-row :deep(.wolves-lore-column) {

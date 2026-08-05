@@ -1,6 +1,6 @@
 import { loadAllLoreRecords } from './wolves-lore-records'
-import { wolvesRelease } from './wolves-story'
 import { allocateLoreSlots } from './wolves-lore-timing'
+import { wolvesRelease } from './wolves-story'
 
 export interface WolvesNarrativeSlot {
   artifactId: string
@@ -21,6 +21,7 @@ export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
 
 const hiddenFromWolvesVideoArtifactIds = new Set([
   'do-not-reply',
+  'lorem-prologue-1',
   'lorem-prologue-2',
   'john-seager',
 ])
@@ -51,7 +52,6 @@ export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
   ...allocateRange(middle, 220, 398),
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
 ]
-
 
 export function getNarrativeSlotForTime(time: number): WolvesNarrativeSlot {
   const normalizedTime = Math.max(0, time)

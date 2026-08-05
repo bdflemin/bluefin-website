@@ -1,12 +1,24 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getChatlogLore, getQuoteLore, loreRecords } from '../components/wolves/lore'
+import { splitReadableBeats } from '../components/wolves/lore/readable-beats'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
 import { parseLoreRecord } from '../data/wolves-lore-records'
 import { getNarrativeSlotForTime } from '../data/wolves-narrative-timeline'
 import { wolvesRelease } from '../data/wolves-story'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
 import { wolvesLoreRecordFixtures } from './fixtures/wolves-lore-records'
+
+async function advanceUntil(condition: () => boolean, timeoutMs = 60_000) {
+  for (let elapsed = 0; elapsed < timeoutMs; elapsed += 250) {
+    await vi.advanceTimersByTimeAsync(250)
+    if (condition()) {
+      return
+    }
+  }
+
+  throw new Error(`Condition was not met within ${timeoutMs}ms`)
+}
 
 describe('wolvesLoreColumn Logic', () => {
   it('renders the narrative record in a unified surface without the removed dossier directory', () => {
@@ -39,8 +51,7 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    vi.advanceTimersByTime(5_000)
-    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTimeAsync(5_000)
     expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('It is a bitter thought, but you must face it.')
   })
@@ -83,7 +94,7 @@ describe('wolvesLoreColumn Logic', () => {
     expect(quote.quote.startsWith(renderedQuote)).toBe(true)
   })
 
-  it('renders an authored quote attribution over its title', async () => {
+  it('renders an authored quote attribution over its title', () => {
     const record = loreRecords.find(record => record.id === 'arthur-c-clarke-2')
     if (!record || record.kind !== 'quote') {
       throw new Error('Expected the Arthur C. Clarke quote fixture')
@@ -94,8 +105,6 @@ describe('wolvesLoreColumn Logic', () => {
         duration: 20,
       },
     })
-
-    await wrapper.find('.quote-viewport').trigger('click')
 
     expect(record.diagnostics).toEqual([])
     expect(wrapper.get('.lore-quote-meta strong').text()).toBe('Arthur C. Clarke')
@@ -206,26 +215,58 @@ describe('wolvesLoreColumn Logic', () => {
     expect(firstMessage.text.startsWith(wrapper.find('.conversation-message p').text())).toBe(true)
   })
 
-  it('shows a live typing cursor until a chatlog reveal is skipped', async () => {
+  it('renders Jordan and Adrian as automatic readable beats without narrative controls', async () => {
     vi.useFakeTimers()
+    const record = loreRecords.find(record => record.id === 'jordan-adrian')
+    if (!record || record.kind !== 'chatlog') {
+      throw new Error('Expected the Jordan and Adrian transmission fixture')
+    }
+    const chatlog = getChatlogLore(record)
+    const expectedBeats = new Map(
+      chatlog.messages
+        .filter(message => message.speaker === 'Adrian' || message.speaker === 'Jordan')
+        .map(message => [message.speaker!, splitReadableBeats(message.text, 120)]),
+    )
     const wrapper = mount(WolvesLoreColumn, {
       props: {
-        artifactId: 'lorem-prologue-1',
-        duration: 0.1,
+        artifactId: record.id,
+        duration: 0.01,
       },
     })
+    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
+    const viewport = wrapper.get('.quote-viewport')
+    const beforeClick = wrapper.text()
 
-    vi.advanceTimersByTime(20)
-    await wrapper.vm.$nextTick()
+    expect(viewport.attributes('onClick')).toBeUndefined()
+    await viewport.trigger('click')
+    expect(wrapper.text()).toBe(beforeClick)
 
-    // Some messages should not be fully revealed yet
-    expect(wrapper.text()).not.toContain('Where\'s your sense of fun?')
+    const observedBeats = new Map<string, Map<string, string>>()
+    await advanceUntil(() => {
+      const beat = wrapper.find('.conversation-message')
+      const speaker = beat.find('.conversation-speaker').text()
+      const text = beat.find('p').exists() ? beat.find('p').text() : ''
+      const expected = expectedBeats.get(speaker)
+      if (!expected?.includes(text)) {
+        return false
+      }
 
-    await wrapper.find('.quote-viewport').trigger('click')
-    await wrapper.vm.$nextTick()
+      expect(wrapper.findAll('.conversation-message')).toHaveLength(1)
+      expect(beat.find('.conversation-message-header').exists()).toBe(true)
+      const speakerBeats = observedBeats.get(speaker) ?? new Map<string, string>()
+      speakerBeats.set(text, beat.attributes('data-chatlog-beat-continuation') ?? 'false')
+      observedBeats.set(speaker, speakerBeats)
 
-    // All messages should be fully revealed after skip
-    expect(wrapper.text()).toContain('Where\'s your sense of fun?')
+      return [...expectedBeats].every(([name, beats]) => observedBeats.get(name)?.size === beats.length)
+    })
+
+    for (const [speaker, beats] of expectedBeats) {
+      expect(observedBeats.get(speaker)?.size).toBe(beats.length)
+      expect([...observedBeats.get(speaker)?.values() ?? []]).toEqual(
+        beats.map((_, index) => String(index > 0)),
+      )
+    }
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 
   it('renders The Children sound effects with the established SFX treatment', async () => {
@@ -237,16 +278,27 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    await wrapper.find('.quote-viewport').trigger('click')
-
-    const soundEffects = wrapper.findAll('.sfx-message')
-    expect(soundEffects).toHaveLength(3)
-    expect(soundEffects.map(effect => effect.find('.sfx-text').text())).toEqual([
+    const expectedEffects = [
       'static noise and distant explosions',
       'heavy static',
       'connection dropping',
-    ])
-    expect(soundEffects.every(effect => !effect.find('.conversation-message-header').exists())).toBe(true)
+    ]
+    const observedEffects = new Set<string>()
+    await advanceUntil(() => {
+      const effect = wrapper.find('.sfx-message')
+      if (!effect.exists()) {
+        return false
+      }
+
+      const text = effect.find('.sfx-text').text()
+      if (expectedEffects.includes(text)) {
+        observedEffects.add(text)
+      }
+      expect(effect.find('.conversation-message-header').exists()).toBe(false)
+      return observedEffects.size === expectedEffects.length
+    })
+
+    expect([...observedEffects]).toEqual(expectedEffects)
   })
 
   it('renders deterministic project tabs only for project-linked chats', async () => {
@@ -270,63 +322,49 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('Continue using familiar Kubernetes APIs, tooling, and workflows.')
   })
 
-  it('continuously pins long quotes to the latest readable text', async () => {
+  it('automatically pages long quotes without scroll or click controls', async () => {
     vi.useFakeTimers()
-    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
-    const wrapper = mount(WolvesLoreColumn, {
-      props: {
-        artifactId: 'arthur-c-clarke-3',
-        duration: 0.01,
-      },
-    })
-
-    vi.advanceTimersByTime(1_000)
-    await wrapper.vm.$nextTick()
-
-    expect(scrollTo).toHaveBeenCalledWith({
-      top: expect.any(Number),
-      behavior: 'auto',
-    })
-  })
-
-  it('scrolls a completed quote after its final character renders', async () => {
-    vi.useFakeTimers()
-    const record = loreRecords.find(record => record.id === 'arthur-c-clarke-3')
-    if (!record || record.kind !== 'quote') {
+    const record = loreRecords
+      .filter(record => record.kind === 'quote')
+      .reduce((longest, record) => record.body.length > longest.body.length ? record : longest)
+    if (record.kind !== 'quote') {
       throw new Error('Expected a quote fixture')
     }
-    const quote = getQuoteLore(record)
+    const beats = splitReadableBeats(record.body, 110)
+    expect(beats.length).toBeGreaterThan(1)
 
-    const renderedTextAtScroll: string[] = []
     const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
-      .mockImplementation(function (this: HTMLElement) {
-        renderedTextAtScroll.push(this.querySelector('.lore-quote-text')?.textContent ?? '')
-      })
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,
         duration: 0.01,
       },
     })
+    const viewport = wrapper.get('.quote-viewport')
+    const beforeClick = wrapper.get('.lore-quote-text').text()
 
-    await vi.advanceTimersByTimeAsync(1_000)
+    expect(viewport.attributes('onClick')).toBeUndefined()
+    await viewport.trigger('click')
+    expect(wrapper.get('.lore-quote-text').text()).toBe(beforeClick)
 
-    expect(scrollTo).toHaveBeenCalled()
-    expect(renderedTextAtScroll).toContain(quote.quote)
-    wrapper.unmount()
+    await advanceUntil(() => Number(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')) > 0)
+
+    expect(wrapper.get('.lore-quote-text').text()).not.toBe(record.body)
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 
-  it('reveals the Golden Era vision during the authored conversation', async () => {
+  it('reveals the Golden Era vision and preserves Sarah pacing without narrative controls', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'lorem-pursuit-1')
     if (!record || record.kind !== 'chatlog') {
       throw new Error('Expected the Golden Era transmission fixture')
     }
     const chatlog = getChatlogLore(record)
-
+    const saintclair = chatlog.messages.find(message => message.speaker === 'SAINTCLAIR')
     const climaxMessage = chatlog.messages.find(message => message.speaker === 'BUR//S')
-    if (!climaxMessage) {
-      throw new Error('Expected the Golden Era vision fixture')
+    const sarah = chatlog.messages.find(message => message.speaker === 'SARAH')
+    if (!saintclair || !climaxMessage || !sarah) {
+      throw new Error('Expected the Golden Era conversation fixtures')
     }
 
     const vision = climaxMessage.text.slice(climaxMessage.text.indexOf('. ') + 2)
@@ -336,22 +374,41 @@ describe('wolvesLoreColumn Logic', () => {
         duration: 0.01,
       },
     })
+    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
+    const viewport = wrapper.get('.quote-viewport')
+    const beforeClick = wrapper.text()
 
-    vi.advanceTimersByTime(8_800)
-    await wrapper.vm.$nextTick()
+    expect(viewport.attributes('onClick')).toBeUndefined()
+    await viewport.trigger('click')
+    expect(wrapper.text()).toBe(beforeClick)
 
-    expect(wrapper.text()).not.toContain(vision)
+    let sawSaintclair = false
+    let sawVision = false
+    let sawPartialSarah = false
+    await advanceUntil(() => {
+      const message = wrapper.find('.conversation-message')
+      expect(wrapper.findAll('.conversation-message')).toHaveLength(1)
+      const speaker = message.find('.conversation-speaker').text()
+      const text = message.find('p').exists() ? message.find('p').text() : ''
 
-    vi.advanceTimersByTime(31_200)
-    await wrapper.vm.$nextTick()
+      if (speaker === 'SAINTCLAIR' && text === saintclair.text) {
+        sawSaintclair = true
+      }
+      if (speaker === 'BUR//S' && message.find('.climax-sentence').exists()) {
+        expect(message.find('.climax-sentence').text()).toBe(vision)
+        sawVision = true
+      }
+      if (speaker === 'SARAH' && text && text !== sarah.text) {
+        sawPartialSarah = true
+      }
 
-    expect(wrapper.find('.climax-sentence').text()).toBe(vision)
-    expect(wrapper.findAll('.conversation-message')
-      .filter(message => !(message.attributes('style') ?? '').includes('display: none'))
-      .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
+      return sawSaintclair && sawVision && sawPartialSarah
+    }, 120_000)
+
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 
-  it('does not auto-scroll the final chat after its key line is revealed', async () => {
+  it('keeps the finale chat noninteractive after its key line is revealed', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {
       props: {
@@ -359,43 +416,15 @@ describe('wolvesLoreColumn Logic', () => {
         duration: 0.01,
       },
     })
-    const scrollTo = vi.spyOn(wrapper.get('.quote-viewport').element, 'scrollTo')
+    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
+    const viewport = wrapper.get('.quote-viewport')
+    const beforeClick = wrapper.text()
 
+    expect(viewport.attributes('onClick')).toBeUndefined()
+    await viewport.trigger('click')
+    expect(wrapper.text()).toBe(beforeClick)
     await vi.advanceTimersByTimeAsync(20_000)
 
-    expect(scrollTo).not.toHaveBeenCalled()
-  })
-
-  it('keeps Golden Era dialogue visible while Sarah is still typing without repeatedly scrolling', async () => {
-    vi.useFakeTimers()
-    const record = loreRecords.find(record => record.id === 'lorem-pursuit-1')
-    if (!record || record.kind !== 'chatlog') {
-      throw new Error('Expected the Golden Era transmission fixture')
-    }
-    const chatlog = getChatlogLore(record)
-
-    const sarah = chatlog.messages.find(message => message.speaker === 'SARAH')
-    if (!sarah) {
-      throw new Error('Expected the Golden Era Sarah fixture')
-    }
-
-    const wrapper = mount(WolvesLoreColumn, {
-      props: {
-        artifactId: record.id,
-        duration: 0.01,
-      },
-    })
-
-    await vi.advanceTimersByTimeAsync(41_000)
-    const scrollTo = vi.spyOn(wrapper.get('.quote-viewport').element, 'scrollTo')
-
-    await vi.advanceTimersByTimeAsync(500)
-
-    const sarahText = wrapper.findAll('.conversation-message')
-      .find(message => message.find('.conversation-speaker').text() === 'SARAH')
-      ?.find('p')
-      .text() ?? ''
-    expect(sarahText).not.toBe(sarah.text)
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
@@ -413,9 +442,19 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    await vi.advanceTimersByTimeAsync(25_000)
+    const finalMessage = chatlog.messages[chatlog.messages.length - 1]!
+    await advanceUntil(() => {
+      const message = wrapper.find('.conversation-message')
+      return message.find('.conversation-speaker').text() === finalMessage.speaker
+        && message.find('p').exists()
+        && message.find('p').text() === finalMessage.text
+    })
 
-    expect(wrapper.text()).toContain(chatlog.messages[chatlog.messages.length - 1]!.text)
+    expect(wrapper.emitted('chat-complete')).toBeUndefined()
+    await vi.advanceTimersByTimeAsync(4_000)
+    expect(wrapper.emitted('chat-complete')).toBeUndefined()
+    await vi.advanceTimersByTimeAsync(1_500)
+    expect(wrapper.emitted('chat-complete')).toHaveLength(1)
   })
 
   it('replaces the full lore column with a vertical dinosaur dossier', () => {

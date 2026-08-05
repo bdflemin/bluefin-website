@@ -67,6 +67,13 @@ successful build does not prove eager lore loading succeeds. Finish with
 
 ## Timing and readability lessons
 
+- Wolves is a passive video presentation. Do not require, offer, or depend on
+  pointer, click, touch, keyboard, or scrolling interaction to follow its
+  narrative text. The renderer must pace and reveal the complete story itself.
+- Use a noninteractive paged renderer for chatlogs and quotes: show one
+  complete sentence- or word-bounded readable beat, retain the speaker header
+  on continued chat beats, then automatically type, hold, and replace it.
+  Never accumulate important text behind an overflow viewport.
 - The active media-player clock remains the only synchronization clock.
 - A chat completion event may hold its active record on screen, but it is a
   display lifecycle gate, not a second clock: when it releases, resume from
