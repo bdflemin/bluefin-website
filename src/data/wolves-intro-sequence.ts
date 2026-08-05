@@ -435,13 +435,13 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
       //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
       //   17.5 without a fresh user request.
-      // - Kaslin Fields' Arc Warlock lightning duel runs 39-48s, beginning on her visible
+      // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
       //   electric reveal (previously cut off at
       //   40s, well before the footage itself ends).
       // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
       // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
-      //   the same shot from ~88.5-90s onward, so their windows overlap (84-95s and
-      //   88.5-96s) with `position` anchoring each to its own side of the frame instead of one
+      //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
+      //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
       //   caption overwriting the other. Christoph's plate ends a second before Natali's so
       //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
       //   trustee label remains authoritative. His title line carries two segments joined the same way
@@ -474,15 +474,15 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       overlays: [
         { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
         { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
-        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 39, end: 48 },
+        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
         // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
         // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
         { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 84, end: 95, position: 'left', trustee: true, leader: true },
-        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 88.5, end: 96, position: 'right', raised: true },
+        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
+        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
         { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
       ],
     },

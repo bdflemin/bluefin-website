@@ -193,7 +193,7 @@ describe('wolves intro overlay sequence', () => {
 
     expect(destiny.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5 }),
-      expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 39, end: 48 }),
+      expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 }),
     ]))
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
@@ -207,8 +207,8 @@ describe('wolves intro overlay sequence', () => {
     expect(destiny.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 }),
       expect.objectContaining({ text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 }),
-      expect.objectContaining({ text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 84, end: 95, position: 'left', trustee: true, leader: true }),
-      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 88.5, end: 96, position: 'right' }),
+      expect.objectContaining({ text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true }),
+      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right' }),
     ]))
     expect(destiny.overlays?.find(cue => cue.text.includes('Christoph Blecker'))).toHaveProperty('leader', true)
   })
