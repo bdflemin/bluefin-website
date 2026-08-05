@@ -154,10 +154,9 @@ describe('wolves Track 0 slide locks', () => {
     expect(finaleSlides).toEqual([newPhoto])
   })
 
-  it('locks the post-hero opening run in order: walters, tophee, kirkland, 0R0A9083, 052', () => {
+  it('locks the post-hero opening run in order: walters, kirkland, 0R0A9083, 052', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
       'wolves/people/bootc creator Colin Walters.JPG',
-      'wolves/people/flickr-54137782365.webp',
       'wolves/people/kirkland.webp',
       'wolves/people/flickr-55343975781.webp',
       'wolves/people/kubecon-55168545279.webp',
@@ -169,7 +168,6 @@ describe('wolves Track 0 slide locks', () => {
       sequence[3],
       sequence[0],
       { id: 'people-b' },
-      sequence[4],
       sequence[1],
       sequence[2],
     ]

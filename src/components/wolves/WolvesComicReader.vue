@@ -33,6 +33,10 @@ import {
   pinTrackZeroPostHeroOpening,
   splitTrackZeroFastFinaleSlides,
 } from '@/data/wolves-track-zero-slides'
+
+const trackZeroReservedForLaterIds = new Set([
+  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
+])
 import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
@@ -143,7 +147,8 @@ const mixedPhotos = computed(() => {
   // 2. Local People wallpapers (isPeople = true)
   const localPeople = wallpapers.filter((wp) => {
     const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
-    return isPeople
+    const id = wp.name ?? wp.dayName ?? wp.nightName ?? ''
+    return isPeople && !trackZeroReservedForLaterIds.has(id)
   }).map(wp => ({
     id: wp.name,
     isLocal: true,
@@ -274,7 +279,8 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   const localPeople = wallpapers.filter((wp) => {
     const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
-    return isPeople
+    const id = wp.name ?? wp.dayName ?? wp.nightName ?? ''
+    return isPeople && !trackZeroReservedForLaterIds.has(id)
   }).map(wp => ({
     id: wp.name || wp.dayName || wp.nightName || '',
     isLocal: true,
@@ -604,7 +610,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const barrageBase = [
     ...shuffledPeople.slice(buildPoolEnd),
     ...finaleSlides,
-  ]
+  ].filter(slide => slide.id !== 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
   const sec6Cuts = trackZeroEvenBeatCuts(
     currentTime,

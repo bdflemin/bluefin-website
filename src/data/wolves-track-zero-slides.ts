@@ -98,12 +98,11 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
 
 /**
  * Locked opening run of the post-hero People stretch (starts right after the
- * Bluefin group hands off at 196.36s): Walters -> Tophee -> Kirkland ->
- * 0R0A9083 -> Daily Highlights 052, back-to-back in this exact order.
+ * Bluefin group hands off at 196.36s): Walters -> Kirkland -> 0R0A9083 ->
+ * Daily Highlights 052, back-to-back in this exact order.
  */
 export const postHeroOpeningSequenceIds = [
   'wolves/people/bootc creator Colin Walters.JPG',
-  'wolves/people/flickr-54137782365.webp',
   'wolves/people/kirkland.webp',
   'wolves/people/flickr-55343975781.webp',
   'wolves/people/kubecon-55168545279.webp',
@@ -167,12 +166,12 @@ export const trackZeroFastFinalePhotoIds: ReadonlySet<string> = new Set([
   'wolves/people/20260709-osc26-distrobox-1.webp',
   'wolves/people/abigailcabunoc30360.web_.webp',
   'wolves/people/amberleighruth_reference.webp',
-  'wolves/people/ashleymcnamara35365.webp',
+  'wolves/people/Bluefin Advisor Ashley McNamara.webp',
   'wolves/people/dirkhohndel.faces21994.web_.webp',
   'wolves/people/faces.jessiefrazella25358.web_.webp',
   'wolves/people/liz.webp',
   'wolves/people/rikkiendsley28095-2.webp',
-  'wolves/people/stormy.faces23764.web_.webp',
+  'wolves/people/Bluefin Advisor Stormy Peters.webp',
   'wolves/people/vmbrasseur.webp',
 ] as const)
 
