@@ -34,6 +34,10 @@ For a visual size or collision request, assert the affected elements'
 proof of the rendered result because containing blocks and responsive rules can
 constrain them.
 
+For isolated overlay copy, use a classed element instead of a bare semantic tag
+when the site has global element styling. A global `footer` rule can introduce
+panel paint, stacking, or padding that defeats component-scoped styles.
+
 ## Common Rationalizations
 
 - "The CSS width is larger, so the rendered element must be larger." A grid,

@@ -897,10 +897,10 @@ defineExpose({
           </div>
           <blockquote class="wolves-intro-overlay-title-card-amber-quote" data-amber-quote>
             <p>"You don't need permission to contribute to your own destiny."</p>
-            <footer>
+            <div class="wolves-intro-overlay-title-card-amber-attribution">
               <strong>— Amber Graner</strong>
               <span>Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]</span>
-            </footer>
+            </div>
           </blockquote>
         </div>
         <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
@@ -1239,8 +1239,8 @@ defineExpose({
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   /* Top/bottom padding reserves the pinned text bands (title above, pill
      below) so the centered art region can never reach them. */
   padding: clamp(17rem, 26vh, 21rem) clamp(1.6rem, 4vw, 4rem) 19rem;
@@ -1251,18 +1251,20 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(34rem, 38rem);
-  align-items: start;
+  display: flex;
+  align-items: center;
   gap: clamp(2rem, 4vw, 5rem);
-  width: min(100%, 110rem);
+  width: fit-content;
+  max-width: 100%;
+  transform: translate(-6.25vw, -5rem);
 }
 
 .wolves-intro-overlay-title-card-main {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
 }
 
@@ -1344,50 +1346,54 @@ defineExpose({
 
 .wolves-intro-overlay-title-card-amber-quote {
   position: absolute;
-  bottom: clamp(12rem, 16vh, 15rem);
-  left: clamp(1.6rem, 4vw, 4rem);
-  width: min(58vw, 48rem);
+  bottom: clamp(12.5rem, 14vh, 13rem);
+  left: 50%;
+  width: min(90vw, 90rem);
   margin: 0;
   padding: 0;
   color: #fff;
-  text-align: left;
-  text-shadow: 0 2px 10px rgb(0 0 0 / 90%);
+  text-align: center;
+  text-shadow:
+    0 3px 12px rgb(0 0 0 / 95%),
+    0 0 24px rgb(0 0 0 / 75%);
+  transform: translateX(-50%);
 }
 
 .wolves-intro-overlay-title-card-amber-quote p {
   margin: 0;
   font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  font-size: clamp(1.35rem, 2vw, 2.3rem);
-  line-height: 1.25;
+  font-size: clamp(2rem, 3.4vw, 4rem);
+  line-height: 1.15;
   letter-spacing: 0.03em;
   color: #f8fafc;
-  text-align: left;
+  text-align: center;
 }
 
-.wolves-intro-overlay-title-card-amber-quote footer {
+.wolves-intro-overlay-title-card-amber-attribution {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   gap: 0.35rem;
-  margin-top: 0.8rem;
+  margin-top: 1rem;
   font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  text-align: left;
+  text-align: center;
 }
 
 .wolves-intro-overlay-title-card-amber-quote strong {
   color: #93c5fd;
-  font-size: clamp(1rem, 1.2vw, 1.3rem);
+  font-size: clamp(1.15rem, 1.4vw, 1.6rem);
 }
 
 .wolves-intro-overlay-title-card-amber-quote span {
   color: #cbd5e1;
-  font-size: clamp(0.85rem, 1vw, 1.05rem);
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
   line-height: 1.35;
 }
 
 .wolves-intro-overlay-title-card-qr {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 0.9rem;
@@ -1406,7 +1412,9 @@ defineExpose({
   aspect-ratio: 1;
   padding: 0.65rem;
   border-radius: 1.35rem;
-  background: #fff;
+  border: 1px solid rgb(147 197 253 / 45%);
+  background: #020617;
+  box-shadow: inset 0 0 24px rgb(59 130 246 / 14%);
 }
 
 .wolves-intro-overlay-title-card-qr-image {
@@ -1414,6 +1422,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
+  filter: invert(1);
 }
 
 .wolves-intro-overlay-title-card-qr-dialogue,
@@ -1428,11 +1437,13 @@ defineExpose({
   }
 
   .wolves-intro-overlay-title-card-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     align-items: center;
     justify-items: center;
     gap: 0.8rem;
+    transform: none;
     width: 100%;
   }
 
@@ -1470,12 +1481,12 @@ defineExpose({
 
   .wolves-intro-overlay-title-card-amber-quote {
     bottom: 19rem;
-    left: 1.2rem;
-    width: min(78vw, 30rem);
+    left: 50%;
+    width: min(92vw, 36rem);
   }
 
   .wolves-intro-overlay-title-card-amber-quote p {
-    font-size: clamp(1.15rem, 3.5vw, 1.8rem);
+    font-size: clamp(1.6rem, 5.2vw, 2.4rem);
   }
 
   .wolves-intro-overlay-title-card-qr {

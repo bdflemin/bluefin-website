@@ -164,6 +164,8 @@ async function assertComicHeroQrLayout(page) {
       qrLinkDisplay: qrLink ? getComputedStyle(qrLink).display : '',
       qrLinkRadius: qrLink ? getComputedStyle(qrLink).borderRadius : '',
       qrCardRadius: qrCard ? getComputedStyle(qrCard).borderRadius : '',
+      qrCardBackground: qrCard ? getComputedStyle(qrCard).backgroundColor : '',
+      qrImageFilter: qrImage ? getComputedStyle(qrImage).filter : '',
       quoteBackground: amberQuote ? getComputedStyle(amberQuote).backgroundColor : '',
       quoteBorderWidth: amberQuote ? getComputedStyle(amberQuote).borderTopWidth : '',
       quoteTextAlign: amberQuote ? getComputedStyle(amberQuote).textAlign : '',
@@ -194,12 +196,23 @@ async function assertComicHeroQrLayout(page) {
   expectTruthy('Comic hero QR remains large enough to scan', layout.qrImage.width >= 300)
   expectTruthy('Comic hero monitor has rounded corners', Number.parseFloat(layout.qrLinkRadius) >= 20)
   expectTruthy('Comic hero QR screen has rounded corners', Number.parseFloat(layout.qrCardRadius) >= 12)
+  expectEqual('Comic hero QR screen uses the dark palette', layout.qrCardBackground, 'rgb(2, 6, 23)')
+  expectEqual('Comic hero QR image inverts for dark contrast', layout.qrImageFilter, 'invert(1)')
   expectNoOverlap('Comic hero QR does not cover the Chonky hero shot', layout.heroShot, layout.qrCard)
+  expectNoOverlap('Amber quote stays below the dinosaur artwork', layout.amberQuote, layout.heroShot)
+  expectNoOverlap('Amber quote stays below the QR code', layout.amberQuote, layout.qrCard)
   expectNoOverlap('Comic hero monitor stays above the footer widget', layout.qrLink, layout.widget)
   expectNoOverlap('Amber quote stays above the footer widget', layout.amberQuote, layout.widget)
-  expectTruthy('Dinosaur artwork occupies the left visual field', layout.heroShot.left < layout.qrCard.left)
-  expectTruthy('Amber quote uses the left lower third', layout.amberQuote.left < layout.viewport.width / 2)
-  expectEqual('Amber quote is left aligned', layout.quoteTextAlign, 'left')
+  expectTruthy('Dinosaur artwork remains left of the QR code', layout.heroShot.left < layout.qrCard.left)
+  expectTruthy(
+    'Dinosaur and QR form a centered composition',
+    Math.abs(((layout.heroShot.left + layout.qrCard.right) / 2) - (layout.viewport.width / 2)) <= 40,
+  )
+  expectTruthy(
+    'Amber quote is centered along the bottom',
+    Math.abs(((layout.amberQuote.left + layout.amberQuote.right) / 2) - (layout.viewport.width / 2)) <= 1,
+  )
+  expectEqual('Amber quote is centered', layout.quoteTextAlign, 'center')
   expectEqual('Amber quote has no panel border', layout.quoteBorderWidth, '0px')
   expectEqual('Amber quote has no panel background', layout.quoteBackground, 'rgba(0, 0, 0, 0)')
 }

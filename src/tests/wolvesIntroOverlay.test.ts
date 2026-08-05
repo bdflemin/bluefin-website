@@ -276,6 +276,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.get('[data-amber-quote]').text()).toContain('You don\'t need permission to contribute to your own destiny.')
     expect(wrapper.get('[data-amber-quote]').text()).toContain('— Amber Graner')
     expect(wrapper.get('[data-amber-quote]').text()).toContain('Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]')
+    expect(wrapper.find('[data-amber-quote] footer').exists()).toBe(false)
   })
 
   it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {

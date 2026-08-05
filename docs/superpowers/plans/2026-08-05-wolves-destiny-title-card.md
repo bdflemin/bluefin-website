@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the Destiny title card asymmetric, enlarge its QR code, move the Amber Graner quote into an unboxed lower third, and replace the supplied status line.
+**Goal:** Center the Destiny title-card artwork and QR, enlarge the QR code,
+move the Amber Graner quote into an unboxed bottom band, and replace the
+supplied status line.
 
 **Architecture:** Keep the authored status in `WolvesApp.vue`; retain all title-card markup and assets in `WolvesIntroOverlay.vue`. Adjust only the existing title-card CSS and update its deterministic unit and browser assertions.
 
@@ -30,13 +32,14 @@
 
 **Interfaces:**
 - Consumes: `INTRO_DISPLAY['wolves-intro'].title`, `activeComicTitleCardCue`, and the existing QR/quote data attributes.
-- Produces: an asymmetric title-card layout with measurable non-overlapping artwork, QR, lower-third quote, and widget bounds.
+- Produces: a centered title-card composition with measurable non-overlapping
+  artwork, QR, bottom quote, and widget bounds.
 
 - [ ] **Step 1: Write the failing regression expectations**
 
 Change the title expectation to `a project to bring their stories to life`. In
 the title-card browser helper, require a 300px QR image, artwork left of the
-QR, and a left-aligned freeform quote above the widget.
+QR, and a centered freeform quote along the bottom above the widget.
 
 - [ ] **Step 2: Run the focused tests to verify they fail**
 
@@ -49,9 +52,9 @@ fail before the implementation.
 
 Set `INTRO_DISPLAY['wolves-intro'].title` to the supplied exact text and remove
 that phrase from the title-card cue. Use the existing title-card grid for a
-left artwork field and a right 28rem QR frame. Remove all panel paint from
-`.wolves-intro-overlay-title-card-amber-quote`; pin it as left-aligned
-lower-third text above the media widget.
+centered dinosaur/QR pair with a 28rem QR frame. Remove all panel paint from
+`.wolves-intro-overlay-title-card-amber-quote`; pin it as centered bottom-band
+text above the media widget.
 
 - [ ] **Step 4: Run focused regression checks**
 

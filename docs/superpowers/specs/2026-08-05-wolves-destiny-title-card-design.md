@@ -9,17 +9,16 @@ replacement.
 ## Composition
 
 The supplied phrase appears only in the top status plate. The title card has no
-duplicate headline: the dinosaur artwork occupies the left visual field and the
-MakeMeAComic QR code occupies the right visual field. Neither is centered in
-the title-card viewport. The QR card becomes the larger right-hand anchor so
-the code remains practical to scan. At the supported desktop viewport it has a
-32rem code frame and a rendered code width of at least 300px.
+duplicate headline: the dinosaur artwork and MakeMeAComic QR code form one
+horizontally centered composition, with the dinosaur on the left and the QR on
+the right. The QR card remains the larger right-hand anchor so the code is
+practical to scan. At the supported desktop viewport it has a 32rem code frame
+and a rendered code width of at least 300px.
 
-The Amber Graner quote is removed from its panel. It becomes a freeform,
-left-aligned lower-third attribution above the persistent media widget, using
-the existing mono typeface, contrast, and shadow treatment. The quote does not
-overlap the QR card, dinosaur artwork, or widget at desktop or narrow mobile
-sizes.
+The Amber Graner quote is removed from its panel and centered along the bottom
+of the screen above the persistent media widget. Its enlarged mono treatment,
+high contrast, and deep shadow are intended for theater-distance reading. The
+quote does not overlap the QR card, dinosaur artwork, or widget.
 
 ## Content and Runtime Constraints
 
@@ -33,5 +32,5 @@ sizes.
 
 The focused Vue test verifies both the QR and quote render only in the
 title-card cue. The deterministic Wolves browser test verifies desktop bounds,
-the asymmetric artwork/QR ordering, a 300px QR minimum, and the quote's
-freeform lower-third placement.
+the centered artwork/QR ordering, a 300px QR minimum, and the quote's
+freeform bottom-band placement.
