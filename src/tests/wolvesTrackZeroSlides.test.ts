@@ -156,7 +156,7 @@ describe('wolves Track 0 slide locks', () => {
 
   it('locks the post-hero opening run in order: walters, tophee, kirkland, 0R0A9083, 052', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
-      'wolves/people/walters.JPG',
+      'wolves/people/bootc creator Colin Walters.JPG',
       'wolves/people/flickr-54137782365.webp',
       'wolves/people/kirkland.webp',
       'wolves/people/flickr-55343975781.webp',
@@ -182,7 +182,7 @@ describe('wolves Track 0 slide locks', () => {
   })
 
   it('skips missing post-hero opening members without breaking the pool', () => {
-    const walters = { id: 'wolves/people/walters.JPG' }
+    const walters = { id: 'wolves/people/bootc creator Colin Walters.JPG' }
     const regular = { id: 'people-a' }
 
     expect(pinTrackZeroPostHeroOpening([regular, walters])).toEqual([walters, regular])

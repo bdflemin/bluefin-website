@@ -102,7 +102,7 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
  * 0R0A9083 -> Daily Highlights 052, back-to-back in this exact order.
  */
 export const postHeroOpeningSequenceIds = [
-  'wolves/people/walters.JPG',
+  'wolves/people/bootc creator Colin Walters.JPG',
   'wolves/people/flickr-54137782365.webp',
   'wolves/people/kirkland.webp',
   'wolves/people/flickr-55343975781.webp',
