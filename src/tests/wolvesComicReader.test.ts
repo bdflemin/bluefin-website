@@ -928,7 +928,7 @@ describe('wolvesComicReader', () => {
     }
   })
 
-  it('limits the pre-legend barrage to the music-authoritative slide budget', async () => {
+  it('uses unique contributor photos on every available pre-legend barrage beat', async () => {
     const feed = Array.from({ length: 200 }, (_, index) => ({
       id: `feed-${index}`,
       server: 's',
@@ -949,11 +949,12 @@ describe('wolvesComicReader', () => {
       duration: number
     }>
     const remoteBackfill = slides.filter(slide => !slide.isLocal)
-    expect(remoteBackfill).toHaveLength(0)
     const barrageSlides = slides.filter(slide =>
       slide.startTime >= TRACK_ZERO_SECTIONS.bkEnd
       && slide.endTime <= TRACK_ZERO_SECTIONS.finaleStart)
-    expect(barrageSlides).toHaveLength(30)
+    expect(remoteBackfill.length).toBeGreaterThan(0)
+    expect(new Set(barrageSlides.map(slide => slide.id)).size).toBe(barrageSlides.length)
+    expect(barrageSlides.length).toBeGreaterThan(30)
     const finaleSlide = slides.find(slide => slide.endTime === 423)
     expect(finaleSlide?.startTime).toBe(TRACK_ZERO_SECTIONS.finaleStart)
 

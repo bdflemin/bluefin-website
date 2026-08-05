@@ -76,6 +76,9 @@ successful build does not prove eager lore loading succeeds. Finish with
   Never accumulate important text behind an overflow viewport.
 - Every Wolves presentation image is single-use. Do not schedule duplicate
   assets in Track 0 or repeat a Track 0 image in carry-forward tracks.
+- The 5:55 finale barrage consumes distinct contributor photos on each measured
+  music beat through the legend cue. Use the live CNCF feed when it provides
+  enough unique images; retain deterministic local fallback timing otherwise.
 - The active media-player clock remains the only synchronization clock.
 - A chat completion event may hold its active record on screen, but it is a
   display lifecycle gate, not a second clock: when it releases, resume from
