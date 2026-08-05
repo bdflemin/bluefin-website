@@ -334,7 +334,7 @@ describe('wolvesLoreColumn Logic', () => {
       .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
   })
 
-  it('keeps Golden Era dialogue visible while Sarah is still typing', async () => {
+  it('keeps Golden Era dialogue visible while Sarah is still typing without repeatedly scrolling', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'lorem-pursuit-1')
     if (!record || record.kind !== 'chatlog') {
@@ -347,7 +347,6 @@ describe('wolvesLoreColumn Logic', () => {
       throw new Error('Expected the Golden Era Sarah fixture')
     }
 
-    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,
@@ -356,7 +355,7 @@ describe('wolvesLoreColumn Logic', () => {
     })
 
     await vi.advanceTimersByTimeAsync(9_900)
-    scrollTo.mockClear()
+    const scrollTo = vi.spyOn(wrapper.get('.quote-viewport').element, 'scrollTo')
 
     await vi.advanceTimersByTimeAsync(500)
 
@@ -365,7 +364,7 @@ describe('wolvesLoreColumn Logic', () => {
       ?.find('p')
       .text() ?? ''
     expect(sarahText).not.toBe(sarah.text)
-    expect(scrollTo).toHaveBeenCalled()
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 
   it('replaces the full lore column with a vertical dinosaur dossier', () => {

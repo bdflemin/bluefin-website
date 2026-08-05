@@ -37,9 +37,6 @@ function scrollViewport() {
   void nextTick(() => {
     const viewport = quoteViewportRef.value
     if (viewport) {
-      // The typewriter advances faster than a smooth animation can settle.
-      // Use an immediate scroll after layout so the latest authored text stays
-      // readable instead of accumulating a scroll backlog.
       viewport.scrollTo({
         top: viewport.scrollHeight,
         behavior: 'auto',
@@ -122,7 +119,6 @@ function runTypewriter() {
     }
 
     if (isClimaxMessage && climaxStage === 'fading') {
-      scrollViewport()
       activeMessageIndex.value++
       currentLength = 0
       return
@@ -132,9 +128,6 @@ function runTypewriter() {
 
     if (currentLength <= targetText.length) {
       typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength)
-      // Scroll on every character so long messages never outrun the viewport
-      // between punctuation marks.
-      scrollViewport()
 
       if (isClimaxMessage && currentLength === climaxOpeningEnd) {
         climaxStage = 'holding'
@@ -143,10 +136,6 @@ function runTypewriter() {
       }
 
       const lastChar = targetText[currentLength - 1]
-      if (lastChar === '.' || lastChar === '?' || lastChar === '!' || lastChar === '…') {
-        scrollViewport()
-      }
-
       if (isSlowSpeaker) {
         pauseTicks = 2
         if (lastChar === '.' || lastChar === '?' || lastChar === '!') {
@@ -184,7 +173,6 @@ function skipTypewriter() {
 
   activeMessageIndex.value = conversation.value.messages.length - 1
   typedMessagesText.value = conversation.value.messages.map(message => message.text)
-
   scrollViewport()
 }
 
@@ -382,13 +370,10 @@ onBeforeUnmount(clearTypewriter)
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
-  padding-right: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(102, 179, 255, 0.3) transparent;
-  scroll-behavior: auto;
+  scrollbar-width: none;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    display: none;
   }
 
   .thesis-warning {
@@ -413,10 +398,6 @@ onBeforeUnmount(clearTypewriter)
     }
   }
 
-  &::-webkit-scrollbar-thumb {
-    background: rgba(102, 179, 255, 0.3);
-    border-radius: 3px;
-  }
 }
 
 .conversation-rotator {
