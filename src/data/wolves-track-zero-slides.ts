@@ -98,11 +98,14 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
 
 /**
  * Locked opening run of the post-hero People stretch (starts right after the
- * Bluefin group hands off at 196.36s): Walters -> Kirkland -> 0R0A9083 ->
- * Daily Highlights 052, back-to-back in this exact order.
+ * Bluefin group hands off at 196.36s): Walters -> Jonathan Bryce -> CNCF
+ * Projects Team -> Kirkland -> 0R0A9083 -> Daily Highlights 052,
+ * back-to-back in this exact order.
  */
 export const postHeroOpeningSequenceIds = [
   'wolves/people/bootc creator Colin Walters.JPG',
+  'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
+  'wolves/people/CNCF Projects Team.webp',
   'wolves/people/kirkland.webp',
   'wolves/people/flickr-55343975781.webp',
   'wolves/people/kubecon-55168545279.webp',

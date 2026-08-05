@@ -154,9 +154,11 @@ describe('wolves Track 0 slide locks', () => {
     expect(finaleSlides).toEqual([newPhoto])
   })
 
-  it('locks the post-hero opening run in order: walters, kirkland, 0R0A9083, 052', () => {
+  it('locks the post-hero opening run to registered contributor photos', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
       'wolves/people/bootc creator Colin Walters.JPG',
+      'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
+      'wolves/people/CNCF Projects Team.webp',
       'wolves/people/kirkland.webp',
       'wolves/people/flickr-55343975781.webp',
       'wolves/people/kubecon-55168545279.webp',
@@ -164,18 +166,20 @@ describe('wolves Track 0 slide locks', () => {
 
     const sequence = postHeroOpeningSequenceIds.map(id => ({ id }))
     const scrambled = [
-      { id: 'people-a' },
-      sequence[3],
+      sequence[5],
       sequence[0],
       { id: 'people-b' },
+      sequence[4],
       sequence[1],
+      { id: 'people-a' },
       sequence[2],
+      sequence[3],
     ]
 
     expect(pinTrackZeroPostHeroOpening(scrambled)).toEqual([
       ...sequence,
-      { id: 'people-a' },
       { id: 'people-b' },
+      { id: 'people-a' },
     ])
   })
 
