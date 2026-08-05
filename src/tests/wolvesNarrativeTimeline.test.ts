@@ -16,6 +16,7 @@ describe('wolves narrative timeline', () => {
     expect(ids).toContain('blue-universal-acquires-wayland-yutani')
     expect(ids).not.toContain('lorem-prologue-2')
     expect(ids).not.toContain('john-seager')
+    expect(ids).not.toContain('do-not-reply')
   })
 
   it('keeps unlocked lore in authored timeline order', () => {

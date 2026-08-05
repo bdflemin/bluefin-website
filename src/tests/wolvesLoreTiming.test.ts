@@ -49,4 +49,17 @@ describe('wolves lore timing', () => {
     expect(slots[0]?.duration).toBeGreaterThan(0)
     expect(slots[1]?.duration).toBeGreaterThanOrEqual(3)
   })
+
+  it('reflows remaining chats contiguously after a record is removed', () => {
+    const records = [
+      { id: 'first', kind: 'chatlog' as const, body: 'A'.repeat(90) },
+      { id: 'third', kind: 'chatlog' as const, body: 'B'.repeat(90) },
+    ]
+    const slots = allocateLoreSlots(records, 0, 40)
+
+    expect(slots[0]?.startTime).toBe(0)
+    expect(slots[1]?.startTime).toBeCloseTo(slots[0]!.endTime, 8)
+    expect(slots[1]?.endTime).toBe(40)
+    expect(slots.every(slot => slot.endTime > slot.startTime)).toBe(true)
+  })
 })

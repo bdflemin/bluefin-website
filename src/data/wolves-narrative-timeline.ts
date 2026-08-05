@@ -20,6 +20,7 @@ export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
 ]
 
 const hiddenFromWolvesVideoArtifactIds = new Set([
+  'do-not-reply',
   'lorem-prologue-2',
   'john-seager',
 ])
