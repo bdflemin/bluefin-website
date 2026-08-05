@@ -21,6 +21,8 @@ unavailable in this draft.
   placeholders: an unnamed future guardian and `NOMINATE A MAINTAINER`.
 - Mark the nomination placeholder `COMING SOON`; it must not submit anywhere
   until a destination is supplied.
+- Center the constrained maintainer-support paragraphs in the gallery, including
+  their text, without changing their width or copy.
 
 ## Verification
 
@@ -29,4 +31,5 @@ unavailable in this draft.
 - Donation and nomination controls do not navigate away from the draft.
 - The QR-code images and their external destinations are absent.
 - Both replacement character placeholders make their unavailable state clear.
+- The constrained maintainer-support paragraphs are centered as text blocks.
 - The lobby remains usable at desktop and mobile widths.
