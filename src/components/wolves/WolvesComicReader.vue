@@ -11,7 +11,6 @@ import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import {
-  TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
@@ -354,15 +353,6 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // The Microraptor lock keeps its slide at a fixed slot even as the pool drifts.
   const shuffledNormalShowcase = pinBluefinMicroraptorSlide(deterministicShuffle(normalShowcase, 202))
   const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides(localPeople)
-  const remoteFinalePeople = flickrPhotos.value
-    .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id))
-    .map(photo => ({
-      id: photo.id,
-      isLocal: false,
-      path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
-      title: photo.title,
-      type: 'single' as const,
-    }))
   // Locked post-hero opening (Walters -> Tophee -> Kirkland -> 0R0A9083 -> 052)
   // sits at the head of the People pool; the hero locks are extracted by id below.
   const shuffledPeople = pinTrackZeroPostHeroOpening(
@@ -620,21 +610,13 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const barrageBase = [
     ...shuffledPeople.slice(buildPoolEnd),
     ...finaleSlides,
-    ...remoteFinalePeople,
-  ].filter((slide, index, slides) =>
-    slide.id !== 'wolves/people/interview-clyde-seepersad-linux-foundation.webp'
-    && slides.findIndex(candidate => candidate.id === slide.id) === index)
-  const barrageBeatCuts = TRACK_ZERO_BEAT_TIMES.filter(beat =>
-    beat > currentTime && beat <= TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime)
-  const peoplePool4 = deterministicShuffle(barrageBase, 404)
-    .slice(0, Math.min(barrageBase.length, barrageBeatCuts.length))
-  const sec6Cuts = peoplePool4.length === barrageBeatCuts.length
-    ? barrageBeatCuts
-    : trackZeroEvenBeatCuts(
-        currentTime,
-        TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime,
-        peoplePool4.length,
-      )
+  ].filter(slide => slide.id !== 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')
+  const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
+  const sec6Cuts = trackZeroEvenBeatCuts(
+    currentTime,
+    TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime,
+    peoplePool4.length,
+  )
   peoplePool4.forEach((item, index) => {
     const endTime = sec6Cuts[index]
     result.push({
