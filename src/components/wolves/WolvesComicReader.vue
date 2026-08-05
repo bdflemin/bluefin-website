@@ -8,7 +8,7 @@ import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-so
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
-import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
+import { shuffleWolvesGalleryPhotosWithSeed } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import {
   TRACK_ZERO_SECTIONS,
@@ -82,7 +82,6 @@ const flickrPhotos = ref<{ id: string, server: string, secret: string, title: st
 const laterTrackPhotos = ref<any[]>([])
 const shuffledLaterTrackPhotos = ref<any[]>([])
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
-const shownLaterTrackPhotoIds = new Set<string>()
 
 const activeBuffer = ref<'A' | 'B'>('A')
 const photoA = ref<any>(null)
@@ -735,18 +734,22 @@ const activeFlickrIndex = computed(() => {
   if (props.playlistCurrentTime === undefined) {
     return 0
   }
+  if (laterTrackPhotos.value.length === 0) {
+    return 0
+  }
 
   const standardHold = laterTrackSlideHold.value ?? 7
   const hasFeaturedOpening = isWolvesExperience.value
     && props.trackIndex === ghostsInTheMistOpeningSlide.trackIndex
     && laterTrackPhotos.value[0]?.id === ghostsInTheMistOpeningSlide.photoId
   if (!hasFeaturedOpening) {
-    return Math.floor(props.playlistCurrentTime / standardHold)
+    return Math.floor(props.playlistCurrentTime / standardHold) % laterTrackPhotos.value.length
   }
   if (props.playlistCurrentTime < ghostsInTheMistOpeningSlide.holdSeconds) {
     return 0
   }
-  return 1 + Math.floor((props.playlistCurrentTime - ghostsInTheMistOpeningSlide.holdSeconds) / standardHold)
+  const galleryLength = Math.max(1, laterTrackPhotos.value.length - 1)
+  return 1 + Math.floor((props.playlistCurrentTime - ghostsInTheMistOpeningSlide.holdSeconds) / standardHold) % galleryLength
 })
 
 const activeDisplayIndex = computed(() => {
@@ -806,10 +809,6 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
   if (!activePhotoObj) {
     return
   }
-  if ((props.trackIndex ?? 0) > 0) {
-    shownLaterTrackPhotoIds.add(activePhotoObj.id)
-  }
-
   // Preload upcoming images to prevent decode/network stutter during exact
   // beat crossfades; sub-second barrage slides need a deeper lookahead.
   const activeDuration = (activePhotoObj as { duration?: number }).duration
@@ -863,7 +862,6 @@ watch(() => props.experienceId, () => {
   slideChangeToken++
   laterTrackPhotos.value = []
   shuffledLaterTrackPhotos.value = []
-  shownLaterTrackPhotoIds.clear()
   photoA.value = null
   photoB.value = null
   slideAIndex.value = -1
@@ -956,7 +954,6 @@ function snapshotLaterTrackPhotos() {
   const galleryCandidates = [...trackZeroCarryForwardPhotos.value, ...remotePhotos]
   if (galleryCandidates.length === 0) {
     shuffledLaterTrackPhotos.value = []
-    shownLaterTrackPhotoIds.clear()
     laterTrackPhotos.value = []
     return
   }
@@ -967,25 +964,15 @@ function snapshotLaterTrackPhotos() {
   const shufflePool = isWolvesExperience.value
     ? galleryCandidates.filter(photo => photo.id !== ghostsInTheMistOpeningSlide.photoId)
     : galleryCandidates
-  if (shuffledLaterTrackPhotos.value.length === 0) {
-    shuffledLaterTrackPhotos.value = shuffleWolvesGalleryPhotos(shufflePool)
-  }
-  else {
-    const knownIds = new Set(shuffledLaterTrackPhotos.value.map(photo => photo.id))
-    const newPhotos = shufflePool.filter(photo => !knownIds.has(photo.id))
-    if (newPhotos.length > 0) {
-      shuffledLaterTrackPhotos.value.push(...shuffleWolvesGalleryPhotos(newPhotos))
-    }
-  }
-
-  const displayedPhotoIds = new Set([photoA.value?.id, photoB.value?.id])
-  const availablePhotos = shuffledLaterTrackPhotos.value
-    .filter(photo => !shownLaterTrackPhotoIds.has(photo.id) && !displayedPhotoIds.has(photo.id))
+  shuffledLaterTrackPhotos.value = shuffleWolvesGalleryPhotosWithSeed(
+    shufflePool,
+    `${props.experienceId}:${props.trackIndex ?? 0}`,
+  )
   laterTrackPhotos.value = isWolvesExperience.value
     && props.trackIndex === ghostsInTheMistOpeningSlide.trackIndex
     && featuredOpening
-    ? [featuredOpening, ...availablePhotos]
-    : availablePhotos
+    ? [featuredOpening, ...shuffledLaterTrackPhotos.value]
+    : shuffledLaterTrackPhotos.value
 }
 
 function deterministicShuffle<T>(array: T[], seed = 42): T[] {

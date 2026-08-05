@@ -60,6 +60,9 @@ Do not introduce a second transport or wall-clock synchronization.
   explicitly approved dialogue cadence anchors unchanged.
 - When a narrative range is constrained, allocate chatlog readability before
   static quote or source records; preserve explicitly approved cadence locks.
+- Seed later-track gallery order from the experience and track identifiers, and
+  resolve its index from native player time so seek direction cannot change the
+  displayed photo.
 - Preserve locked anchors and recompute only unlocked intervals.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
