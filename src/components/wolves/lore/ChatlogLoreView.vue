@@ -166,7 +166,9 @@ function runTypewriter() {
     }
     else {
       typedMessagesText.value[activeMessageIndex.value] = targetText
-      scrollViewport()
+      if (props.record.id !== CLIMAX_ARTIFACT_ID) {
+        scrollViewport()
+      }
       activeMessageIndex.value++
       currentLength = 0
       pauseTicks = isSlowSpeaker ? 50 : 20

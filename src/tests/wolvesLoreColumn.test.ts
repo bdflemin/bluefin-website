@@ -358,6 +358,21 @@ describe('wolvesLoreColumn Logic', () => {
       .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
   })
 
+  it('does not auto-scroll the Golden Era climax after the vision is revealed', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'lorem-pursuit-1',
+        duration: 0.01,
+      },
+    })
+    const scrollTo = vi.spyOn(wrapper.get('.quote-viewport').element, 'scrollTo')
+
+    await vi.advanceTimersByTimeAsync(20_000)
+
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
   it('keeps Golden Era dialogue visible while Sarah is still typing without repeatedly scrolling', async () => {
     vi.useFakeTimers()
     const record = loreRecords.find(record => record.id === 'lorem-pursuit-1')
