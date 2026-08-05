@@ -603,6 +603,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/flickr-54137782365.webp',
+    title: 'Christoph Blecker - First Amongst Equals - Platinum Member',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/flickr-54137791405.webp',
     title: 'KC+CNC_NA_241111_BF_KCS_evening_227',
   },
