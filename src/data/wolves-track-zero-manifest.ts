@@ -190,6 +190,8 @@ export const TRACK_ZERO_LOCKED_STATUSES = [
 
 
 const LOCKED_STATUS_TEXTS = new Set(TRACK_ZERO_LOCKED_STATUSES.map(entry => entry.text))
+const TRACK_ZERO_FRONT_ROTATION_START = TRACK_ZERO_SECTIONS.verseStart
+const TRACK_ZERO_FRONT_ROTATION_END = 345
 
 export function getTrackZeroSectionMessages(sectionIndex: number): readonly string[] {
   const alreadyUsed = new Set<string>()
@@ -214,6 +216,25 @@ export function getTrackZeroRotatingStatusMessages(): readonly string[] {
   ))
 }
 
+export function getTrackZeroFrontStatusMessages(): readonly string[] {
+  return Object.freeze(TRACK_ZERO_LORE_PLAN.slice(0, 4).flatMap(section =>
+    section.entries.flatMap(entry =>
+      'text' in entry && !entry.locked ? [entry.text] : [],
+    ),
+  ))
+}
+
+function frontRotationElapsed(time: number): number {
+  const cappedTime = Math.min(time, TRACK_ZERO_FRONT_ROTATION_END)
+  const lockedSeconds = TRACK_ZERO_LOCKED_STATUSES.reduce((total, entry) => {
+    const start = Math.max(entry.startTime, TRACK_ZERO_FRONT_ROTATION_START)
+    const end = Math.min(entry.endTime ?? TRACK_ZERO_FRONT_ROTATION_END, cappedTime)
+    return total + Math.max(0, end - start)
+  }, 0)
+
+  return cappedTime - TRACK_ZERO_FRONT_ROTATION_START - lockedSeconds
+}
+
 function planMessages(sectionIndex: number): readonly string[] {
   return getTrackZeroSectionMessages(sectionIndex)
 }
@@ -233,32 +254,10 @@ export function getTrackZeroHudLabel(time: number): string {
   if (lockedStatus) {
     return lockedStatus.text
   }
-  if (time >= 0 && time < TRACK_ZERO_SECTIONS.verseStart) {
-    return pacedPlanMessage(0, time, 0, TRACK_ZERO_SECTIONS.verseStart)
-  }
-  if (time >= 175.96 && time < 196.36) {
-    return planTextAt(1, 0)
-  }
-  if (time >= TRACK_ZERO_SECTIONS.verseStart && time < TRACK_ZERO_SECTIONS.chorusStart) {
-    return pacedPlanMessage(2, time, TRACK_ZERO_SECTIONS.verseStart, TRACK_ZERO_SECTIONS.chorusStart)
-  }
-  if (time >= TRACK_ZERO_SECTIONS.chorusStart && time < rezaContributorTrackZeroWindow.startTime) {
-    return pacedPlanMessage(1, time, TRACK_ZERO_SECTIONS.chorusStart, rezaContributorTrackZeroWindow.startTime, [0, 6])
-  }
-  if (time >= rezaContributorTrackZeroWindow.startTime && time < rezaContributorTrackZeroWindow.endTime) {
-    return planTextAt(1, 1)
-  }
-  if (time >= rezaContributorTrackZeroWindow.endTime && time < rezaContributorTrackZeroWindow.endTime + 3.08) {
-    return planTextAt(1, 2)
-  }
-  if (time >= 202.52 && time < TRACK_ZERO_SECTIONS.bridgeStart) {
-    return pacedPlanMessage(1, time, 202.52, TRACK_ZERO_SECTIONS.bridgeStart, [6, 11])
-  }
-  if (time >= TRACK_ZERO_SECTIONS.bridgeStart && time < TRACK_ZERO_SECTIONS.buildStart) {
-    return pacedPlanMessage(2, time, TRACK_ZERO_SECTIONS.bridgeStart, TRACK_ZERO_SECTIONS.buildStart, [9, 11])
-  }
-  if (time >= TRACK_ZERO_SECTIONS.buildStart && time < 345) {
-    return pacedPlanMessage(3, time, TRACK_ZERO_SECTIONS.buildStart, 345)
+  if (time >= TRACK_ZERO_FRONT_ROTATION_START && time < TRACK_ZERO_FRONT_ROTATION_END) {
+    const messages = getTrackZeroFrontStatusMessages()
+    const slotDuration = frontRotationElapsed(TRACK_ZERO_FRONT_ROTATION_END) / messages.length
+    return messages[Math.min(Math.floor(frontRotationElapsed(time) / slotDuration), messages.length - 1)] ?? DEFAULT_HUD_LABEL
   }
   if (time >= 365 && time < 408) {
     return pacedPlanMessage(4, time, 365, 408)

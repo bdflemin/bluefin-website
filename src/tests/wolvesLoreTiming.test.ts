@@ -10,6 +10,14 @@ describe('wolves lore timing', () => {
     expect(long).toBeGreaterThan(short)
   })
 
+  it('reserves a slower reading pace for quotes', () => {
+    const quote = estimateLoreReadDuration({ kind: 'quote', body: 'A'.repeat(100) })
+    const chat = estimateLoreReadDuration({ kind: 'chatlog', body: 'A'.repeat(100) })
+
+    expect(quote).toBeGreaterThan(chat)
+    expect(estimateLoreReadDuration({ kind: 'quote', body: '' })).toBe(15)
+  })
+
   it('allocates every slot enough time without moving locked anchors', () => {
     const slots = allocateLoreSlots(
       [
@@ -28,7 +36,7 @@ describe('wolves lore timing', () => {
     }
   })
 
-  it('prioritizes chat readability over static records when a range is constrained', () => {
+  it('keeps both quotes and chats visible when a range is constrained', () => {
     const slots = allocateLoreSlots(
       [
         { id: 'quote', kind: 'quote', body: 'A'.repeat(300), attribution: 'ARCHIVE' },
@@ -38,6 +46,7 @@ describe('wolves lore timing', () => {
       20,
     )
 
-    expect(slots[1]?.duration).toBeGreaterThan(slots[0]?.duration ?? 0)
+    expect(slots[0]?.duration).toBeGreaterThan(0)
+    expect(slots[1]?.duration).toBeGreaterThanOrEqual(3)
   })
 })

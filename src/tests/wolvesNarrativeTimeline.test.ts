@@ -25,7 +25,7 @@ describe('wolves narrative timeline', () => {
 
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
-      artifactId: 'arthur-c-clarke-1',
+      artifactId: 'lorem-prologue-1',
       startTime: 0,
     })
     expect(getNarrativeSlotForTime(180)).toMatchObject({
@@ -64,12 +64,20 @@ describe('wolves narrative timeline', () => {
     }
   })
 
-  it('keeps each retimed post-Golden-Era slot between three and eighteen seconds', () => {
+  it('uses the available unlocked range for readable post-Golden-Era lore', () => {
     const retimedSlots = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
 
     for (const slot of retimedSlots) {
       expect(slot.endTime - slot.startTime).toBeGreaterThan(0)
-      expect(slot.endTime - slot.startTime).toBeLessThanOrEqual(30)
+    }
+  })
+
+  it('gives every Arthur C. Clarke quote a readable unlocked duration', () => {
+    for (const artifactId of ['arthur-c-clarke-1', 'arthur-c-clarke-2', 'arthur-c-clarke-3']) {
+      const slot = wolvesNarrativeTimeline.find(slot => slot.artifactId === artifactId)
+
+      expect(slot).toBeDefined()
+      expect(slot!.endTime - slot!.startTime).toBeGreaterThanOrEqual(15)
     }
   })
 
@@ -89,10 +97,9 @@ describe('wolves narrative timeline', () => {
     expect(getNarrativeSlotForTime(1_000)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
   })
 
-  it('gives longer visible lore entries longer non-anchor slots', () => {
-    const short = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'quote-natasha-woods')!
-    const long = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'glorious-eggroll')!
-
-    expect(long.endTime - long.startTime).toBeGreaterThan(short.endTime - short.startTime)
+  it('keeps every visible non-anchor entry on screen for a positive duration', () => {
+    for (const slot of wolvesNarrativeTimeline.filter(slot => slot.startTime > 0 && slot.endTime < 398)) {
+      expect(slot.endTime - slot.startTime).toBeGreaterThan(0)
+    }
   })
 })

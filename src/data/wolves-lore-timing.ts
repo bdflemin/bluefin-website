@@ -13,11 +13,15 @@ export interface LoreTimingSlot {
 }
 
 const CHARACTERS_PER_SECOND = 15
+const QUOTE_CHARACTERS_PER_SECOND = 10
 const BASE_SECONDS = 3
+const QUOTE_BASE_SECONDS = 15
 
 export function estimateLoreReadDuration(input: LoreTimingInput): number {
   const characters = input.body.trim().length + (input.attribution?.trim().length ?? 0)
-  return Math.max(BASE_SECONDS, characters / CHARACTERS_PER_SECOND)
+  const charactersPerSecond = input.kind === 'quote' ? QUOTE_CHARACTERS_PER_SECOND : CHARACTERS_PER_SECOND
+  const baseSeconds = input.kind === 'quote' ? QUOTE_BASE_SECONDS : BASE_SECONDS
+  return Math.max(baseSeconds, characters / charactersPerSecond)
 }
 
 export function allocateLoreSlots(
@@ -25,51 +29,33 @@ export function allocateLoreSlots(
   startTime: number,
   endTime: number,
   _lockedAnchors: ReadonlyMap<string, number> = new Map(),
-  maxSlotSeconds = Infinity,
 ): LoreTimingSlot[] {
   const minimumDurations = entries.map(entry => estimateLoreReadDuration(entry))
   const available = Math.max(0, endTime - startTime)
+  const quoteMinimumTotal = entries.reduce(
+    (sum, entry, index) => sum + (entry.kind === 'quote' ? minimumDurations[index]! : 0),
+    0,
+  )
+  const chatCount = entries.filter(entry => entry.kind === 'chatlog').length
+  const quoteAvailable = Math.max(0, available - chatCount * BASE_SECONDS)
+  const quoteScale = quoteMinimumTotal > quoteAvailable && quoteMinimumTotal > 0
+    ? quoteAvailable / quoteMinimumTotal
+    : 1
+  const quoteAllocated = quoteMinimumTotal * quoteScale
   const chatMinimumTotal = entries.reduce(
     (sum, entry, index) => sum + (entry.kind === 'chatlog' ? minimumDurations[index]! : 0),
     0,
   )
-  const chatScale = chatMinimumTotal > available && chatMinimumTotal > 0
-    ? available / chatMinimumTotal
-    : 1
-  const chatAllocated = chatMinimumTotal * chatScale
-  const staticMinimumTotal = entries.reduce(
-    (sum, entry, index) => sum + (entry.kind === 'chatlog' ? 0 : minimumDurations[index]!),
-    0,
-  )
-  const staticScale = staticMinimumTotal > 0
-    ? Math.max(0, available - chatAllocated) / staticMinimumTotal
+  const chatScale = chatMinimumTotal > 0
+    ? Math.max(0, available - quoteAllocated) / chatMinimumTotal
     : 0
   const durations = entries.map((entry, index) =>
-    minimumDurations[index]! * (entry.kind === 'chatlog' ? chatScale : staticScale))
-  const slotCap = maxSlotSeconds
-  let remaining = available - durations.reduce((total, duration) => total + Math.min(duration, slotCap), 0)
-  const cappedDurations = durations.map(duration => Math.min(duration, slotCap))
-
-  while (remaining > 1e-9) {
-    const eligible = cappedDurations
-      .map((duration, index) => ({ duration, index }))
-      .filter(({ duration }) => duration < slotCap)
-    if (eligible.length === 0) {
-      break
-    }
-
-    const additionalDuration = remaining / eligible.length
-    for (const { index } of eligible) {
-      const increase = Math.min(additionalDuration, slotCap - cappedDurations[index]!)
-      cappedDurations[index]! += increase
-      remaining -= increase
-    }
-  }
+    minimumDurations[index]! * (entry.kind === 'quote' ? quoteScale : chatScale))
 
   let cursor = startTime
   return entries.map((entry, index) => {
     const minimumDuration = minimumDurations[index]
-    const duration = cappedDurations[index]!
+    const duration = durations[index]!
     const slot = { id: entry.id, startTime: cursor, endTime: cursor + duration, duration, minimumDuration }
     cursor += duration
     return slot

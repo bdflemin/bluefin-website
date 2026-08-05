@@ -15,7 +15,6 @@ interface WolvesNarrativeLock {
 }
 
 export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
-  { artifactId: 'arthur-c-clarke-1', startTime: 0 },
   { artifactId: 'lorem-pursuit-1', startTime: 150, endTime: 220 },
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
 ]
@@ -38,16 +37,15 @@ function timingInput(id: string) {
   }
 }
 function allocateRange(ids: readonly string[], startTime: number, endTime: number): WolvesNarrativeSlot[] {
-  return allocateLoreSlots(ids.map(timingInput), startTime, endTime, new Map(), 30)
+  return allocateLoreSlots(ids.map(timingInput), startTime, endTime)
     .map(slot => ({ artifactId: slot.id, startTime: slot.startTime, endTime: slot.endTime }))
 }
 const pursuitIndex = authoredArtifactIds.indexOf('lorem-pursuit-1')
 const finalIndex = authoredArtifactIds.indexOf('blue-universal-acquires-wayland-yutani')
-const opening = authoredArtifactIds.slice(0, pursuitIndex).filter(id => id !== 'arthur-c-clarke-1')
+const opening = authoredArtifactIds.slice(0, pursuitIndex)
 const middle = authoredArtifactIds.slice(pursuitIndex + 1, finalIndex)
 export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
-  { artifactId: 'arthur-c-clarke-1', startTime: 0, endTime: 14.441591784338897 },
-  ...allocateRange(opening, 14.441591784338897, 150),
+  ...allocateRange(opening, 0, 150),
   { artifactId: 'lorem-pursuit-1', startTime: 150, endTime: 220 },
   ...allocateRange(middle, 220, 398),
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },

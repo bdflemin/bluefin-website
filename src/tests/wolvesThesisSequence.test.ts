@@ -8,7 +8,11 @@ import {
   wolvesIncomingSignalMessages,
   getTrackZeroSectionMessages,
 } from '../data/wolves-thesis-sequence'
-import { getTrackZeroRotatingStatusMessages, TRACK_ZERO_LORE_PLAN } from '../data/wolves-track-zero-manifest'
+import {
+  getTrackZeroFrontStatusMessages,
+  getTrackZeroRotatingStatusMessages,
+  TRACK_ZERO_LORE_PLAN,
+} from '../data/wolves-track-zero-manifest'
 
 const THESIS_START_SECONDS = 345
 const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'
@@ -42,6 +46,14 @@ describe('wolves thesis sequence', () => {
     ])
     expect(messages.filter(message => message === 'Software is Supposed to Die')).toHaveLength(3)
     expect(messages[messages.length - 1]).toBe('The equation must be balanced, think like a dinosaur')
+  })
+
+  it('keeps the finale entries out of the smooth front status queue', () => {
+    const messages = getTrackZeroFrontStatusMessages()
+
+    expect(messages).not.toContain('Why do they shackle themselves')
+    expect(messages.filter(message => message === 'Mechaphippy Deployment: [UNAUTHORIZED]')).toHaveLength(2)
+    expect(messages[messages.length - 1]).toBe('Falling back to "humans/trying-their-best:v1"')
   })
 
   it('splits the early ambient signals from the climax reports at the delimiter', () => {
@@ -119,16 +131,19 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
   })
 
-  it('paces status messages through their authored front-of-video sections', () => {
+  it('paces every pre-finale status smoothly through unlocked front-of-video time', () => {
     expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(30)).toBe('Welcome to Indie Cloud Native')
-    expect(getWolvesHudLabel(42)).toBe('Kernel development accelerating')
+    const front = getTrackZeroFrontStatusMessages()
+    const frontSlotDuration = (345 - 41.982 - (196.36 - 175.96) - (206.6 - 200.44) - (209.68 - 206.6)) / front.length
+    expect(getWolvesHudLabel(42)).toBe(front[0])
+    expect(getWolvesHudLabel(41.982 + frontSlotDuration)).toBe(front[1])
     expect(getWolvesHudLabel(140)).not.toBe(DEFAULT_HUD_LABEL)
     expect(getWolvesHudLabel(206.599)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
     expect(getWolvesHudLabel(206.6)).toBe('Bazzite proximity to Kube of Destiny: Critical')
-    expect(getWolvesHudLabel(229)).toBe('AN4-ChK-12: Chance of Success: 77.777% and climbing')
-    expect(getWolvesHudLabel(276.943)).toBe('Podman Knowledge: [Deployed]')
-    expect(getWolvesHudLabel(276.944)).toBe('Buildstream Dakota[GNOMEOS] Prototype: DEADLY')
+    expect(getWolvesHudLabel(229)).not.toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(276.943)).not.toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(276.944)).not.toBe(DEFAULT_HUD_LABEL)
     expect(getWolvesHudLabel(357.632)).toBe('We are Universal Blue')
   })
 
