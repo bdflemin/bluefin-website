@@ -11,6 +11,8 @@ import {
   jonoBaconTrackZeroWindow,
   lauraSlideId,
   lauraTrackZeroWindow,
+  topheeSlideId,
+  topheeTrackZeroWindow,
   jorgeBluefinSlideId,
   jorgeBluefinTrackZeroWindow,
   kyleSlideId,
@@ -65,13 +67,15 @@ describe('wolves Track 0 slide locks', () => {
     ])
   })
 
-  it('locks Laura after Jorge in the hero run', () => {
+  it('locks Laura and Tophee after Jorge in the hero run', () => {
     const laura = { id: lauraSlideId }
+    const tophee = { id: topheeSlideId }
     const jorge = { id: jorgeBluefinSlideId }
 
-    expect(pinTrackZeroHeroSlides([{ id: 'people-a' }, laura, jorge]))
-      .toEqual([jorge, laura, { id: 'people-a' }])
+    expect(pinTrackZeroHeroSlides([{ id: 'people-a' }, laura, tophee, jorge]))
+      .toEqual([jorge, laura, tophee, { id: 'people-a' }])
     expect(lauraTrackZeroWindow.startTime).toBe(jorgeBluefinTrackZeroWindow.endTime)
+    expect(topheeTrackZeroWindow.startTime).toBe(lauraTrackZeroWindow.endTime)
   })
 
   it('keeps the authored hero locks unique, exact, and contiguous', () => {
@@ -156,10 +160,10 @@ describe('wolves Track 0 slide locks', () => {
 
   it('locks the post-hero opening run to registered contributor photos', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
+      'wolves/people/kirkland.webp',
       'wolves/people/bootc creator Colin Walters.JPG',
       'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
       'wolves/people/CNCF Projects Team.webp',
-      'wolves/people/kirkland.webp',
       'wolves/people/flickr-55343975781.webp',
       'wolves/people/kubecon-55168545279.webp',
     ])

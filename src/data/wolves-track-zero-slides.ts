@@ -46,6 +46,12 @@ export const lauraTrackZeroWindow = {
   endTime: 200.44,
 } as const
 
+export const topheeSlideId = 'wolves/people/topheememe.jpg'
+export const topheeTrackZeroWindow = {
+  startTime: lauraTrackZeroWindow.endTime,
+  endTime: lauraTrackZeroWindow.endTime + 4.08,
+} as const
+
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
  * back-to-back after Marina's window (Sherman + m2 composite -> NOT John Bazzite -> Hikari -> Hikari2 -> Jorge).
@@ -63,8 +69,8 @@ export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
 const REZA_HOLD_SECONDS = 6.16
 export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
 export const rezaContributorTrackZeroWindow = {
-  startTime: lauraTrackZeroWindow.endTime,
-  endTime: lauraTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
+  startTime: topheeTrackZeroWindow.endTime,
+  endTime: topheeTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
 } as const
 
 /**
@@ -85,7 +91,7 @@ export function pinJonoBaconAtTrackZeroWindow<T extends { id: string }>(slides: 
 }
 
 export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonly T[]): T[] {
-  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds, lauraSlideId]
+  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds, lauraSlideId, topheeSlideId]
   const heroSlides = heroSlideIds
     .map(id => slides.find(slide => slide.id === id))
     .filter((slide): slide is T => slide !== undefined)
@@ -98,15 +104,15 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
 
 /**
  * Locked opening run of the post-hero People stretch (starts right after the
- * Bluefin group hands off at 196.36s): Walters -> Jonathan Bryce -> CNCF
- * Projects Team -> Kirkland -> 0R0A9083 -> Daily Highlights 052,
+ * Reza's contributor window ends): Kirkland -> Walters -> Jonathan Bryce -> CNCF
+ * Projects Team -> 0R0A9083 -> Daily Highlights 052,
  * back-to-back in this exact order.
  */
 export const postHeroOpeningSequenceIds = [
+  'wolves/people/kirkland.webp',
   'wolves/people/bootc creator Colin Walters.JPG',
   'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
   'wolves/people/CNCF Projects Team.webp',
-  'wolves/people/kirkland.webp',
   'wolves/people/flickr-55343975781.webp',
   'wolves/people/kubecon-55168545279.webp',
 ] as const
