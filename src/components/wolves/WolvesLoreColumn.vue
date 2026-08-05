@@ -20,6 +20,10 @@ const props = defineProps<{
   warning?: string
   records?: readonly LoreRecord[]
 }>()
+const emit = defineEmits<{
+  chatStarted: []
+  chatComplete: []
+}>()
 
 const loreViewByKind: Record<LoreKind, Component> = {
   'chatlog': ChatlogLoreView,
@@ -60,6 +64,8 @@ const selectedLoreView = computed(() => {
         :records="records"
         :duration="duration"
         :warning="warning"
+        @chat-started="emit('chatStarted')"
+        @chat-complete="emit('chatComplete')"
       />
     </div>
   </div>

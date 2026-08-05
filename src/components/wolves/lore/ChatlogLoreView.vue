@@ -5,6 +5,10 @@ import { getChatlogLore } from '../lore'
 import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
 
 const props = defineProps<LoreViewProps>()
+const emit = defineEmits<{
+  chatStarted: []
+  chatComplete: []
+}>()
 
 const conversation = computed(() => getChatlogLore(props.record))
 const quoteViewportRef = ref<HTMLElement | null>(null)
@@ -48,6 +52,7 @@ function scrollViewport() {
 
 function runTypewriter() {
   clearTypewriter()
+  emit('chatStarted')
 
   activeMessageIndex.value = 0
   typedMessagesText.value = conversation.value.messages.map(() => '')
@@ -101,6 +106,7 @@ function runTypewriter() {
 
     if (activeMessageIndex.value >= conversation.value.messages.length) {
       clearTypewriter()
+      emit('chatComplete')
       return
     }
 
@@ -180,6 +186,7 @@ function skipTypewriter() {
   activeMessageIndex.value = conversation.value.messages.length - 1
   typedMessagesText.value = conversation.value.messages.map(message => message.text)
   scrollViewport()
+  emit('chatComplete')
 }
 
 const activeProject = computed(() =>
