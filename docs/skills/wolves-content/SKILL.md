@@ -28,6 +28,11 @@ player synchronization, or generated manifests.
 5. Regenerate generated files with their scripts.
 6. Run the relevant tests, build, and browser checks.
 
+For a visible WebP quality regression, compare the optimized asset with its
+approved source at identical dimensions. Recover only demonstrated high-loss
+PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
+source is already low resolution.
+
 For a dinosaur addition, use the registry, supplied artwork, and supplied lore
 record. Do not invent names, scientific facts, pairings, or provenance.
 
