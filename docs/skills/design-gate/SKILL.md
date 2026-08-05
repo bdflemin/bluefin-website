@@ -29,6 +29,11 @@ Do not use for content-only changes that stay in documented data surfaces.
 Do not shrink type, alter spacing, change markup, or change timing to make
 supplied content fit.
 
+For a visual size or collision request, assert the affected elements'
+`getBoundingClientRect()` values in the browser. CSS dimensions alone are not
+proof of the rendered result because containing blocks and responsive rules can
+constrain them.
+
 ## Red Flags
 
 - "Small" spacing or typography changes without approval.

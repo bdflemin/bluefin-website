@@ -257,7 +257,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('Guardians')
   })
 
-  it('renders Amber Graner quote in the title-card QR slot', async () => {
+  it('renders the MakeMeAComic QR and Amber Graner quote on the title card', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
         videos: [{
@@ -270,6 +270,9 @@ describe('wolvesIntroOverlay video segments', () => {
     })
 
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
+    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('alt')).toBe('QR code linking to makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-domain]').text()).toBe('makemeacomic.com')
     expect(wrapper.get('[data-amber-quote]').text()).toContain('You don\'t need permission to contribute to your own destiny.')
     expect(wrapper.get('[data-amber-quote]').text()).toContain('— Amber Graner')
     expect(wrapper.get('[data-amber-quote]').text()).toContain('Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]')
@@ -557,7 +560,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('We built a city none of us dared')
   })
 
-  it('renders the Amber quote only during the comic title-card cue', async () => {
+  it('renders the QR and Amber quote only during the comic title-card cue', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
@@ -566,6 +569,7 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-amber-quote]').exists()).toBe(false)
+    expect(wrapper.find('[data-comic-hero-qr-link]').exists()).toBe(false)
 
     const titleCardWrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
@@ -579,6 +583,7 @@ describe('wolvesIntroOverlay video segments', () => {
     })
 
     expect(titleCardWrapper.find('[data-amber-quote]').exists()).toBe(true)
+    expect(titleCardWrapper.find('[data-comic-hero-qr-link]').exists()).toBe(true)
   })
 
   it('renders the video layer without the old top-left mask or pause veil', async () => {

@@ -78,7 +78,7 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
   },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
-    title: 'fighting for something greater than themselves',
+    title: 'a project to bring their stories to life',
     mediaTitle: 'The Wolves are Coming',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',

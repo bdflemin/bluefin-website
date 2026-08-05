@@ -1236,8 +1236,8 @@ defineExpose({
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   /* Top/bottom padding reserves the pinned text bands (title above, pill
      below) so the centered art region can never reach them. */
   padding: clamp(17rem, 26vh, 21rem) clamp(1.6rem, 4vw, 4rem) 19rem;
@@ -1249,17 +1249,17 @@ defineExpose({
 
 .wolves-intro-overlay-title-card-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: clamp(1.2rem, 2.5vw, 2.4rem);
-  width: min(100%, 100rem);
+  grid-template-columns: minmax(0, 1fr) minmax(34rem, 38rem);
+  align-items: start;
+  gap: clamp(2rem, 4vw, 5rem);
+  width: min(100%, 110rem);
 }
 
 .wolves-intro-overlay-title-card-main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   min-width: 0;
 }
 
@@ -1268,7 +1268,7 @@ defineExpose({
      bounds, not its transparent canvas. The title and pill remain pinned outside
      the frame, so the hero art cannot move either text band. */
   position: relative;
-  width: min(72vw, 42vh, 60rem);
+  width: min(58vw, 50vh, 52rem);
   aspect-ratio: 1;
 }
 
@@ -1310,13 +1310,12 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
-  /* Pinned to the screen, out of the art's layout flow: the cycling art can
-     never move the title. */
+  /* Pinned above the art so the cycling image can never move the title. */
   position: absolute;
   top: clamp(11rem, 17vh, 14rem);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(90vw, 96rem);
+  left: clamp(1.6rem, 4vw, 4rem);
+  width: min(72vw, 80rem);
+  text-align: left;
 }
 
 .wolves-intro-overlay-title-card-line-small {
@@ -1341,28 +1340,21 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-amber-quote {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  justify-self: end;
-  width: min(100%, 34rem);
+  position: absolute;
+  bottom: clamp(12rem, 16vh, 15rem);
+  left: clamp(1.6rem, 4vw, 4rem);
+  width: min(58vw, 48rem);
   margin: 0;
-  padding: 2rem 1.5rem;
-  border: 1px solid rgb(147 197 253 / 32%);
-  border-radius: 2rem;
-  background: linear-gradient(180deg, rgb(9 11 16 / 92%) 0%, rgb(5 7 10 / 96%) 100%);
-  box-shadow:
-    0 0 32px rgb(0 0 0 / 55%),
-    inset 0 0 0 1px rgb(255 255 255 / 5%);
+  padding: 0;
   color: #fff;
-  transform: translateY(-3rem);
+  text-align: left;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 90%);
 }
 
 .wolves-intro-overlay-title-card-amber-quote p {
   margin: 0;
   font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  font-size: clamp(1.6rem, 2.3vw, 2.7rem);
+  font-size: clamp(1.35rem, 2vw, 2.3rem);
   line-height: 1.25;
   letter-spacing: 0.03em;
   color: #f8fafc;
@@ -1375,7 +1367,7 @@ defineExpose({
   align-items: flex-start;
   width: 100%;
   gap: 0.35rem;
-  margin-top: 1.4rem;
+  margin-top: 0.8rem;
   font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   text-align: left;
 }
@@ -1397,7 +1389,7 @@ defineExpose({
   align-items: center;
   gap: 0.9rem;
   justify-self: end;
-  width: min(100%, 24rem);
+  width: min(100%, 38rem);
   padding: 1.2rem;
   border: 1px solid rgb(147 197 253 / 32%);
   border-radius: 2rem;
@@ -1407,7 +1399,7 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-qr-frame {
-  width: min(100%, 21rem);
+  width: min(100%, 32rem);
   aspect-ratio: 1;
   padding: 0.65rem;
   border-radius: 1.35rem;
@@ -1427,22 +1419,13 @@ defineExpose({
   color: #93c5fd;
 }
 
-.wolves-intro-overlay-title-card-amber-quote {
-  position: absolute;
-  bottom: clamp(2rem, 5vh, 5rem);
-  left: 50%;
-  width: min(90vw, 60rem);
-  transform: translateX(-50%);
-}
-
 @media (max-width: 700px) {
   .wolves-intro-overlay-title-card {
-    justify-content: center;
     padding: 21rem 1.2rem 24rem;
   }
 
   .wolves-intro-overlay-title-card-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
     grid-template-rows: minmax(0, 1fr);
     align-items: center;
     justify-items: center;
@@ -1457,13 +1440,14 @@ defineExpose({
   .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
     /* Below the taller two-line mobile nameplate. */
     top: 17rem;
-    width: 94vw;
+    left: 1.2rem;
+    width: 86vw;
   }
 
   .wolves-intro-overlay-title-card-art-frame {
     grid-column: 1;
     grid-row: 1;
-    width: min(48vw, 34vh, 26rem);
+    width: min(52vw, 34vh, 26rem);
   }
 
   .wolves-intro-overlay-title-card-line-small {
@@ -1482,15 +1466,23 @@ defineExpose({
   }
 
   .wolves-intro-overlay-title-card-amber-quote {
-    grid-column: 2;
-    grid-row: 1;
-    width: min(48vw, 25rem);
-    padding: 1.2rem;
-    transform: none;
+    bottom: 19rem;
+    left: 1.2rem;
+    width: min(78vw, 30rem);
   }
 
   .wolves-intro-overlay-title-card-amber-quote p {
     font-size: clamp(1.15rem, 3.5vw, 1.8rem);
+  }
+
+  .wolves-intro-overlay-title-card-qr {
+    width: min(100%, 22rem);
+    padding: 0.8rem;
+  }
+
+  .wolves-intro-overlay-title-card-qr-frame {
+    width: min(100%, 20rem);
+    padding: 0.5rem;
   }
 
   /* Narrow screens: tighten the guardian + companion pair so both cards fit

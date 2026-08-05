@@ -218,7 +218,7 @@ try {
   assert(
     'Destiny nameplate label',
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
-    'fighting for something greater than themselves',
+    'a project to bring their stories to life',
   )
   assert(
     'Destiny media plaque uses the authored title',
@@ -279,7 +279,7 @@ try {
   assert(
     'Top status holds the default title at 48 (no standing #nova4ever)',
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
-    'fighting for something greater than themselves',
+    'a project to bring their stories to life',
   )
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(52.2, true)
@@ -298,7 +298,7 @@ try {
     window.__mockWolvesPlayers[index].seekTo(55, true)
   }, introPlayerIndex)
   await page.waitForFunction(
-    () => document.querySelector('.wc-intro-nameplate .wc-nameplate-label')?.textContent === 'fighting for something greater than themselves',
+    () => document.querySelector('.wc-intro-nameplate .wc-nameplate-label')?.textContent === 'a project to bring their stories to life',
     null,
     { timeout: 5_000 },
   )

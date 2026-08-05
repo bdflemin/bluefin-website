@@ -378,7 +378,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|fighting for something greater than themselves')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|a project to bring their stories to life')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('The Wolves are Coming')
 
     intro.vm.$emit('status', {
@@ -405,7 +405,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|fighting for something greater than themselves')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|a project to bring their stories to life')
     expect(wrapper.get('.nameplate-stub').classes()).not.toContain('glitching')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('The Wolves are Coming')
   })

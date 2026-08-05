@@ -193,7 +193,7 @@ try {
   }
 
   await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
-  await assertNameplate('Meet your Fireteam', 'fighting for something greater than themselves')
+  await assertNameplate('Meet your Fireteam', 'a project to bring their stories to life')
   expectTruthy('Destiny player mounted', await page.locator('.wolves-intro-overlay-player').isVisible())
   await capture(page, '08-destiny-trailer')
 
