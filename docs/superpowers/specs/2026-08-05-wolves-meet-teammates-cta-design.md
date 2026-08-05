@@ -23,6 +23,9 @@ unavailable in this draft.
   until a destination is supplied.
 - Center the constrained maintainer-support paragraphs in the gallery, including
   their text, without changing their width or copy.
+- Use a single centered treatment for constrained editorial and support copy in
+  the gallery. Preserve left alignment for card and quote content, where it
+  supports scanning and reading.
 
 ## Verification
 
@@ -32,4 +35,6 @@ unavailable in this draft.
 - The QR-code images and their external destinations are absent.
 - Both replacement character placeholders make their unavailable state clear.
 - The constrained maintainer-support paragraphs are centered as text blocks.
+- Editorial support copy shares one alignment rule; cards and quote content
+  retain their intentional left alignment.
 - The lobby remains usable at desktop and mobile widths.
