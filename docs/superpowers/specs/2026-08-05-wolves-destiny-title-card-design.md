@@ -8,12 +8,12 @@ replacement.
 
 ## Composition
 
-The title remains in its existing top band. The dinosaur artwork occupies the
-left visual field and the MakeMeAComic QR code occupies the right visual field;
-neither is centered in the title-card viewport. The QR card becomes the larger
-right-hand anchor so the code remains practical to scan. At the supported
-desktop viewport it has a 32rem code frame and a rendered code width of at
-least 300px.
+The supplied phrase appears only in the top status plate. The title card has no
+duplicate headline: the dinosaur artwork occupies the left visual field and the
+MakeMeAComic QR code occupies the right visual field. Neither is centered in
+the title-card viewport. The QR card becomes the larger right-hand anchor so
+the code remains practical to scan. At the supported desktop viewport it has a
+32rem code frame and a rendered code width of at least 300px.
 
 The Amber Graner quote is removed from its panel. It becomes a freeform,
 left-aligned lower-third attribution above the persistent media widget, using

@@ -340,7 +340,7 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   const cues = parseDestinyCaptionFile(destinyCaptions)
   return [
     ...cues,
-    { text: 'A Project to Bring Their Stories to life ...', start: 24, end: 38, comicHeroTitleCard: true },
+    { text: '', start: 24, end: 38, comicHeroTitleCard: true },
   ]
 }
 

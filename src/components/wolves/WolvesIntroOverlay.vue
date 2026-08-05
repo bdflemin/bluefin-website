@@ -850,7 +850,10 @@ defineExpose({
         <div v-if="activeComicTitleCardCue" class="wolves-intro-overlay-title-card">
           <div class="wolves-intro-overlay-title-card-layout">
             <div class="wolves-intro-overlay-title-card-main">
-              <p class="wolves-intro-overlay-title-card-line">
+              <p
+                v-if="activeComicTitleCardCue.text"
+                class="wolves-intro-overlay-title-card-line"
+              >
                 {{ activeComicTitleCardCue.text }}
               </p>
               <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">

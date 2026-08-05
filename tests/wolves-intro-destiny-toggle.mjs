@@ -145,6 +145,7 @@ async function assertComicHeroQrLayout(page) {
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       titleCard: toRect(titleCard),
+      titleCardText: titleCard?.textContent?.trim() ?? '',
       heroShot: toRect(heroShot),
       qrCard: toRect(qrCard),
       qrLink: toRect(qrLink),
@@ -170,6 +171,7 @@ async function assertComicHeroQrLayout(page) {
   })
 
   expectContained('Title card', layout.titleCard, layout.viewport)
+  expectTruthy('Title card does not duplicate the top status copy', !layout.titleCardText.includes('A Project to Bring Their Stories to life'))
   expectContained('Comic hero shot', layout.heroShot, layout.viewport)
   expectContained('Comic hero QR card', layout.qrCard, layout.viewport)
   expectContained('Comic hero QR link', layout.qrLink, layout.viewport)

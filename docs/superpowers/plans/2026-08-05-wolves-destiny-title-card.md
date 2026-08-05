@@ -47,10 +47,11 @@ fail before the implementation.
 
 - [ ] **Step 3: Implement the minimal layout and content revision**
 
-Set `INTRO_DISPLAY['wolves-intro'].title` to the supplied exact text. Use the
-existing title-card grid for a left artwork field and a right 28rem QR frame.
-Remove all panel paint from `.wolves-intro-overlay-title-card-amber-quote`;
-pin it as left-aligned lower-third text above the media widget.
+Set `INTRO_DISPLAY['wolves-intro'].title` to the supplied exact text and remove
+that phrase from the title-card cue. Use the existing title-card grid for a
+left artwork field and a right 28rem QR frame. Remove all panel paint from
+`.wolves-intro-overlay-title-card-amber-quote`; pin it as left-aligned
+lower-third text above the media widget.
 
 - [ ] **Step 4: Run focused regression checks**
 
