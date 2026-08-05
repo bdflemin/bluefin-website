@@ -26,6 +26,8 @@ unavailable in this draft.
 - Use a single centered treatment for constrained editorial and support copy in
   the gallery. Preserve left alignment for card and quote content, where it
   supports scanning and reading.
+- Use the command CTA treatment for `MEET YOUR TEAMMATES`: add a prominent
+  play/start glyph before the existing label without changing its behavior.
 
 ## Verification
 
@@ -37,4 +39,6 @@ unavailable in this draft.
 - The constrained maintainer-support paragraphs are centered as text blocks.
 - Editorial support copy shares one alignment rule; cards and quote content
   retain their intentional left alignment.
+- The entry CTA's play/start glyph is visible at rest and does not replace the
+  accessible button label.
 - The lobby remains usable at desktop and mobile widths.
