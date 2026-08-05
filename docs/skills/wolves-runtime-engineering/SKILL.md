@@ -65,6 +65,16 @@ Do not introduce a second transport or wall-clock synchronization.
 - Add a locked hero photo as a contiguous timed window and shift only the
   following unlocked window; do not move the established hero anchors.
 - Preserve locked anchors and recompute only unlocked intervals.
+- Derive Track 0's rotating HUD queue directly from the authored plan and keep
+  duplicate status lines; deduping breaks the approved finale cadence.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
 - Never describe a discarded experiment as restored or complete.
+
+## Verification
+
+Re-derive the unified Track 0 queue and finale timing from source with:
+
+```bash
+npm run test:run -- src/tests/wolvesThesisSequence.test.ts
+```

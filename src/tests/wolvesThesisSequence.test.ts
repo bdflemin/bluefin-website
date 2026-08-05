@@ -8,6 +8,7 @@ import {
   wolvesIncomingSignalMessages,
   getTrackZeroSectionMessages,
 } from '../data/wolves-thesis-sequence'
+import { getTrackZeroRotatingStatusMessages, TRACK_ZERO_LORE_PLAN } from '../data/wolves-track-zero-manifest'
 
 const THESIS_START_SECONDS = 345
 
@@ -21,10 +22,25 @@ describe('wolves thesis sequence', () => {
       'M2 Status: [ Unknown ]',
       'Field Medical Exoskeleton: [ Missing ]',
       'TARGET ACQUIRED: GOSPO, KYLE',
-      'TARGET ACQUIRED: EGGROLL, GLORIOUS',
+      'TARGETS ACQUIRED: ZEGLIUS, RENNER, INFFY, LEDIF, GLORIOUS EGGROLL',
     ])
     expect(wolvesIncomingSignalMessages[wolvesIncomingSignalMessages.length - 1]).toBe('The equation must be balanced, think like a dinosaur')
     expect(wolvesIncomingSignalMessages.every(message => message.length > 0)).toBe(true)
+  })
+
+  it('queues every non-locked status in authored order, including repeats', () => {
+    const messages = getTrackZeroRotatingStatusMessages()
+
+    expect(messages.slice(0, 6)).toEqual([
+      'Hikari Protocol: Initialized',
+      'KDE Plasma Couplings: ENGAGED',
+      'Mechaphippy Deployment: [UNAUTHORIZED]',
+      'M2 Status: [ Unknown ]',
+      'Field Medical Exoskeleton: [ Missing ]',
+      'TARGET ACQUIRED: GOSPO, KYLE',
+    ])
+    expect(messages.filter(message => message === 'Software is Supposed to Die')).toHaveLength(3)
+    expect(messages[messages.length - 1]).toBe('The equation must be balanced, think like a dinosaur')
   })
 
   it('splits the early ambient signals from the climax reports at the delimiter', () => {
@@ -68,8 +84,7 @@ describe('wolves thesis sequence', () => {
     expect(finale).not.toContain('Hikari Protocol: Initialized')
   })
 
-  it('uses the ordered Track 0 plan as the signal source', async () => {
-    const { TRACK_ZERO_LORE_PLAN } = await import('../data/wolves-track-zero-manifest')
+  it('uses the ordered Track 0 plan as the signal source', () => {
     expect(TRACK_ZERO_LORE_PLAN[0].entries[0]).toMatchObject({ text: 'Welcome to Indie Cloud Native', locked: true })
     expect(wolvesIncomingSignalMessages).toContain('TARGET ACQUIRED: GOSPO, KYLE')
     expect(wolvesIncomingSignalMessages).not.toContain('Add lore here')
@@ -93,11 +108,11 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(350.5)).toBe('We are Universal Blue')
     expect(getWolvesHudLabel(359)).toBe('Evolve or die ...')
     expect(getWolvesHudLabel(364.999)).toBe('Evolve or die ...')
-    const finaleSpan = (408 - 365) / getTrackZeroSectionMessages(4).length
-    expect(getWolvesHudLabel(365)).toBe(getTrackZeroSectionMessages(4)[0])
-    expect(getWolvesHudLabel(365 + finaleSpan)).toBe(getTrackZeroSectionMessages(4)[1])
-    expect(getWolvesHudLabel(365 + 6 * finaleSpan)).toBe(getTrackZeroSectionMessages(4)[6])
-    expect(getWolvesHudLabel(407.999)).toBe(getTrackZeroSectionMessages(4)[getTrackZeroSectionMessages(4).length - 1])
+    const rotation = getTrackZeroRotatingStatusMessages()
+    const slotDuration = (408 - 365) / rotation.length
+    expect(getWolvesHudLabel(365)).toBe(rotation[0])
+    expect(getWolvesHudLabel(365 + slotDuration)).toBe(rotation[1])
+    expect(getWolvesHudLabel(407.999)).toBe(rotation[rotation.length - 1])
     expect(getWolvesHudLabel(408)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
@@ -107,9 +122,10 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(175.96)).toBe('The Blue Delivers')
     expect(getWolvesHudLabel(196.359)).toBe('The Blue Delivers')
-    expect(getWolvesHudLabel(196.36)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
-    expect(getWolvesHudLabel(201.00)).toBe('Bazzite proximity to Kube of Destiny: Critical')
-    expect(getWolvesHudLabel(203.00)).toBe('shua_bot: Ensure talent is nurtured, my operator is tired ')
+    expect(getWolvesHudLabel(196.36)).toBe('gregkh_clanker_t1000: Ensure talent is nurtured, my operator is tired ')
+    expect(getWolvesHudLabel(202.53)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
+    expect(getWolvesHudLabel(203.52)).toBe('Bazzite proximity to Kube of Destiny: Critical')
+    expect(getWolvesHudLabel(206.61)).toBe('shua_bot: Ensure talent is nurtured, my operator is tired ')
     expect(getWolvesHudLabel(229)).toBe('AN4-ChK-12: Chance of Success: 77.777% and climbing')
     expect(getWolvesHudLabel(276.943)).toBe('Podman Knowledge: [Deployed]')
     expect(getWolvesHudLabel(276.944)).toBe('Buildstream Dakota[GNOMEOS] Prototype: DEADLY')
@@ -121,15 +137,15 @@ describe('wolves thesis sequence', () => {
     // driving movement; it must not hold until the contributor section.
     expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(30)).toBe('Welcome to Indie Cloud Native')
-    expect(getWolvesHudLabel(42)).toBe('PREVENT OPEN GAMING COLLECTIVE AT ALL COSTS')
+    expect(getWolvesHudLabel(42)).toBe('Kernel development accelerating')
     expect(getWolvesHudLabel(140)).not.toBe('Celebrating Five Years of Universal Blue')
     // The remaining ambient signals compress evenly into the post-hero window,
     // ending on the pod status at the ImagePullBackOff handoff.
     const sectionMessages = getTrackZeroSectionMessages(1)
     const postRezaMessages = sectionMessages.slice(6)
     expect(postRezaMessages.length).toBeGreaterThan(0)
-    expect(getWolvesHudLabel(202.53)).toBe(postRezaMessages[0])
-    expect(getWolvesHudLabel(202.54 + ((229 - 202.53) / postRezaMessages.length))).toBe(postRezaMessages[0])
+    expect(getWolvesHudLabel(202.53)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
+    expect(getWolvesHudLabel(206.61)).toBe(postRezaMessages[0])
     // Contributor messages now intentionally occupy the post-hero block.
     for (let time = 229; time < 345; time += 0.5) {
       expect(getWolvesHudLabel(time)).not.toMatch(/TARGET ACQUIRED|Kube of Destiny|Projected Joining|Software is Supposed to Die/)

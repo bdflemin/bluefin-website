@@ -27,7 +27,6 @@ export const TRACK_ZERO_LORE_PLAN = [
       { text: 'Mechaphippy Deployment: [UNAUTHORIZED]' },
       { text: 'M2 Status: [ Unknown ]' },
       { text: 'Field Medical Exoskeleton: [ Missing ]' },
-      { lore: 'Add lore here' },
     ],
   },
   {
@@ -38,7 +37,7 @@ export const TRACK_ZERO_LORE_PLAN = [
       { text: 'HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026', locked: true },
       { text: 'Bazzite proximity to Kube of Destiny: Critical', locked: true },
       { text: 'TARGET ACQUIRED: GOSPO, KYLE' },
-      { text: 'TARGET ACQUIRED: EGGROLL, GLORIOUS' },
+      { text: 'TARGETS ACQUIRED: ZEGLIUS, RENNER, INFFY, LEDIF, GLORIOUS EGGROLL' },
       { text: 'TARGET ACQUIRED: People who read documentation' },
       { text: 'AN4-ChK-12: Potential kernel contributions detected' },
       { text: 'gregkh_clanker_t1000: Potential kernel contributions detected' },
@@ -54,7 +53,6 @@ export const TRACK_ZERO_LORE_PLAN = [
     section: 'LORE SECTION — bridge / system warnings',
     comment: 'The pacing changes here. Keep the warning and fallback statuses in place.',
     entries: [
-      { text: 'PREVENT OPEN GAMING COLLECTIVE AT ALL COSTS' },
       { text: 'Kernel development accelerating' },
       { text: 'Kube of Destiny location: Earth' },
       { text: 'Projected Joining: Salt Lake City, Utah' },
@@ -208,6 +206,14 @@ export function getTrackZeroSectionMessages(sectionIndex: number): readonly stri
     .filter(text => !CONTROL_TEXTS.has(text) && !LOCKED_STATUS_TEXTS.has(text) && !alreadyUsed.has(text))))
 }
 
+export function getTrackZeroRotatingStatusMessages(): readonly string[] {
+  return Object.freeze(TRACK_ZERO_LORE_PLAN.flatMap(section =>
+    section.entries.flatMap(entry =>
+      'text' in entry && !entry.locked ? [entry.text] : [],
+    ),
+  ))
+}
+
 function planMessages(sectionIndex: number): readonly string[] {
   return getTrackZeroSectionMessages(sectionIndex)
 }
@@ -259,7 +265,9 @@ export function getTrackZeroHudLabel(time: number): string {
     return pacedPlanMessage(3, time, TRACK_ZERO_SECTIONS.buildStart, 345)
   }
   if (time >= 365 && time < 408) {
-    return pacedPlanMessage(4, time, 365, 408)
+    const messages = getTrackZeroRotatingStatusMessages()
+    const slotDuration = (408 - 365) / messages.length
+    return messages[Math.min(Math.floor((time - 365) / slotDuration), messages.length - 1)] ?? DEFAULT_HUD_LABEL
   }
   return DEFAULT_HUD_LABEL
 }
