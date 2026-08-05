@@ -1,9 +1,10 @@
-# Wolves Meet Your Teammates CTA
+# Wolves Lobby Draft-State Controls
 
 ## Goal
 
 Make the primary `MEET YOUR TEAMMATES` control on the Wolves lobby visibly
-actionable at rest.
+actionable at rest while making the donation and nomination areas clearly
+unavailable in this draft.
 
 ## Scope
 
@@ -13,9 +14,19 @@ actionable at rest.
 - Preserve the existing label, click behavior, placement, responsive sizing,
   hover treatment, and keyboard-focus treatment.
 - Do not alter markup, navigation, animation, or the Director's Cut control.
+- Update the donation controls in
+  `src/components/wolves/WolvesCharacterGallery.vue` to be non-interactive
+  `COMING SOON` controls with disabled semantics and no destination.
+- Replace the two QR-code cards with two non-interactive character-card
+  placeholders: an unnamed future guardian and `NOMINATE A MAINTAINER`.
+- Mark the nomination placeholder `COMING SOON`; it must not submit anywhere
+  until a destination is supplied.
 
 ## Verification
 
 - The primary CTA and waypoint CTA are visibly filled before hover.
 - Both controls retain a clear keyboard focus state.
+- Donation and nomination controls do not navigate away from the draft.
+- The QR-code images and their external destinations are absent.
+- Both replacement character placeholders make their unavailable state clear.
 - The lobby remains usable at desktop and mobile widths.
