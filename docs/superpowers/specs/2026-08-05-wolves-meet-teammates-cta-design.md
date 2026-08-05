@@ -28,6 +28,8 @@ unavailable in this draft.
   supports scanning and reading.
 - Use the command CTA treatment for `MEET YOUR TEAMMATES`: add a prominent
   play/start glyph before the existing label without changing its behavior.
+- Place `Click to begin the Wolves Experience` in small text above each entry
+  control and use `Meet your Teammates` as the shared button label.
 
 ## Verification
 
@@ -41,4 +43,6 @@ unavailable in this draft.
   retain their intentional left alignment.
 - The entry CTA's play/start glyph is visible at rest and does not replace the
   accessible button label.
+- Both entry controls pair the small instruction with the supplied button
+  label.
 - The lobby remains usable at desktop and mobile widths.
