@@ -21,6 +21,8 @@ import {
   bluefinGroupSlides,
   jonoBaconSlideId,
   jonoBaconTrackZeroWindow,
+  lauraSlideId,
+  lauraTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
   rezaContributorSlideId,
@@ -391,6 +393,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     : shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
+  const lauraPhoto = peoplePool1.find(item => item.id === lauraSlideId)
   // The Bluefin group (Sherman + m2 composite, NOT John Bazzite, hikari) locks as one back-to-back run;
   // it only engages when every member survived into the Track 0 people pool.
   const bluefinGroupPhotos = bluefinGroupSlides.map(slide => ({
@@ -403,6 +406,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     jonoBaconSlideId,
     ...(marinaPhoto ? [marinaMooreSlideId] : []),
     ...(hasBluefinGroupLock ? bluefinGroupSlides.map(slide => slide.id) : []),
+    ...(lauraPhoto ? [lauraSlideId] : []),
   ])
   const remainingPeoplePool1 = peoplePool1.filter(item =>
     !lockedHeroSlideIds.has(item.id),
@@ -476,6 +480,17 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
         })
         currentTime = slide.window.endTime
       }
+    }
+
+    if (lauraPhoto) {
+      result.push({
+        ...lauraPhoto,
+        path: lauraPhoto.path || '',
+        startTime: currentTime,
+        duration: lauraTrackZeroWindow.endTime - lauraTrackZeroWindow.startTime,
+        endTime: lauraTrackZeroWindow.endTime,
+      })
+      currentTime = lauraTrackZeroWindow.endTime
     }
 
     if (rezaPhoto) {

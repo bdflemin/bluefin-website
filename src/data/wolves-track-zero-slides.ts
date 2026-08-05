@@ -40,6 +40,12 @@ export const jorgeBluefinTrackZeroWindow = {
   endTime: 196.36,
 } as const
 
+export const lauraSlideId = 'wolves/people/laura.webp'
+export const lauraTrackZeroWindow = {
+  startTime: jorgeBluefinTrackZeroWindow.endTime,
+  endTime: 200.44,
+} as const
+
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
  * back-to-back after Marina's window (Sherman + m2 composite -> NOT John Bazzite -> Hikari -> Hikari2 -> Jorge).
@@ -57,8 +63,8 @@ export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
 const REZA_HOLD_SECONDS = 3.08
 export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
 export const rezaContributorTrackZeroWindow = {
-  startTime: jorgeBluefinTrackZeroWindow.endTime,
-  endTime: jorgeBluefinTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
+  startTime: lauraTrackZeroWindow.endTime,
+  endTime: lauraTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
 } as const
 
 /**
@@ -79,7 +85,7 @@ export function pinJonoBaconAtTrackZeroWindow<T extends { id: string }>(slides: 
 }
 
 export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonly T[]): T[] {
-  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds]
+  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds, lauraSlideId]
   const heroSlides = heroSlideIds
     .map(id => slides.find(slide => slide.id === id))
     .filter((slide): slide is T => slide !== undefined)

@@ -9,6 +9,8 @@ import {
   hikariTrackZeroWindow,
   jonoBaconSlideId,
   jonoBaconTrackZeroWindow,
+  lauraSlideId,
+  lauraTrackZeroWindow,
   jorgeBluefinSlideId,
   jorgeBluefinTrackZeroWindow,
   kyleSlideId,
@@ -61,6 +63,15 @@ describe('wolves Track 0 slide locks', () => {
       { id: 'people-b' },
       { id: 'people-c' },
     ])
+  })
+
+  it('locks Laura after Jorge in the hero run', () => {
+    const laura = { id: lauraSlideId }
+    const jorge = { id: jorgeBluefinSlideId }
+
+    expect(pinTrackZeroHeroSlides([{ id: 'people-a' }, laura, jorge]))
+      .toEqual([jorge, laura, { id: 'people-a' }])
+    expect(lauraTrackZeroWindow.startTime).toBe(jorgeBluefinTrackZeroWindow.endTime)
   })
 
   it('keeps the authored hero locks unique, exact, and contiguous', () => {

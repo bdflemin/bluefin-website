@@ -65,6 +65,8 @@ Do not introduce a second transport or wall-clock synchronization.
   displayed photo.
 - Do not auto-scroll an explicitly authored final conversation after its key
   line is revealed; only an explicit user skip may move that viewport.
+- Add a locked hero photo as a contiguous timed window and shift only the
+  following unlocked window; do not move the established hero anchors.
 - Preserve locked anchors and recompute only unlocked intervals.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
