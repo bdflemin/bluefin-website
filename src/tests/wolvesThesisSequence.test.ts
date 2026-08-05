@@ -11,6 +11,7 @@ import {
 import { getTrackZeroRotatingStatusMessages, TRACK_ZERO_LORE_PLAN } from '../data/wolves-track-zero-manifest'
 
 const THESIS_START_SECONDS = 345
+const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'
 
 describe('wolves thesis sequence', () => {
   it('reads ordered non-empty messages from the editable source', () => {
@@ -118,38 +119,18 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
   })
 
-  it('keeps authored HUD notifications active through thesis-overlay gaps', () => {
-    expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
-    expect(getWolvesHudLabel(175.96)).toBe('The Blue Delivers')
-    expect(getWolvesHudLabel(196.359)).toBe('The Blue Delivers')
-    expect(getWolvesHudLabel(196.36)).toBe('gregkh_clanker_t1000: Ensure talent is nurtured, my operator is tired ')
-    expect(getWolvesHudLabel(202.53)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
-    expect(getWolvesHudLabel(203.52)).toBe('Bazzite proximity to Kube of Destiny: Critical')
-    expect(getWolvesHudLabel(206.61)).toBe('shua_bot: Ensure talent is nurtured, my operator is tired ')
-    expect(getWolvesHudLabel(229)).toBe('AN4-ChK-12: Chance of Success: 77.777% and climbing')
-    expect(getWolvesHudLabel(276.943)).toBe('Podman Knowledge: [Deployed]')
-    expect(getWolvesHudLabel(276.944)).toBe('Buildstream Dakota[GNOMEOS] Prototype: DEADLY')
-    expect(getWolvesHudLabel(357.632)).toBe('We are Universal Blue')
-  })
-
-  it('holds the opening signal line before the hero run and plays the ambient signals after it', () => {
-    // The opening status follows the authored plan and changes before the
-    // driving movement; it must not hold until the contributor section.
+  it('returns the default HUD label outside the locked windows before the unified queue', () => {
     expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(30)).toBe('Welcome to Indie Cloud Native')
-    expect(getWolvesHudLabel(42)).toBe('Kernel development accelerating')
-    expect(getWolvesHudLabel(140)).not.toBe('Celebrating Five Years of Universal Blue')
-    // The remaining ambient signals compress evenly into the post-hero window,
-    // ending on the pod status at the ImagePullBackOff handoff.
-    const sectionMessages = getTrackZeroSectionMessages(1)
-    const postRezaMessages = sectionMessages.slice(6)
-    expect(postRezaMessages.length).toBeGreaterThan(0)
+    expect(getWolvesHudLabel(42)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(140)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(196.36)).toBe(DEFAULT_HUD_LABEL)
     expect(getWolvesHudLabel(202.53)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
-    expect(getWolvesHudLabel(206.61)).toBe(postRezaMessages[0])
-    // Contributor messages now intentionally occupy the post-hero block.
-    for (let time = 229; time < 345; time += 0.5) {
-      expect(getWolvesHudLabel(time)).not.toMatch(/TARGET ACQUIRED|Kube of Destiny|Projected Joining|Software is Supposed to Die/)
-    }
+    expect(getWolvesHudLabel(206.61)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(229)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(276.943)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(276.944)).toBe(DEFAULT_HUD_LABEL)
+    expect(getWolvesHudLabel(357.632)).toBe('We are Universal Blue')
   })
 
   it('preserves the approved thesis window, HUD, and visual modes', () => {

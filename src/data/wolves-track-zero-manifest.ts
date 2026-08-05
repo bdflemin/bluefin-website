@@ -214,55 +214,10 @@ export function getTrackZeroRotatingStatusMessages(): readonly string[] {
   ))
 }
 
-function planMessages(sectionIndex: number): readonly string[] {
-  return getTrackZeroSectionMessages(sectionIndex)
-}
-
-function pacedPlanMessage(sectionIndex: number, time: number, startTime: number, endTime: number, messageRange?: readonly [number, number]): string {
-  const allMessages = planMessages(sectionIndex)
-  const messages = messageRange ? allMessages.slice(messageRange[0], messageRange[1]) : allMessages
-  if (messages.length === 0) {
-    return DEFAULT_HUD_LABEL
-  }
-  const span = (endTime - startTime) / messages.length
-  return messages[Math.min(Math.floor((time - startTime) / span + 1e-7), messages.length - 1)] ?? DEFAULT_HUD_LABEL
-}
-
 export function getTrackZeroHudLabel(time: number): string {
   const lockedStatus = TRACK_ZERO_LOCKED_STATUSES.find(entry => time >= entry.startTime && (entry.endTime === undefined || time < entry.endTime))
   if (lockedStatus) {
     return lockedStatus.text
-  }
-  // The opening movement is paced by the authored ambient plan. The welcome
-  // line is a lock at the head of the movement, not a 2:38 hold.
-  if (time >= 0 && time < TRACK_ZERO_SECTIONS.verseStart) {
-    return pacedPlanMessage(0, time, 0, TRACK_ZERO_SECTIONS.verseStart)
-  }
-  if (time >= 175.96 && time < 196.36) {
-    return planTextAt(1, 0)
-  }
-  // Carry the next authored system messages through the driving movement so
-  // the status rail follows the song's major movement rather than freezing.
-  if (time >= TRACK_ZERO_SECTIONS.verseStart && time < TRACK_ZERO_SECTIONS.chorusStart) {
-    return pacedPlanMessage(2, time, TRACK_ZERO_SECTIONS.verseStart, TRACK_ZERO_SECTIONS.chorusStart)
-  }
-  if (time >= TRACK_ZERO_SECTIONS.chorusStart && time < rezaContributorTrackZeroWindow.startTime) {
-    return pacedPlanMessage(1, time, TRACK_ZERO_SECTIONS.chorusStart, rezaContributorTrackZeroWindow.startTime, [0, 6])
-  }
-  if (time >= rezaContributorTrackZeroWindow.startTime && time < rezaContributorTrackZeroWindow.endTime) {
-    return planTextAt(1, 1)
-  }
-  if (time >= rezaContributorTrackZeroWindow.endTime && time < rezaContributorTrackZeroWindow.endTime + 3.08) {
-    return planTextAt(1, 2)
-  }
-  if (time >= 202.52 && time < TRACK_ZERO_SECTIONS.bridgeStart) {
-    return pacedPlanMessage(1, time, 202.52, TRACK_ZERO_SECTIONS.bridgeStart, [6, 11])
-  }
-  if (time >= TRACK_ZERO_SECTIONS.bridgeStart && time < TRACK_ZERO_SECTIONS.buildStart) {
-    return pacedPlanMessage(2, time, TRACK_ZERO_SECTIONS.bridgeStart, TRACK_ZERO_SECTIONS.buildStart, [9, 11])
-  }
-  if (time >= TRACK_ZERO_SECTIONS.buildStart && time < 345) {
-    return pacedPlanMessage(3, time, TRACK_ZERO_SECTIONS.buildStart, 345)
   }
   if (time >= 365 && time < 408) {
     const messages = getTrackZeroRotatingStatusMessages()
