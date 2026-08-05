@@ -19,12 +19,23 @@ function addError(message) {
 }
 
 const markdown = walk(root).filter(path => extname(path).toLowerCase() === '.md')
-const required = ['AGENTS.md', 'docs/skills/INDEX.md', 'docs/README.md']
+const required = ['AGENTS.md', 'docs/SKILL.md', 'docs/skills/INDEX.md', 'docs/README.md']
 for (const path of required) {
   if (!existsSync(join(root, path))) {
     addError(`missing required file: ${path}`)
   }
 }
+
+const banned = ['IMPROVEMENTS.md', 'CHANGELOG.md', 'CHANGES.md', 'SESSION.md', 'NOTES.md', 'PLAN.md', 'TODO.md']
+for (const path of banned) {
+  if (existsSync(join(root, path))) {
+    addError(`banned agent changelog or session file: ${path} (write learnings to docs/skills/ instead)`)
+  }
+}
+
+const router = existsSync(join(root, 'docs/SKILL.md'))
+  ? readFileSync(join(root, 'docs/SKILL.md'), 'utf8')
+  : ''
 
 const skillFiles = walk(join(root, 'docs/skills')).filter(path => path.endsWith('/SKILL.md'))
 for (const path of skillFiles) {
@@ -49,6 +60,9 @@ for (const path of skillFiles) {
   if (name && name !== directory) {
     addError(`${relativePath}: name '${name}' does not match '${directory}'`)
   }
+  if (!router.includes(`skills/${directory}/SKILL.md`)) {
+    addError(`${relativePath}: not routed from docs/SKILL.md`)
+  }
   if (source.split('\n').length > 500) {
     addError(`${relativePath}: exceeds 500 lines`)
   }
@@ -57,7 +71,7 @@ for (const path of skillFiles) {
 for (const path of markdown) {
   const relativePath = relative(root, path)
   const source = readFileSync(path, 'utf8')
-  if (path.endsWith('/SKILL.md') && !source.includes('## Verification')) {
+  if (skillFiles.includes(path) && !source.includes('## Verification')) {
     addError(`${relativePath}: missing Verification section`)
   }
 

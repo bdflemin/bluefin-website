@@ -9,7 +9,7 @@
   "packages": {
     "kernel": "7.0.7",
     "gnome": "50.2",
-    "freedesktop-sdk": "25.08.13",
+    "freedesktop-sdk": "25.08.14",
     "mesa": "26.0.6",
     "bootc": "1.15.2",
     "nvidia": "595.71.05",
