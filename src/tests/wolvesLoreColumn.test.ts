@@ -358,11 +358,11 @@ describe('wolvesLoreColumn Logic', () => {
       .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
   })
 
-  it('does not auto-scroll the Golden Era climax after the vision is revealed', async () => {
+  it('does not auto-scroll the final chat after its key line is revealed', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {
       props: {
-        artifactId: 'lorem-pursuit-1',
+        artifactId: 'committee-report-personal-transmission',
         duration: 0.01,
       },
     })

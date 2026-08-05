@@ -63,7 +63,7 @@ Do not introduce a second transport or wall-clock synchronization.
 - Seed later-track gallery order from the experience and track identifiers, and
   resolve its index from native player time so seek direction cannot change the
   displayed photo.
-- Do not auto-scroll an explicitly authored climax conversation after its key
+- Do not auto-scroll an explicitly authored final conversation after its key
   line is revealed; only an explicit user skip may move that viewport.
 - Preserve locked anchors and recompute only unlocked intervals.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.

@@ -20,6 +20,7 @@ const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
 const CLIMAX_SPEAKER = 'BUR//S'
 const CLIMAX_HOLD_MS = 3000
 const CLIMAX_FADE_MS = 1000
+const FINAL_CHAT_ARTIFACT_ID = 'committee-report-personal-transmission'
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -166,7 +167,7 @@ function runTypewriter() {
     }
     else {
       typedMessagesText.value[activeMessageIndex.value] = targetText
-      if (props.record.id !== CLIMAX_ARTIFACT_ID) {
+      if (props.record.id !== FINAL_CHAT_ARTIFACT_ID) {
         scrollViewport()
       }
       activeMessageIndex.value++
