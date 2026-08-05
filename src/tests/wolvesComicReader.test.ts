@@ -118,6 +118,7 @@ describe('wolvesComicReader', () => {
     }
   })
 
+
   it('does not render manual page navigation', () => {
     const wrapper = mount(WolvesComicReader, {
       props: {

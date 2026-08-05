@@ -16,7 +16,7 @@ npm install --include=dev
 npm run dev
 ```
 
-Read `AGENTS.md` and `docs/skills/INDEX.md` before editing. Read the source file
+Read `AGENTS.md` and `docs/SKILL.md` before editing. Read the source file
 that owns the requested content.
 
 ## Checks

@@ -60,9 +60,6 @@ Do not introduce a second transport or wall-clock synchronization.
   explicitly approved dialogue cadence anchors unchanged.
 - When a narrative range is constrained, allocate chatlog readability before
   static quote or source records; preserve explicitly approved cadence locks.
-- Seed later-track gallery order from the experience and track identifiers, and
-  resolve its index from native player time so seek direction cannot change the
-  displayed photo.
 - Do not auto-scroll an explicitly authored final conversation after its key
   line is revealed; only an explicit user skip may move that viewport.
 - Add a locked hero photo as a contiguous timed window and shift only the

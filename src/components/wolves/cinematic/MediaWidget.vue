@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
 const props = withDefaults(defineProps<{
@@ -7,10 +7,12 @@ const props = withDefaults(defineProps<{
   showVoiceOverToggle?: boolean
   voiceOverEnabled?: boolean
   voiceOverLabel?: string
+  autoHide?: boolean
 }>(), {
   showVoiceOverToggle: false,
   voiceOverEnabled: false,
   voiceOverLabel: 'Ikora voice over',
+  autoHide: false,
 })
 
 // The widget is a pure store subscriber: playback intents are emitted upward and
@@ -52,6 +54,37 @@ const canPrevious = computed(() => store.widgetCanPrevious)
 const canNext = computed(() => store.widgetCanNext)
 
 const progressEl = ref<HTMLElement | null>(null)
+const isVisible = ref(true)
+let autoHideTimer: ReturnType<typeof setTimeout> | null = null
+
+function resetAutoHide() {
+  if (!props.autoHide) {
+    return
+  }
+  isVisible.value = true
+  if (autoHideTimer) {
+    clearTimeout(autoHideTimer)
+  }
+  autoHideTimer = setTimeout(() => {
+    isVisible.value = false
+  }, 3000)
+}
+
+onMounted(() => {
+  if (props.autoHide) {
+    window.addEventListener('pointermove', resetAutoHide, { passive: true })
+    window.addEventListener('touchstart', resetAutoHide, { passive: true })
+    resetAutoHide()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (autoHideTimer) {
+    clearTimeout(autoHideTimer)
+  }
+  window.removeEventListener('pointermove', resetAutoHide)
+  window.removeEventListener('touchstart', resetAutoHide)
+})
 
 function handleSeek(event: MouseEvent) {
   const rect = progressEl.value?.getBoundingClientRect()
@@ -89,7 +122,11 @@ function handleVoiceOverChange(event: Event) {
 </script>
 
 <template>
-  <footer class="wc-widget wc-plate wc-plate--sheen">
+  <footer
+    class="wc-widget wc-plate wc-plate--sheen"
+    :class="{ 'wc-widget--hidden': props.autoHide && !isVisible }"
+    @focusin="resetAutoHide"
+  >
     <img
       class="wc-widget-art"
       :src="artworkSrc"
@@ -180,6 +217,15 @@ function handleVoiceOverChange(event: Event) {
   padding: 12px 16px;
   transform: translateX(-50%);
   touch-action: manipulation;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.wc-widget--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(100% + 1rem));
 }
 
 .wc-widget-art,

@@ -5,7 +5,7 @@ import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
-const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
+const emit = defineEmits<{ enter: [], enterDirectorsCut: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
 
 const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.webp`
 
@@ -35,10 +35,14 @@ onBeforeUnmount(() => {
     <Transition name="wc-waypoint">
       <div v-if="waypointVisible" class="wc-waypoint wc-plate">
         <span class="wc-waypoint-title">SEVEN DAYS TO THE WOLVES</span>
-        <span class="wc-label wc-waypoint-status">COMING IN 2027</span>
-        <button class="wc-waypoint-enter" type="button" @click="emit('enter')">
-          MEET YOUR TEAMMATES
-        </button>
+        <span class="wc-label wc-waypoint-status">2 NOVEMBER 2026</span>
+        <div class="wc-waypoint-entry">
+          <span class="wc-cta-instruction">Click to begin the Wolves Experience</span>
+          <button class="wc-waypoint-enter wc-cta--primary" type="button" @click="emit('enter')">
+            <span class="wc-cta-icon" aria-hidden="true">▶</span>
+            Meet your Teammates
+          </button>
+        </div>
       </div>
     </Transition>
     <div class="wc-lobby-frame">
@@ -54,17 +58,23 @@ onBeforeUnmount(() => {
       </p>
 
       <p class="wc-lobby-status wc-label">
-        COMING IN 2027
+        2 NOVEMBER 2026
       </p>
 
-      <button
-        ref="enterButton"
-        class="wc-lobby-enter wc-plate"
-        type="button"
-        @click="emit('enter')"
-      >
-        MEET YOUR TEAMMATES
-      </button>
+      <div class="wc-lobby-entry">
+        <p class="wc-cta-instruction">
+          Click to begin the Wolves Experience
+        </p>
+        <button
+          ref="enterButton"
+          class="wc-lobby-enter wc-cta--primary wc-plate"
+          type="button"
+          @click="emit('enter')"
+        >
+          <span class="wc-cta-icon" aria-hidden="true">▶</span>
+          Meet your Teammates
+        </button>
+      </div>
 
       <div class="wc-lobby-dispatch">
         <span class="wc-lobby-dispatch-dot" aria-hidden="true" />
@@ -96,6 +106,16 @@ onBeforeUnmount(() => {
       </blockquote>
       <WolvesQrCodes />
       <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
+
+      <div class="wc-lobby-directors-cut">
+        <button
+          class="wc-lobby-directors-cut-btn wc-plate"
+          type="button"
+          @click="emit('enterDirectorsCut')"
+        >
+          DIRECTOR'S CUT (PROLOGUE + DESTINY)
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -168,19 +188,43 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.wc-waypoint-entry,
+.wc-lobby-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wc-lobby-entry {
+  align-self: center;
+}
+
+.wc-cta-instruction {
+  margin: 0;
+  font-family: var(--wc-font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--wc-grey);
+}
+
 .wc-waypoint-status {
   font-size: 1rem;
 }
 
 .wc-waypoint-enter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
   padding: 0.5rem 1.6rem;
   border: 1px solid var(--wc-gold);
-  background: none;
+  background: var(--wc-gold);
   font-family: var(--wc-font-mono);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--wc-gold);
+  color: var(--wc-bg);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -188,8 +232,8 @@ onBeforeUnmount(() => {
 
   &:hover,
   &:focus-visible {
-    background: var(--wc-gold);
-    color: var(--wc-bg);
+    background: var(--wc-bg);
+    color: var(--wc-gold);
   }
 }
 
@@ -263,12 +307,16 @@ onBeforeUnmount(() => {
 }
 
 .wc-lobby-enter {
-  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   padding: 1.4rem 4.8rem;
   font-size: clamp(1.5rem, 1.45vw, 1.8rem);
   font-weight: 700;
   letter-spacing: 0.3em;
-  color: var(--wc-gold);
+  background: var(--wc-gold);
+  color: var(--wc-bg);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -276,14 +324,32 @@ onBeforeUnmount(() => {
 
   &:hover:not(:disabled),
   &:focus-visible {
-    background: var(--wc-gold);
-    color: var(--wc-bg);
+    background: var(--wc-bg);
+    color: var(--wc-gold);
   }
 
   &:disabled {
     opacity: 0.35;
     cursor: default;
   }
+}
+
+.wc-cta-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 1.55em;
+  aspect-ratio: 1;
+  place-items: center;
+  background: var(--wc-bg);
+  color: var(--wc-gold);
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.wc-cta--primary:hover:not(:disabled) .wc-cta-icon,
+.wc-cta--primary:focus-visible .wc-cta-icon {
+  background: var(--wc-gold);
+  color: var(--wc-bg);
 }
 
 .wc-lobby-quote {
@@ -323,6 +389,34 @@ onBeforeUnmount(() => {
   font-size: 1.05rem;
   letter-spacing: 0.1em;
   color: var(--wc-grey);
+}
+
+.wc-lobby-directors-cut {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.2rem;
+}
+
+.wc-lobby-directors-cut-btn {
+  align-self: center;
+  padding: 1.2rem 3rem;
+  font-family: var(--wc-font-mono);
+  font-size: clamp(1.2rem, 1.2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--wc-gold);
+  background: transparent;
+  border: 1px solid var(--wc-gold);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: var(--wc-gold);
+    color: var(--wc-bg);
+  }
 }
 
 @media (max-width: 640px) {

@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
 
@@ -258,7 +257,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('Guardians')
   })
 
-  it('renders a comic-book placeholder card for an active title-card cue', async () => {
+  it('renders Amber Graner quote in the title-card QR slot', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
         videos: [{
@@ -271,18 +270,9 @@ describe('wolvesIntroOverlay video segments', () => {
     })
 
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
-    expect(wrapper.text()).toContain('Made by Paid Artists')
-    expect(wrapper.get('[data-comic-hero-qr-dialogue]').text()).toBe('Level Up a Maintainer')
-    expect(wrapper.text()).toContain('makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('aria-label')).toBe('Open makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('target')).toBe('_blank')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('rel')).toBe('noopener noreferrer')
-    expect(wrapper.get('[data-comic-hero-qr-link]').classes()).toContain('wolves-intro-overlay-title-card-qr')
-    expect(wrapper.find('[data-comic-hero-qr-card]').exists()).toBe(true)
-    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('src')).toBe(qrMakeMeAComic)
-    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('alt')).toBe('QR code linking to makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-domain]').text()).toBe('makemeacomic.com')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('You don\'t need permission to contribute to your own destiny.')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('— Amber Graner')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]')
   })
 
   it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {
@@ -567,7 +557,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('We built a city none of us dared')
   })
 
-  it('renders the makemeacomic QR only during the comic title-card cue', async () => {
+  it('renders the Amber quote only during the comic title-card cue', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
@@ -575,7 +565,7 @@ describe('wolvesIntroOverlay video segments', () => {
     players[0].triggerReady()
     await flushPromises()
 
-    expect(wrapper.find('[data-comic-hero-qr-link]').exists()).toBe(false)
+    expect(wrapper.find('[data-amber-quote]').exists()).toBe(false)
 
     const titleCardWrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
@@ -588,7 +578,7 @@ describe('wolvesIntroOverlay video segments', () => {
       },
     })
 
-    expect(titleCardWrapper.find('[data-comic-hero-qr-link]').exists()).toBe(true)
+    expect(titleCardWrapper.find('[data-amber-quote]').exists()).toBe(true)
   })
 
   it('renders the video layer without the old top-left mask or pause veil', async () => {

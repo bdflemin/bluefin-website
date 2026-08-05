@@ -7,7 +7,7 @@ sub-applications with Vue 3, TypeScript, Vite, SCSS, and Tailwind.
 
 **Agents edit content. Agents never edit design.**
 
-Read `AGENTS.md` before editing. Use `docs/skills/INDEX.md` to load only the
+Read `AGENTS.md` before editing. Use `docs/SKILL.md` to load only the
 workflow needed for the task.
 
 ## Production entries
@@ -39,7 +39,7 @@ npm run preview
 ## Documentation
 
 - `AGENTS.md`: agent entry point and repository boundaries.
-- `docs/skills/INDEX.md`: lazy-loaded task workflows.
+- `docs/SKILL.md`: task→skill router for lazy-loaded workflows.
 - `docs/reference/content-map.md`: production content sources.
 - `docs/reference/wolves-runtime.md`: Wolves content and runtime boundaries.
 - `CONTRIBUTING.md`: contributor workflow.

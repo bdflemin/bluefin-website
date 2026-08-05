@@ -4,8 +4,8 @@
 
 ## Start
 
-- `../AGENTS.md`: repository rules and task routing.
-- `skills/INDEX.md`: choose one lazy-loaded workflow.
+- `../AGENTS.md`: repository rules and boundaries.
+- `SKILL.md`: task→skill router; choose one lazy-loaded workflow.
 - `reference/content-map.md`: locate production content.
 - `reference/production-entrypoints.md`: locate mounted applications.
 

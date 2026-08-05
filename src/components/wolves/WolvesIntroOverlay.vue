@@ -44,7 +44,6 @@ const baseUrl = import.meta.env.BASE_URL
 const comicHeroQrUrl = 'https://makemeacomic.com'
 const comicHeroQrDomain = 'makemeacomic.com'
 const comicHeroQrDialogue = 'Level Up a Maintainer'
-
 const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
 const isPaused = ref(false)
@@ -867,12 +866,6 @@ defineExpose({
                   >
                 </Transition>
               </div>
-              <p
-                class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
-                data-comic-hero-paid-artists
-              >
-                Made by Paid Artists
-              </p>
             </div>
 
             <a
@@ -891,10 +884,7 @@ defineExpose({
                   data-comic-hero-qr-image
                 >
               </div>
-              <span
-                class="wolves-intro-overlay-title-card-qr-dialogue"
-                data-comic-hero-qr-dialogue
-              >
+              <span class="wolves-intro-overlay-title-card-qr-dialogue" data-comic-hero-qr-dialogue>
                 {{ comicHeroQrDialogue }}
               </span>
               <span class="wolves-intro-overlay-title-card-qr-domain" data-comic-hero-qr-domain>
@@ -902,6 +892,13 @@ defineExpose({
               </span>
             </a>
           </div>
+          <blockquote class="wolves-intro-overlay-title-card-amber-quote" data-amber-quote>
+            <p>"You don't need permission to contribute to your own destiny."</p>
+            <footer>
+              <strong>— Amber Graner</strong>
+              <span>Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]</span>
+            </footer>
+          </blockquote>
         </div>
         <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
           <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
@@ -1343,6 +1340,57 @@ defineExpose({
   -webkit-text-stroke: 0;
 }
 
+.wolves-intro-overlay-title-card-amber-quote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  width: min(100%, 34rem);
+  margin: 0;
+  padding: 2rem 1.5rem;
+  border: 1px solid rgb(147 197 253 / 32%);
+  border-radius: 2rem;
+  background: linear-gradient(180deg, rgb(9 11 16 / 92%) 0%, rgb(5 7 10 / 96%) 100%);
+  box-shadow:
+    0 0 32px rgb(0 0 0 / 55%),
+    inset 0 0 0 1px rgb(255 255 255 / 5%);
+  color: #fff;
+  transform: translateY(-3rem);
+}
+
+.wolves-intro-overlay-title-card-amber-quote p {
+  margin: 0;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.6rem, 2.3vw, 2.7rem);
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+  color: #f8fafc;
+  text-align: left;
+}
+
+.wolves-intro-overlay-title-card-amber-quote footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: 0.35rem;
+  margin-top: 1.4rem;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  text-align: left;
+}
+
+.wolves-intro-overlay-title-card-amber-quote strong {
+  color: #93c5fd;
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
+}
+
+.wolves-intro-overlay-title-card-amber-quote span {
+  color: #cbd5e1;
+  font-size: clamp(0.85rem, 1vw, 1.05rem);
+  line-height: 1.35;
+}
+
 .wolves-intro-overlay-title-card-qr {
   display: flex;
   flex-direction: column;
@@ -1354,36 +1402,14 @@ defineExpose({
   border: 1px solid rgb(147 197 253 / 32%);
   border-radius: 2rem;
   background: linear-gradient(180deg, rgb(9 11 16 / 92%) 0%, rgb(5 7 10 / 96%) 100%);
-  box-shadow:
-    0 0 32px rgb(0 0 0 / 55%),
-    inset 0 0 0 1px rgb(255 255 255 / 5%);
   color: #fff;
   text-decoration: none;
-  transform: translateY(-3rem);
-}
-
-.wolves-intro-overlay-title-card-qr-dialogue {
-  width: 100%;
-  min-height: 3.8rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgb(147 197 253 / 40%);
-  border-radius: 0.85rem;
-  background: rgb(5 18 31 / 88%);
-  box-shadow: inset 0 0 18px rgb(59 130 246 / 14%);
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  font-size: clamp(1.05rem, 1.15vw, 1.3rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  line-height: 1.35;
-  text-transform: uppercase;
-  color: #93c5fd;
 }
 
 .wolves-intro-overlay-title-card-qr-frame {
   width: min(100%, 21rem);
   aspect-ratio: 1;
   padding: 0.65rem;
-  overflow: hidden;
   border-radius: 1.35rem;
   background: #fff;
 }
@@ -1393,16 +1419,20 @@ defineExpose({
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
-  image-rendering: pixelated;
 }
 
+.wolves-intro-overlay-title-card-qr-dialogue,
 .wolves-intro-overlay-title-card-qr-domain {
-  font-family: var(--wc-font-weyland, 'Michroma', 'Arial Narrow', sans-serif);
-  font-size: clamp(1rem, 1.2vw, 1.25rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  color: #93c5fd;
+}
+
+.wolves-intro-overlay-title-card-amber-quote {
+  position: absolute;
+  bottom: clamp(2rem, 5vh, 5rem);
+  left: 50%;
+  width: min(90vw, 60rem);
+  transform: translateX(-50%);
 }
 
 @media (max-width: 700px) {
@@ -1451,21 +1481,16 @@ defineExpose({
     -webkit-text-stroke: 0;
   }
 
-  .wolves-intro-overlay-title-card-qr {
+  .wolves-intro-overlay-title-card-amber-quote {
     grid-column: 2;
     grid-row: 1;
-    width: min(48vw, 18.5rem);
-    padding: 1rem;
+    width: min(48vw, 25rem);
+    padding: 1.2rem;
     transform: none;
   }
 
-  .wolves-intro-overlay-title-card-qr-frame {
-    width: min(100%, 16.5rem);
-    padding: 0.5rem;
-  }
-
-  .wolves-intro-overlay-title-card-qr-dialogue {
-    font-size: clamp(0.9rem, 2.8vw, 1.15rem);
+  .wolves-intro-overlay-title-card-amber-quote p {
+    font-size: clamp(1.15rem, 3.5vw, 1.8rem);
   }
 
   /* Narrow screens: tighten the guardian + companion pair so both cards fit

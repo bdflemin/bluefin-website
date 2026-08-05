@@ -7,7 +7,7 @@ import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
-import { buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
 import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
@@ -55,17 +55,27 @@ async function launchExperience(manifest: ExperienceManifest) {
   await enterCinematic()
 }
 
-const introVideos = buildIntroVideoSequence()
+const isDirectorsCut = ref(false)
+const introVideos = computed(() =>
+  isDirectorsCut.value ? buildDirectorsCutVideoSequence() : buildIntroVideoSequence()
+)
 const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
 const introNameplateVisible = ref(true)
 const introNameplateGlitch = ref(false)
-const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segment.id, index]))
+const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segment, index) => [segment.id, index])))
 
 // Factual display metadata for the authored intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
+  'wolves-prologue': {
+    chapter: 'PROLOGUE',
+    title: 'Gayane Ballet Suite (Adagio)',
+    mediaTitle: 'PROLOGUE — Gayane Ballet Suite',
+    artist: 'Aram Khachaturian',
+    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+  },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
     title: 'fighting for something greater than themselves',
@@ -82,13 +92,14 @@ const introMediaTitle = ref(INTRO_DISPLAY['wolves-intro'].mediaTitle)
  */
 const introStartAt = ref<number | null>(null)
 
-async function enterIntro(startAtNativeTime: number | null = null) {
+async function enterIntro(startAtNativeTime: number | null = null, directorsCut = false) {
+  isDirectorsCut.value = directorsCut
   const token = ++handoffToken
   introHandoff.value = false
   introStartAt.value = startAtNativeTime
   introTransparent.value = false
   store.enterIntro()
-  introMediaTitle.value = INTRO_DISPLAY['wolves-intro'].mediaTitle
+  introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -110,8 +121,8 @@ async function watchGuardian(name: string) {
 }
 
 function normalizeIntroStatus(payload: IntroStatusPayload) {
-  const segmentIndex = introSegmentIndexById.get(payload.segmentId) ?? 0
-  const segment = introVideos[segmentIndex]
+  const segmentIndex = introSegmentIndexById.value.get(payload.segmentId) ?? 0
+  const segment = introVideos.value[segmentIndex]
   if (!segment) {
     return {
       segmentIndex: 0,
@@ -252,7 +263,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wolves-cinematic">
-    <CinematicLobby v-if="store.phase === 'lobby'" @enter="enterIntro()" @launch-experience="launchExperience" @watch-guardian="watchGuardian" />
+    <CinematicLobby
+      v-if="store.phase === 'lobby'"
+      @enter="enterIntro(null, false)"
+      @enter-directors-cut="enterIntro(null, true)"
+      @launch-experience="launchExperience"
+      @watch-guardian="watchGuardian"
+    />
 
     <!-- The Destiny intro shares the cinematic transport and universal top title placard. -->
     <div v-else-if="store.phase === 'intro' || store.phase === 'cinematic'" class="wc-runtime">
@@ -273,6 +290,7 @@ onBeforeUnmount(() => {
         </div>
         <MediaWidget
           :title="introMediaTitle"
+          auto-hide
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shuffleWolvesGalleryPhotos, shuffleWolvesGalleryPhotosWithSeed } from '@/data/wolves-gallery-shuffle'
+import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 
 const photos = [
   { id: 'na-1', title: 'KC+CNC_NA_251109_A' },
@@ -9,13 +9,6 @@ const photos = [
 ]
 
 describe('wolvesGalleryShuffle', () => {
-  it('locks a seeded photo order for seeking in either direction', () => {
-    const photos = [{ id: 'one' }, { id: 'two' }, { id: 'three' }, { id: 'four' }]
-
-    expect(shuffleWolvesGalleryPhotosWithSeed(photos, 'seven-days-to-the-wolves:1'))
-      .toEqual(shuffleWolvesGalleryPhotosWithSeed(photos, 'seven-days-to-the-wolves:1'))
-  })
-
   it('shuffles every Flickr photo once without preserving source event order', () => {
     const shuffled = shuffleWolvesGalleryPhotos(photos, () => 0)
 

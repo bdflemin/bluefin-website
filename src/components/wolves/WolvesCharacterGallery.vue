@@ -7,15 +7,8 @@
  * the `watchGuardian` event).
  */
 import { onMounted, ref } from 'vue'
-import qrDonate from '@/assets/svg/qr-donate.svg'
-import qrStore from '@/assets/svg/qr-store.svg'
 
 const emit = defineEmits<{ watchGuardian: [name: string] }>()
-
-const DONATE_URL = 'https://github.com/sponsors/castrojo'
-const GUARDIAN_DONATE_URL = 'https://makemeacomic.com'
-/** Official LF Events page for the Dan Kohn scholarship + travel funding program. */
-const DAN_KOHN_FUND_URL = 'https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/attend/scholarships-travel-funding/'
 
 interface CharacterCard {
   slug: string
@@ -38,7 +31,6 @@ interface DonationTier {
   fund: string
   name: string
   perks: string[]
-  donateUrl?: string
 }
 
 const donationTiers: DonationTier[] = [
@@ -47,21 +39,18 @@ const donationTiers: DonationTier[] = [
     fund: 'Corporate donation to Wolves',
     name: 'Fireteam Hero',
     perks: ['Your entire team drawn into the comic book as a two-page hero shot.'],
-    donateUrl: 'https://makemeacomic.com',
   },
   {
     amount: '$1,000',
     fund: 'Donation to the Dan Kohn Fund',
     name: 'Livery Sponsor',
     perks: ['The team is branded in your org\u2019s livery on their comic book pages.'],
-    donateUrl: DAN_KOHN_FUND_URL,
   },
   {
     amount: '$10,000',
     fund: 'Donation to the Dan Kohn Fund',
     name: 'Founding Funder',
     perks: ['Founding Funder of the Bluefin Universe.'],
-    donateUrl: DAN_KOHN_FUND_URL,
   },
   {
     amount: '$15,000',
@@ -72,7 +61,6 @@ const donationTiers: DonationTier[] = [
       'Special Edition, Limited Print Launch Edition, signed by CNCF Maintainers of Great Renown.',
       'Exclusive rights to print distribution at your booth for a two-year exclusivity period.',
     ],
-    donateUrl: DAN_KOHN_FUND_URL,
   },
 ]
 
@@ -87,7 +75,6 @@ interface UpcomingGuardian {
   name: string
   class: string
   title?: string
-  donateUrl: string
 }
 
 const upcomingGuardians: UpcomingGuardian[] = [
@@ -96,28 +83,24 @@ const upcomingGuardians: UpcomingGuardian[] = [
     shortName: 'Marco',
     name: 'Marco Ceppi',
     class: 'Sunbreaker Titan',
-    donateUrl: GUARDIAN_DONATE_URL,
   },
   {
     slug: 'wayne',
     shortName: 'Wayne',
     name: 'Wayne Witzel',
     class: 'Striker Titan',
-    donateUrl: GUARDIAN_DONATE_URL,
   },
   {
     slug: 'jordan',
     shortName: 'Jordan',
     name: 'Jordan Petridis',
     class: '[Redacted]',
-    donateUrl: 'https://donate.gnome.org',
   },
   {
     slug: 'zachriel',
     shortName: 'Zachriel',
     name: 'Zachriel',
     class: '[Coming soon]',
-    donateUrl: GUARDIAN_DONATE_URL,
   },
   {
     slug: 'eggroll',
@@ -125,7 +108,6 @@ const upcomingGuardians: UpcomingGuardian[] = [
     name: 'Glorious Eggroll',
     class: 'Nightstalker Hunter',
     title: 'Legendary Mentor — Master of the Arcane',
-    donateUrl: GUARDIAN_DONATE_URL,
   },
 ]
 
@@ -161,7 +143,7 @@ onMounted(async () => {
       universe. The more maintainers you sponsor, the more the comic book
       comes together — page by page, guardian by guardian.
     </p>
-    <div v-if="characters.length > 0" class="wc-character-gallery-grid">
+    <div class="wc-character-gallery-grid">
       <article
         v-for="character in characters"
         :key="character.slug"
@@ -182,14 +164,13 @@ onMounted(async () => {
         </button>
         <span class="wc-character-card-name">{{ character.name }} inspired me</span>
         <span class="wc-character-card-sub">{{ character.class }} · {{ character.title }}</span>
-        <a
+        <button
           class="wc-character-card-donate"
-          :href="GUARDIAN_DONATE_URL"
-          target="_blank"
-          rel="noopener noreferrer"
+          type="button"
+          disabled
         >
-          DONATE TO LEVEL UP {{ character.shortName.toUpperCase() }}
-        </a>
+          COMING SOON
+        </button>
       </article>
       <article
         v-for="guardian in upcomingGuardians"
@@ -201,48 +182,27 @@ onMounted(async () => {
         </div>
         <span class="wc-character-card-name">{{ guardian.name }} inspired me</span>
         <span class="wc-character-card-sub">{{ guardian.class }}{{ guardian.title ? ` · ${guardian.title}` : '' }}</span>
-        <a
+        <button
           class="wc-character-card-donate"
-          :href="guardian.donateUrl"
-          target="_blank"
-          rel="noopener noreferrer"
+          type="button"
+          disabled
         >
-          DONATE TO LEVEL UP {{ guardian.shortName.toUpperCase() }}
-        </a>
+          COMING SOON
+        </button>
       </article>
-    </div>
-    <div class="wc-character-qr">
-      <article class="wc-character-tier wc-character-tier--qr wc-plate">
-        <span class="wc-character-tier-fund">Support the mission</span>
-        <span class="wc-character-tier-name">Donate to Project Bluefin</span>
-        <div class="wc-character-qr-box">
-          <img :src="qrDonate" alt="QR code for Project Bluefin donations">
+      <article class="wc-character-card wc-character-card--upcoming wc-plate">
+        <div class="wc-character-card-art wc-character-card-art--pending" aria-hidden="true">
+          <span class="wc-label">COMING SOON</span>
         </div>
-        <a
-          class="wc-character-card-donate"
-          :href="DONATE_URL"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          DONATE
-        </a>
-        <span class="wc-character-qr-domain">github.com/sponsors/castrojo</span>
+        <span class="wc-character-card-name">COMING SOON</span>
+        <span class="wc-character-card-sub">NEW GUARDIAN</span>
       </article>
-      <article class="wc-character-tier wc-character-tier--qr wc-plate">
-        <span class="wc-character-tier-fund">Support the mission</span>
-        <span class="wc-character-tier-name">Store</span>
-        <div class="wc-character-qr-box">
-          <img :src="qrStore" alt="QR code for the Project Bluefin store">
+      <article class="wc-character-card wc-character-card--upcoming wc-character-card--nominate wc-plate">
+        <div class="wc-character-card-art wc-character-card-art--pending" aria-hidden="true">
+          <span class="wc-label">COMING SOON</span>
         </div>
-        <a
-          class="wc-character-card-donate"
-          href="https://store.projectbluefin.io"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          VISIT STORE
-        </a>
-        <span class="wc-character-qr-domain">store.projectbluefin.io</span>
+        <span class="wc-character-card-name">NOMINATE A MAINTAINER</span>
+        <span class="wc-character-card-sub">COMING SOON</span>
       </article>
     </div>
     <p class="wc-label wc-character-gallery-subheading">
@@ -273,14 +233,13 @@ onMounted(async () => {
             {{ perk }}
           </li>
         </ul>
-        <a
+        <button
           class="wc-character-card-donate"
-          :href="tier.donateUrl ?? DONATE_URL"
-          target="_blank"
-          rel="noopener noreferrer"
+          type="button"
+          disabled
         >
-          DONATE {{ tier.amount }}
-        </a>
+          COMING SOON
+        </button>
       </article>
     </div>
     <p class="wc-label wc-character-gallery-subheading wc-character-incoming-heading">
@@ -358,6 +317,12 @@ onMounted(async () => {
 .wc-character-gallery-heading {
   font-size: clamp(1.3rem, 1.3vw, 1.6rem);
   letter-spacing: 0.4em;
+}
+
+.wc-character-gallery-rally,
+.wc-character-gallery-intro {
+  align-self: center;
+  text-align: center;
 }
 
 .wc-character-gallery-rally {
@@ -464,7 +429,12 @@ onMounted(async () => {
     background-color 0.15s ease,
     color 0.15s ease;
 
-  &:hover,
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled),
   &:focus-visible {
     background-color: var(--wc-gold);
     color: #0b0d12;
@@ -482,44 +452,6 @@ onMounted(async () => {
   margin-top: 1.6rem;
   font-size: clamp(1.2rem, 1.2vw, 1.5rem);
   letter-spacing: 0.4em;
-}
-
-// Store and donate QR plates, directly under the guardians.
-.wc-character-qr {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-  gap: 1.6rem;
-}
-
-.wc-character-tier--qr {
-  align-items: center;
-  text-align: center;
-
-  .wc-character-card-donate {
-    align-self: center;
-  }
-}
-
-.wc-character-qr-box {
-  align-self: center;
-  width: 16rem;
-  height: 16rem;
-  padding: 1.2rem;
-  background: #0c1016;
-  border: 1px solid var(--wc-line);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-}
-
-.wc-character-qr-domain {
-  font-family: var(--wc-font-mono);
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  color: var(--wc-grey);
 }
 
 .wc-character-gallery-proveit {
