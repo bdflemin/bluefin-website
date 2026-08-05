@@ -29,8 +29,7 @@ player synchronization, or generated files for content work.
 - Incoming signals: `src/data/wolves-incoming-signal.txt`.
 - Dinosaur registry: `src/data/wolves-dinosaur-species.ts`.
 - Guardian bond data: `src/data/wolves-guardian-dinosaur-bonds.ts`.
-- Intro cue data: `buildIntroVideoSequence()` in
-  `src/data/wolves-intro-sequence.ts`.
+- Intro cue data: `buildIntroVideoSequence()` (standard intro) and `buildDirectorsCutVideoSequence()` (Director's Cut with Gayane Ballet Suite prologue + Destiny 2 trailer) in `src/data/wolves-intro-sequence.ts`. The Director's Cut option is available at the bottom of the `/wolves/` page. The standard intro's comic title-card slot uses the approved project copy, restores the MakeMeAComic QR code, and places the recovered Amber Graner quote at the bottom. Its music widget auto-hides during inactivity and reappears on pointer, touch, or keyboard interaction.
 - Soundtrack source data: `public/wolves-playlist.json` and its updater.
 - Back catalogue: source playlist metadata and
   `scripts/update-back-catalogue.js`.
