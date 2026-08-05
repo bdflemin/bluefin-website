@@ -79,6 +79,9 @@ successful build does not prove eager lore loading succeeds. Finish with
 - The 5:55 finale barrage consumes distinct contributor photos on each measured
   music beat through the legend cue. Use the live CNCF feed when it provides
   enough unique images; retain deterministic local fallback timing otherwise.
+- Across Track 0 and later tracks, every unique local or CNCF feed image has
+  one placement only. The final barrage consumes its assigned feed images;
+  remaining unique images carry forward to later tracks without reuse.
 - The active media-player clock remains the only synchronization clock.
 - A chat completion event may hold its active record on screen, but it is a
   display lifecycle gate, not a second clock: when it releases, resume from

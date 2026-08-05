@@ -968,6 +968,8 @@ describe('wolvesComicReader', () => {
       ((laterWrapper.vm as any).laterTrackPhotos as Array<{ id: string }>).map(photo => photo.id),
     )
     expect(laterIds.size).toBeGreaterThan(0)
+    const remoteBarrageIds = new Set(barrageSlides.filter(slide => !slide.isLocal).map(slide => slide.id))
+    expect([...laterIds].some(id => remoteBarrageIds.has(id))).toBe(false)
   })
 
   it('carries Clyde into later tracks instead of forcing it into the pre-legend barrage', async () => {

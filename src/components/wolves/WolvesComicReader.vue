@@ -973,8 +973,9 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 function snapshotLaterTrackPhotos() {
+  const scheduledIds = new Set(timelineSlides.value.map(slide => slide.id))
   const remotePhotos = flickrPhotos.value
-    .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id))
+    .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id) && !scheduledIds.has(photo.id))
     .map((photo) => {
       const isFeaturedOpening = isWolvesExperience.value && photo.id === ghostsInTheMistOpeningSlide.photoId
       return {
