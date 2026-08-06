@@ -62,6 +62,28 @@ function assertTruthy(label, actual) {
   return ok
 }
 
+// Several controls share a label (the overlay's and the transport widget's), and only one of
+// them is on screen at a time. Clicking `.first()` picks whichever is in the DOM first, which
+// is regularly the off-viewport one, so always click the visible match.
+async function clickControl(page, label) {
+  // The transport widget hides after a few seconds without pointer input, and the scripted
+  // seeks between assertions are all evaluate() calls, which do not count as input. Nudge the
+  // pointer so the controls are on screen before trying to click one.
+  await page.mouse.move(720, 450)
+  await page.mouse.move(722, 452)
+  await page.waitForTimeout(800)
+  const control = page.getByLabel(label)
+  const count = await control.count()
+  for (let index = 0; index < count; index += 1) {
+    const candidate = control.nth(index)
+    if (await candidate.isVisible()) {
+      await candidate.click()
+      return
+    }
+  }
+  throw new Error(`No visible "${label}" control to click`)
+}
+
 async function hasVisibleControl(page, label) {
   const control = page.getByLabel(label)
   const count = await control.count()
@@ -206,7 +228,25 @@ try {
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 10_000 })
   await hasVisibleControl(page, 'Pause')
   await hasVisibleControl(page, 'Next')
-  await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
+
+  // The show now opens on the silent title card, which runs for the best part of a minute
+  // before the Destiny trailer mounts its player. Assert the card, then skip it rather than
+  // waiting it out.
+  await page.waitForSelector('.wolves-intro-title-card-plate', { state: 'visible', timeout: 10_000 })
+  assert(
+    'Opening title card nameplate',
+    await page.locator('.wolves-intro-title-card-name').textContent(),
+    'Jorge Castro',
+  )
+  assertTruthy(
+    'Opening title card portrait loaded',
+    await page.locator('.wolves-intro-overlay-background-title-card')
+      .evaluate(image => image.complete && image.naturalWidth > 0),
+  )
+  await captureStage(page, 'opening-title-card')
+  await clickControl(page, 'Next')
+
+  await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 15_000 })
   await hasVisibleControl(page, 'Pause')
   await hasVisibleControl(page, 'Next')
   assert(
@@ -260,7 +300,9 @@ try {
     window.__mockWolvesPlayers[index].seekTo(24.01, true)
   }, introPlayerIndex)
   await page.waitForTimeout(250)
-  const comicHeroShotStart = page.locator('[data-comic-hero-shot]')
+  // Both the leaving and entering shots are in the DOM during the cross-dissolve, so an
+  // unqualified locator is a strict-mode violation. Same guard the guardian plates use above.
+  const comicHeroShotStart = page.locator('[data-comic-hero-shot]:not(.comic-hero-shot-fade-leave-active)')
   assertTruthy('Comic Hero Shots title card starts on the Jorge hero shot', (await comicHeroShotStart.getAttribute('data-comic-hero-shot'))?.includes('youre-holding-it-wrong-post1'))
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(30.3, true)
@@ -307,8 +349,10 @@ try {
     await page.locator('.wc-intro-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--glitch')),
     false,
   )
+  // Natali's plate runs 89.5-96s; 87.5s is inside Christoph's window only, so the right-hand
+  // plate does not exist yet. Seek into her window rather than the second before it opens.
   await page.evaluate((index) => {
-    window.__mockWolvesPlayers[index].seekTo(87.5, true)
+    window.__mockWolvesPlayers[index].seekTo(91, true)
   }, introPlayerIndex)
   await page.waitForSelector('.wolves-guardian-plate', { state: 'visible', timeout: 5_000 })
   assert(
@@ -318,6 +362,9 @@ try {
   )
   await captureStage(page, 'destiny')
 
+  // The handoff state lives for one 400ms fade and then the overlay unmounts, so polling for
+  // the class after the fact is a race the test loses more often than it wins. Arm an observer
+  // first, let it snapshot the fade in progress, then read the result back.
   // Complete the remaining intro stages before exercising the playlist handoff.
   await page.getByLabel('Next').click()
 

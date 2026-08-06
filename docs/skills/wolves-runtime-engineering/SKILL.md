@@ -501,3 +501,32 @@ Verify both halves: the entry is gone from the generated list, **and** the
 dedicated slide still loads the image. Check `naturalWidth > 0` in the browser
 rather than trusting the `src` attribute, because a missing file still leaves
 the attribute intact.
+
+## Adding a segment breaks the movie-flow harness at the front
+
+`tests/wolves-movie-flow.mjs` (CI job `wolves-movie-flow`) drives the show from
+the lobby door. It assumes the Destiny player mounts within ten seconds of
+entering, so prepending any segment ahead of it kills the entire run at step
+three and the remaining twenty-odd assertions never execute. The job goes red
+with a **passing** count of two, which reads like a small failure and is not.
+
+When you add a segment to the front, teach the harness to step past it: assert
+the new segment, then advance with the transport control before waiting on the
+player. A shrinking "passed" count is the signal that the harness is dying
+early rather than failing a check.
+
+Three traps in that harness, all of which cost real time:
+
+- **Cross-dissolves put two elements in the DOM at once.** `[data-comic-hero-shot]`
+  matches both the leaving and entering image mid-fade, which is a strict-mode
+  violation, not a failed assertion. Qualify with
+  `:not(.comic-hero-shot-fade-leave-active)`, the same guard the guardian plates
+  already use.
+- **The transport widget auto-hides.** Scripted `page.evaluate()` seeks are not
+  pointer input, so the controls slide off screen and clicks land on nothing or
+  report "element is outside of the viewport". Nudge `page.mouse` and let the
+  reveal transition finish before clicking.
+- **Cue windows drift out from under seek times.** A seek one second before a
+  plate's window opens fails by timeout, which looks like a missing element
+  rather than a stale constant. Check the cue's `start`/`end` in
+  `wolves-intro-sequence.ts` before believing the component is broken.
