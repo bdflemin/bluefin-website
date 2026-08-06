@@ -40,14 +40,16 @@ describe('wolves narrative timeline', () => {
 
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
-      artifactId: 'arthur-c-clarke-1',
+      artifactId: 'arthur-c-clarke-2',
       startTime: 0,
     })
-    expect(getNarrativeSlotForTime(180)).toMatchObject({
-      artifactId: 'lorem-pursuit-1',
-      startTime: 150,
-      endTime: 220,
-    })
+    // The Golden Era transmission is anchored to the chanting bridge rather
+    // than a round number: it starts early enough that Sarah's closing line
+    // lands exactly on TRACK_ZERO_SECTIONS.bridgeStart.
+    const pursuit = getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.bridgeStart)
+    expect(pursuit.artifactId).toBe('lorem-pursuit-1')
+    expect(pursuit.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.bridgeStart)
+    expect(pursuit.endTime).toBeGreaterThan(TRACK_ZERO_SECTIONS.bridgeStart)
     // The closing bulletin is anchored to the finale beat rather than a round
     // number: it starts early enough that its death-reveal page lands exactly
     // on TRACK_ZERO_SECTIONS.finaleStart. See wolvesFinaleReveal.test.ts.
@@ -86,14 +88,16 @@ describe('wolves narrative timeline', () => {
 
   it('allocates unlocked lore between the locked anchors', () => {
     const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     expect(middle.length).toBeGreaterThan(0)
     expect(middle.every(slot => slot.endTime > slot.startTime)).toBe(true)
   })
 
   it('keeps the recomputed middle contiguous', () => {
     const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
       expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
     }
@@ -110,7 +114,9 @@ describe('wolves narrative timeline', () => {
   it('gives every Arthur C. Clarke quote its full readable page', () => {
     const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
 
-    for (const artifactId of ['arthur-c-clarke-1', 'arthur-c-clarke-2', 'arthur-c-clarke-3']) {
+    // Only the quotes the show actually displays; see the hidden set in
+    // wolves-narrative-timeline.ts for the ones curated out.
+    for (const artifactId of ['arthur-c-clarke-2', 'arthur-c-clarke-3']) {
       const slot = wolvesNarrativeTimeline.find(slot => slot.artifactId === artifactId)
       const pages = loreRecordPages({ kind: 'quote', body: records.get(artifactId)?.body ?? '' })
 
@@ -123,7 +129,8 @@ describe('wolves narrative timeline', () => {
 
   it('keeps the recomputed unlocked pool contiguous and authored', () => {
     const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
       expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
     }
@@ -131,9 +138,10 @@ describe('wolves narrative timeline', () => {
   })
 
   it('uses the next slot at exact boundaries and holds the final entry afterward', () => {
-    expect(getNarrativeSlotForTime(150)?.artifactId).toBe('lorem-pursuit-1')
-    expect(getNarrativeSlotForTime(220)?.artifactId)
-      .toBe(wolvesNarrativeTimeline.find(slot => slot.startTime === 220)?.artifactId)
+    const pursuit = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!
+    expect(getNarrativeSlotForTime(pursuit.startTime)?.artifactId).toBe('lorem-pursuit-1')
+    expect(getNarrativeSlotForTime(pursuit.endTime)?.artifactId)
+      .toBe(wolvesNarrativeTimeline.find(slot => slot.startTime === pursuit.endTime)?.artifactId)
     expect(getNarrativeSlotForTime(425)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
     expect(getNarrativeSlotForTime(1_000)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
   })

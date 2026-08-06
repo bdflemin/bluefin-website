@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { WolvesNarrativeSlot } from '@/data/wolves-narrative-timeline'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
@@ -15,9 +14,10 @@ import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 const store = useCinematicStore()
 
 const time = computed(() => store.nativeTime)
-const narrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
-const activeChatSlot = ref<WolvesNarrativeSlot | null>(null)
-const displayedNarrativeSlot = computed(() => activeChatSlot.value ?? narrativeSlot.value)
+// The lore column follows the player clock and nothing else. A record used to
+// be able to pin this to its own slot until it finished rendering, which let a
+// long transmission run past its window and start every record after it late.
+const displayedNarrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
 const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
 const slotElapsed = computed(() => Math.min(
   slotDuration.value,
@@ -25,14 +25,6 @@ const slotElapsed = computed(() => Math.min(
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
-
-function holdActiveChat() {
-  activeChatSlot.value = narrativeSlot.value
-}
-
-function releaseActiveChat() {
-  activeChatSlot.value = null
-}
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
 // the scheduled lore panel. This is a plain native <iframe> embed (no IFrame
@@ -275,8 +267,6 @@ onBeforeUnmount(() => {
             :duration="slotDuration"
             :elapsed="slotElapsed"
             :warning="thesis.warning"
-            @chat-started="holdActiveChat"
-            @chat-complete="releaseActiveChat"
           />
         </div>
 

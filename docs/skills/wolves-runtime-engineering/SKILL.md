@@ -95,20 +95,33 @@ one metadata block, one page model, one type scale, no scrolling.
 
 ## Timeline oversubscription math
 
-The song has 425 seconds and the lore column shows 27 records. Locked anchors
-consume 150-220 (`lorem-pursuit-1`) and the closing bulletin
-(`blue-universal-acquires-wayland-yutani`), which runs from a derived start to
-425. See "Anchoring text to the music" below — its start is not a round number.
+The song has 425 seconds. Both locked anchors derive their start from a
+measured beat: `lorem-pursuit-1` from `bridgeStart` and
+`blue-universal-acquires-wayland-yutani` from `finaleStart`. See "Anchoring
+text to the music" below — neither start is a round number.
 
 - Allocation is per whole page: a record's floor is one complete held page, its
   ideal is every authored page held for its reading cost. `allocateLoreSlots()`
   never allocates below the floor.
-- The 220-398 range has 178 seconds for 18 records. Their one-page floors total
-  about 165s (it fits), but their full authored pages total about 487s. Roughly
-  309 seconds of authored pages therefore never display.
-- No renderer change can fix that. Report the overflow; do not delete authored
-  lore and do not "solve" it by shrinking pages below a readable hold. Cutting
-  records or extending the range is a human decision.
+- **The floor is what makes oversubscription invisible.** When 27 records
+  competed for ~400 seconds against ~900 seconds of authored pages, nothing
+  errored. Every record was floored at one page, so a record with eight
+  authored pages rendered page one and vanished. 17 of 27 records were cut
+  mid-record, including Sarah's closing line and the death of Dr. Anderson.
+  A record that is cut looks exactly like a record that is short.
+- No renderer change can fix that. Cutting records or extending the range is a
+  human decision — get it, then act on it. Do not "solve" it by shrinking pages
+  below a readable hold.
+- **Curate by dropping the worst-served record, then re-solve.** Hiding
+  cascades: freeing a slot lets survivors expand, so the fix is not "hide every
+  record currently cut". Greedily drop the record showing the smallest fraction
+  of itself (tie-break on largest ideal duration) and recompute until every
+  survivor shows 100%. That took 17 cut records down to 11 hidden.
+- Hidden records live in `hiddenFromWolvesVideoArtifactIds`. Hiding is
+  reversible and lossless; a fragment on screen is neither.
+- **Audit with a probe, not by eye.** Compare each slot's duration against
+  `affordablePageCount()` versus the record's authored page count. Anything
+  below 100% is a record the audience sees the beginning of and nothing else.
 
 ## Timing lessons
 
@@ -120,8 +133,22 @@ consume 150-220 (`lorem-pursuit-1`) and the closing bulletin
   follow a conversation or its climax.
 - Render chatlogs and quotes as noninteractive, sentence- or word-bounded
   pages. Show one complete readable beat at a time, retain the speaker header
-  on continued chat beats, and automatically type, hold, then replace it; do
-  not accumulate important text behind an overflow viewport.
+  on continued chat beats, and hold then replace it; do not accumulate
+  important text behind an overflow viewport.
+- **Every lore view is a pure function of `elapsed`.** Chat and prose share one
+  clock-driven page model: `pickPageIndexForElapsed(pages, elapsed, duration)`.
+  No view owns a timer.
+
+  The chat view used to be a character-by-character typewriter on a
+  `setInterval` started at mount that never read `props.elapsed`. It was the
+  one panel whose pace was its own opinion, and it cost the show three separate
+  defects: it drifted against the music so a line could only hit a beat by
+  luck, it could not be seeked or rehearsed from a fixed point, and it held its
+  slot open past the end (via a `chat-complete` handshake) so every record
+  after it started late. Deleting the typewriter deleted all three.
+
+  A view that reads the clock is reproducible: same second, same frame, every
+  machine, every rehearsal. A view that runs a timer is not.
 - Lore surfaces must never expose a scrollbar. Quotes advance from the active
   player clock as complete sentence- or word-bounded pages, held for their
   reading cost before automatic replacement; audience input is never a
@@ -244,9 +271,12 @@ branch it guards.
 
 ## Anchoring text to the music
 
-Some moments must land on a measured beat, not near one. The finale is the
-clearest case: the audience must read that Dr. Andy Anderson is dead on the same
-beat the score says **Become Legend**.
+Some moments must land on a measured beat, not near one. There are two:
+
+- The finale: the audience must read that Dr. Andy Anderson is dead on the same
+  beat the score says **Become Legend** (`finaleStart`, 408.137).
+- The Golden Era transmission: Sarah's closing line, "Thus becoming One, from
+  the Seven...", lands on the chanting bridge (`bridgeStart`, 229.204).
 
 The rule is **the text moves to the music, never the music to the text.**
 `TRACK_ZERO_SECTIONS` in `src/data/wolves-track-zero-beats.ts` holds measured
@@ -258,8 +288,22 @@ measure. Derive it:
 
 ```ts
 // wolves-narrative-timeline.ts
-const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart - costOfPagesBeforeTheReveal
+const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart
+  - REVEAL_LEAD_SECONDS
+  - costOfPagesBeforeTheReveal
 ```
+
+`REVEAL_LEAD_SECONDS` (0.01) is not superstition. `pickPageIndexForElapsed`
+selects with a strict `<`, so a page timed to land on the exact beat wins or
+loses on float rounding — the first attempt at the finale showed the *previous*
+page on the beat. Ten milliseconds is well under a video frame and settles it.
+
+Both anchors are also end-anchored, not just start-anchored: an anchored record
+must be given a slot at least as long as its authored pages cost. The Golden Era
+transmission was previously pinned to a hard-coded 150-220, which was 19 seconds
+short of its own content, so it was cut at page 8 of 11 and Sarah's line never
+reached the screen at all. Anchoring the *last* page to a beat and sizing the
+slot from the record's own read cost fixes both ends at once.
 
 The start depends on what the earlier pages cost to read. Hard-coding it means
 the reveal silently slides off the beat the moment anyone re-edits the bulletin
@@ -269,6 +313,8 @@ Both sides of a synchronised moment must read the same constant. The thesis cue
 uses `TRACK_ZERO_SECTIONS.finaleStart` too, so the caption and the reveal cannot
 drift apart. `src/tests/wolvesFinaleReveal.test.ts` asserts the page shown at the
 beat, the page shown just before it, and the cue text, so a drift fails loudly.
+`wolvesLoreColumn.test.ts` does the same for Sarah against `bridgeStart`, using
+the real scheduled slot rather than a fixture duration.
 
 When you change one of these anchors, expect tests asserting the old round
 number to fail. Rebind them to the measured constant; do not re-record them as

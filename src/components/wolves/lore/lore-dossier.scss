@@ -277,18 +277,6 @@
   opacity: 0.8;
 }
 
-.climax-sentence {
-  display: inline;
-}
-
-.climax-fade-enter-active {
-  transition: opacity 1s linear;
-}
-
-.climax-fade-enter-from {
-  opacity: 0;
-}
-
 .quote-fade-enter-active,
 .quote-fade-leave-active {
   transition: opacity 0.5s ease-in-out;
