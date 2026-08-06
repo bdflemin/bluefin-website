@@ -146,3 +146,26 @@ Re-derive the unified Track 0 queue and finale timing from source with:
 ```bash
 npm run test:run -- src/tests/wolvesThesisSequence.test.ts
 ```
+
+## Driving Track 0 in a browser
+
+Reaching Track 0 in Chromium is not automatic; the standalone Playwright scripts
+in `tests/*.mjs` mock the YouTube IFrame API and then have to get past the
+Destiny intro before any Track 0 selector exists.
+
+Two DEV-only hooks exist and they are not interchangeable:
+
+- `window.__wolvesIntro` — published by `WolvesIntroOverlay.vue` while the intro
+  overlay is mounted (`seekTo`, `seekToNativeTime`, `getDuration`, ...).
+- `window.__wolvesCinematic.seekTo` — published by `WolvesApp.vue` and delegated
+  to the stage, so it exists only after the stage mounts.
+
+Waiting on `__wolvesCinematic` while still in the intro therefore hangs forever.
+
+`tests/wolves-trackzero-sidecar-real-player.mjs` advances past the intro by
+synthesising a click on `.wc-widget-progress` at
+`(INTRO_DURATION + 20) / OVERALL_DURATION`. Both constants are hard-coded
+(`119.5` and `1952.5`) and have drifted from the runtime, so the click no longer
+leaves the intro and `.wc-trackzero-grid` never appears. Treat that script as
+currently unable to reach Track 0, and re-derive the constants from the runtime
+before trusting or extending it rather than assuming the app regressed.
