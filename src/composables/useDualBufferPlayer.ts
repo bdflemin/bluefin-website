@@ -194,7 +194,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
     swapping = true
     const crossfadeMs = store.crossfadeMsAt(store.segmentIndex)
-    store.beginCrossfade()
+    store.beginCrossfade(store.segmentIndex + 1)
 
     applyVolume(incoming, 0)
     startIncoming(toSide)
@@ -227,7 +227,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     swapping = true
-    store.beginCrossfade()
+    store.beginCrossfade(target)
 
     const segment = store.segments[target]
     const targetIsPreloaded = sides[toSide].segmentIndex === target
