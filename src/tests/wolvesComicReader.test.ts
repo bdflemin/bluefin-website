@@ -106,20 +106,6 @@ describe('wolvesComicReader', () => {
       },
     })
 
-    it('holds the bridge slide across 4:05 until the 4:08 narrative cut', async () => {
-      const wrapper = mount(WolvesComicReader, {
-        props: {
-          trackIndex: 0,
-          playlistCurrentTime: 0,
-        },
-      })
-      await flushPromises()
-
-      const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
-      const bridgeHold = slides.find(slide => slide.startTime < 245.830 && slide.endTime === 247.594)
-
-      expect(bridgeHold).toBeDefined()
-    })
     await flushPromises()
 
     const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
@@ -131,6 +117,21 @@ describe('wolvesComicReader', () => {
       expect(cutIndex, `missing measured cut at ${pickup}s`).toBeGreaterThanOrEqual(0)
       expect(slides[cutIndex + 1]?.startTime).toBe(slides[cutIndex].endTime)
     }
+  })
+
+  it('holds the bridge slide across 4:05 until the 4:08 narrative cut', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 0,
+      },
+    })
+    await flushPromises()
+
+    const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
+    const bridgeHold = slides.find(slide => slide.startTime < 245.830 && slide.endTime === 247.594)
+
+    expect(bridgeHold).toBeDefined()
   })
 
 
