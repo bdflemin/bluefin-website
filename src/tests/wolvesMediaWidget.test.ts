@@ -42,7 +42,7 @@ describe('media widget', () => {
     store.updateTime(314.3, 424, 314.3)
     await nextTick()
 
-    expect(wrapper.findAll('.wc-widget-slogan').every(slogan => slogan.text() === '#FIGHTFORCONTRIBUTORS')).toBe(true)
+    expect(wrapper.findAll('.wc-widget-slogan').every(slogan => slogan.text() === '#FIGHTFORMAINTAINERS')).toBe(true)
     expect(wrapper.findAll('.wc-widget-slogan-bluefin')).toHaveLength(4)
     random.mockRestore()
   })

@@ -163,7 +163,7 @@ function handleVoiceOverChange(event: Event) {
       aria-hidden="true"
     >
       <template v-if="showNovaGlitch">#NOVA4EVER</template>
-      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORCONTRIBUTORS</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORMAINTAINERS</template>
     </span>
     <span
       class="wc-widget-slogan wc-widget-slogan--right"
@@ -171,7 +171,7 @@ function handleVoiceOverChange(event: Event) {
       aria-hidden="true"
     >
       <template v-if="showNovaGlitch">#NOVA4EVER</template>
-      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORCONTRIBUTORS</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORMAINTAINERS</template>
     </span>
     <img
       class="wc-widget-art"
