@@ -12,6 +12,7 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
 } from '../data/wolves-track-zero-beats'
+import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
 import { trackZeroFastFinalePhotoIds } from '../data/wolves-track-zero-slides'
 
 const source = {
@@ -448,17 +449,8 @@ describe('wolvesComicReader', () => {
 
   it('opens Ghosts In The Mist with the held MN047 Jorge tribute', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
-    const jorgeQuotePartOne = [
-      'Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter. Happy Fifth Birthday Universal Blue!',
-    ]
-    const jorgeQuotePartTwo = [
-      'Thank you to Chainguard, Microsoft, Red Hat, Edera, for sourcing talent from Universal Blue!',
-      'Need talent? Cloud native projets like ours are focused on sustainability. Judge us by the quality of our people.',
-    ]
-    const jorgeQuotePartThree = [
-      'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. Trust me we have work to do! Be the one who moves, not the one who is moved. With you at our side, how can we fail?',
-      '-- July 21, Ann Arbor, USA',
-    ]
+    const [jorgeQuotePartOne, jorgeQuotePartTwo, jorgeQuotePartThree] =
+      ghostsInTheMistOpeningSlide.descriptionParts.map(part => part.split('\n\n').map(paragraph => paragraph.trim()))
     mockGalleryData([
       coverTrack,
       {
@@ -504,10 +496,11 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
 
     await wrapper.setProps({ playlistCurrentTime: 48.4 })
-    expect(activeTimelineImage(wrapper)).not.toContain('55164222671_32d7ace307_c.jpg')
+    const laterPhotos = (wrapper.vm as any).laterTrackPhotos as Array<{ id: string, isLocal: boolean }>
+    expect(laterPhotos.every(photo => !photo.isLocal)).toBe(true)
   })
 
-  it('keeps later-track carry-forward candidates unique', async () => {
+  it('keeps later-track contributor candidates unique', async () => {
     const photos = [
       { id: 'photo-a', server: '1', secret: 'a', title: 'Photo A' },
       { id: 'photo-b', server: '1', secret: 'b', title: 'Photo B' },
@@ -586,7 +579,7 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).not.toContain('Track 0 duplicate')
   })
 
-  it('carries unshown Track 0 people into later tracks when Flickr is unavailable', async () => {
+  it('does not carry Track 1 people into later authored Wolves tracks when Flickr is unavailable', async () => {
     mockGalleryData(
       [
         coverTrack,
@@ -607,8 +600,7 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    expect(wrapper.find('.flickr-caption').exists()).toBe(true)
-    expect(wrapper.get('.flickr-caption').text()).toContain('BLUEFIN SHOWCASE //')
+    expect(wrapper.find('.flickr-caption').exists()).toBe(false)
   })
 
   it('switches an active later track to Flickr when the cache finishes loading', async () => {

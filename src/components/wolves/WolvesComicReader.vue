@@ -982,7 +982,12 @@ function snapshotLaterTrackPhotos() {
         rawPhoto: photo
       }
     })
-  const galleryCandidates = [...trackZeroCarryForwardPhotos.value, ...remotePhotos]
+  // Authored Wolves tracks use only the contributor-summit feed after the
+  // one Jorge hero opening in Track 2. Generic catalogue albums retain the
+  // carry-forward gallery behavior.
+  const galleryCandidates = isWolvesExperience.value
+    ? remotePhotos
+    : [...trackZeroCarryForwardPhotos.value, ...remotePhotos]
   if (galleryCandidates.length === 0) {
     shuffledLaterTrackPhotos.value = []
     shownLaterTrackPhotoIds.clear()

@@ -39,6 +39,15 @@ player synchronization, or generated files for content work.
 Use exact user-supplied or recovered authored copy. Never invent lore, dialogue,
 quotes, names, scientific facts, pairings, or provenance.
 
+## Later-track gallery policy
+
+Authored track numbering is fixed: Track 0 is the Destiny intro, Track 1 is
+“7 Days to the Wolves”, and Track 2 is “Ghosts In The Mist”. Track 2 opens
+with the single Jorge Castro hero plate and its 48.4-second quote sequence.
+After that opening, and for Tracks 3–6, use only the curated Flickr CNCF
+contributor-summit gallery. Do not carry Track 1 hero or local people images
+into later authored Wolves tracks.
+
 ## Locked layers
 
 Keep incoming signals, thesis data, lore records, and later-track chat data in
