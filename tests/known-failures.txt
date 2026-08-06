@@ -18,7 +18,6 @@ src/tests/wolvesComicReader.test.ts :: wolvesComicReader keeps the first 20 seco
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader renders title-only theater captions only for explicitly flagged wallpapers
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader switches an active later track to Flickr when the cache finishes loading
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader uses the same permitted fallback cadence across equivalent mounts and subsequent slides without BPM metadata
-src/tests/wolvesDualBufferPlayer.test.ts :: useDualBufferPlayer skips forward and backward on manual command
 src/tests/wolvesIntroOverlay.test.ts :: wolvesIntroOverlay guardian plate locks Christoph Blecker's leader label to gold while the plate chrome stays blue
 src/tests/wolvesIntroOverlay.test.ts :: wolvesIntroOverlay video segments force-advances at maxDuration instead of waiting for the natural end
 src/tests/wolvesIntroSequence.test.ts :: wolves intro overlay sequence wires the Comic Hero card and status-only Nova cue into the Destiny segment

@@ -51,6 +51,54 @@ playable track from being treated as an unidentified player request.
   for the rest of the phrase.
 - A slot is assumed to display its record's authored pages without checking
   `affordablePageCount()` against the slot duration.
+- A prewarmed buffer is played and never parked, or is promoted without an
+  explicit seek to its opening frame.
+- A clock advances by a hardcoded constant per tick, or by accumulating deltas.
+- A crossfade is triggered by a lead shorter than the fade it starts.
+- A test double for a player exposes `getCurrentTime()` that never advances.
+
+## Transports and clocks
+
+Three invariants, each learned from a defect that reached the theater build.
+
+**A prewarmed buffer must be parked, and promoted by seek.** `cueNext()` starts
+the inactive buffer to force YouTube to buffer, but an unparked buffer keeps
+playing silently underneath the current segment for its entire duration. When
+the next segment is longer than the current one it is already minutes in by the
+time it is heard, and the audience loses the opening of the song. Park on the
+`PLAYING` state change (pause, seek to opening frame, volume 0) *before* any
+`side !== activeSide` early return, and have promotion seek to the opening frame
+rather than trusting where the buffer happens to sit. The seek is the guarantee;
+parking is the optimisation. This also drove a phantom "progress bar snapping"
+report — one root cause, two symptoms, because the elapsed time published on the
+first poll after the swap was whatever the runaway buffer had reached.
+
+**Lead a crossfade by the whole fade, not by a threshold.** If the swap fires
+`PRE_END_THRESHOLD_S` before the end but the ramp runs `crossfadeMs`, the
+outgoing track reaches its real end while the incoming is barely up, and the
+room gets a hole in the music. Lead by `PRE_END_THRESHOLD_S + crossfadeMs/1000`.
+Do not pause the outgoing side early — let it play out under the fade, or the
+last bars of the song are lost. Ramp on an equal-power sin/cos curve: two linear
+ramps sum to a dip in perceived loudness at the midpoint.
+
+**Derive elapsed from an origin; never accumulate.** A silent card with no
+player to read still needs a clock. `currentTime += 0.2` on a 100ms interval ran
+every silent card at double speed — the 59s presenter slide left the screen at
+29.5s. Accumulating a measured delta fixes the speed but still drifts, and lands
+on float error exactly at the boundary (ten `+= 0.1` sum to 0.9999999999999999,
+so a card never reaches its own duration). Keep an origin timestamp and compute
+`(performance.now() - origin) / 1000`. Pause by trailing the origin; seek by
+rebasing it. This is the same principle as "every lore view is a pure function
+of `elapsed`", applied to the one surface that has to source the elapsed value.
+
+**A player test double must have a running clock.** These defects were invisible
+for the same reason: `FakePlayer.currentTime` only moved on `loadVideoById`, so
+a runaway buffer's clock was frozen at 0 forever and every timing assertion was
+vacuously true. Model the transport honestly — `tickClock()` advancing time and
+firing `ENDED` at the boundary, `seekTo()`, and `playVideo()` restarting a
+finished video from 0 the way YouTube does — and drive timers and player clocks
+together from one helper. Fixing the double is what makes the runtime fixes
+provable; do it first. See `src/tests/wolvesDualBufferPlayer.test.ts`.
 
 ## Verification
 
@@ -131,27 +179,21 @@ text to the music" below — neither start is a round number.
 - Keep scheduler and renderer on one content-cost timing model.
 - Treat Wolves lore as a self-paced video presentation, not an interactive
   document: the renderer must advance and hold readable content automatically.
-  Do not require, offer, or depend on pointer, click, touch, keyboard, or
-  scrolling interaction; viewers must never need to operate the experience to
-  follow a conversation or its climax.
+  Never require, offer, or depend on pointer, click, touch, keyboard, or
+  scrolling interaction, and never expose a scrollbar on a lore surface. The
+  audience has no input device; input is never a narrative dependency.
 - Render chatlogs and quotes as noninteractive, sentence- or word-bounded
   pages. Show one complete readable beat at a time, retain the speaker header
   on continued chat beats, and hold then replace it; do not accumulate
   important text behind an overflow viewport.
 - **Every lore view is a pure function of `elapsed`.** Chat and prose share one
   clock-driven page model: `pickPageIndexForElapsed(pages, elapsed, duration)`.
-  No view owns a timer.
-
-  The chat view used to be a character-by-character typewriter on a
-  `setInterval` started at mount that never read `props.elapsed`. It was the
-  one panel whose pace was its own opinion, and it cost the show three separate
-  defects: it drifted against the music so a line could only hit a beat by
-  luck, it could not be seeked or rehearsed from a fixed point, and it held its
-  slot open past the end (via a `chat-complete` handshake) so every record
-  after it started late. Deleting the typewriter deleted all three.
-
-  A view that reads the clock is reproducible: same second, same frame, every
-  machine, every rehearsal. A view that runs a timer is not.
+  No view owns a timer. The chat view used to be a typewriter on a `setInterval`
+  started at mount that never read `props.elapsed`, and it cost three defects at
+  once: it drifted against the music, it could not be seeked or rehearsed from a
+  fixed point, and it held its slot open past the end so every later record
+  started late. Deleting the typewriter deleted all three. A view that reads the
+  clock is reproducible: same second, same frame, every machine, every rehearsal.
 - Lore surfaces must never expose a scrollbar. Quotes advance from the active
   player clock as complete sentence- or word-bounded pages, held for their
   reading cost before automatic replacement; audience input is never a
@@ -169,15 +211,15 @@ text to the music" below — neither start is a round number.
 - The authored final conversation remains noninteractive after its key line is
   revealed; it must advance and hold without scroll or skip controls.
 - Add a locked hero photo as a contiguous timed window and shift only the
-  following unlocked window; do not move the established hero anchors.
-- Preserve locked anchors and recompute only unlocked intervals.
+  following unlocked window: preserve locked anchors, recompute only unlocked
+  intervals.
 - Derive Track 0's rotating HUD queue directly from the authored plan and keep
   duplicate status lines; deduping breaks the approved finale cadence.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
 - A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
 - Never describe a discarded experiment as restored or complete.
 
-## Verification
+## Re-deriving Track 0 timing
 
 Re-derive the unified Track 0 queue and finale timing from source with:
 
@@ -392,115 +434,9 @@ When you change one of these anchors, expect tests asserting the old round
 number to fail. Rebind them to the measured constant; do not re-record them as
 known failures.
 
-## Pages break at thoughts, not at character counts
 
-`splitReadableBeats()` splits on sentence punctuation and then on a character
-budget. Left alone, that budget breaks wherever the count runs out — after
-`Dr.`, or on a stranded preposition. Both happened in the closing bulletin and
-between them they cut the show's central reveal into pieces.
-
-`readable-beats.ts` guards this in three stages:
-
-- `mergeAbbreviationSplits()` rejoins sentences split at a title's period.
-- `fuseTitledNames()` fuses a title with the capitalised words after it into one
-  unbreakable token, so "Dr. Andy Anderson" is laid out as a single unit.
-- `settleBreaks()` repairs a page that ends on a dangling function word by
-  moving the whole trailing phrase to the next page. It only touches pages that
-  end badly; a page ending on a complete thought is already a good page.
-
-The measurable target: **no page ends on a dangling function word.** At the time
-of writing that holds for all 338 pages in the show.
-
-When touching this file, verify no page overflows its budget afterwards. A fuse
-that is too greedy silently produces pages too tall to read from the back row:
-
-```bash
-npx vite-node <probe that pages every record and compares against
-PROSE_PAGE_CHARACTERS / CHAT_PAGE_CHARACTERS>
-```
-
-At the time of writing: 338 pages, zero over budget, zero ending on a dangling
-word, worst page 150 characters against a 190 budget.
-
-`src/tests/wolvesFinaleReveal.test.ts` asserts the dangling-word rule across
-every record, so a greedy change to the splitter fails immediately.
-
-## A photo that is the slide needs different fitting than a backdrop
-
-`.wolves-intro-overlay-background` sets `object-fit: cover`. That is right for a
-backdrop and wrong when the photo is the subject. Cover scales the image to fill
-the frame and throws away whatever overflows, so a 3:2 stage photo in a 16:9
-frame loses its top and bottom, which is exactly where a speaker's gesture and
-headroom live.
-
-`contain` fixes landscape but destroys portrait: in a tall phone viewport the
-same photo shrinks to a stamp floating in black. Scope it:
-
-- Default (portrait) keeps `cover` with `object-position` biased up the frame, so
-  the crop lands on the subject rather than the ceiling.
-- `@media (min-aspect-ratio: 4 / 3)` switches to `contain`. That is the projector
-  case, and the pillarbox reads as intentional letterboxing on a dark stage.
-
-Check both orientations. A landscape screenshot cannot show you the portrait
-failure, and the portrait failure is the ugly one.
-
-## Projected body copy is capped by measure, not by container width
-
-The plate is as wide as the frame allows, but the text must not be. At `68rem`
-of container the title card body ran to roughly 90 characters per line; an
-audience tracks about 50 to 75. Cap the paragraph itself with `max-width` in
-`ch` and centre it with `margin: 0 auto`, leaving the panel free to stay wide.
-
-Add `text-wrap: balance` to the paragraph. Without it the last line collapses to
-a one-word orphan, which is the most distracting artefact in projected text.
-
-`balance` has a trap: Chromium applies it only to blocks of **six lines or
-fewer** and silently falls back to normal wrapping above that. It costs nothing
-and warns about nothing, so a beat that grows past six lines loses the balancing
-without any visible signal in the source. If a paragraph outgrows that budget,
-either split it into another beat or switch that rule to `text-wrap: pretty`,
-which has no line cap but only tidies the last few lines.
-
-Measure the result in the browser rather than trusting the CSS: divide
-`getBoundingClientRect().height` by the computed `line-height` for the line
-count, then divide the character count by that. Assert both the count and the
-resulting characters-per-line for every beat at both orientations.
-
-## An overlay panel can hold contrast without painting a box
-
-A solid `background-color` plus a border plus a drop shadow reads as a lit UI
-box sitting on top of the picture. To recede while staying legible, replace the
-flat fill with a `radial-gradient` that falls off toward the panel edges, drop
-the border and the shadow to `0`/`none`, and raise `backdrop-filter: blur()`.
-Contrast then comes from the blur and the existing `text-shadow` instead of from
-an opaque rectangle.
-
-## Withhold a gallery image, do not delete it
-
-`src/components/wolves/wallpapers-list.ts` is generated by
-`scripts/generate-wallpapers.js`, which scans
-`public/img/wallpapers/wolves/<subfolder>/` and turns every image it finds into
-a slide. So any photo promoted to a dedicated moment, such as the opening title
-card portrait, keeps appearing a second time as an anonymous gallery slide.
-
-There are three wrong fixes and one right one:
-
-- Hand-editing the generated list is reverted by the next generator run, and the
-  file's own header forbids it.
-- Deleting the file breaks the dedicated slide, which loads it by path.
-- Moving the file out of the scanned tree works but scatters the show's assets
-  across two conventions.
-
-Use `RESERVED_FOR_DEDICATED_SLIDES` in the generator instead: a subfolder-keyed
-set of filenames that `scanDirectory()` filters out. The file stays on disk for
-its dedicated slide and is withheld only from the gallery. Re-run
-`node scripts/generate-wallpapers.js` and confirm the slide count dropped by
-exactly the number of names reserved.
-
-Verify both halves: the entry is gone from the generated list, **and** the
-dedicated slide still loads the image. Check `naturalWidth > 0` in the browser
-rather than trusting the `src` attribute, because a missing file still leaves
-the attribute intact.
+See `../wolves-content/SKILL.md` for page-breaking, image fitting, projected
+measure, and gallery-withholding rules.
 
 ## Adding a segment breaks the movie-flow harness at the front
 

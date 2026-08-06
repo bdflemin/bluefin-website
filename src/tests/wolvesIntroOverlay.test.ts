@@ -107,7 +107,11 @@ function resolveIframeApi() {
 
 beforeEach(() => {
   players = []
-  vi.useFakeTimers()
+  // Silent text cards measure real elapsed time via performance.now(), so it has to
+  // advance with the fake clock (same config the dual-buffer suite uses).
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'performance'],
+  })
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
@@ -819,6 +823,26 @@ surrounded by predators`)
     await vi.advanceTimersByTimeAsync(1000)
     await flushPromises()
 
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('holds a silent card for its full authored duration', async () => {
+    const textSequence = [
+      { id: 'wolves-title-card', kind: 'text' as const, duration: 59 },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    // Half way through the authored window the card must still be on screen. It used
+    // not to be: a silent card advanced its own clock at double speed, so the 59s
+    // presenter welcome slide left the screen at 29.5s and each paragraph got half
+    // the reading time it was written for.
+    await vi.advanceTimersByTimeAsync(30_000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(29_500)
+    await flushPromises()
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
