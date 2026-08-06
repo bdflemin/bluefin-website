@@ -400,6 +400,13 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
 /** performance.now() corresponding to elapsed 0 on a silent text card. */
 let textClockOriginMs = 0
+
+/**
+ * Guard against a click landing a hair before the active cue's own start and "advancing" to
+ * the cue already on screen, which reads to the presenter as a dead click.
+ */
+const CUE_ADVANCE_EPSILON_SECONDS = 0.05
+
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
 /** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
@@ -705,6 +712,49 @@ function handleNext() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
+/**
+ * Presenter pacing for a silent text card: jump to the next authored cue, or into the next
+ * segment once the last cue is up.
+ *
+ * This is an operator affordance, not a narrative dependency. The card still advances itself
+ * on its own clock, so an unattended run behaves exactly as before and never waits for input.
+ * It exists because the welcome card is spoken live: the presenter finishes a line and wants
+ * the next one, rather than standing in silence until the authored window expires.
+ *
+ * Scored cards are deliberately excluded. A card with a music bed has its cues written against
+ * that track, so moving the text without moving the music desyncs the segment for the rest of
+ * its run. Only a silent card, where the presenter's own voice is the soundtrack, is safe to
+ * pace by hand.
+ */
+function advanceTextCue() {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || segment.audioYoutubeVideoId || isPaused.value) {
+    return
+  }
+
+  const nextCue = segment.overlays
+    ?.filter(cue => cue.start > currentTime.value + CUE_ADVANCE_EPSILON_SECONDS)
+    .sort((a, b) => a.start - b.start)[0]
+
+  if (!nextCue) {
+    handleNext()
+    return
+  }
+
+  seekToSeconds(nextCue.start)
+}
+
+/**
+ * Advance the welcome card when the presenter clicks it. Clicks on the transport chrome are
+ * left alone so Play/Pause/Next keep their own meaning, and video and scored segments are
+ * untouched: only a silent, presenter-spoken text card is click-advanced.
+ */
+function handleOverlayClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a, input, [role="button"]')) {
+    return
+  }
+  advanceTextCue()
+}
 function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
@@ -822,6 +872,7 @@ defineExpose({
       v-if="currentSegment && (!sequenceState.done || handoffPending)"
       class="wolves-intro-overlay"
       :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+      @click="handleOverlayClick"
     >
       <template v-if="currentSegment.kind === 'video'">
         <div ref="mountHost" class="wolves-intro-overlay-player" />
