@@ -1149,7 +1149,19 @@ defineExpose({
    own panel, which keeps the quote legible without darkening the whole frame. */
 .wolves-intro-overlay-background-title-card {
   opacity: 0.92;
-  object-position: center 32%;
+  /* Portrait keeps `cover` (inherited above) biased to the upper frame, because `contain` in
+     a tall viewport shrinks the 3:2 photo to a stamp floating in black. */
+  object-position: center 30%;
+}
+
+/* Landscape, which is what a projector shows: the photo is 3:2 and the frame is wider, so
+   `cover` scaled it to the frame width and cropped the top and bottom away. `contain` shows
+   the whole photo, keeping the full gesture in frame for the back of the room. */
+@media (min-aspect-ratio: 4 / 3) {
+  .wolves-intro-overlay-background-title-card {
+    object-fit: contain;
+    object-position: center center;
+  }
 }
 
 /* Opening title card lower third. Palette, crest geometry and gradient name mirror
@@ -1162,16 +1174,26 @@ defineExpose({
   bottom: max(4%, 11.5rem);
   left: 50%;
   transform: translateX(-50%);
-  width: min(94%, 96rem);
+  /* Narrow enough that the quote breaks into readable lines. At the old 96rem the body ran
+     to roughly 90 characters per line, far past the ~50-75 an audience can track. */
+  width: min(92%, 68rem);
   max-height: 58%;
   overflow-y: auto;
   z-index: 12;
-  padding: clamp(1rem, 0.8rem + 0.8vw, 1.6rem) clamp(1.25rem, 1rem + 1.2vw, 2.25rem);
-  border: 1px solid rgb(66 133 244 / 35%);
-  border-radius: 1rem;
-  background-color: rgb(10 14 22 / 88%);
-  box-shadow: 0 8px 30px rgb(0 0 0 / 55%);
-  backdrop-filter: blur(6px);
+  padding: clamp(1.1rem, 0.9rem + 0.8vw, 1.7rem) clamp(1.5rem, 1.2rem + 1.4vw, 2.6rem);
+  /* A soft scrim rather than a panel: the photo is the slide, so the plate darkens just
+     enough to hold contrast and fades out at its edges instead of drawing a lit box on
+     top of the frame. Legibility is carried by the blur and the text shadow. */
+  border: 0;
+  border-radius: 1.5rem;
+  background: radial-gradient(
+    120% 140% at 50% 50%,
+    rgb(6 9 14 / 82%) 0%,
+    rgb(6 9 14 / 74%) 55%,
+    rgb(6 9 14 / 30%) 100%
+  );
+  box-shadow: none;
+  backdrop-filter: blur(10px);
   text-align: center;
   color: #f5f5f5;
   text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
@@ -1238,7 +1260,7 @@ defineExpose({
 }
 
 .wolves-intro-title-card-subtitle {
-  margin: 0.35rem 0 0.9rem;
+  margin: 0.35rem 0 1.1rem;
   font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.7rem);
   color: #94a3b8;
 }
@@ -1246,9 +1268,13 @@ defineExpose({
 /* Sized for readers in theater seats rather than at a desk: this is the slide's message,
    not a caption under a photo, so it runs larger than the Ghosts plate's body copy. */
 .wolves-intro-title-card-quote-body {
-  margin: 0 0 0.6rem;
+  /* `balance` splits the paragraph into even lines so no beat ends on a one-word orphan,
+     which is the single most distracting thing about projected text. */
+  margin: 0 auto 0.6rem;
+  max-width: 46ch;
   font-size: clamp(1.5rem, 1.2rem + 0.8vw, 2.1rem);
-  line-height: 1.45;
+  line-height: 1.5;
+  text-wrap: balance;
 
   &:last-child {
     margin-bottom: 0;

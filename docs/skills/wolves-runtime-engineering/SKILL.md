@@ -421,3 +421,46 @@ word, worst page 150 characters against a 190 budget.
 
 `src/tests/wolvesFinaleReveal.test.ts` asserts the dangling-word rule across
 every record, so a greedy change to the splitter fails immediately.
+
+## A photo that is the slide needs different fitting than a backdrop
+
+`.wolves-intro-overlay-background` sets `object-fit: cover`, which is right for a
+backdrop but wrong when the photo is the subject. Cover scales the image to fill
+the frame and throws away whatever overflows, so a 3:2 stage photo in a 16:9
+frame loses its top and bottom, which is exactly where a speaker's gesture and
+headroom live.
+
+`contain` fixes landscape but destroys portrait: in a tall phone viewport the
+same photo shrinks to a stamp floating in black. Scope it:
+
+- Default (portrait) keeps `cover` with `object-position` biased up the frame, so
+  the crop lands on the subject rather than the ceiling.
+- `@media (min-aspect-ratio: 4 / 3)` switches to `contain`. That is the projector
+  case, and the pillarbox reads as intentional letterboxing on a dark stage.
+
+Check both orientations. A landscape screenshot cannot show you the portrait
+failure, and the portrait failure is the ugly one.
+
+## Projected body copy is capped by measure, not by container width
+
+The plate is as wide as the frame allows, but the text must not be. At `68rem`
+of container the title card body ran to roughly 90 characters per line; an
+audience tracks about 50 to 75. Cap the paragraph itself with `max-width` in
+`ch` and centre it with `margin: 0 auto`, leaving the panel free to stay wide.
+
+Add `text-wrap: balance` to the paragraph. Without it the last line collapses to
+a one-word orphan, which is the most distracting artefact in projected text.
+
+Measure the result in the browser rather than trusting the CSS: divide
+`getBoundingClientRect().height` by the computed `line-height` for the line
+count, then divide the character count by that. Assert both the count and the
+resulting characters-per-line for every beat at both orientations.
+
+## An overlay panel can hold contrast without painting a box
+
+A solid `background-color` plus a border plus a drop shadow reads as a lit UI
+box sitting on top of the picture. To recede while staying legible, replace the
+flat fill with a `radial-gradient` that falls off toward the panel edges, drop
+the border and the shadow to `0`/`none`, and raise `backdrop-filter: blur()`.
+Contrast then comes from the blur and the existing `text-shadow` instead of from
+an opaque rectangle.
