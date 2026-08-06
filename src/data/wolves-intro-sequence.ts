@@ -447,18 +447,18 @@ const OPENING_TITLE_CARD_IMAGE = 'img/wallpapers/wolves/people/Yikes!.webp'
  */
 function buildOpeningTitleCardSegment(): IntroTextSegment {
   const parts = [
-    'Welcome Linux gamers. As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
+    'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
     'This summer the Apache Foundation and CNCF Collided. Buildstream, Kubernetes, and bootc. None of you have any idea of what that means. But let\'s just say ...',
-    'It\'s time to meet your new teammates. The people who supported us when we needed them the most. And now we fight together for a better Linux. But we need your help. Meet my friends. Greatness awaits.',
-    'The people in these slides were just like you. Ask them. Join us.',
+    'Modern Linux is unified. Don\'t believe me? It\'s time to meet your new teammates.',
+    'The people in these slides were once just like you. Ask them. Join us, the Linux you want exists ... suit up.',
   ]
-  // One window per paragraph, sized for a room reading from theater seats while the
-  // presenter speaks over it. The closing call to action is the shortest line but holds
-  // nearly as long, so "Join us." is still on screen as the Destiny video takes over.
-  const windows = [14, 15, 17, 13]
+  // One window per paragraph, weighted by how much there is to read rather than split
+  // evenly: the third beat is a short punch ("Don't believe me?") and the closer is the
+  // longest line, so it holds longest and is still on screen as the Destiny video takes over.
+  const windows = [14, 16, 12, 17]
   const titlePlate = {
     name: 'Jorge Castro',
-    subtitle: 'Project Bluefin // Universal Blue (Emeritus)',
+    subtitle: 'Project Bluefin // Universal Blue // Kubernetes',
   } as const
 
   let start = 0

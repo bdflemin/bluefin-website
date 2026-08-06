@@ -194,12 +194,12 @@ describe('wolves intro overlay sequence', () => {
       expect(cue.preservePunctuation).toBe(true)
       expect(cue.titlePlate).toEqual({
         name: 'Jorge Castro',
-        subtitle: 'Project Bluefin // Universal Blue (Emeritus)',
+        subtitle: 'Project Bluefin // Universal Blue // Kubernetes',
       })
     }
 
     // The cues tile the segment without gaps or overlaps, so no paragraph is skipped.
-    expect(card.overlays!.map(cue => [cue.start, cue.end])).toEqual([[0, 14], [14, 29], [29, 46], [46, 59]])
+    expect(card.overlays!.map(cue => [cue.start, cue.end])).toEqual([[0, 14], [14, 30], [30, 42], [42, 59]])
   })
 
   it('keeps the opening title card quote verbatim', () => {
@@ -209,10 +209,10 @@ describe('wolves intro overlay sequence', () => {
     }
 
     expect(card.overlays!.map(cue => cue.text)).toEqual([
-      'Welcome Linux gamers. As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
+      'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
       'This summer the Apache Foundation and CNCF Collided. Buildstream, Kubernetes, and bootc. None of you have any idea of what that means. But let\'s just say ...',
-      'It\'s time to meet your new teammates. The people who supported us when we needed them the most. And now we fight together for a better Linux. But we need your help. Meet my friends. Greatness awaits.',
-      'The people in these slides were just like you. Ask them. Join us.',
+      'Modern Linux is unified. Don\'t believe me? It\'s time to meet your new teammates.',
+      'The people in these slides were once just like you. Ask them. Join us, the Linux you want exists ... suit up.',
     ])
   })
 
