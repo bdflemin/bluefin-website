@@ -100,6 +100,22 @@ finished video from 0 the way YouTube does — and drive timers and player clock
 together from one helper. Fixing the double is what makes the runtime fixes
 provable; do it first. See `src/tests/wolvesDualBufferPlayer.test.ts`.
 
+The same blind spot existed in the browser mock, so there is now a runtime
+harness that runs the clock against the real route:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort   # in another shell
+node tests/wolves-buffer-parking.mjs
+```
+
+It fails on a build with an unparked prewarm buffer (both buffers `PLAYING`,
+both clocks in lockstep) and passes when one is parked at `currentTime` 0 with
+volume 0. Two things to know before writing another harness like it:
+`window.__wolvesDurations.skipIntro()` is async, so returning its promise from
+`page.evaluate()` hangs the run, and `window.__wolvesCinematic` never appears
+under a mocked player, so assert against `window.__mockWolvesPlayers` instead of
+waiting for that hook.
+
 ## Verification
 
 - [ ] Explicit approval exists.
