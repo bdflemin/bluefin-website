@@ -211,8 +211,8 @@ describe('wolves intro overlay sequence', () => {
     expect(card.overlays!.map(cue => cue.text)).toEqual([
       'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices, let me explain who we are.',
       'This summer the Apache Foundation and CNCF collided. Buildstream, Kubernetes, and bootc. None of you have any idea what that means. But let\'s just say ...',
-      'Modern Linux is already unified. Don\'t believe me? It\'s time to meet your new teammates.',
-      'The people in these slides were once just like you. Ask them. Join us. The Linux you want exists ... suit up.',
+      'Modern Linux is unified. Don\'t believe me? Meet your new teammates.',
+      'The people in these slides were once just like you. Ask them. The Linux you want exists ... suit up.',
     ])
   })
 
