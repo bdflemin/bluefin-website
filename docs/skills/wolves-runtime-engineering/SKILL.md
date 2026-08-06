@@ -215,6 +215,23 @@ from the production bundle — verify with
 YouTube IFrame mock hangs on `stage.start()`. Install the mock first; copy it
 from `tests/wolves-trackzero-sidecar-real-player.mjs`.
 
+**Do not build a new full-show harness to check a Track 0 anchor.** This was
+tried and abandoned; record the outcome so it is not tried a fifth time. A
+one-off probe can be walked out of the intro by clicking `.wc-lobby-enter` (the
+user gesture browsers require before media may play) and then calling the intro
+overlay's exposed `next()` in a loop, found by walking the Vue tree from
+`document.querySelector('#app').__vue_app__._instance` through `subTree`. That
+path is not repeatable: the number of `next()` calls needed to land in Track 0
+is not stable, 60 steps under-shoots and never mounts `[data-lore-view]`, and 80
+steps mounts a panel that reads as empty text. Two further traps cost real time:
+`window.__wolvesCinematic.seekTo` is offset by the intro, so passing it a Track 0
+time seeks back into the intro and unmounts the lore column; and Playwright's
+default 30 s locator timeout turns each such failed read into a 30 s stall, so a
+polling loop looks like a hang rather than a failure. Assert anchored moments in
+`src/tests/wolvesLoreColumn.test.ts` against the page model instead, where the
+Sarah-on-`bridgeStart` regression test already lives, and reserve browser runs
+for the existing `tests/wolves-movie-flow.mjs`.
+
 `tests/wolves-movie-flow.mjs` asserts Track 0 beats but stops at 196.36 (Jorge),
 one slide before the Laura -> Tophee -> Reza boundary. That blind spot is exactly
 where a dropped portrait shipped unnoticed. Extend coverage past any boundary you
