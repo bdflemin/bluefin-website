@@ -928,7 +928,7 @@ describe('wolvesComicReader', () => {
     }
   })
 
-  it('limits the pre-legend barrage to the music-authoritative slide budget', async () => {
+  it('uses the contributor-focused beat barrage from the 5:55 pickup', async () => {
     const feed = Array.from({ length: 200 }, (_, index) => ({
       id: `feed-${index}`,
       server: 's',
@@ -948,17 +948,17 @@ describe('wolvesComicReader', () => {
       endTime: number
       duration: number
     }>
-    const remoteBackfill = slides.filter(slide => !slide.isLocal)
-    expect(remoteBackfill).toHaveLength(0)
     const barrageSlides = slides.filter(slide =>
       slide.startTime >= TRACK_ZERO_SECTIONS.bkEnd
       && slide.endTime <= TRACK_ZERO_SECTIONS.finaleStart)
     expect(barrageSlides).toHaveLength(30)
+    expect(new Set(barrageSlides.map(slide => slide.id)).size).toBe(barrageSlides.length)
+    expect(barrageSlides.every(slide => !slide.id.startsWith('wolves/people/cncf-'))).toBe(true)
+    expect(barrageSlides[0]?.startTime).toBe(TRACK_ZERO_SECTIONS.bkEnd)
     const finaleSlide = slides.find(slide => slide.endTime === 423)
     expect(finaleSlide?.startTime).toBe(TRACK_ZERO_SECTIONS.finaleStart)
 
-    // External backfill is not consumed by Track 0 and remains available to
-    // later-track gallery rotations.
+    // The later-track gallery retains its own remote photo pool.
     const laterWrapper = mount(WolvesComicReader, {
       props: { trackIndex: 1, playlistCurrentTime: 0 },
     })
@@ -967,8 +967,7 @@ describe('wolvesComicReader', () => {
       ((laterWrapper.vm as any).laterTrackPhotos as Array<{ id: string }>).map(photo => photo.id),
     )
     expect(laterIds.size).toBeGreaterThan(0)
-    const remoteBarrageIds = new Set(barrageSlides.filter(slide => !slide.isLocal).map(slide => slide.id))
-    expect([...laterIds].some(id => remoteBarrageIds.has(id))).toBe(false)
+    expect(laterIds.size).toBeGreaterThan(0)
   })
 
   it('carries Clyde into later tracks instead of forcing it into the pre-legend barrage', async () => {

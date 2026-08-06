@@ -605,12 +605,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     currentTime = endTime
   }
 
-  // Music-authoritative barrage: enough curated shots to follow the measured
-  // build into Become Legend without forcing one-beat cuts.
+  // The barrage starts at the authored 5:55 pickup and accelerates on the
+  // measured beat grid without cutting every beat. Keep the generic CNCF
+  // filler photos out of this contributor-focused sequence.
   const barrageBase = [
     ...shuffledPeople.slice(buildPoolEnd),
     ...finaleSlides,
-  ].filter(slide => slide.id !== 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')
+  ].filter((slide, index, slides) =>
+    slide.id !== 'wolves/people/interview-clyde-seepersad-linux-foundation.webp'
+    && !slide.id.startsWith('wolves/people/cncf-')
+    && slides.findIndex(candidate => candidate.id === slide.id) === index)
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
   const sec6Cuts = trackZeroEvenBeatCuts(
     currentTime,

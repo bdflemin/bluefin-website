@@ -73,6 +73,9 @@ playable track from being treated as an unidentified player request.
 - For a locked chat window, use its full player-clock duration when it exceeds
   the minimum readability estimate. This retains the final sentence through
   the authored endpoint instead of releasing a couch-readable chat early.
+- The Track 0 finale barrage begins at the measured 5:55 pickup
+  (`TRACK_ZERO_SECTIONS.bkEnd`); distribute its curated contributor photos
+  across subsequent measured beats rather than cutting every beat.
 - When a narrative range is constrained, allocate chatlog readability before
   static quote or source records; preserve explicitly approved cadence locks.
 - The authored final conversation remains noninteractive after its key line is
