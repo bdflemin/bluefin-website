@@ -38,6 +38,10 @@ For isolated overlay copy, use a classed element instead of a bare semantic tag
 when the site has global element styling. A global `footer` rule can introduce
 panel paint, stacking, or padding that defeats component-scoped styles.
 
+For desktop-only decorative labels adjacent to the fixed media widget, position
+them relative to the widget and hide them at the desktop breakpoint. Measure
+both label bounds and the widget before approving the layout.
+
 ## Common Rationalizations
 
 - "The CSS width is larger, so the rendered element must be larger." A grid,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
 const props = withDefaults(defineProps<{
@@ -52,6 +52,36 @@ const progressCells = computed(() => {
 
 const canPrevious = computed(() => store.widgetCanPrevious)
 const canNext = computed(() => store.widgetCanNext)
+const NOVA_GLITCH_RANGES = [
+  [0.7, 0.78],
+  [0.79, 0.87],
+  [0.88, 0.96],
+] as const
+const NOVA_GLITCH_DURATION_SECONDS = 0.45
+const novaGlitchWindows = ref<readonly [number, number][]>([])
+
+function scheduleNovaGlitches() {
+  const duration = store.segments[0]?.durationSeconds ?? 424
+  novaGlitchWindows.value = NOVA_GLITCH_RANGES.map(([start, end]) => {
+    const time = duration * (start + (end - start) * Math.random())
+    return [time, time + NOVA_GLITCH_DURATION_SECONDS]
+  })
+}
+
+watch(() => store.phase, (phase) => {
+  if (phase === 'cinematic' && store.segmentIndex === 0) {
+    scheduleNovaGlitches()
+  }
+  else {
+    novaGlitchWindows.value = []
+  }
+}, { immediate: true })
+
+const showNovaGlitch = computed(() =>
+  store.phase === 'cinematic'
+  && store.segmentIndex === 0
+  && novaGlitchWindows.value.some(([start, end]) => store.nativeTime >= start && store.nativeTime < end),
+)
 
 const progressEl = ref<HTMLElement | null>(null)
 const isVisible = ref(true)
@@ -127,6 +157,22 @@ function handleVoiceOverChange(event: Event) {
     :class="{ 'wc-widget--hidden': props.autoHide && !isVisible }"
     @focusin="resetAutoHide"
   >
+    <span
+      class="wc-widget-slogan wc-widget-slogan--left"
+      :class="{ 'wc-widget-slogan--glitch': showNovaGlitch }"
+      aria-hidden="true"
+    >
+      <template v-if="showNovaGlitch">#NOVA4EVER</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORCONTRIBUTORS</template>
+    </span>
+    <span
+      class="wc-widget-slogan wc-widget-slogan--right"
+      :class="{ 'wc-widget-slogan--glitch': showNovaGlitch }"
+      aria-hidden="true"
+    >
+      <template v-if="showNovaGlitch">#NOVA4EVER</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORCONTRIBUTORS</template>
+    </span>
     <img
       class="wc-widget-art"
       :src="artworkSrc"
@@ -226,6 +272,57 @@ function handleVoiceOverChange(event: Event) {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, calc(100% + 1rem));
+}
+
+.wc-widget-slogan {
+  position: absolute;
+  top: 50%;
+  color: var(--wc-white);
+  font-family: var(--wc-font-weyland-mono);
+  font-size: clamp(1.4rem, 1.8vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 85%);
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.wc-widget-slogan--left {
+  right: calc(100% + clamp(1.2rem, 3vw, 4rem));
+}
+
+.wc-widget-slogan--right {
+  left: calc(100% + clamp(1.2rem, 3vw, 4rem));
+}
+
+.wc-widget-slogan-bluefin {
+  color: #38bdf8;
+}
+
+.wc-widget-slogan--glitch {
+  animation: wc-widget-slogan-glitch 0.18s steps(2, jump-none) infinite;
+}
+
+@keyframes wc-widget-slogan-glitch {
+  0% {
+    transform: translate(-2px, -50%) skewX(-4deg);
+    text-shadow:
+      2px 0 0 rgb(255 0 64 / 75%),
+      -2px 0 0 rgb(0 220 255 / 75%);
+  }
+
+  50% {
+    transform: translate(2px, -50%) skewX(3deg);
+    text-shadow:
+      -3px 0 0 rgb(255 0 64 / 75%),
+      3px 0 0 rgb(0 220 255 / 75%);
+  }
+
+  100% {
+    transform: translate(-1px, -50%);
+  }
 }
 
 .wc-widget-art,
@@ -484,6 +581,12 @@ function handleVoiceOverChange(event: Event) {
 
   // The block readout wraps badly at phone widths; times remain.
   .wc-widget-meta .wc-widget-time:first-child {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .wc-widget-slogan {
     display: none;
   }
 }

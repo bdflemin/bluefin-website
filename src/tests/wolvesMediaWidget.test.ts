@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
@@ -24,6 +25,25 @@ describe('media widget', () => {
     expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe(String(Math.round(store.segmentProgress * 100)))
     expect(wrapper.text()).not.toContain('DEPLOYMENT: five-years-of-universal-blue')
     expect(wrapper.text()).toContain('0:10 / 4:31')
-    expect(wrapper.text()).toContain('TOTAL 28:48 / 32:32')
+    expect(wrapper.text()).toContain('TOTAL 28:45 / 32:29')
+  })
+
+  it('shows contributor slogans and randomizes Nova glitches in Track 1’s final stretch', async () => {
+    const store = useCinematicStore()
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    store.enterCinematic()
+    store.updateTime(313.76, 424, 313.76)
+
+    const wrapper = mount(MediaWidget)
+
+    expect(wrapper.findAll('.wc-widget-slogan')).toHaveLength(2)
+    expect(wrapper.findAll('.wc-widget-slogan').every(slogan => slogan.text() === '#NOVA4EVER')).toBe(true)
+
+    store.updateTime(314.3, 424, 314.3)
+    await nextTick()
+
+    expect(wrapper.findAll('.wc-widget-slogan').every(slogan => slogan.text() === '#FIGHTFORCONTRIBUTORS')).toBe(true)
+    expect(wrapper.findAll('.wc-widget-slogan-bluefin')).toHaveLength(4)
+    random.mockRestore()
   })
 })
