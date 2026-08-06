@@ -28,6 +28,10 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
 
 - **DNS/subdomain request:** create or update the zone record/custom-domain
   configuration only.
+- **Current website delivery:** `projectbluefin.io` is Cloudflare-proxied
+  GitHub Pages, not a Cloudflare Pages project. `public/_headers` therefore
+  documents a Pages-compatible policy but does not set live response headers;
+  verify live cache behavior with `curl -I` before relying on it.
 - **Existing redirect-subdomain pattern:** before changing DNS, inspect the
   account's existing routes. Project subdomains backed by GitHub Pages may use
   a dedicated redirect Worker route (`host.example/*`) because GitHub Pages
@@ -58,6 +62,14 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
   HTTP checks.
 - [ ] No credentials are in the repository or command output.
 - [ ] The resulting hostname returns the intended status and content.
+
+## Delivery topology verification
+
+```bash
+curl -I https://projectbluefin.io/wolves/
+curl -I https://projectbluefin.io/img/wallpapers/wolves/people/kubecon-54927422306.webp
+wrangler pages project list
+```
 
 ## Sources
 
