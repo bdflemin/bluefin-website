@@ -530,14 +530,20 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 4. Chanting Bridge [~229, ~277] -> 24 people wallpapers; 6-beat holds
   // tightening to 4-beat as the chant gathers.
-  const peoplePool2 = shuffledPeople.slice(15, 39)
-  const sec4Cuts = trackZeroBeatCutsWithPickup(
+  const bridgeCuts = trackZeroBeatCutsWithPickup(
     currentTime,
     TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.pickupTime,
     TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.endTime,
-    peoplePool2.length,
+    24,
     ...TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.beatGroups,
   )
+  // The measured pickup created two 1.74-second cuts around 4:05. Preserve
+  // this bridge image through the 4:08 narrative scene cut; the show only
+  // accelerates into its fast barrage at the authored 5:55 pickup.
+  const bridgeHiccupCutIndex = bridgeCuts.findIndex(cut => Math.abs(cut - 245.830) < 0.001)
+  const peoplePool2 = shuffledPeople.slice(15, 39)
+    .filter((_, index) => index !== bridgeHiccupCutIndex)
+  const sec4Cuts = bridgeCuts.filter((_, index) => index !== bridgeHiccupCutIndex)
   peoplePool2.forEach((item, index) => {
     const endTime = sec4Cuts[index]
     result.push({

@@ -105,6 +105,21 @@ describe('wolvesComicReader', () => {
         playlistCurrentTime: 0,
       },
     })
+
+    it('holds the bridge slide across 4:05 until the 4:08 narrative cut', async () => {
+      const wrapper = mount(WolvesComicReader, {
+        props: {
+          trackIndex: 0,
+          playlistCurrentTime: 0,
+        },
+      })
+      await flushPromises()
+
+      const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
+      const bridgeHold = slides.find(slide => slide.startTime < 245.830 && slide.endTime === 247.594)
+
+      expect(bridgeHold).toBeDefined()
+    })
     await flushPromises()
 
     const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
