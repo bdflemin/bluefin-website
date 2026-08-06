@@ -91,6 +91,14 @@ const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => 
 const activeComicHeroShot = computed(() => activeComicTitleCardCue.value
   ? getActiveComicHeroShot(currentTime.value, activeComicTitleCardCue.value)
   : undefined)
+/**
+ * The opening title card's cue, if one is on screen. Its quote is rendered inside the
+ * nameplate block rather than as a standard caption, so the normal overlay text is
+ * suppressed while it is active — otherwise the same words would paint twice.
+ */
+const activeTitlePlateCue = computed<IntroOverlayTextCue | undefined>(() =>
+  activeCue.value?.titlePlate ? activeCue.value : undefined,
+)
 const comicHeroLeftOffsets = ref<Record<string, number>>({})
 const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
@@ -816,7 +824,10 @@ defineExpose({
               <img
                 v-if="activeCue?.backgroundImage"
                 class="wolves-intro-overlay-background"
-                :class="{ 'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns' }"
+                :class="{
+                  'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns',
+                  'wolves-intro-overlay-background-title-card': activeCue.titlePlate,
+                }"
                 :style="activeCue.backgroundMotion === 'kenburns' ? { animationDuration: `${activeCue.end - activeCue.start}s` } : undefined"
                 :src="`${baseUrl}${activeCue.backgroundImage}`"
                 alt=""
@@ -999,7 +1010,7 @@ defineExpose({
       </template>
 
       <p
-        v-else-if="overlayText"
+        v-else-if="overlayText && !activeTitlePlateCue"
         :key="overlayText"
         class="wolves-intro-overlay-text font-mono"
         :class="{
@@ -1024,6 +1035,41 @@ defineExpose({
           >{{ part.char }}</span>
         </template>
       </p>
+
+      <!-- Opening title card lower third. Replicates the Ghosts In The Mist guardian
+           nameplate from WolvesComicReader.vue (crest, horizon rules, gradient name) with
+           the class and honorific lines dropped, then renders the welcome quote beneath it
+           one authored paragraph at a time. Rendered verbatim: this quote states real
+           figures and organisation names, so it never goes through the theater punctuation
+           strip that the cinematic display cues use. -->
+      <div v-if="activeTitlePlateCue" class="wolves-intro-title-card-plate font-mono">
+        <div class="wolves-intro-title-card-header" aria-hidden="true">
+          <div class="wolves-intro-title-card-horizon wolves-intro-title-card-horizon-left" />
+          <svg class="wolves-intro-title-card-crest" viewBox="0 0 100 100">
+            <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-intro-title-card-crest-outer" />
+            <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-intro-title-card-crest-inner" />
+            <path d="M35,45 L50,60 L65,45" class="wolves-intro-title-card-crest-chevron" />
+          </svg>
+          <div class="wolves-intro-title-card-horizon wolves-intro-title-card-horizon-right" />
+        </div>
+        <p class="wolves-intro-title-card-name">
+          {{ activeTitlePlateCue.titlePlate!.name }}
+        </p>
+        <p class="wolves-intro-title-card-subtitle">
+          {{ activeTitlePlateCue.titlePlate!.subtitle }}
+        </p>
+        <Transition name="wolves-intro-title-card-quote-fade" mode="out-in">
+          <div :key="activeTitlePlateCue.text" class="wolves-intro-title-card-quote">
+            <p
+              v-for="(paragraph, index) in activeTitlePlateCue.text.split('\n\n')"
+              :key="index"
+              class="wolves-intro-title-card-quote-body"
+            >
+              {{ paragraph }}
+            </p>
+          </div>
+        </Transition>
+      </div>
 
     <!-- Transport now lives in the app-level Destiny hero widget; the overlay
          exposes next/previous/toggle/seekToRatio and emits status instead. -->
@@ -1096,6 +1142,129 @@ defineExpose({
   /* Dims still images (e.g. the KubeCon Ken Burns beat) behind the overlaid text; the
      day/night crossfade beats override this via their own animated opacity below. */
   opacity: 0.55;
+}
+
+/* The opening title card's photo is the subject of the slide, not a backdrop for text, so
+   it is dimmed far less than the cinematic still beats above. The lower third carries its
+   own panel, which keeps the quote legible without darkening the whole frame. */
+.wolves-intro-overlay-background-title-card {
+  opacity: 0.92;
+  object-position: center 32%;
+}
+
+/* Opening title card lower third. Palette, crest geometry and gradient name mirror
+   `.theater-guardian-*` in WolvesComicReader.vue so the two plates read as the same object;
+   only the class and honorific lines are absent here. */
+.wolves-intro-title-card-plate {
+  position: absolute;
+  /* Clears the transport widget's fixed bottom dock (z-index 1000, ~100px tall). The widget
+     auto-hides during the intro, but the quote must stay readable while it is on screen. */
+  bottom: max(4%, 11.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94%, 96rem);
+  max-height: 58%;
+  overflow-y: auto;
+  z-index: 12;
+  padding: clamp(1rem, 0.8rem + 0.8vw, 1.6rem) clamp(1.25rem, 1rem + 1.2vw, 2.25rem);
+  border: 1px solid rgb(66 133 244 / 35%);
+  border-radius: 1rem;
+  background-color: rgb(10 14 22 / 88%);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 55%);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  color: #f5f5f5;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
+}
+
+.wolves-intro-title-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.wolves-intro-title-card-horizon {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 2rem;
+  background: linear-gradient(to right, transparent, #d1d5db 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(226 232 240 / 55%);
+}
+
+.wolves-intro-title-card-horizon-right {
+  background: linear-gradient(to left, transparent, #d1d5db 60%, #fff 100%);
+}
+
+.wolves-intro-title-card-crest {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgb(226 232 240 / 65%));
+}
+
+.wolves-intro-title-card-crest-outer {
+  fill: none;
+  stroke: #d1d5db;
+  stroke-width: 2;
+}
+
+.wolves-intro-title-card-crest-inner {
+  fill: rgb(8 12 20 / 95%);
+  stroke: #f5f5f5;
+  stroke-width: 1;
+}
+
+.wolves-intro-title-card-crest-chevron {
+  fill: none;
+  stroke: #d1d5db;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wolves-intro-title-card-name {
+  margin: 0.2rem 0 0;
+  font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #f5f5f5;
+  background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
+}
+
+.wolves-intro-title-card-subtitle {
+  margin: 0.35rem 0 0.9rem;
+  font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.7rem);
+  color: #94a3b8;
+}
+
+/* Sized for readers in theater seats rather than at a desk: this is the slide's message,
+   not a caption under a photo, so it runs larger than the Ghosts plate's body copy. */
+.wolves-intro-title-card-quote-body {
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.5rem, 1.2rem + 0.8vw, 2.1rem);
+  line-height: 1.45;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Each authored paragraph cross-dissolves into the next rather than cutting, matching the
+   unhurried pace of the rest of the intro. */
+.wolves-intro-title-card-quote-fade-enter-active,
+.wolves-intro-title-card-quote-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.wolves-intro-title-card-quote-fade-enter-from,
+.wolves-intro-title-card-quote-fade-leave-to {
+  opacity: 0;
 }
 
 .wolves-intro-overlay-background-day {

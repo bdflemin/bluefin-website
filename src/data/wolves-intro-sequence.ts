@@ -46,6 +46,16 @@ export interface IntroOverlayTextCue {
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
   readonly comicHeroTitleCard?: boolean
   /**
+   * Renders the opening title card's lower third: the Ghosts In The Mist guardian nameplate
+   * (crest, horizon rules, gradient name, subtitle) with this cue's `text` as the quote body
+   * beneath it, rather than the standard centered caption. The quote is rendered verbatim,
+   * paragraph-split on blank lines, and is never run through the theater punctuation strip.
+   */
+  readonly titlePlate?: {
+    readonly name: string
+    readonly subtitle: string
+  }
+  /**
    * Day/night crossfade background(s) shown behind the text for this cue only. Accepts one or
    * more stages: a single-stage cue crossfades day->night once over its full duration; a
    * multi-stage cue splits its duration evenly across stages, crossfading day->night within
@@ -402,6 +412,13 @@ export const PROLOGUE_TEXT_FADE_SECONDS = 7.8
 export const PROLOGUE_SCENE_CROSSFADE_SECONDS = PROLOGUE_TEXT_FADE_SECONDS / 2
 
 /**
+ * The recovered full-resolution Flickr original of the orange-shirt stage photo (2048x1365),
+ * used as the opening title card's backdrop. The earlier low-resolution copy was replaced
+ * from the Amsterdam gallery; do not swap this back to a thumbnail-sized source.
+ */
+const OPENING_TITLE_CARD_IMAGE = 'img/wallpapers/wolves/people/Yikes!.webp'
+
+/**
  * The sequence played before the live playlist experience begins:
  *
  * `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
@@ -416,8 +433,59 @@ export const PROLOGUE_SCENE_CROSSFADE_SECONDS = PROLOGUE_TEXT_FADE_SECONDS / 2
  * `startSoundtrack()` already starts once this sequence completes, so there is no separate
  * local hero video to chain here.
  */
+/**
+ * The opening title card, played before the Destiny trailer.
+ *
+ * Deliberately silent: it is the presenter's own welcome slide, so the room hears the
+ * speaker rather than a music bed, and the segment simply fades into the Destiny video
+ * when it ends. The nameplate replicates the Ghosts In The Mist lower third
+ * (`src/data/wolves-gallery-featured.ts`) with the guardian class and honorifics dropped
+ * per explicit user request (2026-08-06) — just the name and one affiliation subtitle.
+ *
+ * The quote is authored verbatim and must stay that way: it names a real device count and
+ * two real foundations, so paraphrasing it would misstate fact from the stage.
+ */
+function buildOpeningTitleCardSegment(): IntroTextSegment {
+  const parts = [
+    'Welcome Linux gamers. As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
+    'This summer the Apache Foundation and CNCF Collided. Buildstream, Kubernetes, and bootc. None of you have any idea of what that means. But let\'s just say ...',
+    'It\'s time to meet your new teammates. The people who supported us when we needed them the most. And now we fight together for a better Linux. But we need your help. Meet my friends. Greatness awaits.',
+  ]
+  // One window per paragraph, sized for a room reading from theater seats while the
+  // presenter speaks over it. The final beat runs longest so "Greatness awaits." is still
+  // on screen as the Destiny video takes over.
+  const windows = [14, 15, 17]
+  const titlePlate = {
+    name: 'Jorge Castro',
+    subtitle: 'Project Bluefin // Universal Blue (Emeritus)',
+  } as const
+
+  let start = 0
+  const overlays = parts.map((text, index) => {
+    const end = start + windows[index]
+    const cue: IntroOverlayTextCue = {
+      text,
+      start,
+      end,
+      titlePlate,
+      backgroundImage: OPENING_TITLE_CARD_IMAGE,
+      preservePunctuation: true,
+    }
+    start = end
+    return cue
+  })
+
+  return {
+    id: 'wolves-title-card',
+    kind: 'text',
+    duration: start,
+    overlays,
+  }
+}
+
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
+    buildOpeningTitleCardSegment(),
     {
       // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
       // toggle. Guardian window timings below were re-verified frame-by-frame
@@ -495,6 +563,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
  */
 export function buildDirectorsCutVideoSequence(): readonly IntroVideoSpec[] {
   return [
+    buildOpeningTitleCardSegment(),
     {
       id: 'wolves-prologue',
       kind: 'text',

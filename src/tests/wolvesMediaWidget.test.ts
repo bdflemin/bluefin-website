@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
+/** Mirrors the widget's own clock formatting so expectations track the real timeline. */
+function mmss(seconds: number): string {
+  const whole = Math.floor(seconds)
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
+}
+
 describe('media widget', () => {
   beforeEach(() => {
     const pinia = createPinia()
@@ -25,7 +31,10 @@ describe('media widget', () => {
     expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe(String(Math.round(store.segmentProgress * 100)))
     expect(wrapper.text()).not.toContain('DEPLOYMENT: five-years-of-universal-blue')
     expect(wrapper.text()).toContain('0:10 / 4:31')
-    expect(wrapper.text()).toContain('TOTAL 28:45 / 32:29')
+    // Derived rather than hard-coded: the overall timeline is the sum of every authored
+    // intro segment, so adding or retiming one (e.g. the opening title card) shifts these
+    // totals. A literal here silently rots the moment the sequence changes.
+    expect(wrapper.text()).toContain(`TOTAL ${mmss(store.overallElapsed)} / ${mmss(store.overallDuration)}`)
   })
 
   it('shows contributor slogans and randomizes Nova glitches in Track 1’s final stretch', async () => {

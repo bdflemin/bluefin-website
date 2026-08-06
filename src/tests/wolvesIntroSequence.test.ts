@@ -166,12 +166,53 @@ describe('wolves intro overlay sequence', () => {
     ])
   })
 
-  it('starts directly with the Destiny trailer', () => {
+  it('opens on the silent title card and then runs the Destiny trailer', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(1)
-    expect(sequence.map(segment => segment.id)).toEqual(['wolves-intro'])
+    expect(sequence).toHaveLength(2)
+    expect(sequence.map(segment => segment.id)).toEqual(['wolves-title-card', 'wolves-intro'])
     expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
     expect(JSON.stringify(sequence)).not.toContain('Bluefin Cinematic Universe')
+  })
+
+  it('gives the opening title card the recovered orange portrait, the plain nameplate and no music bed', () => {
+    const card = buildIntroVideoSequence()[0]
+    if (!card || !isTextSegment(card)) {
+      throw new Error('Expected the opening title card to be a text segment')
+    }
+
+    // Silent by design: the presenter speaks over this slide, so any audio here would
+    // fight the person on stage.
+    expect(card.audioYoutubeVideoId).toBeUndefined()
+    expect(card.overlays).toBeDefined()
+    expect(card.overlays!.length).toBe(3)
+    expect(card.duration).toBe(46)
+
+    for (const cue of card.overlays!) {
+      expect(cue.backgroundImage).toBe('img/wallpapers/wolves/people/Yikes!.webp')
+      // The quote names real figures and organisations, so it must never be run through
+      // the theater punctuation strip.
+      expect(cue.preservePunctuation).toBe(true)
+      expect(cue.titlePlate).toEqual({
+        name: 'Jorge Castro',
+        subtitle: 'Project Bluefin // Universal Blue (Emeritus)',
+      })
+    }
+
+    // The cues tile the segment without gaps or overlaps, so no paragraph is skipped.
+    expect(card.overlays!.map(cue => [cue.start, cue.end])).toEqual([[0, 14], [14, 29], [29, 46]])
+  })
+
+  it('keeps the opening title card quote verbatim', () => {
+    const card = buildIntroVideoSequence()[0]
+    if (!card || !isTextSegment(card)) {
+      throw new Error('Expected the opening title card to be a text segment')
+    }
+
+    expect(card.overlays!.map(cue => cue.text)).toEqual([
+      'Welcome Linux gamers. As we celebrate 100k weekly Bazzite devices I\'d like to take the time to explain who we are.',
+      'This summer the Apache Foundation and CNCF Collided. Buildstream, Kubernetes, and bootc. None of you have any idea of what that means. But let\'s just say ...',
+      'It\'s time to meet your new teammates. The people who supported us when we needed them the most. And now we fight together for a better Linux. But we need your help. Meet my friends. Greatness awaits.',
+    ])
   })
 
   it('defaults the Destiny segment to the unvoiced source and keeps the Ikora track optional', () => {

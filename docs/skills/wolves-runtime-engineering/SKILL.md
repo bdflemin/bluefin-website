@@ -182,6 +182,58 @@ Re-derive the unified Track 0 queue and finale timing from source with:
 npm run test:run -- src/tests/wolvesThesisSequence.test.ts
 ```
 
+## The intro sequence is a list, and things count it
+
+`buildIntroVideoSequence()` in `src/data/wolves-intro-sequence.ts` is the
+authored intro. It is no longer a single Destiny segment: it opens on
+`wolves-title-card`, a silent text segment carrying the presenter's welcome
+slide, and then runs `wolves-intro`.
+
+Adding or retiming a segment here has reach beyond the overlay, because
+`src/stores/cinematic.ts` derives `overallDuration` by summing every segment
+(`INTRO_SEGMENTS = buildIntroVideoSequence()`). The transport widget's
+`TOTAL m:ss / m:ss` readout is computed from that sum, so a new segment changes
+strings that tests assert. `wolvesMediaWidget.test.ts` hard-coded
+`TOTAL 28:45 / 32:29` and broke the moment a 46 s card was prepended. It now
+derives the expectation from `store.overallElapsed` / `store.overallDuration`
+instead. **Do not reintroduce literal clock strings in intro tests** — they rot
+silently the next time the sequence changes, which is the same failure mode that
+already bit the `119.5` / `1952.5` duration literals.
+
+`buildDirectorsCutVideoSequence()` is a second, separate list. A segment meant to
+open the show must be prepended to **both** or the Director's Cut will not have
+it.
+
+## The overlay renders exactly one text treatment at a time
+
+`isSomberTextSegment` (true for every `kind: 'text'` segment) switches the
+overlay between two mutually exclusive branches: the guardian-plate block for
+video segments, and a single centered `<p>` for text segments. A cue that needs
+its own layout therefore has to both add its block *and* suppress the default
+`<p>`, or the same words paint twice. The `titlePlate` cue does this via
+`v-else-if="overlayText && !activeTitlePlateCue"`.
+
+Two further traps when adding an overlay layer:
+
+- **Cue background images are dimmed to `opacity: 0.55`** by
+  `.wolves-intro-overlay-background`, because they are normally backdrops for
+  text. When the photo *is* the slide, override it (the title card uses `0.92`)
+  or the subject looks washed out.
+- **The transport widget is `position: fixed`, `z-index: 1000`, and sits in the
+  bottom ~100 px.** It outranks the overlay's own `z-index: 999`, so any
+  bottom-anchored overlay content collides with it. The first title-card layout
+  put the quote directly underneath the progress bar. It auto-hides after 3 s of
+  pointer inactivity (`auto-hide` in `WolvesApp.vue`), which is exactly why the
+  collision is easy to miss — screenshot within 3 s of a click to see it, and
+  assert `getBoundingClientRect()` overlap between `.wc-widget` and the new
+  element rather than trusting a single screenshot.
+
+Remember `html { font-size: 63.5% }` in `src/style/index.scss`: `1rem` is about
+`10.16px`, not `16px`. A `clamp(1.15rem, …)` body size that looks reasonable in
+the stylesheet renders at roughly `12px` — far too small for theater seats.
+Measure `getComputedStyle(el).fontSize` in the browser instead of reading the
+clamp.
+
 ## Driving Track 0 in a browser
 
 Reaching Track 0 in Chromium is not automatic. The standalone Playwright scripts
