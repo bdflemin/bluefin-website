@@ -433,11 +433,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/Yikes!.webp',
-    title: 'Yikes!',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/abigailcabunoc30360.web_.webp',
     title: 'Abigailcabunoc30360',
   },

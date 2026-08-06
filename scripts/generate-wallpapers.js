@@ -287,13 +287,25 @@ function dayNightNames(stem, dayFile, nightFile) {
   }
 }
 
+// Images that already have a dedicated moment in the show and would otherwise appear a
+// second time as an anonymous gallery slide. The files stay on disk because their dedicated
+// slide loads them by path; they are only withheld from the generated gallery list.
+const RESERVED_FOR_DEDICATED_SLIDES = {
+  // The opening title card portrait, used by buildOpeningTitleCardSegment().
+  people: new Set(['Yikes!.webp']),
+}
+
 async function scanDirectory(subfolder) {
   try {
     const dirPath = join(BASE_WALLPAPERS_DIR, subfolder)
     const files = await readdir(dirPath)
+    const reserved = RESERVED_FOR_DEDICATED_SLIDES[subfolder] ?? new Set()
     // Filter out directories and non-image files (animated gifs play fine in
     // the slideshow's plain <img> elements, so they are first-class slides).
-    return files.filter(file => /\.(?:webp|png|jpg|jpeg|gif)$/i.test(file)).sort()
+    return files
+      .filter(file => /\.(?:webp|png|jpg|jpeg|gif)$/i.test(file))
+      .filter(file => !reserved.has(file))
+      .sort()
   }
   catch (err) {
     console.warn(`Warning: Could not read directory ${subfolder}:`, err.message)
