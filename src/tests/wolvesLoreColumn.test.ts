@@ -313,7 +313,7 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.find('[data-chatlog-project-panel]').exists()).toBe(false)
   })
 
-  it('renders a complete long quote without audience pagination or controls', () => {
+  it('automatically holds complete quote pages without audience controls', async () => {
     const record = loreRecords
       .filter(record => record.kind === 'quote')
       .reduce((longest, record) => record.body.length > longest.body.length ? record : longest)
@@ -330,8 +330,15 @@ describe('wolvesLoreColumn Logic', () => {
     const viewport = wrapper.get('.quote-viewport')
 
     expect(viewport.attributes('onClick')).toBeUndefined()
-    expect(wrapper.get('.lore-quote-text').text()).toBe(record.body.trim())
-    expect(wrapper.find('[data-quote-beat-index]').exists()).toBe(false)
+    const firstPage = wrapper.get('.lore-quote-text').text()
+    expect(record.body).toContain(firstPage)
+    expect(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')).toBe('0')
+
+    await wrapper.setProps({ elapsed: 1 })
+    expect(wrapper.get('.lore-quote-text').text()).toBe(firstPage)
+
+    await wrapper.setProps({ elapsed: 10 })
+    expect(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')).not.toBe('0')
   })
 
   it('reveals the Golden Era vision and preserves Sarah pacing without narrative controls', async () => {

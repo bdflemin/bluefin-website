@@ -2,10 +2,27 @@
 import type { LoreViewProps } from '../lore'
 import { computed } from 'vue'
 import { getQuoteLore } from '../lore'
+import { splitReadableBeats } from './readable-beats'
 
 const props = defineProps<LoreViewProps>()
 
 const quote = computed(() => getQuoteLore(props.record))
+const quoteBeats = computed(() => splitReadableBeats(quote.value.quote, 110))
+const quoteBeatCosts = computed(() => quoteBeats.value.map(beat =>
+  Math.max(4, beat.trim().split(/\s+/).filter(Boolean).length / 3 + 2),
+))
+const activeBeatIndex = computed(() => {
+  const elapsed = Math.max(0, props.elapsed ?? 0)
+  let consumed = 0
+  for (const [index, cost] of quoteBeatCosts.value.entries()) {
+    consumed += cost
+    if (elapsed < consumed) {
+      return index
+    }
+  }
+  return Math.max(0, quoteBeats.value.length - 1)
+})
+const activeQuoteBeat = computed(() => quoteBeats.value[activeBeatIndex.value] ?? quote.value.quote)
 </script>
 
 <template>
@@ -25,8 +42,8 @@ const quote = computed(() => getQuoteLore(props.record))
               <div class="lore-quote-mark">
                 &ldquo;
               </div>
-              <p class="lore-quote-text">
-                {{ quote.quote }}
+              <p class="lore-quote-text" :data-quote-beat-index="activeBeatIndex">
+                {{ activeQuoteBeat }}
               </p>
               <div class="lore-quote-meta">
                 <strong>{{ quote.attribution }}</strong>

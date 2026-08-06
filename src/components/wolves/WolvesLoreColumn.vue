@@ -62,7 +62,7 @@ watch(
     const progress = props.duration > 0
       ? Math.min(1, Math.max(0, (props.elapsed ?? 0) / props.duration))
       : 0
-    for (const surface of feed.value?.querySelectorAll<HTMLElement>('.quote-viewport, .lore-dossier-panel') ?? []) {
+    for (const surface of feed.value?.querySelectorAll<HTMLElement>('.lore-dossier-panel') ?? []) {
       surface.scrollTop = (surface.scrollHeight - surface.clientHeight) * progress
     }
   },

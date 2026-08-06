@@ -68,9 +68,9 @@ playable track from being treated as an unidentified player request.
   pages. Show one complete readable beat at a time, retain the speaker header
   on continued chat beats, and automatically type, hold, then replace it; do
   not accumulate important text behind an overflow viewport.
-- Lore surfaces must never expose a scrollbar. When a complete quote or dossier
-  exceeds its viewport, advance its hidden scroll position from the active
-  player clock over the scheduled record window; audience input is never a
+- Lore surfaces must never expose a scrollbar. Quotes advance from the active
+  player clock as complete sentence- or word-bounded pages, held for their
+  reading cost before automatic replacement; audience input is never a
   narrative dependency.
 - Fast music or slideshow slots must not accelerate ordinary chat typing; keep
   explicitly approved dialogue cadence anchors unchanged.
