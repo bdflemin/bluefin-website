@@ -70,6 +70,9 @@ playable track from being treated as an unidentified player request.
   not accumulate important text behind an overflow viewport.
 - Fast music or slideshow slots must not accelerate ordinary chat typing; keep
   explicitly approved dialogue cadence anchors unchanged.
+- For a locked chat window, use its full player-clock duration when it exceeds
+  the minimum readability estimate. This retains the final sentence through
+  the authored endpoint instead of releasing a couch-readable chat early.
 - When a narrative range is constrained, allocate chatlog readability before
   static quote or source records; preserve explicitly approved cadence locks.
 - The authored final conversation remains noninteractive after its key line is

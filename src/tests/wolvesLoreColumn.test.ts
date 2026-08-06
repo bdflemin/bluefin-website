@@ -408,6 +408,22 @@ describe('wolvesLoreColumn Logic', () => {
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
+  it('uses the full locked Golden Era window before releasing Sarah’s final sentence', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'lorem-pursuit-1',
+        duration: 70,
+      },
+    })
+
+    await vi.advanceTimersByTimeAsync(65_000)
+    expect(wrapper.emitted('chat-complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(wrapper.emitted('chat-complete')).toHaveLength(1)
+  })
+
   it('keeps the finale chat noninteractive after its key line is revealed', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {

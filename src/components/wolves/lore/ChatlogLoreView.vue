@@ -67,17 +67,23 @@ function runTypewriter() {
 
   let stepTime = 35
   {
+    const usesLockedPlaybackBudget = props.record.id === CLIMAX_ARTIFACT_ID
     const minimumReadSeconds = estimateLoreReadDuration({
       kind: 'chatlog',
       body: conversation.value.messages.map(message => message.text).join(' '),
       attribution: conversation.value.channel,
     })
-    const readableBudgetMs = Math.max(1, minimumReadSeconds * 1000 * 0.7)
+    const readableBudgetMs = usesLockedPlaybackBudget
+      ? Math.max(minimumReadSeconds * 1000, props.duration * 1000)
+      : minimumReadSeconds * 1000 * 0.7
     const climaxCueDuration = props.record.id === CLIMAX_ARTIFACT_ID
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
       : 0
+    const reservedCompletionDuration = usesLockedPlaybackBudget
+      ? CHAT_COMPLETION_PAUSE_SECONDS * 1000
+      : 0
     let totalTicks = 0
-    chatlogBeats.value.forEach((beat) => {
+    chatlogBeats.value.forEach((beat, index) => {
       const isSlow = beat.speaker === 'BUR//S' || beat.speaker === 'SARAH'
       totalTicks += beat.text.length
       const text = beat.text
@@ -94,8 +100,14 @@ function runTypewriter() {
         }
       }
       totalTicks += isSlow ? 50 : 20
+      if (usesLockedPlaybackBudget && index < chatlogBeats.value.length - 1) {
+        totalTicks += isSlow ? 50 : 20
+      }
     })
-    stepTime = Math.max(5, Math.min(50, Math.max(0, readableBudgetMs - climaxCueDuration) / totalTicks))
+    stepTime = Math.max(
+      5,
+      Math.min(50, Math.max(0, readableBudgetMs - climaxCueDuration - reservedCompletionDuration) / totalTicks),
+    )
   }
 
   let currentLength = 0
