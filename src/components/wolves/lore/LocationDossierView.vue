@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
+import type { LoreSpecEntry } from './LoreRecordHeader.vue'
 import { computed } from 'vue'
 import { renderLoreParagraphs } from '../lore'
+import { pickBlockPage } from './lore-pages'
+import LoreRecordHeader from './LoreRecordHeader.vue'
 
 const props = defineProps<LoreViewProps>()
 
+const spec = computed<LoreSpecEntry[]>(() => [
+  ...props.record.metadata.subject ? [{ key: 'site', value: props.record.metadata.subject }] : [],
+  ...props.record.metadata.affiliation ? [{ key: 'control', value: props.record.metadata.affiliation }] : [],
+  ...props.record.metadata.classification ? [{ key: 'classification', value: props.record.metadata.classification }] : [],
+])
+
 const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
+const page = computed(() => pickBlockPage(paragraphs.value, para => para, props.elapsed, props.duration))
 </script>
 
 <template>
@@ -13,45 +23,11 @@ const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
     class="lore-dossier-panel"
     data-lore-view="location-dossier"
   >
-    <header class="lore-dossier-header">
-      <p class="lore-dossier-eyebrow">
-        LOCATION DOSSIER
-      </p>
-      <h2 v-if="record.metadata.title" class="lore-dossier-title">
-        {{ record.metadata.title }}
-      </h2>
-    </header>
+    <LoreRecordHeader eyebrow="LOCATION DOSSIER" :title="record.metadata.title" :spec="spec" />
 
-    <dl class="lore-spec lore-spec--boxed">
-      <div v-if="record.metadata.subject">
-        <dt>
-          site:
-        </dt>
-        <dd>
-          {{ record.metadata.subject }}
-        </dd>
-      </div>
-      <div v-if="record.metadata.affiliation">
-        <dt>
-          control:
-        </dt>
-        <dd>
-          {{ record.metadata.affiliation }}
-        </dd>
-      </div>
-      <div v-if="record.metadata.classification">
-        <dt>
-          classification:
-        </dt>
-        <dd>
-          {{ record.metadata.classification }}
-        </dd>
-      </div>
-    </dl>
-
-    <article class="lore-dossier-body">
+    <article class="lore-dossier-body" :data-lore-page-index="page.index">
       <p
-        v-for="(para, index) in paragraphs"
+        v-for="(para, index) in page.blocks"
         :key="index"
 
         v-html="para"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
-import { CHAT_COMPLETION_PAUSE_SECONDS } from '../data/wolves-lore-timing'
+import { CHAT_COMPLETION_PAUSE_SECONDS, loreRecordPages } from '../data/wolves-lore-timing'
 import {
   getNarrativeSlotForTime,
   lockedNarrativeSlots,
@@ -99,12 +100,17 @@ describe('wolves narrative timeline', () => {
     }
   })
 
-  it('gives every Arthur C. Clarke quote a readable unlocked duration', () => {
+  it('gives every Arthur C. Clarke quote its full readable page', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+
     for (const artifactId of ['arthur-c-clarke-1', 'arthur-c-clarke-2', 'arthur-c-clarke-3']) {
       const slot = wolvesNarrativeTimeline.find(slot => slot.artifactId === artifactId)
+      const pages = loreRecordPages({ kind: 'quote', body: records.get(artifactId)?.body ?? '' })
 
       expect(slot).toBeDefined()
-      expect(slot!.endTime - slot!.startTime).toBeGreaterThanOrEqual(15)
+      // A quote holds one complete page for its own reading cost; the old
+      // fifteen-second constant is replaced by the shared page model.
+      expect(slot!.endTime - slot!.startTime).toBeGreaterThanOrEqual(estimatePageSeconds(pages[0]!) - 1e-8)
     }
   })
 

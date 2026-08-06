@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { CHAT_COMPLETION_PAUSE_SECONDS, estimateLoreReadDuration } from '@/data/wolves-lore-timing'
+import { CHAT_COMPLETION_PAUSE_SECONDS } from '@/data/wolves-lore-timing'
 import { getChatlogLore } from '../lore'
+import { CHAT_PAGE_CHARACTERS, estimatePagesSeconds } from './lore-pages'
+import LoreRecordHeader from './LoreRecordHeader.vue'
 import { splitReadableBeats } from './readable-beats'
 
 const props = defineProps<LoreViewProps>()
@@ -21,7 +23,6 @@ const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
 const CLIMAX_SPEAKER = 'BUR//S'
 const CLIMAX_HOLD_MS = 3000
 const CLIMAX_FADE_MS = 1000
-const CHATLOG_BEAT_MAXIMUM_CHARACTERS = 120
 
 interface ChatlogBeat {
   messageIndex: number
@@ -35,7 +36,7 @@ interface ChatlogBeat {
 
 const chatlogBeats = computed<ChatlogBeat[]>(() =>
   conversation.value.messages.flatMap((message, messageIndex) =>
-    splitReadableBeats(message.text, CHATLOG_BEAT_MAXIMUM_CHARACTERS).map((text, beatIndex) => ({
+    splitReadableBeats(message.text, CHAT_PAGE_CHARACTERS).map((text, beatIndex) => ({
       ...message,
       text,
       messageIndex,
@@ -48,6 +49,10 @@ const activeBeat = computed(() => chatlogBeats.value[activeBeatIndex.value] ?? n
 const climaxMessageIndex = computed(() => props.record.id === CLIMAX_ARTIFACT_ID
   ? conversation.value.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
   : -1)
+const headerSpec = computed(() => [
+  ...conversation.value.channel ? [{ key: 'channel', value: conversation.value.channel }] : [],
+  ...conversation.value.date ? [{ key: 'date', value: conversation.value.date }] : [],
+])
 
 function clearTypewriter() {
   if (typewriterTimer) {
@@ -67,13 +72,14 @@ function runTypewriter() {
   let stepTime = 35
   {
     const usesLockedPlaybackBudget = props.record.id === CLIMAX_ARTIFACT_ID
-    const minimumReadSeconds = estimateLoreReadDuration({
-      kind: 'chatlog',
-      body: conversation.value.messages.map(message => message.text).join(' '),
-      attribution: conversation.value.channel,
-    })
+    // Chat pages cost the same as every other lore page, plus the hold after
+    // the final line.
+    const minimumReadSeconds = estimatePagesSeconds(chatlogBeats.value.map(beat => beat.text))
+      + CHAT_COMPLETION_PAUSE_SECONDS
+    // A locked conversation owns its authored window: it spends exactly the
+    // player-clock duration so the final sentence lands on the music.
     const readableBudgetMs = usesLockedPlaybackBudget
-      ? Math.max(minimumReadSeconds * 1000, props.duration * 1000)
+      ? (props.duration > 1 ? props.duration * 1000 : minimumReadSeconds * 1000)
       : minimumReadSeconds * 1000 * 0.7
     const climaxCueDuration = props.record.id === CLIMAX_ARTIFACT_ID
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
@@ -223,296 +229,57 @@ onBeforeUnmount(clearTypewriter)
 <template>
   <section
     id="intercepted-communications"
-    class="dispatch-quote-section comic-reader-section"
+    class="lore-dossier-panel"
+    data-lore-view="chatlog"
     data-lore-view-kind="chatlog"
   >
-    <div class="dispatch-quote-card">
-      <div class="quote-viewport">
-        <p v-if="warning" class="thesis-warning">
-          {{ warning }}
-        </p>
-        <Transition name="quote-fade">
-          <div :key="record.id" class="conversation-rotator">
-            <div class="conversation-heading">
-              <span>{{ conversation.channel }}</span>
-              <time :datetime="conversation.date">{{ conversation.date }}</time>
-            </div>
-            <h3 class="conversation-title">
-              {{ conversation.title }}
-            </h3>
-            <ol class="conversation-messages">
-              <li
-                v-if="activeBeat"
-                :key="`${record.id}-${activeBeat.messageIndex}-${activeBeat.beatIndex}`"
-                class="conversation-message"
-                :class="{ 'sfx-message': activeBeat.isSfx }"
-                :data-chatlog-beat-index="activeBeatIndex"
-                :data-chatlog-message-index="activeBeat.messageIndex"
-                :data-chatlog-beat-continuation="activeBeat.isContinuation"
-              >
-                <p v-if="activeBeat.isSfx" class="sfx-text">
-                  {{ typedBeatText }}
-                </p>
-                <template v-else>
-                  <div class="conversation-message-header">
-                    <span class="conversation-speaker">{{ activeBeat.speaker }}</span>
-                    <time v-if="activeBeat.timestamp">{{ activeBeat.timestamp }}</time>
-                  </div>
-                  <p v-if="typedBeatText || (activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence)">
-                    {{ typedBeatText }}
-                    <Transition name="climax-fade">
-                      <span
-                        v-if="activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence"
-                        class="climax-sentence"
-                      >{{ revealedClimaxSentence }}</span>
-                    </Transition>
-                  </p>
-                </template>
-              </li>
-            </ol>
-          </div>
-        </Transition>
-      </div>
+    <LoreRecordHeader
+      eyebrow="TRANSMISSION"
+      :title="conversation.title"
+      :spec="headerSpec"
+    />
+
+    <aside
+      v-if="warning"
+      class="lore-dossier-warning thesis-warning-fade"
+      data-lore-warning
+    >
+      {{ warning }}
+    </aside>
+
+    <div class="quote-viewport">
+      <Transition name="quote-fade">
+        <ol :key="record.id" class="conversation-messages">
+          <li
+            v-if="activeBeat"
+            :key="`${record.id}-${activeBeat.messageIndex}-${activeBeat.beatIndex}`"
+            class="conversation-message"
+            :class="{ 'sfx-message': activeBeat.isSfx }"
+            :data-chatlog-beat-index="activeBeatIndex"
+            :data-chatlog-message-index="activeBeat.messageIndex"
+            :data-chatlog-beat-continuation="activeBeat.isContinuation"
+          >
+            <p v-if="activeBeat.isSfx" class="sfx-text">
+              {{ typedBeatText }}
+            </p>
+            <template v-else>
+              <div class="conversation-message-header">
+                <span class="conversation-speaker">{{ activeBeat.speaker }}</span>
+                <time v-if="activeBeat.timestamp">{{ activeBeat.timestamp }}</time>
+              </div>
+              <p v-if="typedBeatText || (activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence)">
+                {{ typedBeatText }}
+                <Transition name="climax-fade">
+                  <span
+                    v-if="activeBeat.messageIndex === climaxMessageIndex && revealedClimaxSentence"
+                    class="climax-sentence"
+                  >{{ revealedClimaxSentence }}</span>
+                </Transition>
+              </p>
+            </template>
+          </li>
+        </ol>
+      </Transition>
     </div>
   </section>
 </template>
-
-<style scoped lang="scss">
-.dispatch-quote-section {
-  @media (min-width: 1024px) {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-}
-
-.dispatch-quote-card {
-  background-color: #10151f;
-  border: 1px solid #272727;
-  padding: 16px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: relative;
-  width: 100%;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  transition:
-    border-color 0.3s,
-    box-shadow 0.3s;
-  overflow: hidden;
-
-  @media (min-width: 1024px) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .conversation-project-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .conversation-project-tab {
-    border: 1px solid rgba(102, 179, 255, 0.25);
-    border-radius: 999px;
-    background: transparent;
-    color: #94a3b8;
-    cursor: pointer;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    font-size: 0.95rem;
-    font-weight: 700;
-    padding: 6px 12px;
-
-    &.active {
-      border-color: rgba(102, 179, 255, 0.55);
-      background: rgba(59, 130, 246, 0.14);
-      color: #ffffff;
-    }
-  }
-
-  &:hover {
-    border-color: rgba(var(--color-blue-rgb), 0.4);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  }
-}
-
-.quote-viewport {
-  position: relative;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-
-  .thesis-warning {
-    margin: 0 0 18px;
-    border-left: 2px solid var(--color-blue-light);
-    padding-left: 12px;
-    color: #d9f4ff;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    font-size: 1.3rem;
-    font-style: italic;
-    line-height: 1.6;
-    opacity: 0.8;
-    animation: thesis-warning-fade 20s linear forwards;
-  }
-
-  @keyframes thesis-warning-fade {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0.35;
-    }
-  }
-}
-
-.conversation-rotator {
-  position: relative;
-  padding-top: 4px;
-  padding-right: 4px;
-}
-
-.conversation-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.25);
-  padding-bottom: 8px;
-  color: var(--color-blue-light);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
-}
-
-.conversation-title {
-  margin: 16px 0 20px;
-  color: #ffffff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.35rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.conversation-messages {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.conversation-project-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.project-summary,
-.project-facts,
-.project-links {
-  margin: 0;
-  color: #e2e8f0;
-  line-height: 1.6;
-}
-
-.project-facts {
-  padding-left: 20px;
-}
-
-.project-links {
-  display: grid;
-  gap: 8px;
-
-  dt {
-    color: #7dd3fc;
-    font-size: 0.95rem;
-    letter-spacing: 0.08em;
-  }
-
-  dd {
-    margin: 0;
-  }
-
-  a {
-    color: #ffffff;
-    overflow-wrap: anywhere;
-    text-decoration: none;
-  }
-}
-
-.conversation-message {
-  border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
-  padding-left: 16px;
-}
-
-.sfx-message {
-  border-left: none;
-  padding-left: 0;
-  text-align: center;
-  margin: 10px 0;
-}
-
-.sfx-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  color: var(--color-blue-light);
-  font-style: italic;
-  font-size: 0.95rem;
-  letter-spacing: 0.1em;
-  opacity: 0.8;
-  margin: 0;
-}
-
-.conversation-message-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--color-blue);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 0.95rem;
-  letter-spacing: 0.06em;
-}
-
-.conversation-message-header time {
-  color: rgba(189, 189, 189, 0.65);
-}
-
-.conversation-message p {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.35rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
-
-.climax-sentence {
-  display: inline;
-}
-
-.climax-fade-enter-active {
-  transition: opacity 1s linear;
-}
-
-.climax-fade-enter-from {
-  opacity: 0;
-}
-
-.quote-fade-enter-active,
-.quote-fade-leave-active {
-  transition: opacity 0.5s ease-in-out;
-}
-
-.quote-fade-leave-active {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-}
-
-.quote-fade-enter-from,
-.quote-fade-leave-to {
-  opacity: 0;
-}
-</style>

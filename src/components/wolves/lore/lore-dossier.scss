@@ -1,7 +1,24 @@
 // Shared dossier panel styles for the Wolves lore views.
-// One token set for every record kind: panel, header, spec list, body, footer.
+//
+// One panel, one metadata block, one type scale, for every record kind. The
+// lore column is read from theater seats, so body copy is sized for the back
+// row and no surface scrolls: content is paged by the player clock instead.
 
 .lore-dossier-panel {
+  // The single theater type scale. No view may hardcode a body font size.
+  //
+  // Sizes are container-relative (cqi = 1% of the panel's inline size) so the
+  // type tracks the panel the theater layout actually hands us instead of the
+  // viewport. Note this site sets `html { font-size: 63.5% }`, so 1rem is
+  // ~10.16px, not 16px: the rem bounds below are deliberately large.
+  --lore-body-size: clamp(1.4rem, 4.2cqi, 2.8rem);
+  --lore-title-size: clamp(1.3rem, 3.2cqi, 2.2rem);
+  --lore-meta-size: clamp(0.95rem, 2cqi, 1.4rem);
+  --lore-line-height: 1.35;
+  --lore-gap: 2.4cqi;
+  --lore-rule: 1px solid rgba(var(--color-blue-rgb), 0.35);
+
+  container-type: inline-size;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -9,7 +26,7 @@
   overflow: hidden;
   border: 1px solid #272727;
   border-radius: 16px;
-  padding: 16px;
+  padding: var(--lore-gap);
   background: #10151f;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   color: rgba(255, 255, 255, 0.9);
@@ -17,39 +34,36 @@
 }
 
 .lore-dossier-header {
-  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.35);
-  padding-bottom: 12px;
+  border-bottom: var(--lore-rule);
+  padding-bottom: calc(var(--lore-gap) * 0.7);
 }
 
 .lore-dossier-eyebrow {
   margin: 0;
   color: var(--color-blue-light);
-  font-size: 0.95rem;
+  font-size: var(--lore-meta-size);
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 .lore-dossier-title {
-  margin: 8px 0 0;
+  margin: calc(var(--lore-gap) * 0.4) 0 0;
   color: #ffffff;
-  font-size: 1.35rem;
+  font-size: var(--lore-title-size);
   font-weight: bold;
   letter-spacing: 0.05em;
-}
-
-.lore-dossier-subtitle {
-  margin: 12px 0 0;
-  color: #e2e8f0;
-  font-size: 1.05rem;
-  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .lore-spec {
-  display: grid;
-  gap: 4px;
-  margin: 16px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--lore-gap);
+  row-gap: 4px;
+  margin: calc(var(--lore-gap) * 0.5) 0 0;
   color: #cbd5e1;
-  font-size: 1rem;
+  font-size: var(--lore-meta-size);
+  line-height: 1.4;
 
   > div {
     margin: 0;
@@ -64,13 +78,15 @@
     display: inline;
     margin: 0;
   }
-}
 
-.lore-spec--inline {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 16px;
-  row-gap: 4px;
+  strong {
+    color: var(--color-blue);
+    font-weight: bold;
+  }
+
+  time {
+    color: rgba(189, 189, 189, 0.7);
+  }
 }
 
 .lore-spec-key {
@@ -78,8 +94,11 @@
 }
 
 .lore-spec--boxed {
+  display: grid;
+  gap: 4px;
   border: 1px solid rgba(var(--color-blue-rgb), 0.25);
   border-radius: 8px;
+  margin: 16px 0 0;
   padding: 12px;
   background: rgba(0, 0, 0, 0.2);
 }
@@ -89,7 +108,7 @@
   margin: 16px 0 0;
   padding-left: 12px;
   color: #94a3b8;
-  font-size: 1rem;
+  font-size: var(--lore-meta-size);
 
   p {
     margin: 0;
@@ -105,16 +124,43 @@
   letter-spacing: 0.05em;
 }
 
-.lore-dossier-body {
-  margin: 16px 0;
+// The single held page. It clips rather than scrolls: the page model is what
+// keeps content inside it, and an audience never operates this surface.
+.lore-dossier-body,
+.quote-viewport {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lore-gap);
+  min-height: 0;
+  overflow: hidden;
+  margin: var(--lore-gap) 0 0;
   color: #f1f5f9;
-  font-size: 1.4rem;
-  line-height: 1.55;
+  font-size: var(--lore-body-size);
+  line-height: var(--lore-line-height);
 
   p {
-    margin: 0 0 16px;
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
     white-space: pre-wrap;
   }
+}
+
+.lore-speaker-name {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-blue-light);
+  font-size: var(--lore-meta-size);
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.lore-speaker-message {
+  border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
+  padding-left: 14px;
 }
 
 .lore-dossier-warning {
@@ -122,17 +168,23 @@
   margin: 16px 0 0;
   padding-left: 12px;
   color: #dbeafe;
-  font-size: 1.1rem;
+  font-size: var(--lore-meta-size);
   font-style: italic;
   line-height: 1.5;
 }
 
-.lore-dossier-footer {
-  border-top: 1px solid rgba(var(--color-blue-rgb), 0.35);
-  margin-top: auto;
-  padding-top: 12px;
-  color: var(--color-blue-light);
-  font-size: 1rem;
+.thesis-warning-fade {
+  animation: thesis-warning-fade 20s linear forwards;
+}
+
+@keyframes thesis-warning-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.35;
+  }
 }
 
 .lore-dossier-figure {
@@ -147,4 +199,109 @@
     object-fit: contain;
     object-position: bottom;
   }
+}
+
+// Quote pages: one mark and one attribution per record, never per page.
+.lore-quote {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lore-quote-mark {
+  color: rgba(var(--color-blue-rgb), 0.28);
+  font-family: Georgia, serif;
+  font-size: calc(var(--lore-body-size) * 1.3);
+  line-height: 1.25;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lore-quote-text {
+  margin: calc(var(--lore-gap) * 0.5) 0 0;
+  color: #ffffff;
+  font-size: var(--lore-body-size);
+  font-style: italic;
+  line-height: var(--lore-line-height);
+}
+
+// Chat pages: one speaker beat at a time, with its header retained.
+.conversation-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lore-gap);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.conversation-message {
+  border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
+  padding-left: 16px;
+}
+
+.conversation-message-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-blue);
+  font-size: var(--lore-meta-size);
+  letter-spacing: 0.06em;
+
+  time {
+    color: rgba(189, 189, 189, 0.65);
+  }
+}
+
+.conversation-message p {
+  margin: 6px 0 0;
+  color: #ffffff;
+  font-size: var(--lore-body-size);
+  line-height: var(--lore-line-height);
+  white-space: pre-wrap;
+}
+
+.sfx-message {
+  border-left: none;
+  padding-left: 0;
+  text-align: center;
+}
+
+.sfx-text {
+  margin: 0;
+  color: var(--color-blue-light);
+  font-size: var(--lore-body-size);
+  font-style: italic;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+.climax-sentence {
+  display: inline;
+}
+
+.climax-fade-enter-active {
+  transition: opacity 1s linear;
+}
+
+.climax-fade-enter-from {
+  opacity: 0;
+}
+
+.quote-fade-enter-active,
+.quote-fade-leave-active {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.quote-fade-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.quote-fade-enter-from,
+.quote-fade-leave-to {
+  opacity: 0;
 }

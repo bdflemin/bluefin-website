@@ -1,6 +1,15 @@
+import { readdir, readFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getChatlogLore, getQuoteLore, loreRecords } from '../components/wolves/lore'
+import {
+  CHAT_PAGE_CHARACTERS,
+  estimatePageSeconds,
+  estimatePagesSeconds,
+  loreProsePages,
+  PROSE_PAGE_CHARACTERS,
+} from '../components/wolves/lore/lore-pages'
 import { splitReadableBeats } from '../components/wolves/lore/readable-beats'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
 import { parseLoreRecord } from '../data/wolves-lore-records'
@@ -225,7 +234,7 @@ describe('wolvesLoreColumn Logic', () => {
     const expectedBeats = new Map(
       chatlog.messages
         .filter(message => message.speaker === 'Adrian' || message.speaker === 'Jordan')
-        .map(message => [message.speaker!, splitReadableBeats(message.text, 120)]),
+        .map(message => [message.speaker!, splitReadableBeats(message.text, CHAT_PAGE_CHARACTERS)]),
     )
     const wrapper = mount(WolvesLoreColumn, {
       props: {
@@ -320,10 +329,14 @@ describe('wolvesLoreColumn Logic', () => {
     if (record.kind !== 'quote') {
       throw new Error('Expected a quote fixture')
     }
+    const pages = loreProsePages(getQuoteLore(record).quote)
+    expect(pages.length).toBeGreaterThan(1)
+    const firstPageSeconds = estimatePageSeconds(pages[0]!)
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,
-        duration: 20,
+        // A slot only ever shows the whole pages it can hold.
+        duration: estimatePagesSeconds(pages),
         elapsed: 0,
       },
     })
@@ -331,14 +344,106 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(viewport.attributes('onClick')).toBeUndefined()
     const firstPage = wrapper.get('.lore-quote-text').text()
-    expect(record.body).toContain(firstPage)
+    expect(firstPage).toBe(pages[0])
     expect(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')).toBe('0')
 
-    await wrapper.setProps({ elapsed: 1 })
+    await wrapper.setProps({ elapsed: firstPageSeconds - 1 })
     expect(wrapper.get('.lore-quote-text').text()).toBe(firstPage)
 
-    await wrapper.setProps({ elapsed: 10 })
+    await wrapper.setProps({ elapsed: firstPageSeconds + 1 })
     expect(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')).not.toBe('0')
+  })
+
+  it('never splits a quote that fits one page', () => {
+    const shortQuotes = loreRecords.filter(record =>
+      record.kind === 'quote' && record.body.length <= PROSE_PAGE_CHARACTERS,
+    )
+
+    expect(shortQuotes.length).toBeGreaterThan(0)
+    for (const record of shortQuotes) {
+      expect(loreProsePages(getQuoteLore(record).quote)).toHaveLength(1)
+    }
+  })
+
+  it('renders one metadata block with the same structure for every lore view', () => {
+    const views = [
+      { artifactId: 'arthur-c-clarke-3', records: undefined },
+      { artifactId: 'lorem-prologue-1', records: undefined },
+      ...wolvesLoreRecordFixtures.map(record => ({
+        artifactId: record.id,
+        records: wolvesLoreRecordFixtures,
+      })),
+    ]
+
+    expect(views).toHaveLength(9)
+    for (const view of views) {
+      const wrapper = mount(WolvesLoreColumn, {
+        props: { artifactId: view.artifactId, duration: 20, records: view.records },
+      })
+
+      const header = wrapper.get('[data-lore-header]')
+      expect(header.element.parentElement?.classList).toContain('lore-dossier-panel')
+      expect(header.get('[data-lore-eyebrow]').text()).toBe(header.get('[data-lore-eyebrow]').text().toUpperCase())
+      expect(header.get('[data-lore-eyebrow]').text()).not.toBe('')
+      expect(header.get('[data-lore-title]').text()).not.toBe('')
+      expect(wrapper.findAll('[data-lore-header]')).toHaveLength(1)
+      // Telemetry footers are noise on a theater screen and stay deleted.
+      expect(wrapper.find('.lore-dossier-footer').exists()).toBe(false)
+    }
+  })
+
+  it('renders the GuardianBond eyebrow as two words', () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'guardian-dinosaur',
+        duration: 20,
+        records: wolvesLoreRecordFixtures,
+      },
+    })
+
+    expect(wrapper.get('[data-lore-eyebrow]').text()).toBe('GUARDIAN BOND')
+  })
+
+  it('never scrolls or pans a lore surface as the player clock advances', async () => {
+    const scrollTop = vi.fn()
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop')
+    Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
+      configurable: true,
+      get: () => 0,
+      set: scrollTop,
+    })
+
+    try {
+      const wrapper = mount(WolvesLoreColumn, {
+        props: { artifactId: 'ishtar-flower-game', duration: 30, elapsed: 0 },
+      })
+
+      for (const elapsed of [5, 10, 20, 29]) {
+        await wrapper.setProps({ elapsed })
+      }
+
+      expect(scrollTop).not.toHaveBeenCalled()
+      expect(wrapper.find('[style*="overflow"]').exists()).toBe(false)
+    }
+    finally {
+      if (descriptor) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollTop', descriptor)
+      }
+    }
+  })
+
+  it('keeps every lore view on the shared theater type scale', async () => {
+    const directory = resolve(process.cwd(), 'src/components/wolves/lore')
+    const views = (await readdir(directory)).filter(name => name.endsWith('.vue'))
+
+    expect(views.length).toBeGreaterThanOrEqual(9)
+    for (const view of views) {
+      const source = await readFile(join(directory, view), 'utf8')
+      const declarations = source.match(/font-size:[^;]+/g) ?? []
+      for (const declaration of declarations) {
+        expect(declaration).toContain('var(--lore-')
+      }
+    }
   })
 
   it('reveals the Golden Era vision and preserves Sarah pacing without narrative controls', async () => {
@@ -456,8 +561,10 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(wrapper.emitted('chat-complete')).toBeUndefined()
     await vi.advanceTimersByTimeAsync(4_000)
+    // The five-second hold after the final line is the guarantee; the trailing
+    // beat pause before it varies with the conversation's typing cadence.
     expect(wrapper.emitted('chat-complete')).toBeUndefined()
-    await vi.advanceTimersByTimeAsync(1_500)
+    await advanceUntil(() => wrapper.emitted('chat-complete') !== undefined, 10_000)
     expect(wrapper.emitted('chat-complete')).toHaveLength(1)
   })
 

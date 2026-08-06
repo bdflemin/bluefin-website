@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 import type { LoreKind, LoreRecord } from '../../data/wolves-lore-records'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { loreRecords } from './lore'
 import ChatlogLoreView from './lore/ChatlogLoreView.vue'
 import DinosaurDossierView from './lore/DinosaurDossierView.vue'
@@ -38,7 +38,6 @@ const loreViewByKind: Record<LoreKind, Component> = {
 }
 
 const records = computed(() => props.records ?? loreRecords)
-const feed = ref<HTMLElement | null>(null)
 
 const currentRecord = computed(() =>
   records.value.find(record => record.id === props.artifactId) ?? null,
@@ -54,25 +53,11 @@ const selectedLoreView = computed(() => {
   }
   return loreViewByKind[record.kind]
 })
-
-watch(
-  () => [props.artifactId, props.elapsed, props.duration],
-  async () => {
-    await nextTick()
-    const progress = props.duration > 0
-      ? Math.min(1, Math.max(0, (props.elapsed ?? 0) / props.duration))
-      : 0
-    for (const surface of feed.value?.querySelectorAll<HTMLElement>('.lore-dossier-panel') ?? []) {
-      surface.scrollTop = (surface.scrollHeight - surface.clientHeight) * progress
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
   <div class="wolves-lore-column">
-    <div ref="feed" class="tab-content flex flex-1 flex-col min-h-0" data-unified-lore-feed>
+    <div class="tab-content flex flex-1 flex-col min-h-0" data-unified-lore-feed>
       <component
         :is="selectedLoreView"
         v-if="currentRecord"

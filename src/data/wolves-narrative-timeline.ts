@@ -31,9 +31,12 @@ const authoredArtifactIds = wolvesRelease.artifacts
 const recordsById = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
 function timingInput(id: string) {
   const record = recordsById.get(id)
+  const kind = record?.kind === 'chatlog'
+    ? 'chatlog' as const
+    : record?.kind === 'quote' ? 'quote' as const : 'prose' as const
   return {
     id,
-    kind: record?.kind === 'chatlog' ? 'chatlog' as const : 'quote' as const,
+    kind,
     body: record?.body ?? id,
     attribution: record?.metadata.attribution ?? record?.metadata.sender,
   }

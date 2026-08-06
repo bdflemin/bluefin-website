@@ -56,6 +56,52 @@ playable track from being treated as an unidentified player request.
 - `../../architecture/runtime-data-flow.md`
 - `../design-gate/SKILL.md`
 
+## Lore display model
+
+The Wolves lore column is a theater text display, not a document. One panel,
+one metadata block, one page model, one type scale, no scrolling.
+
+- `src/components/wolves/lore/lore-pages.ts` is the single page model. Both the
+  scheduler (`src/data/wolves-lore-timing.ts`) and every lore view cost content
+  with it, so an allocated slot always matches what is rendered. Never add a
+  second splitter or a per-view character constant.
+- `src/components/wolves/lore/lore-dossier.scss` owns the only panel and the
+  only type scale. Sizes are container-relative (`cqi` against
+  `.lore-dossier-panel`, which sets `container-type: inline-size`) so type and
+  spacing track the panel the theater layout hands the column, not the viewport.
+  No view may hardcode a body `font-size`; consume `--lore-body-size`,
+  `--lore-title-size`, `--lore-meta-size`, `--lore-gap`.
+- The site sets `html { font-size: 63.5% }`, so `1rem` is about `10.16px`. A rem
+  value copied from a normal 16px-root design reads roughly 1.6x too small here.
+  Size lore type by measured px in Chromium, not by rem intuition.
+- Every view renders `LoreRecordHeader.vue`: fixed uppercase kind eyebrow,
+  record title, and one inline spec row of at most three key/value pairs. No
+  footers, no telemetry (status, phase, resource name, fingerprint) - that is
+  noise on a theater screen.
+- Page budgets must include per-block chrome. `BLOCK_OVERHEAD_CHARACTERS`
+  charges each block for its speaker label and block gap; without it a page of
+  short speaker blocks renders far taller than its character count predicts.
+- Any block longer than a page is split before packing. A page that cannot be
+  split is a page that clips.
+- Renderers self-limit with `affordablePageCount()`: a slot never shows a page
+  it cannot hold for that page's reading cost, so no page flashes past.
+
+## Timeline oversubscription math
+
+The song has 425 seconds and the lore column shows 27 records. Locked anchors
+consume 150-220 (`lorem-pursuit-1`) and 398-425
+(`blue-universal-acquires-wayland-yutani`).
+
+- Allocation is per whole page: a record's floor is one complete held page, its
+  ideal is every authored page held for its reading cost. `allocateLoreSlots()`
+  never allocates below the floor.
+- The 220-398 range has 178 seconds for 18 records. Their one-page floors total
+  about 165s (it fits), but their full authored pages total about 487s. Roughly
+  309 seconds of authored pages therefore never display.
+- No renderer change can fix that. Report the overflow; do not delete authored
+  lore and do not "solve" it by shrinking pages below a readable hold. Cutting
+  records or extending the range is a human decision.
+
 ## Timing lessons
 
 - Keep scheduler and renderer on one content-cost timing model.

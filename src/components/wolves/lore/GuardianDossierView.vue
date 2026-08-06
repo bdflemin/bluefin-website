@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
+import type { LoreSpecEntry } from './LoreRecordHeader.vue'
 import { computed } from 'vue'
 import { deriveLoreTelemetry } from '../../../data/wolves-lore-records'
 import { renderLoreParagraphs } from '../lore'
+import { pickBlockPage } from './lore-pages'
+import LoreRecordHeader from './LoreRecordHeader.vue'
 
 const props = defineProps<LoreViewProps>()
 
@@ -16,7 +19,20 @@ const bond = computed(() =>
   ),
 )
 
+const spec = computed<LoreSpecEntry[]>(() => [
+  ...specializations.value.length
+    ? [{ key: 'specializations', value: specializations.value.join(' · ').toUpperCase() }]
+    : [],
+  ...props.record.metadata.guardian?.class
+    ? [{ key: 'class', value: props.record.metadata.guardian.class }]
+    : [],
+  ...props.record.metadata.guardian?.super
+    ? [{ key: 'super', value: props.record.metadata.guardian.super }]
+    : [],
+])
+
 const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
+const page = computed(() => pickBlockPage(paragraphs.value, para => para, props.elapsed, props.duration))
 </script>
 
 <template>
@@ -24,78 +40,46 @@ const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
     class="lore-dossier-panel"
     data-lore-view="guardian-dossier"
   >
-    <header class="lore-dossier-header">
-      <p class="lore-dossier-eyebrow">
-        MAINTAINER // GUARDIAN
-      </p>
-      <h2 v-if="record.metadata.title" class="lore-dossier-title">
-        {{ record.metadata.title }}
-      </h2>
-      <p v-if="specializations.length" class="lore-dossier-subtitle">
-        {{ specializations.join(' · ').toUpperCase() }}
-      </p>
-    </header>
+    <LoreRecordHeader eyebrow="MAINTAINER // GUARDIAN" :title="record.metadata.title" :spec="spec" />
 
-    <div>
-      <dl class="lore-spec lore-spec--boxed">
-        <div v-if="record.metadata.guardian?.class">
-          <dt>
-            class:
-          </dt>
-          <dd>
-            {{ record.metadata.guardian.class }}
-          </dd>
-        </div>
-        <div v-if="record.metadata.guardian?.super">
-          <dt>
-            super:
-          </dt>
-          <dd>
-            {{ record.metadata.guardian.super }}
-          </dd>
-        </div>
-        <div v-if="record.metadata.aliases?.length">
-          <dt>
-            aliases:
-          </dt>
-          <dd>
-            [{{ record.metadata.aliases.join(', ') }}]
-          </dd>
-        </div>
-        <div v-if="record.metadata.titles?.length">
-          <dt>
-            titles:
-          </dt>
-          <dd>
-            [{{ record.metadata.titles.join(', ') }}]
-          </dd>
-        </div>
-        <div v-if="bond">
-          <dt>
-            GuardianBond:
-          </dt>
-          <dd>
-            {{ bond.id }}
-          </dd>
-        </div>
-      </dl>
+    <dl class="lore-spec lore-spec--boxed">
+      <div v-if="record.metadata.aliases?.length">
+        <dt>
+          aliases:
+        </dt>
+        <dd>
+          [{{ record.metadata.aliases.join(', ') }}]
+        </dd>
+      </div>
+      <div v-if="record.metadata.titles?.length">
+        <dt>
+          titles:
+        </dt>
+        <dd>
+          [{{ record.metadata.titles.join(', ') }}]
+        </dd>
+      </div>
+      <div v-if="bond">
+        <dt>
+          GuardianBond:
+        </dt>
+        <dd>
+          {{ bond.id }}
+        </dd>
+      </div>
+      <div>
+        <dt>
+          status:
+        </dt>
+        <dd>
+          {{ telemetry.phase }} · {{ telemetry.controller }} · {{ telemetry.recordFingerprint }}
+        </dd>
+      </div>
+    </dl>
 
-      <aside class="lore-dossier-rail">
-        <p class="lore-dossier-rail-label">
-          STATUS RAIL
-        </p>
-        <p>
-          {{ telemetry.phase }} · {{ telemetry.controller }}
-        </p>
-        <p>
-          {{ telemetry.recordFingerprint }}
-        </p>
-      </aside>
-    </div>
-
-    <article class="lore-dossier-body">
+    <article class="lore-dossier-body" :data-lore-page-index="page.index">
       <p
-        v-for="(para, index) in paragraphs"
+        v-for="(para, index) in page.blocks"
         :key="index"
 
         v-html="para"

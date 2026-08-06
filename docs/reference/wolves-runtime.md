@@ -90,6 +90,10 @@ successful build does not prove eager lore loading succeeds. Finish with
   complete sentence- or word-bounded readable beat, retain the speaker header
   on continued chat beats, then automatically type, hold, and replace it.
   Never accumulate important text behind an overflow viewport.
+- All nine lore views share one panel (`lore-dossier.scss`), one metadata block
+  (`LoreRecordHeader.vue`), one page model (`lore-pages.ts`) and one
+  container-relative type scale. No lore surface scrolls or pans, and no view
+  carries its own card chrome, footer telemetry, or body font size.
 - Every Wolves presentation image is single-use. Do not schedule duplicate
   assets in Track 0 or repeat a Track 0 image in carry-forward tracks.
 - The active media-player clock remains the only synchronization clock.
