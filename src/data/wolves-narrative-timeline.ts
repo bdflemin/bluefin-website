@@ -24,6 +24,14 @@ const FINAL_ARTIFACT_END = 425
 /** The page that names the dead doctor; the show's dramatic reveal. */
 const DEATH_REVEAL_MARKER = 'Andy Anderson'
 
+/**
+ * Put the reveal up a hair early so it is provably on screen when the beat
+ * lands. `pickPageIndexForElapsed` selects with a strict `<`, so a page timed
+ * to the exact beat wins or loses on float rounding. Ten milliseconds is well
+ * under a video frame and settles it.
+ */
+const REVEAL_LEAD_SECONDS = 0.01
+
 const finalRecordPages = loreRecordPages({
   kind: 'prose',
   body: loadAllLoreRecords().find(record => record.id === FINAL_ARTIFACT_ID)?.body ?? '',
@@ -39,7 +47,7 @@ const finalRecordPages = loreRecordPages({
  * pages before the reveal cost to read. A hard-coded start silently drifts off
  * the beat the moment the bulletin is re-edited or the reading pace changes.
  */
-const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart - finalRecordPages
+const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart - REVEAL_LEAD_SECONDS - finalRecordPages
   .slice(0, Math.max(0, finalRecordPages.findIndex(page => page.includes(DEATH_REVEAL_MARKER))))
   .reduce((total, page) => total + estimatePageSeconds(page), 0)
 

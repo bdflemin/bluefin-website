@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loreProsePages, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { loreChatPages, loreProsePages, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
 import { wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
@@ -31,6 +31,12 @@ describe('finale reveal', () => {
     expect(pageAt(BEAT)).toContain('Dr. Andy Anderson')
   })
 
+  it('lands the whole reveal as one page, not split across a page turn', () => {
+    expect(pageAt(BEAT)).toBe(
+      'following the tragic death of Dr. Andy Anderson and his team in a laboratory accident earlier this year.',
+    )
+  })
+
   it('still holds the setup a moment before the beat', () => {
     expect(pageAt(BEAT - 0.25)).not.toContain('Dr. Andy Anderson')
   })
@@ -38,6 +44,17 @@ describe('finale reveal', () => {
   it('fires Become Legend on the same beat', () => {
     expect(getWolvesThesisState(BEAT).text).toBe('Become Legend')
     expect(getWolvesThesisState(BEAT - 0.25).text).not.toBe('Become Legend')
+  })
+
+  it('never ends a page on a dangling function word', () => {
+    const trailing = /\s(?:a|an|the|and|or|of|to|in|on|at|by|for|from|with|is|was|will|that|his|her|their|its)$/i
+
+    for (const record of loadAllLoreRecords()) {
+      const pages = record.kind === 'chatlog' ? loreChatPages(record.body) : loreProsePages(record.body)
+      pages.slice(0, -1).forEach((page, index) => {
+        expect(trailing.test(page.trimEnd()), `${record.id} page ${index} ends mid phrase: "${page.slice(-40)}"`).toBe(false)
+      })
+    }
   })
 
   it('keeps the doctor title and name on one page', () => {

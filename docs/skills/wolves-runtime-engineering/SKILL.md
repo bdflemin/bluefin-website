@@ -44,6 +44,8 @@ playable track from being treated as an unidentified player request.
 - A musical moment is scheduled with a round number instead of the measured
   beat in `TRACK_ZERO_SECTIONS`.
 - A page ends on a title such as `Dr.`, orphaning the name it introduces.
+- A page ends on a preposition or article, making the audience wait a page turn
+  for the rest of the phrase.
 - A slot is assumed to display its record's authored pages without checking
   `affordablePageCount()` against the slot duration.
 
@@ -272,16 +274,24 @@ When you change one of these anchors, expect tests asserting the old round
 number to fail. Rebind them to the measured constant; do not re-record them as
 known failures.
 
-## Pagination must not split a name
+## Pages break at thoughts, not at character counts
 
 `splitReadableBeats()` splits on sentence punctuation and then on a character
-budget. Both stages used to break after `Dr.`, dealing "Dr." and "Andy Anderson"
-onto separate pages — which cut the show's central reveal in half.
+budget. Left alone, that budget breaks wherever the count runs out — after
+`Dr.`, or on a stranded preposition. Both happened in the closing bulletin and
+between them they cut the show's central reveal into pieces.
 
-`readable-beats.ts` now guards this in two places: `mergeAbbreviationSplits()`
-rejoins sentence fragments split at a title's period, and `fuseTitledNames()`
-fuses a title with the capitalised words that follow it into one unbreakable
-token before the character budget is applied.
+`readable-beats.ts` guards this in three stages:
+
+- `mergeAbbreviationSplits()` rejoins sentences split at a title's period.
+- `fuseTitledNames()` fuses a title with the capitalised words after it into one
+  unbreakable token, so "Dr. Andy Anderson" is laid out as a single unit.
+- `settleBreaks()` repairs a page that ends on a dangling function word by
+  moving the whole trailing phrase to the next page. It only touches pages that
+  end badly; a page ending on a complete thought is already a good page.
+
+The measurable target: **no page ends on a dangling function word.** At the time
+of writing that holds for all 338 pages in the show.
 
 When touching this file, verify no page overflows its budget afterwards. A fuse
 that is too greedy silently produces pages too tall to read from the back row:
@@ -291,5 +301,8 @@ npx vite-node <probe that pages every record and compares against
 PROSE_PAGE_CHARACTERS / CHAT_PAGE_CHARACTERS>
 ```
 
-At the time of writing, 339 pages across all records, zero over budget, worst
-150 characters against a 190 budget.
+At the time of writing: 338 pages, zero over budget, zero ending on a dangling
+word, worst page 150 characters against a 190 budget.
+
+`src/tests/wolvesFinaleReveal.test.ts` asserts the dangling-word rule across
+every record, so a greedy change to the splitter fails immediately.
