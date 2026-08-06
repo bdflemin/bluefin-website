@@ -192,16 +192,15 @@ text to the music" below — neither start is a round number.
 
 ## Timing lessons
 
-- Keep scheduler and renderer on one content-cost timing model.
-- Treat Wolves lore as a self-paced video presentation, not an interactive
-  document: the renderer must advance and hold readable content automatically.
+- Keep scheduler and renderer on one content-cost timing model, and treat Wolves
+  lore as a self-paced video presentation, not an interactive document: the
+  renderer must advance and hold readable content automatically.
   Never require, offer, or depend on pointer, click, touch, keyboard, or
   scrolling interaction, and never expose a scrollbar on a lore surface. The
   audience has no input device; input is never a narrative dependency.
-- Render chatlogs and quotes as noninteractive, sentence- or word-bounded
-  pages. Show one complete readable beat at a time, retain the speaker header
-  on continued chat beats, and hold then replace it; do not accumulate
-  important text behind an overflow viewport.
+- Render chatlogs and quotes as noninteractive, sentence- or word-bounded pages:
+  one readable beat at a time, speaker header retained on continued chat beats,
+  held and then replaced, never accumulated behind an overflow viewport.
 - **Every lore view is a pure function of `elapsed`.** Chat and prose share one
   clock-driven page model: `pickPageIndexForElapsed(pages, elapsed, duration)`.
   No view owns a timer. The chat view used to be a typewriter on a `setInterval`
@@ -210,30 +209,16 @@ text to the music" below — neither start is a round number.
   fixed point, and it held its slot open past the end so every later record
   started late. Deleting the typewriter deleted all three. A view that reads the
   clock is reproducible: same second, same frame, every machine, every rehearsal.
-- Lore surfaces must never expose a scrollbar. Quotes advance from the active
-  player clock as complete sentence- or word-bounded pages, held for their
-  reading cost before automatic replacement; audience input is never a
-  narrative dependency.
-- Fast music or slideshow slots must not accelerate ordinary chat typing; keep
-  explicitly approved dialogue cadence anchors unchanged.
-- For a locked chat window, use its full player-clock duration when it exceeds
-  the minimum readability estimate. This retains the final sentence through
-  the authored endpoint instead of releasing a couch-readable chat early.
 - The Track 0 finale barrage begins at the measured 5:55 pickup
-  (`TRACK_ZERO_SECTIONS.bkEnd`); distribute its curated contributor photos
-  across subsequent measured beats rather than cutting every beat.
-- When a narrative range is constrained, allocate chatlog readability before
-  static quote or source records; preserve explicitly approved cadence locks.
-- The authored final conversation remains noninteractive after its key line is
-  revealed; it must advance and hold without scroll or skip controls.
+  (`TRACK_ZERO_SECTIONS.bkEnd`); spread its curated photos across the following
+  measured beats rather than cutting on every beat.
 - Add a locked hero photo as a contiguous timed window and shift only the
   following unlocked window: preserve locked anchors, recompute only unlocked
   intervals.
-- Derive Track 0's rotating HUD queue directly from the authored plan and keep
-  duplicate status lines; deduping breaks the approved finale cadence.
 - Prefer invariant tests over stale exact timestamps for recomputed intervals.
-- A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
-- Never describe a discarded experiment as restored or complete.
+- A build is not runtime proof; verify the real route in Chromium at short and
+  long records and at locked anchors. Never describe a discarded experiment as
+  restored or complete.
 
 ## Re-deriving Track 0 timing
 
@@ -377,6 +362,36 @@ Verify a window change by dumping the rendered slide at boundary times, mounting
 fresh at each time. `setProps` alone does not swap the displayed buffer in jsdom
 because the incoming image never loads, so a stale slide keeps reporting and the
 check silently passes.
+
+## Slide preloading is measured in seconds, not slides
+
+`WolvesComicReader.vue` gates each slide swap on the incoming image having
+decoded, so the wallpaper cannot flash through an empty buffer. That gate is
+correct and must stay: skipping a late image would break slide order, which is
+locked.
+
+So preload depth *is* the timing budget. The rule used to be "three slides ahead
+if the current slide is under a second, otherwise one", which gave the Track 0
+finale barrage — roughly 1.76s per slide — one slide of warning to fetch and
+decode a multi-megabyte photo. Depth is now accumulated in seconds of upcoming
+slides (`PRELOAD_WINDOW_SECONDS`), capped by `MAX_LOOKAHEAD_SLIDES`.
+
+Order matters as much as depth. Lookahead runs only after the slide going on
+screen *now* has been fetched, and that fetch is marked `fetchPriority = 'high'`.
+A browser opens about six connections per host, so firing a dozen lookahead
+requests first puts the visible slide at the back of the queue and causes the
+exact stall the lookahead exists to prevent.
+
+Two things were tried and rejected, so they do not get re-proposed: a retained
+decoded-image cache (real memory cost across a thirty-minute run, and no
+improvement distinguishable from run-to-run noise when measured against the
+movie-flow harness — repeat fetches are left to the browser's HTTP cache), and
+any deadline that swaps before decode (it reintroduces the wallpaper flash).
+
+`tests/wolves-movie-flow.mjs :: Comic Hero Shots title card advances to a later
+slide without repeating` is **flaky on `main` too**: it allows 250ms for a
+decode-gated crossfade of a large photo and fails roughly a third of the time on
+either branch. Measure over several runs before blaming a change for it.
 
 ## WolvesComicReader serves more than Wolves
 

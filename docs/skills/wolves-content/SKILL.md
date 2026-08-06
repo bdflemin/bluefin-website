@@ -194,3 +194,15 @@ dedicated slide still loads the image. Check `naturalWidth > 0` in the browser
 rather than trusting the `src` attribute, because a missing file still leaves
 the attribute intact.
 
+
+## Allocating readability inside a locked range
+
+- Fast music or slideshow slots must not accelerate ordinary chat typing; keep
+  explicitly approved dialogue cadence anchors unchanged.
+- For a locked chat window, use its full player-clock duration when it exceeds
+  the minimum readability estimate. This retains the final sentence through
+  the authored endpoint instead of releasing a couch-readable chat early.
+- When a narrative range is constrained, allocate chatlog readability before
+  static quote or source records; preserve explicitly approved cadence locks.
+- Derive Track 0's rotating HUD queue directly from the authored plan and keep
+  duplicate status lines; deduping breaks the approved finale cadence.
