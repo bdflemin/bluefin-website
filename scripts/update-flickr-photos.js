@@ -135,6 +135,26 @@ export function normalizePhoto(p) {
   }
 }
 
+/**
+ * Builds a fresh gallery cache from the current album scrape. No prior cache
+ * entries survive, so the weekly job rotates in newly published summit photos.
+ */
+export function selectFreshPhotos(candidates, targetTotalPhotos) {
+  const seenIds = new Set()
+  const photos = []
+  for (const candidate of candidates) {
+    if (seenIds.has(candidate.id)) {
+      continue
+    }
+    seenIds.add(candidate.id)
+    photos.push(normalizePhoto(candidate))
+    if (photos.length >= targetTotalPhotos) {
+      break
+    }
+  }
+  return shuffleArray(photos)
+}
+
 export function buildAlbumPageUrl(albumId, userId, page = 1) {
   const base = `https://www.flickr.com/photos/${userId}/albums/${albumId}`
   return page > 1 ? `${base}/page${page}` : base
@@ -303,11 +323,6 @@ async function main() {
       throw new Error('No curated albums configured in scripts/flickr-curation.json')
     }
 
-    console.info('Loading existing Flickr photo cache...')
-    const existingPhotos = (await loadExistingPhotos()).filter(photo => isPeopleFirstPhoto(photo, config))
-    const existingIds = new Set(existingPhotos.map(p => p.id))
-    console.info(`Found ${existingPhotos.length} existing photos that match the people-first filter.`)
-
     console.info(`Scraping ${config.albums.length} curated album(s)...`)
     const allCandidates = []
 
@@ -321,37 +336,18 @@ async function main() {
         const diversified = diversifyByTitleFamily(peopleFirstPhotos, config.maxPhotosPerTitleFamily)
         console.info(`  ${diversified.length} after title-family diversification`)
         const capped = diversified.slice(0, config.maxPhotosPerAlbum)
-        for (const p of capped) {
-          if (!existingIds.has(p.id)) {
-            allCandidates.push(p)
-          }
-        }
+        allCandidates.push(...capped)
       }
       catch (error) {
         console.warn(`  Failed to scrape album ${album.title || album.id}:`, error.message)
       }
     }
 
-    // Deduplicate and cap to target total, then shuffle.
-    const seenIds = new Set(existingIds)
-    const newPhotos = []
-    for (const p of allCandidates) {
-      if (!seenIds.has(p.id)) {
-        seenIds.add(p.id)
-        newPhotos.push(normalizePhoto(p))
-        if (newPhotos.length >= config.targetTotalPhotos) {
-          break
-        }
-      }
-    }
-
-    console.info(`Harvested ${newPhotos.length} new unique photos from curated albums.`)
-
-    const combinedPhotos = [...existingPhotos, ...newPhotos]
-    const shuffledPhotos = shuffleArray(combinedPhotos)
+    const shuffledPhotos = selectFreshPhotos(allCandidates, config.targetTotalPhotos)
+    console.info(`Selected ${shuffledPhotos.length} fresh unique photos from curated albums.`)
 
     await writeFile(TARGET_PATH, `${JSON.stringify(shuffledPhotos, null, 2)}\n`)
-    console.info(`Successfully updated cache with ${shuffledPhotos.length} photos (${newPhotos.length} new) and saved to public/flickr-photos.json`)
+    console.info(`Successfully rebuilt cache with ${shuffledPhotos.length} photos and saved to public/flickr-photos.json`)
   }
   catch (error) {
     console.error('Error updating Flickr photos:', error)

@@ -46,7 +46,10 @@ Authored track numbering is fixed: Track 0 is the Destiny intro, Track 1 is
 with the single Jorge Castro hero plate and its 48.4-second quote sequence.
 After that opening, and for Tracks 3–6, use only the curated Flickr CNCF
 contributor-summit gallery. Do not carry Track 1 hero or local people images
-into later authored Wolves tracks.
+into later authored Wolves tracks. `.github/workflows/update-content.yml`
+rebuilds `public/flickr-photos.json` weekly from scratch from the configured
+summit albums in `scripts/flickr-curation.json`; KubeCon + CloudNativeCon Japan
+2026 is the first/current source album and must remain included.
 
 ## Locked layers
 
