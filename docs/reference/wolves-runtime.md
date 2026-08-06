@@ -39,6 +39,10 @@ player synchronization, or generated files for content work.
 Use exact user-supplied or recovered authored copy. Never invent lore, dialogue,
 quotes, names, scientific facts, pairings, or provenance.
 
+Track 1’s Reza Jelveh portrait is a locked 8.16-second hold. The top title
+uses “HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026” for that
+entire same player-clock window.
+
 ## Later-track gallery policy
 
 Authored track numbering is fixed: Track 0 is the Destiny intro, Track 1 is

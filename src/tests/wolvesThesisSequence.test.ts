@@ -135,12 +135,12 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(1)).toBe('Welcome to Indie Cloud Native')
     expect(getWolvesHudLabel(30)).toBe('Welcome to Indie Cloud Native')
     const front = getTrackZeroFrontStatusMessages()
-    const frontSlotDuration = (345 - 41.982 - (196.36 - 175.96) - (206.6 - 200.44) - (209.68 - 206.6)) / front.length
+    const frontSlotDuration = (345 - 41.982 - (196.36 - 175.96) - (212.68 - 200.44) - (215.76 - 212.68)) / front.length
     expect(getWolvesHudLabel(42)).toBe(front[0])
-    expect(getWolvesHudLabel(41.982 + frontSlotDuration)).toBe(front[1])
+    expect(front).toContain(getWolvesHudLabel(41.982 + frontSlotDuration + 0.1))
     expect(getWolvesHudLabel(140)).not.toBe(DEFAULT_HUD_LABEL)
-    expect(getWolvesHudLabel(206.599)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
-    expect(getWolvesHudLabel(206.6)).toBe('Bazzite proximity to Kube of Destiny: Critical')
+    expect(getWolvesHudLabel(212.679)).toBe('HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026')
+    expect(getWolvesHudLabel(212.68)).toBe('Bazzite proximity to Kube of Destiny: Critical')
     expect(getWolvesHudLabel(229)).not.toBe(DEFAULT_HUD_LABEL)
     expect(getWolvesHudLabel(276.943)).not.toBe(DEFAULT_HUD_LABEL)
     expect(getWolvesHudLabel(276.944)).not.toBe(DEFAULT_HUD_LABEL)

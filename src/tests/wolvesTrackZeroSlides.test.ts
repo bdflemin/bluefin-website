@@ -24,6 +24,7 @@ import {
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
   postHeroOpeningSequenceIds,
+  rezaContributorTrackZeroWindow,
   shermanM2CompositeSlideId,
   shermanM2CompositeTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
@@ -76,6 +77,10 @@ describe('wolves Track 0 slide locks', () => {
       .toEqual([jorge, laura, tophee, { id: 'people-a' }])
     expect(lauraTrackZeroWindow.startTime).toBe(jorgeBluefinTrackZeroWindow.endTime)
     expect(topheeTrackZeroWindow.startTime).toBe(lauraTrackZeroWindow.endTime)
+  })
+
+  it('holds Reza for two regular slide windows', () => {
+    expect(rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime).toBeCloseTo(8.16)
   })
 
   it('keeps the authored hero locks unique, exact, and contiguous', () => {

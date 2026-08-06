@@ -66,7 +66,9 @@ export const bluefinGroupSlides = [
 
 export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
 
-const REZA_HOLD_SECONDS = 6.16
+// Reza receives two standard 4.08-second slide windows so the HAMI Bazzite
+// quote and top title remain readable for the full portrait hold.
+const REZA_HOLD_SECONDS = 8.16
 export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
 export const rezaContributorTrackZeroWindow = {
   startTime: topheeTrackZeroWindow.endTime,

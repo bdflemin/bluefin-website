@@ -100,7 +100,6 @@ const slideAIndex = ref(-1)
 const slideBIndex = ref(-1)
 const crossfadeActive = ref(false)
 let crossfadeTimer: ReturnType<typeof setTimeout> | null = null
-const TIMELINE_BOUNDARY_EPSILON_SECONDS = 0.001
 
 const activePhoto = computed(() => {
   return activeBuffer.value === 'A' ? photoA.value : photoB.value
@@ -677,7 +676,7 @@ const activeTimelineSlide = computed(() => {
     return null
   }
   const curTime = props.playlistCurrentTime ?? 0
-  let index = timelineSlides.value.findIndex(s => curTime < s.endTime - TIMELINE_BOUNDARY_EPSILON_SECONDS)
+  let index = timelineSlides.value.findIndex(s => curTime < s.endTime)
   if (index === -1) {
     index = timelineSlides.value.length - 1
   }
