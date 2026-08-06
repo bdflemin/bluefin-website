@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getTrackZeroSectionMessages,
   getWolvesHudLabel,
   getWolvesThesisState,
   parseEarlySignalMessages,
   parseIncomingSignalMessages,
   wolvesEarlySignalMessages,
   wolvesIncomingSignalMessages,
-  getTrackZeroSectionMessages,
 } from '../data/wolves-thesis-sequence'
+import { TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
 import {
   getTrackZeroFrontStatusMessages,
   getTrackZeroRotatingStatusMessages,
@@ -110,7 +111,7 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesThesisState(359).text).toBe('')
     expect(getWolvesThesisState(365).active).toBe(false)
     expect(getWolvesThesisState(405).text).toBe('You have ascended ...')
-    expect(getWolvesThesisState(408).text).toBe('Become Legend')
+    expect(getWolvesThesisState(TRACK_ZERO_SECTIONS.finaleStart).text).toBe('Become Legend')
     expect(getWolvesThesisState(425).text).toBe('Become Legend')
   })
 
@@ -172,7 +173,7 @@ describe('wolves thesis sequence', () => {
       warning: 'truly a great loss for humanity.',
     })
     expect(getWolvesThesisState(407.999).hudLabel).toBe('The equation must be balanced, think like a dinosaur')
-    expect(getWolvesThesisState(408)).toMatchObject({
+    expect(getWolvesThesisState(TRACK_ZERO_SECTIONS.finaleStart)).toMatchObject({
       text: 'Become Legend',
       hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall',
     })

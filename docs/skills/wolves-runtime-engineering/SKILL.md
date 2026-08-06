@@ -41,6 +41,11 @@ playable track from being treated as an unidentified player request.
 - A fullscreen overlay lacks the required containing-block treatment.
 - A second YouTube API loader or transport is introduced.
 - Browser bounds and player states are not checked.
+- A musical moment is scheduled with a round number instead of the measured
+  beat in `TRACK_ZERO_SECTIONS`.
+- A page ends on a title such as `Dr.`, orphaning the name it introduces.
+- A slot is assumed to display its record's authored pages without checking
+  `affordablePageCount()` against the slot duration.
 
 ## Verification
 
@@ -89,8 +94,9 @@ one metadata block, one page model, one type scale, no scrolling.
 ## Timeline oversubscription math
 
 The song has 425 seconds and the lore column shows 27 records. Locked anchors
-consume 150-220 (`lorem-pursuit-1`) and 398-425
-(`blue-universal-acquires-wayland-yutani`).
+consume 150-220 (`lorem-pursuit-1`) and the closing bulletin
+(`blue-universal-acquires-wayland-yutani`), which runs from a derived start to
+425. See "Anchoring text to the music" below — its start is not a round number.
 
 - Allocation is per whole page: a record's floor is one complete held page, its
   ideal is every authored page held for its reading cost. `allocateLoreSlots()`
@@ -233,3 +239,57 @@ component.
 Related: `isExperimental` near the top of the component is a permanently-true
 flag, so it reads as a dead branch gate. That is not a licence to delete the
 branch it guards.
+
+## Anchoring text to the music
+
+Some moments must land on a measured beat, not near one. The finale is the
+clearest case: the audience must read that Dr. Andy Anderson is dead on the same
+beat the score says **Become Legend**.
+
+The rule is **the text moves to the music, never the music to the text.**
+`TRACK_ZERO_SECTIONS` in `src/data/wolves-track-zero-beats.ts` holds measured
+beat times. `finaleStart` (408.137) is one of them. A round number like `408` or
+a slot starting at `398` is an authored guess; a measured beat is ground truth.
+
+Do not schedule such a moment by writing down the start time you happened to
+measure. Derive it:
+
+```ts
+// wolves-narrative-timeline.ts
+const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart - costOfPagesBeforeTheReveal
+```
+
+The start depends on what the earlier pages cost to read. Hard-coding it means
+the reveal silently slides off the beat the moment anyone re-edits the bulletin
+or changes the reading pace — and nothing fails, it just stops landing.
+
+Both sides of a synchronised moment must read the same constant. The thesis cue
+uses `TRACK_ZERO_SECTIONS.finaleStart` too, so the caption and the reveal cannot
+drift apart. `src/tests/wolvesFinaleReveal.test.ts` asserts the page shown at the
+beat, the page shown just before it, and the cue text, so a drift fails loudly.
+
+When you change one of these anchors, expect tests asserting the old round
+number to fail. Rebind them to the measured constant; do not re-record them as
+known failures.
+
+## Pagination must not split a name
+
+`splitReadableBeats()` splits on sentence punctuation and then on a character
+budget. Both stages used to break after `Dr.`, dealing "Dr." and "Andy Anderson"
+onto separate pages — which cut the show's central reveal in half.
+
+`readable-beats.ts` now guards this in two places: `mergeAbbreviationSplits()`
+rejoins sentence fragments split at a title's period, and `fuseTitledNames()`
+fuses a title with the capitalised words that follow it into one unbreakable
+token before the character budget is applied.
+
+When touching this file, verify no page overflows its budget afterwards. A fuse
+that is too greedy silently produces pages too tall to read from the back row:
+
+```bash
+npx vite-node <probe that pages every record and compares against
+PROSE_PAGE_CHARACTERS / CHAT_PAGE_CHARACTERS>
+```
+
+At the time of writing, 339 pages across all records, zero over budget, worst
+150 characters against a 190 budget.

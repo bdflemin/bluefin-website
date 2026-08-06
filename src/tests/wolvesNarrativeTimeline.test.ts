@@ -7,6 +7,7 @@ import {
   lockedNarrativeSlots,
   wolvesNarrativeTimeline,
 } from '../data/wolves-narrative-timeline'
+import { TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
 
 describe('wolves narrative timeline', () => {
   it('contains every visible release artifact exactly once', () => {
@@ -47,11 +48,15 @@ describe('wolves narrative timeline', () => {
       startTime: 150,
       endTime: 220,
     })
-    expect(getNarrativeSlotForTime(398)).toMatchObject({
+    // The closing bulletin is anchored to the finale beat rather than a round
+    // number: it starts early enough that its death-reveal page lands exactly
+    // on TRACK_ZERO_SECTIONS.finaleStart. See wolvesFinaleReveal.test.ts.
+    expect(getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart)).toMatchObject({
       artifactId: 'blue-universal-acquires-wayland-yutani',
-      startTime: 398,
       endTime: 425,
     })
+    expect(getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart).startTime)
+      .toBeLessThan(TRACK_ZERO_SECTIONS.finaleStart)
   })
 
   it('keeps every registered narrative lock at its declared time', () => {
@@ -80,13 +85,15 @@ describe('wolves narrative timeline', () => {
   })
 
   it('allocates unlocked lore between the locked anchors', () => {
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
     expect(middle.length).toBeGreaterThan(0)
     expect(middle.every(slot => slot.endTime > slot.startTime)).toBe(true)
   })
 
   it('keeps the recomputed middle contiguous', () => {
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
       expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
     }
@@ -115,7 +122,8 @@ describe('wolves narrative timeline', () => {
   })
 
   it('keeps the recomputed unlocked pool contiguous and authored', () => {
-    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
       expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
     }

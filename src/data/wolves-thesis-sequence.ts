@@ -1,15 +1,16 @@
+import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats'
 import {
   getTrackZeroHudLabel,
+  getTrackZeroSectionMessages,
   parseTrackZeroEarlySignalMessages,
   parseTrackZeroSignalMessages,
   wolvesEarlySignalMessages,
   wolvesIncomingSignalMessages,
-  getTrackZeroSectionMessages,
 } from './wolves-track-zero-manifest'
 
 export { parseTrackZeroEarlySignalMessages as parseEarlySignalMessages }
 export { parseTrackZeroSignalMessages as parseIncomingSignalMessages }
-export { wolvesEarlySignalMessages, wolvesIncomingSignalMessages, getTrackZeroSectionMessages }
+export { getTrackZeroSectionMessages, wolvesEarlySignalMessages, wolvesIncomingSignalMessages }
 
 export type WolvesThesisMode = 'inactive' | 'welcome' | 'corruption' | 'universal-blue' | 'evolve' | 'growing-corruption' | 'legend'
 
@@ -76,7 +77,7 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
   if (time < 405) {
     return active('growing-corruption', '', '', '', false, getWolvesHudLabel(time))
   }
-  if (time < 408) {
+  if (time < TRACK_ZERO_SECTIONS.finaleStart) {
     return active('legend', ASCENDED_TEXT, '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))
   }
   return active('legend', LEGEND_TEXT, '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))

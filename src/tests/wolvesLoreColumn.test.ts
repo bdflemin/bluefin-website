@@ -608,9 +608,10 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
+    // startTime is derived from the finale beat, not a round number; the
+    // anchor itself is asserted in wolvesNarrativeTimeline/wolvesFinaleReveal.
     expect(finalSlot).toMatchObject({
       artifactId: 'blue-universal-acquires-wayland-yutani',
-      startTime: 398,
       endTime: 425,
     })
     expect(thesisState.warning).toBe('truly a great loss for humanity.')
