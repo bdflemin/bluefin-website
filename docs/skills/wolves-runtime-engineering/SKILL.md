@@ -1,6 +1,9 @@
 ---
 name: wolves-runtime-engineering
 description: Use only for explicitly approved Wolves overlay, transport, player, or runtime engineering.
+metadata:
+  verified-sources:
+    - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
 ---
 
 # Wolves runtime engineering
@@ -424,8 +427,8 @@ every record, so a greedy change to the splitter fails immediately.
 
 ## A photo that is the slide needs different fitting than a backdrop
 
-`.wolves-intro-overlay-background` sets `object-fit: cover`, which is right for a
-backdrop but wrong when the photo is the subject. Cover scales the image to fill
+`.wolves-intro-overlay-background` sets `object-fit: cover`. That is right for a
+backdrop and wrong when the photo is the subject. Cover scales the image to fill
 the frame and throws away whatever overflows, so a 3:2 stage photo in a 16:9
 frame loses its top and bottom, which is exactly where a speaker's gesture and
 headroom live.
@@ -450,6 +453,13 @@ audience tracks about 50 to 75. Cap the paragraph itself with `max-width` in
 
 Add `text-wrap: balance` to the paragraph. Without it the last line collapses to
 a one-word orphan, which is the most distracting artefact in projected text.
+
+`balance` has a trap: Chromium applies it only to blocks of **six lines or
+fewer** and silently falls back to normal wrapping above that. It costs nothing
+and warns about nothing, so a beat that grows past six lines loses the balancing
+without any visible signal in the source. If a paragraph outgrows that budget,
+either split it into another beat or switch that rule to `text-wrap: pretty`,
+which has no line cap but only tidies the last few lines.
 
 Measure the result in the browser rather than trusting the CSS: divide
 `getBoundingClientRect().height` by the computed `line-height` for the line
