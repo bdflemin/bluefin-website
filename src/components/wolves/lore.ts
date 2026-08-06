@@ -39,6 +39,7 @@ export interface LoreViewProps {
   record: LoreRecord
   records?: readonly LoreRecord[]
   duration: number
+  elapsed?: number
   warning?: string
 }
 

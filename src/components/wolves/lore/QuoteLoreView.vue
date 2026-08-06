@@ -1,77 +1,11 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
+import { computed } from 'vue'
 import { getQuoteLore } from '../lore'
-import { splitReadableBeats } from './readable-beats'
 
 const props = defineProps<LoreViewProps>()
 
 const quote = computed(() => getQuoteLore(props.record))
-const typedQuoteText = ref('')
-const activeBeatIndex = ref(0)
-const quoteBeats = computed(() => splitReadableBeats(quote.value.quote, 110))
-const QUOTE_BEAT_HOLD_MS = 1500
-let typewriterTimer: ReturnType<typeof setInterval> | null = null
-
-function clearTypewriter() {
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer)
-    typewriterTimer = null
-  }
-}
-
-function runTypewriter() {
-  clearTypewriter()
-  typedQuoteText.value = ''
-  activeBeatIndex.value = 0
-
-  const targetText = quote.value.quote
-  const minimumReadSeconds = estimateLoreReadDuration({ kind: 'quote', body: targetText, attribution: quote.value.attribution })
-  const readableBudgetMs = Math.max(1, Math.min(props.duration, minimumReadSeconds) * 1000 * 0.7)
-  const stepTime = Math.max(5, Math.min(50, readableBudgetMs / Math.max(1, targetText.length + quoteBeats.value.length - 1)))
-  let index = 0
-  let pauseTicks = 0
-  let beatComplete = false
-
-  typewriterTimer = setInterval(() => {
-    if (pauseTicks > 0) {
-      pauseTicks--
-      return
-    }
-
-    if (beatComplete) {
-      activeBeatIndex.value++
-      typedQuoteText.value = ''
-      index = 0
-      beatComplete = false
-      return
-    }
-
-    const activeBeat = quoteBeats.value[activeBeatIndex.value]
-    if (!activeBeat) {
-      clearTypewriter()
-      return
-    }
-
-    index++
-    typedQuoteText.value = activeBeat.slice(0, index)
-
-    if (index >= activeBeat.length) {
-      if (activeBeatIndex.value === quoteBeats.value.length - 1) {
-        clearTypewriter()
-        return
-      }
-
-      beatComplete = true
-      pauseTicks = Math.ceil(QUOTE_BEAT_HOLD_MS / stepTime)
-    }
-  }, stepTime)
-}
-
-watch(() => props.record, runTypewriter, { immediate: true })
-
-onBeforeUnmount(clearTypewriter)
 </script>
 
 <template>
@@ -91,8 +25,8 @@ onBeforeUnmount(clearTypewriter)
               <div class="lore-quote-mark">
                 &ldquo;
               </div>
-              <p class="lore-quote-text" :data-quote-beat-index="activeBeatIndex">
-                {{ typedQuoteText }}
+              <p class="lore-quote-text">
+                {{ quote.quote }}
               </p>
               <div class="lore-quote-meta">
                 <strong>{{ quote.attribution }}</strong>
@@ -202,7 +136,7 @@ onBeforeUnmount(clearTypewriter)
   margin: 18px 0 24px;
   color: #ffffff;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.45rem;
+  font-size: clamp(1.1rem, 1.25vw, 1.45rem);
   font-style: italic;
   line-height: 1.55;
 }

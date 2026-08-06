@@ -15,7 +15,6 @@ const conversation = computed(() => getChatlogLore(props.record))
 const activeBeatIndex = ref(0)
 const typedBeatText = ref('')
 const revealedClimaxSentence = ref('')
-const activePanel = ref<'chatlog' | string>('chatlog')
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
 
 const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
@@ -214,12 +213,7 @@ function runTypewriter() {
   }, stepTime)
 }
 
-const activeProject = computed(() =>
-  conversation.value.projects?.find(project => project.id === activePanel.value) ?? null,
-)
-
 watch(() => props.record, () => {
-  activePanel.value = 'chatlog'
   runTypewriter()
 }, { immediate: true })
 
@@ -237,32 +231,8 @@ onBeforeUnmount(clearTypewriter)
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
         </p>
-        <div
-          v-if="conversation.projects?.length"
-          class="conversation-project-tabs"
-          data-chatlog-project-tabs
-        >
-          <button
-            class="conversation-project-tab"
-            :class="{ active: activePanel === 'chatlog' }"
-            data-chatlog-project-tab="chatlog"
-            @click.stop="activePanel = 'chatlog'"
-          >
-            [ CHATLOG ]
-          </button>
-          <button
-            v-for="project in conversation.projects"
-            :key="project.id"
-            class="conversation-project-tab"
-            :class="{ active: activePanel === project.id }"
-            :data-chatlog-project-tab="project.id"
-            @click.stop="activePanel = project.id"
-          >
-            [ {{ project.name.toUpperCase() }} ]
-          </button>
-        </div>
         <Transition name="quote-fade">
-          <div v-if="activePanel === 'chatlog'" :key="record.id" class="conversation-rotator">
+          <div :key="record.id" class="conversation-rotator">
             <div class="conversation-heading">
               <span>{{ conversation.channel }}</span>
               <time :datetime="conversation.date">{{ conversation.date }}</time>
@@ -300,38 +270,6 @@ onBeforeUnmount(clearTypewriter)
                 </template>
               </li>
             </ol>
-          </div>
-          <div
-            v-else-if="activeProject"
-            :key="`${record.id}-${activeProject.id}`"
-            class="conversation-project-panel"
-            data-chatlog-project-panel
-          >
-            <div class="conversation-heading">
-              <span>PROJECT DOSSIER</span>
-              <span>{{ activeProject.maturity }}</span>
-            </div>
-            <h3 class="conversation-title">
-              {{ activeProject.name }}
-            </h3>
-            <p class="project-summary">
-              {{ activeProject.summary }}
-            </p>
-            <ul class="project-facts">
-              <li v-for="fact in activeProject.facts" :key="fact">
-                {{ fact }}
-              </li>
-            </ul>
-            <dl class="project-links">
-              <div>
-                <dt>HOMEPAGE</dt>
-                <dd><a :href="activeProject.homepage" target="_blank" rel="noopener noreferrer">{{ activeProject.homepage }}</a></dd>
-              </div>
-              <div>
-                <dt>DOCS</dt>
-                <dd><a :href="activeProject.documentation" target="_blank" rel="noopener noreferrer">{{ activeProject.documentation }}</a></dd>
-              </div>
-            </dl>
           </div>
         </Transition>
       </div>

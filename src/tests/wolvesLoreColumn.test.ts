@@ -301,7 +301,7 @@ describe('wolvesLoreColumn Logic', () => {
     expect([...observedEffects]).toEqual(expectedEffects)
   })
 
-  it('renders deterministic project tabs only for project-linked chats', async () => {
+  it('keeps project-linked chats passive without audience-operated tabs', () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: 'openssf-reinforcements',
@@ -309,48 +309,29 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    expect(wrapper.findAll('[data-chatlog-project-tab]').map(button => button.text())).toEqual([
-      '[ CHATLOG ]',
-      '[ KUBESTELLAR ]',
-      '[ KUBERNETES ]',
-    ])
-
-    await wrapper.get('[data-chatlog-project-tab="kubestellar"]').trigger('click')
-
-    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('KubeStellar')
-    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('CNCF Sandbox')
-    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('Continue using familiar Kubernetes APIs, tooling, and workflows.')
+    expect(wrapper.find('[data-chatlog-project-tabs]').exists()).toBe(false)
+    expect(wrapper.find('[data-chatlog-project-panel]').exists()).toBe(false)
   })
 
-  it('automatically pages long quotes without scroll or click controls', async () => {
-    vi.useFakeTimers()
+  it('renders a complete long quote without audience pagination or controls', () => {
     const record = loreRecords
       .filter(record => record.kind === 'quote')
       .reduce((longest, record) => record.body.length > longest.body.length ? record : longest)
     if (record.kind !== 'quote') {
       throw new Error('Expected a quote fixture')
     }
-    const beats = splitReadableBeats(record.body, 110)
-    expect(beats.length).toBeGreaterThan(1)
-
-    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,
-        duration: 0.01,
+        duration: 20,
+        elapsed: 0,
       },
     })
     const viewport = wrapper.get('.quote-viewport')
-    const beforeClick = wrapper.get('.lore-quote-text').text()
 
     expect(viewport.attributes('onClick')).toBeUndefined()
-    await viewport.trigger('click')
-    expect(wrapper.get('.lore-quote-text').text()).toBe(beforeClick)
-
-    await advanceUntil(() => Number(wrapper.get('.lore-quote-text').attributes('data-quote-beat-index')) > 0)
-
-    expect(wrapper.get('.lore-quote-text').text()).not.toBe(record.body)
-    expect(scrollTo).not.toHaveBeenCalled()
+    expect(wrapper.get('.lore-quote-text').text()).toBe(record.body.trim())
+    expect(wrapper.find('[data-quote-beat-index]').exists()).toBe(false)
   })
 
   it('reveals the Golden Era vision and preserves Sarah pacing without narrative controls', async () => {

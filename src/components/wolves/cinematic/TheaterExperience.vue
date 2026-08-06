@@ -19,6 +19,10 @@ const narrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
 const activeChatSlot = ref<WolvesNarrativeSlot | null>(null)
 const displayedNarrativeSlot = computed(() => activeChatSlot.value ?? narrativeSlot.value)
 const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
+const slotElapsed = computed(() => Math.min(
+  slotDuration.value,
+  Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
+))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
@@ -269,6 +273,7 @@ onBeforeUnmount(() => {
           <WolvesLoreColumn
             :artifact-id="displayedNarrativeSlot.artifactId"
             :duration="slotDuration"
+            :elapsed="slotElapsed"
             :warning="thesis.warning"
             @chat-started="holdActiveChat"
             @chat-complete="releaseActiveChat"
