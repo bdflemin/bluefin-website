@@ -468,6 +468,141 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/cncf-52466921801.jpg',
+    title: 'Cncf 52466921801',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-52467359330.jpg',
+    title: 'Cncf 52467359330',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-52467382760.jpg',
+    title: 'Cncf 52467382760',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54413939348.jpg',
+    title: 'Cncf 54413939348',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54433693969.jpg',
+    title: 'Cncf 54433693969',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926535297.jpg',
+    title: 'Cncf 54926535297',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926535347.jpg',
+    title: 'Cncf 54926535347',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926555127.jpg',
+    title: 'Cncf 54926555127',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927401696.jpg',
+    title: 'Cncf 54927401696',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927401841.jpg',
+    title: 'Cncf 54927401841',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927404581.jpg',
+    title: 'Cncf 54927404581',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927603113.jpg',
+    title: 'Cncf 54927603113',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927603143.jpg',
+    title: 'Cncf 54927603143',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927618613.jpg',
+    title: 'Cncf 54927618613',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927651509.jpg',
+    title: 'Cncf 54927651509',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927667344.jpg',
+    title: 'Cncf 54927667344',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927709700.jpg',
+    title: 'Cncf 54927709700',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55163321757.jpg',
+    title: 'Cncf 55163321757',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55163325232.jpg',
+    title: 'Cncf 55163325232',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164222721.jpg',
+    title: 'Cncf 55164222721',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164225146.jpg',
+    title: 'Cncf 55164225146',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164226151.jpg',
+    title: 'Cncf 55164226151',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164466499.jpg',
+    title: 'Cncf 55164466499',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164467374.jpg',
+    title: 'Cncf 55164467374',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164467589.jpg',
+    title: 'Cncf 55164467589',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164601140.jpg',
+    title: 'Cncf 55164601140',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164601225.jpg',
+    title: 'Cncf 55164601225',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/coreos.jpg',
     title: 'Coreos',
   },

@@ -33,6 +33,11 @@ approved source at identical dimensions. Recover only demonstrated high-loss
 PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
 source is already low resolution.
 
+For Flickr-backed theater assets, retrieve the largest available Flickr
+rendition (prefer 2048px, then 1600px, then the original) before encoding a
+WebP derivative at high quality. Keep the existing local filename and do not
+upscale when Flickr's original itself is below the target size.
+
 When an official event album uses camera filenames instead of descriptive
 titles, add its distinctive prefixes to `peopleFirst.allowPatterns`, run
 `node scripts/update-flickr-photos.js`, and verify it adds photos before
