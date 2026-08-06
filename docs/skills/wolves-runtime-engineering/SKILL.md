@@ -149,23 +149,87 @@ npm run test:run -- src/tests/wolvesThesisSequence.test.ts
 
 ## Driving Track 0 in a browser
 
-Reaching Track 0 in Chromium is not automatic; the standalone Playwright scripts
-in `tests/*.mjs` mock the YouTube IFrame API and then have to get past the
-Destiny intro before any Track 0 selector exists.
+Reaching Track 0 in Chromium is not automatic. The standalone Playwright scripts
+in `tests/*.mjs` mock the YouTube IFrame API and must then leave the Destiny
+intro before any Track 0 selector exists.
 
-Two DEV-only hooks exist and they are not interchangeable:
+**You cannot leave the intro with the progress bar.** `handleSegmentSeek` in
+`src/WolvesApp.vue` routes a bar click to `intro.seekToRatio()` while the intro
+overlay is showing, which seeks *inside* the intro sequence. Harnesses that
+clicked `.wc-widget-progress` at an "overall" ratio sat in the intro forever and
+timed out waiting for `.wc-trackzero-grid`.
 
-- `window.__wolvesIntro` — published by `WolvesIntroOverlay.vue` while the intro
-  overlay is mounted (`seekTo`, `seekToNativeTime`, `getDuration`, ...).
-- `window.__wolvesCinematic.seekTo` — published by `WolvesApp.vue` and delegated
-  to the stage, so it exists only after the stage mounts.
+Use the DEV-only hooks instead. Three exist, published at different times:
+
+| Hook | Published by | Available |
+|---|---|---|
+| `window.__wolvesDurations` | `WolvesApp.vue` | From app start |
+| `window.__wolvesIntro` | `WolvesIntroOverlay.vue` | While the intro overlay is mounted |
+| `window.__wolvesCinematic` | `WolvesApp.vue` | Only after the stage starts |
 
 Waiting on `__wolvesCinematic` while still in the intro therefore hangs forever.
 
-`tests/wolves-trackzero-sidecar-real-player.mjs` advances past the intro by
-synthesising a click on `.wc-widget-progress` at
-`(INTRO_DURATION + 20) / OVERALL_DURATION`. Both constants are hard-coded
-(`119.5` and `1952.5`) and have drifted from the runtime, so the click no longer
-leaves the intro and `.wc-trackzero-grid` never appears. Treat that script as
-currently unable to reach Track 0, and re-derive the constants from the runtime
-before trusting or extending it rather than assuming the app regressed.
+`__wolvesDurations` exposes `intro()`, `overall()`, and `skipIntro()`. Read the
+durations from it rather than hard-coding them: the literals `119.5` and `1952.5`
+that both harnesses carried are now `116.8` and `1949.8`, and that drift is what
+silently broke them. All three hooks are `import.meta.env.DEV` gated and absent
+from the production bundle — verify with
+`grep -c __wolvesDurations dist/assets/wolves-*.js`, which must print `0`.
+
+`skipIntro()` starts the real stage, so a harness that has not installed the
+YouTube IFrame mock hangs on `stage.start()`. Install the mock first; copy it
+from `tests/wolves-trackzero-sidecar-real-player.mjs`.
+
+`tests/wolves-movie-flow.mjs` asserts Track 0 beats but stops at 196.36 (Jorge),
+one slide before the Laura -> Tophee -> Reza boundary. That blind spot is exactly
+where a dropped portrait shipped unnoticed. Extend coverage past any boundary you
+change.
+
+## Locked slide windows
+
+Track 0 hero portraits are pinned to authored windows in
+`src/data/wolves-track-zero-slides.ts`, but the schedule is assembled in
+`WolvesComicReader.vue`, and the two drift apart in two specific ways. Both have
+already shipped bugs.
+
+- **The pool slice must cover every hero index.** `peoplePool1` is built from
+  `shuffledPeople` by index range, then hero portraits are found inside it by id.
+  A slice that stops short of the last hero index silently drops that portrait:
+  `pinTrackZeroPostHeroOpening` prepends six slides, so hero indices run 6..14,
+  and `slice(7, 14)` lost Tophee at index 14 while `peoplePool2 = slice(15, 39)`
+  never picked him up. Nothing threw, no test failed, and the slide vanished from
+  the show.
+- **Anchor a locked slide to its own window, never to the running clock.**
+  Pushing a locked portrait with `startTime: currentTime` makes it inherit any
+  upstream drift. When Tophee disappeared, Reza moved from his locked 204.52 to
+  200.44 while his `endTime` stayed 212.68 — so the portrait ran 12.24 s against
+  a `duration` field still claiming 8.16 s, the crossfade derived from `duration`
+  was wrong, and the "HAMI brings Bazzite" title above him was misaligned by
+  4.08 s. The data layer and its unit tests were all correct; only the assembled
+  schedule was wrong. Use `startTime: <slide>TrackZeroWindow.startTime`.
+
+Verify a window change by dumping the rendered slide at boundary times, mounting
+fresh at each time. `setProps` alone does not swap the displayed buffer in jsdom
+because the incoming image never loads, so a stale slide keeps reporting and the
+check silently passes.
+
+## WolvesComicReader serves more than Wolves
+
+`WolvesComicReader.vue` drives three different shows and only one is the
+presentation:
+
+- `timelineSlides` — the Wolves Track 0 schedule (`wolvesExperience` true).
+- `laterTrackPhotos` — Wolves tracks 1 and later.
+- `mixedPhotos` — the ten other albums in `public/experiences/catalogue.json`.
+
+`mixedPhotosToUse` only swaps in `timelineSlides` when `wolvesExperience` is
+true, so `mixedPhotos` is live for every non-Wolves album. It reads as dead
+legacy code beside the newer Wolves path, and an audit flagged ~113 lines of it
+for deletion; deleting it would have broken ten experiences while leaving
+`/wolves/` working, so a `/wolves/` smoke test would not have caught it. Check
+whether the non-Wolves experiences reach a symbol before removing it from this
+component.
+
+Related: `isExperimental` near the top of the component is a permanently-true
+flag, so it reads as a dead branch gate. That is not a licence to delete the
+branch it guards.

@@ -11,6 +11,8 @@
     "lint:fix": "eslint --fix",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:gate": "node scripts/test-baseline.mjs",
+    "test:gate:update": "node scripts/test-baseline.mjs --update",
     "typecheck": "vue-tsc --noEmit",
     "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
     "update:back-catalogue": "node scripts/update-back-catalogue.js",

@@ -9,6 +9,14 @@
 - `reference/content-map.md`: locate production content.
 - `reference/production-entrypoints.md`: locate mounted applications.
 
+## Two different products
+
+This repository ships a **website** at `/` and a **presentation** at
+`/wolves/`. They have different rules. The presentation is performed to a live
+audience in theater seats, is read from a distance, is paced by music, and
+cannot be interacted with. See `../AGENTS.md` under "`/wolves/` is a
+presentation" and `reference/wolves-runtime.md`.
+
 ## Architecture
 
 - `architecture/application-map.md`: production entry points and component areas.

@@ -65,8 +65,12 @@ const MOCK_DURATIONS = {
   san94Q93IcY: 234,
   rYkYLIYvI18: 271,
 }
-const INTRO_DURATION = 119.5
-const OVERALL_DURATION = 1952.5
+// NOTE: these are FALLBACKS only. The live values are read from
+// `window.__wolvesCinematic.introDuration()` / `.overallDuration()` once the
+// app is up (see `readLiveDurations`). Hard-coding them caused this harness to
+// silently stop escaping the Destiny intro when the timeline changed.
+let INTRO_DURATION = 119.5
+let OVERALL_DURATION = 1952.5
 const TRACK_ZERO_SEEK_SECONDS = 300
 const EXPECTED_VIDEO_IDS = [
   'xu_yE8h3jT8',
@@ -79,6 +83,23 @@ const EXPECTED_VIDEO_IDS = [
 ]
 const EXPECTED_PLAYLIST = EXPECTED_VIDEO_IDS.join(',')
 const EXPECTED_FIRST_VIDEO_ID = EXPECTED_VIDEO_IDS[0]
+
+// Replace the fallback durations with the live timeline as soon as the app
+// publishes them, so a timeline edit cannot silently strand this harness.
+async function readLiveDurations(page) {
+  const live = await page.evaluate(() => {
+    const d = window.__wolvesDurations
+    return d ? { intro: d.intro(), overall: d.overall() } : null
+  }).catch(() => null)
+  if (live && live.intro > 0 && live.overall > 0) {
+    INTRO_DURATION = live.intro
+    OVERALL_DURATION = live.overall
+    console.log(`  durations: intro=${INTRO_DURATION} overall=${OVERALL_DURATION} (live)`)
+  }
+  else {
+    console.log(`  durations: intro=${INTRO_DURATION} overall=${OVERALL_DURATION} (FALLBACK - hook missing)`)
+  }
+}
 
 let passed = 0
 let failed = 0
@@ -274,14 +295,17 @@ try {
     // animation-heavy pages.
   }
   await page.waitForTimeout(1000)
+  await readLiveDurations(page)
 
   await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION|MEET YOUR TEAMMATES/i }).click()
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 10_000 })
 
-  // Skip past the Destiny intro directly into Part I ("7 Days to the
-  // Wolves") via the overall progress bar, exactly as
-  // tests/wolves-lobby-progress.mjs does.
-  await clickOverallRatio(page, (INTRO_DURATION + 20) / OVERALL_DURATION)
+  // Skip past the Destiny intro directly into Part I ("7 Days to the Wolves").
+  // The progress bar cannot do this: during the intro a bar click is routed to
+  // `intro.seekToRatio()`, which only seeks inside the intro. Use the DEV skip
+  // hook instead.
+  await page.waitForFunction(() => typeof window.__wolvesDurations?.skipIntro === 'function', null, { timeout: 10_000 })
+  await page.evaluate(() => window.__wolvesDurations.skipIntro())
   await page.waitForSelector('.wc-trackzero-grid', { state: 'visible', timeout: 10_000 })
   await page.waitForFunction(
     () => typeof window.__wolvesCinematic?.seekTo === 'function',

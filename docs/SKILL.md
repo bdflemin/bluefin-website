@@ -14,6 +14,14 @@ task, load only that skill, then act.
 
 Do not load every skill. Load the smallest skill that answers the job.
 
+## Know what you are editing
+
+`/` is a website. `/wolves/` is a **presentation** performed to a live audience
+seated in a theater, projected and synchronized to music, with no interaction
+available to anyone. Web-page instincts — scroll it, shrink the type, add a
+control, add more words — are defects there. Read `AGENTS.md` under
+"`/wolves/` is a presentation" before touching that route.
+
 ## Skill index
 
 | I need to... | Load |

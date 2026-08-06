@@ -2,9 +2,24 @@
 
 **Agents edit content. Agents never edit design.**
 
+## What this is
+
+`/wolves/` is a cinematic presentation performed to a live audience seated in a
+theater. It is projected on a large screen, synchronized to music by the media
+player clock, and it runs unattended from start to finish.
+
+It is a show, not a document and not an app. The audience reads it from a
+distance, at a pace the music chooses, with no ability to interact. The
+production qualities that follow from that are stated in `AGENTS.md` under
+"`/wolves/` is a presentation" and are binding on every change here.
+
+The recurring failure mode in this repository is treating a Wolves surface like
+a web page: adding scroll, shrinking type to fit more words, varying chrome per
+view, or adding content without checking whether its time window can hold it.
+
 ## Boundary
 
-The `/wolves/` experience has a frozen design. Agents may edit only authored
+The `/wolves/` presentation has a frozen design. Agents may edit only authored
 prose, data values, registered records, and approved assets within existing
 structures. Do not edit Vue templates, styles, layout, controls, animation,
 player synchronization, or generated files for content work.
@@ -81,9 +96,12 @@ Chromium and assert the page has rendered text with no `pageerror` events; a
 successful build does not prove eager lore loading succeeds. Finish with
 `docs/skills/validation/SKILL.md` before any production claim.
 
-## Timing and readability lessons
+## Presentation rules
 
-- Wolves is a passive video presentation. Do not require, offer, or depend on
+These are the rules that keep the show readable from theater seats. They are
+derived from real failures on this route, not preferences.
+
+- Wolves is a passive presentation. Do not require, offer, or depend on
   pointer, click, touch, keyboard, or scrolling interaction to follow its
   narrative text. The renderer must pace and reveal the complete story itself.
 - Use a noninteractive paged renderer for chatlogs and quotes: show one
@@ -107,3 +125,21 @@ successful build does not prove eager lore loading succeeds. Finish with
 - Do not call an abandoned experiment restored. State which source is active and what was actually changed.
 - For accessibility, expose complete active lore text at the article level; do not announce every typed character through a live region.
 - Verify short and long records in Chromium, not only with unit tests or a build.
+
+## The time budget is real
+
+Every unlocked lore record is allocated a slice of a fixed musical window.
+`estimateLoreReadDuration()` states what a record needs; `allocateLoreSlots()`
+divides what the music actually has. When authored content exceeds the window,
+the allocator does not warn — it silently compresses slots, and records past the
+end of the window never appear on screen at all.
+
+Before adding or lengthening any record, compare the total authored cost of its
+range against that range's real duration. Adding words to a full window removes
+other words from the show.
+
+Known standing overflow: the 220–398 s range holds 178 s of music against
+roughly 487 s of authored pages, so about 309 s of authored lore currently never
+displays. Resolving that means cutting records, and which records to cut is an
+owner decision, not an agent decision. Do not "fix" it by shrinking type,
+speeding the typewriter, or lowering the readability minimum.

@@ -8,7 +8,7 @@ import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -19,6 +19,23 @@ const showIntroOverlay = computed(() => store.phase === 'intro' || introHandoff.
 let handoffToken = 0
 let unmounted = false
 
+if (import.meta.env.DEV) {
+  // Published from app start (unlike `__wolvesCinematic`, which only exists
+  // once the stage has started) so browser harnesses can compute a seek ratio
+  // while still inside the intro instead of hard-coding durations.
+  //
+  // `skipIntro` exists because the media widget's progress bar cannot be used
+  // to leave the intro: `handleSegmentSeek` routes a click to
+  // `intro.seekToRatio()`, which seeks *within* the intro sequence. Harnesses
+  // that clicked the bar at an "overall" ratio were silently stuck in the
+  // intro forever.
+  ;(window as any).__wolvesDurations = {
+    intro: () => INTRO_SEQUENCE_DURATION,
+    overall: () => store.overallDuration,
+    skipIntro: () => enterCinematic(),
+  }
+}
+
 async function startCinematicStage() {
   await nextTick()
   await stage.value?.start?.()
@@ -26,8 +43,15 @@ async function startCinematicStage() {
     return
   }
   if (import.meta.env.DEV) {
-    // Dev-only hook so browser-based boundary verification can drive the real player.
-    ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
+    // Dev-only hook so browser-based boundary verification can drive the real
+    // player. Durations are published here so standalone Playwright harnesses
+    // read the live timeline instead of hard-coding constants that silently
+    // drift out of date and leave the harness stuck in the intro.
+    ;(window as any).__wolvesCinematic = {
+      seekTo: (s: number) => stage.value?.seekTo(s),
+      introDuration: () => INTRO_SEQUENCE_DURATION,
+      overallDuration: () => store.overallDuration,
+    }
   }
 }
 

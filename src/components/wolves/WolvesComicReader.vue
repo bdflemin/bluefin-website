@@ -1,7 +1,16 @@
 <!--
-WolvesComicReader — Chapter-aware canvas PDF reader
-===================================================
-Renders the soundtrack-synced Wolves visual presentation.
+WolvesComicReader — soundtrack-synced slideshow
+==============================================
+Drives two different shows from one component:
+
+  - The Wolves presentation (`wolvesExperience` true, trackIndex 0) uses
+    `timelineSlides`, whose Track 0 schedule is pinned to authored windows in
+    `src/data/wolves-track-zero-slides.ts`.
+  - Every other album in `public/experiences/catalogue.json` uses
+    `mixedPhotos`, and later Wolves tracks use `laterTrackPhotos`.
+
+There is no PDF and no canvas despite the historical name; `loadComicPdf()`
+is a no-op kept only for the download link.
 -->
 <script setup lang="ts">
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
@@ -28,6 +37,8 @@ import {
   marinaMooreTrackZeroWindow,
   rezaContributorSlideId,
   rezaContributorTrackZeroWindow,
+  topheeSlideId,
+  topheeTrackZeroWindow,
   pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
@@ -124,6 +135,13 @@ const currentBeat = computed(() => {
 void currentBeat.value
 
 const mixedPhotos = computed(() => {
+  // NOT DEAD CODE. This is the slideshow for the ten non-Wolves album
+  // experiences in public/experiences/catalogue.json. `mixedPhotosToUse` only
+  // swaps in `timelineSlides` when `wolvesExperience` is true, so this branch
+  // still runs for every other album at trackIndex 0. Deleting it because the
+  // Wolves path looks like a replacement breaks those albums silently — the
+  // Wolves route keeps working, so a /wolves/ smoke test will not catch it.
+
   // Rebuild the per-experience shuffle when the lobby launches another album.
   void props.experienceId
 
@@ -352,8 +370,10 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // The Microraptor lock keeps its slide at a fixed slot even as the pool drifts.
   const shuffledNormalShowcase = pinBluefinMicroraptorSlide(deterministicShuffle(normalShowcase, 202))
   const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides(localPeople)
-  // Locked post-hero opening (Walters -> Tophee -> Kirkland -> 0R0A9083 -> 052)
-  // sits at the head of the People pool; the hero locks are extracted by id below.
+  // Locked post-hero opening (Kirkland -> Walters -> Bryce -> CNCF Projects ->
+  // 0R0A9083 -> 052) is pinned to the head of the People pool; because the hero
+  // locks are extracted by id below, these are the first slides that actually
+  // play after Reza's window closes.
   const shuffledPeople = pinTrackZeroPostHeroOpening(
     pinTrackZeroHeroSlides(deterministicShuffle(regularSlides, 303)),
   )
@@ -395,12 +415,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 3. Heavy Chorus 1 / Verse 2 / Chorus 2 [~127, ~229] -> leftover showcase + people wallpapers
   const normalPool2 = shuffledNormalShowcase.slice(22, 39)
+  // Hero locks run jono -> marina -> Bluefin group -> laura -> tophee -> reza.
+  // The slice must cover every hero index or a locked portrait is silently
+  // dropped and every following locked window starts early.
   const peoplePool1 = andyAdvisorPhoto
-    ? [...shuffledPeople.slice(0, 7), andyAdvisorPhoto, ...shuffledPeople.slice(7, 14)]
-    : shuffledPeople.slice(0, 15)
+    ? [...shuffledPeople.slice(0, 7), andyAdvisorPhoto, ...shuffledPeople.slice(7, 15)]
+    : shuffledPeople.slice(0, 16)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
   const lauraPhoto = peoplePool1.find(item => item.id === lauraSlideId)
+  const topheePhoto = peoplePool1.find(item => item.id === topheeSlideId)
   // The Bluefin group (Sherman + m2 composite, NOT John Bazzite, hikari) locks as one back-to-back run;
   // it only engages when every member survived into the Track 0 people pool.
   const bluefinGroupPhotos = bluefinGroupSlides.map(slide => ({
@@ -414,6 +438,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     ...(marinaPhoto ? [marinaMooreSlideId] : []),
     ...(hasBluefinGroupLock ? bluefinGroupSlides.map(slide => slide.id) : []),
     ...(lauraPhoto ? [lauraSlideId] : []),
+    ...(topheePhoto ? [topheeSlideId] : []),
   ])
   const remainingPeoplePool1 = peoplePool1.filter(item =>
     !lockedHeroSlideIds.has(item.id),
@@ -500,11 +525,25 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       currentTime = lauraTrackZeroWindow.endTime
     }
 
+    if (topheePhoto) {
+      result.push({
+        ...topheePhoto,
+        path: topheePhoto.path || '',
+        startTime: currentTime,
+        duration: topheeTrackZeroWindow.endTime - currentTime,
+        endTime: topheeTrackZeroWindow.endTime,
+      })
+      currentTime = topheeTrackZeroWindow.endTime
+    }
+
+    // Reza is anchored to his own locked window rather than to whatever the
+    // running clock happens to be, so the HAMI title above him stays aligned
+    // even if an earlier hero slide is missing from the pool.
     if (rezaPhoto) {
       result.push({
         ...rezaPhoto,
         path: rezaPhoto.path || '',
-        startTime: currentTime,
+        startTime: rezaContributorTrackZeroWindow.startTime,
         duration: rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime,
         endTime: rezaContributorTrackZeroWindow.endTime,
       })

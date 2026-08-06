@@ -41,7 +41,7 @@ Application content or data checks:
 
 ```bash
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 ```
 
@@ -50,9 +50,37 @@ Full code checks:
 ```bash
 npm run lint:fix
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 ```
+
+## The suite is red; use the gate
+
+`npm run test:run` is **not** a pass/fail signal in this repository. The vitest
+suite has carried failures for over a week (35 failing on 2026-07-29, 33 on
+2026-08-05 afternoon, 26 now). A bare run prints a large failure count whether or
+not you broke anything, so agents learned to ignore it — which is how a series of
+real regressions shipped unnoticed in a single afternoon.
+
+Use the baseline gate instead:
+
+```bash
+npm run test:gate
+```
+
+It runs the suite, compares the failing set against `tests/known-failures.txt`,
+and exits non-zero **only for failures you introduced**. It also lists baseline
+failures that now pass, so the baseline shrinks as the suite is repaired.
+
+Re-record only when you have deliberately changed the failure set, and say so in
+the commit message:
+
+```bash
+npm run test:gate:update
+```
+
+Never re-record to silence a failure you caused. Never delete an entry by hand.
+A shrinking `tests/known-failures.txt` is good; a growing one needs a reason.
 
 ## Red Flags
 
@@ -66,6 +94,11 @@ npm run build
   work.
 - A change is called missing from the browser before the serving process and its
   port were identified.
+- `npm run test:run` output is used to decide whether a change is safe.
+- `tests/known-failures.txt` is re-recorded in the same commit as the change that
+  added the failures.
+- Something is deleted as "dead code" without checking the non-Wolves
+  experiences that share `WolvesComicReader.vue`.
 
 ## Verification
 

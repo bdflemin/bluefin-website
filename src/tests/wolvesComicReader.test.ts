@@ -7,13 +7,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
+import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
 import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
 } from '../data/wolves-track-zero-beats'
-import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
-import { trackZeroFastFinalePhotoIds } from '../data/wolves-track-zero-slides'
+import {
+  hikari2SlideId,
+  hikari2TrackZeroWindow,
+  hikariSlideId,
+  hikariTrackZeroWindow,
+  jonoBaconSlideId,
+  jonoBaconTrackZeroWindow,
+  jorgeBluefinSlideId,
+  jorgeBluefinTrackZeroWindow,
+  kyleSlideId,
+  kyleTrackZeroWindow,
+  lauraSlideId,
+  lauraTrackZeroWindow,
+  marinaMooreSlideId,
+  marinaMooreTrackZeroWindow,
+  rezaContributorSlideId,
+  rezaContributorTrackZeroWindow,
+  shermanM2CompositeSlideId,
+  shermanM2CompositeTrackZeroWindow,
+  topheeSlideId,
+  topheeTrackZeroWindow,
+  trackZeroFastFinalePhotoIds,
+} from '../data/wolves-track-zero-slides'
 
 const source = {
   provider: 'youtube',
@@ -134,7 +156,6 @@ describe('wolvesComicReader', () => {
 
     expect(bridgeHold).toBeDefined()
   })
-
 
   it('does not render manual page navigation', () => {
     const wrapper = mount(WolvesComicReader, {
@@ -449,8 +470,8 @@ describe('wolvesComicReader', () => {
 
   it('opens Ghosts In The Mist with the held MN047 Jorge tribute', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
-    const [jorgeQuotePartOne, jorgeQuotePartTwo, jorgeQuotePartThree] =
-      ghostsInTheMistOpeningSlide.descriptionParts.map(part => part.split('\n\n').map(paragraph => paragraph.trim()))
+    const [jorgeQuotePartOne, jorgeQuotePartTwo, jorgeQuotePartThree]
+      = ghostsInTheMistOpeningSlide.descriptionParts.map(part => part.split('\n\n').map(paragraph => paragraph.trim()))
     mockGalleryData([
       coverTrack,
       {
@@ -991,5 +1012,66 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
     expect(((wrapper.vm as any).laterTrackPhotos as Array<{ id: string }>)
       .some(photo => photo.id === 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')).toBe(true)
+  })
+})
+
+describe('track 0 locked windows', () => {
+  beforeEach(() => {
+    mockGalleryData([coverTrack])
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  // Regression guard. Every slide below is authored to a fixed window in
+  // wolves-track-zero-slides.ts because a title card in
+  // wolves-track-zero-manifest.ts is scheduled against the same seconds. When a
+  // slide is assembled with a running cursor instead of its window, or dropped
+  // from a people pool entirely, the picture and its caption drift apart and
+  // nothing throws. That is exactly how Tophee vanished and Reza ran 4.08s
+  // early while every data-layer test stayed green.
+  const lockedWindows = [
+    ['jono bacon', jonoBaconSlideId, jonoBaconTrackZeroWindow],
+    ['marina moore', marinaMooreSlideId, marinaMooreTrackZeroWindow],
+    ['sherman m2', shermanM2CompositeSlideId, shermanM2CompositeTrackZeroWindow],
+    ['kyle', kyleSlideId, kyleTrackZeroWindow],
+    ['hikari', hikariSlideId, hikariTrackZeroWindow],
+    ['hikari 2', hikari2SlideId, hikari2TrackZeroWindow],
+    ['jorge bluefin', jorgeBluefinSlideId, jorgeBluefinTrackZeroWindow],
+    ['laura', lauraSlideId, lauraTrackZeroWindow],
+    ['tophee', topheeSlideId, topheeTrackZeroWindow],
+    ['reza contributor', rezaContributorSlideId, rezaContributorTrackZeroWindow],
+  ] as const
+
+  it.each(lockedWindows)('places %s at its authored window', async (_name, id, window) => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const slides = (wrapper.vm as any).timelineSlides as Array<{ id: string, startTime: number, endTime: number }>
+    const matches = slides.filter(slide => slide.id === id)
+
+    expect(matches, `${id} is missing from the track 0 schedule`).toHaveLength(1)
+    expect(matches[0].startTime).toBeCloseTo(window.startTime, 2)
+    expect(matches[0].endTime).toBeCloseTo(window.endTime, 2)
+  })
+
+  it('runs the locked people sequence back to back with no gap or overlap', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const slides = (wrapper.vm as any).timelineSlides as Array<{ id: string, startTime: number, endTime: number }>
+    const ordered = lockedWindows.map(([, id]) =>
+      slides.find(slide => slide.id === id)!)
+
+    for (let index = 1; index < ordered.length; index += 1) {
+      expect(ordered[index].startTime, `gap before ${ordered[index].id}`)
+        .toBeCloseTo(ordered[index - 1].endTime, 2)
+    }
   })
 })

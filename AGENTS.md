@@ -31,11 +31,43 @@ approval if the requested result needs a design file or runtime behavior change.
 | Path | Entry file | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public experience |
+| `/wolves/` | `wolves/index.html` | Public presentation (see below) |
 | `/dakota/` | `dakota/index.html` | Unlisted sub-application |
 | `/server/` | `server/index.html` | Separate production entry |
 
 Do not promote an unlisted path through navigation, metadata, or a sitemap.
+
+## `/wolves/` is a presentation
+
+`/wolves/` is not a web page that happens to animate. It is a cinematic
+presentation performed to a live audience seated in a theater, projected on a
+large screen and synchronized to music by the media player clock.
+
+That single fact decides most arguments about it:
+
+- **Nobody can interact with it.** The audience has no input device and the
+  presenter is not driving it. Never require, offer, or depend on click, hover,
+  pointer, touch, keyboard, or scroll to follow the narrative. If text needs
+  input to be finished reading, it is broken.
+- **It is read from the back row.** Type is sized for projection distance, not
+  for a laptop. Small, dense, or low-contrast text is a defect.
+- **Nothing scrolls or pans.** Every beat is a complete, self-contained page
+  that appears, holds long enough to be read, and is replaced.
+- **Consistency is the product.** Identical chrome, metadata, and type scale on
+  every record. On a large screen, per-view variation does not read as variety;
+  it reads as a broken slide deck.
+- **A quote is never split across pages.** Splitting re-renders the quote mark
+  and attribution and destroys the beat.
+- **Time is the binding constraint.** Every record is allocated a window from
+  the music. Content that does not fit its window never reaches the audience,
+  no matter how good it is. Adding words removes other words.
+- **It must survive unattended.** There is no chance to recover live. A
+  mid-show failure is seen by everyone.
+
+Judge every Wolves change by "can the back row read this in the time the music
+allows", not by whether it looks right on your monitor.
+
+Detail lives in `docs/reference/wolves-runtime.md`.
 
 ## Content sources
 
@@ -51,13 +83,17 @@ Use `import.meta.env.BASE_URL` for public runtime asset paths.
 
 ```bash
 npm install --include=dev
-npm run dev
+npm run dev -- --host :: --port 5173 --strictPort
 npm run lint
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 npm run preview
 ```
+
+Run exactly one dev server. `npm run test:gate` is the test signal, not
+`npm run test:run`: the suite carries a recorded baseline of known failures in
+`tests/known-failures.txt` and the gate fails only on new ones.
 
 For documentation-only changes:
 
