@@ -69,9 +69,11 @@ const CHROME_FREE_YOUTUBE_PLAYER_VARS = {
 
 export function getChromeFreeYoutubePlayerVars(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const origin = typeof window !== 'undefined' ? window.location.origin : undefined
+  const widgetReferrer = typeof window !== 'undefined' ? window.location.href : undefined
   return {
     ...CHROME_FREE_YOUTUBE_PLAYER_VARS,
     ...(origin ? { origin } : {}),
+    ...(widgetReferrer ? { widget_referrer: widgetReferrer } : {}),
     ...overrides,
   }
 }

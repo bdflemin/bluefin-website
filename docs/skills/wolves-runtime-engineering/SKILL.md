@@ -30,6 +30,11 @@ Do not use for routine content or unapproved visual work.
 
 Do not introduce a second transport or wall-clock synchronization.
 
+Every YouTube IFrame player must receive both `origin` and `widget_referrer`
+from the current window. `origin` identifies the IFrame API caller;
+`widget_referrer` identifies the embedding page and prevents an otherwise
+playable track from being treated as an unidentified player request.
+
 ## Red Flags
 
 - Content work is used to justify component or style changes.

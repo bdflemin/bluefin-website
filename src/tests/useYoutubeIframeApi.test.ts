@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cancelPlayerVolumeFade, fadePlayerVolume } from '../composables/useYoutubeIframeApi'
+import {
+  cancelPlayerVolumeFade,
+  fadePlayerVolume,
+  getChromeFreeYoutubePlayerVars,
+} from '../composables/useYoutubeIframeApi'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -24,6 +28,15 @@ describe('fadePlayerVolume', () => {
 
     expect(setVolume).toHaveBeenLastCalledWith(40)
     expect(onComplete).toHaveBeenCalledOnce()
+  })
+
+  describe('getChromeFreeYoutubePlayerVars', () => {
+    it('identifies both the embedding origin and page to YouTube', () => {
+      expect(getChromeFreeYoutubePlayerVars()).toMatchObject({
+        origin: window.location.origin,
+        widget_referrer: window.location.href,
+      })
+    })
   })
 
   it('defaults to a start volume of 100 when getVolume is absent', () => {
