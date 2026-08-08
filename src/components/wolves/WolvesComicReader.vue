@@ -23,8 +23,8 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
-  trackZeroEvenBeatCuts,
   trackZeroBeatCutsWithPickup,
+  trackZeroEvenBeatCuts,
 } from '@/data/wolves-track-zero-beats'
 import { TRACK_ZERO_PRESENTATION_SECTIONS } from '@/data/wolves-track-zero-manifest'
 import {
@@ -35,19 +35,15 @@ import {
   lauraTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
-  rezaContributorSlideId,
-  rezaContributorTrackZeroWindow,
-  topheeSlideId,
-  topheeTrackZeroWindow,
   pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
+  rezaContributorSlideId,
+  rezaContributorTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
+  topheeSlideId,
+  topheeTrackZeroWindow,
 } from '@/data/wolves-track-zero-slides'
-
-const trackZeroReservedForLaterIds = new Set([
-  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
-])
 import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
@@ -59,6 +55,10 @@ const props = withDefaults(defineProps<{
   experienceId: 'seven-days-to-the-wolves',
   wolvesExperience: true,
 })
+
+const trackZeroReservedForLaterIds = new Set([
+  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
+])
 
 const isWolvesExperience = computed(() => props.wolvesExperience)
 
