@@ -492,7 +492,63 @@ Three traps in that harness, all of which cost real time:
 - **The transport widget auto-hides.** Scripted `page.evaluate()` seeks are not
   pointer input, so the controls slide off screen and clicks report "outside of
   the viewport". Nudge `page.mouse` and let the reveal transition finish first.
+  This also means never clicking `Next` with a raw `page.getByLabel('Next')` —
+  two controls share the label (overlay + transport), and the raw locator
+  intermittently resolves to the off-viewport one and times out after 30 s. Use
+  the harness's `clickControl()` helper, which nudges the pointer and clicks the
+  visible match.
 - **Cue windows drift out from under seek times.** A seek one second before a
   plate's window opens fails by timeout, which looks like a missing element
   rather than a stale constant. Check the cue's `start`/`end` in
   `wolves-intro-sequence.ts` before believing the component is broken.
+
+## The mock player must emit the real load lifecycle
+
+`useDualBufferPlayer.start()` awaits a promise that only resolves when the
+**active** player fires an `onStateChange` to `PLAYING` after
+`loadVideoById(...)`. The real IFrame API buffers and autoplays after a load;
+a mock whose `loadVideoById` only records the video id never emits that
+transition, so `start()` never settles, `handleIntroComplete()` in
+`WolvesApp.vue` never reaches `introTransparent = true`, and
+`.wolves-intro-overlay--transparent-handoff` never appears. That is issue
+#706's exact failure: the harness dies at the intro handoff with the overlay
+stuck opaque, and every Track 0 assertion after it silently never runs.
+
+When writing or copying the mock (`tests/wolves-movie-flow.mjs` has the
+canonical one):
+
+- `loadVideoById` must set `currentTime` to `startSeconds` and then emit
+  `BUFFERING` → `PLAYING` state changes asynchronously (microtask is enough).
+- `cueVideoById` must set `currentTime` and emit `CUED` — the dual buffer cues
+  the inactive side and then prewarms it with `playVideo`, which parks it back
+  on `PLAYING` (`parkPrewarmedSide`).
+- Forcing `ENDED` or seeking past the intro cut does **not** unstick the
+  handoff; the await is on the *cinematic stage's* load-play transition, not
+  on the intro player at all.
+
+## Derive harness expectations from the live modules, not constants
+
+Most of the movie-flow harness's historical failures were stale constants,
+not runtime defects. The show's timing is derived — lore slots from reading
+cost (`wolves-narrative-timeline.ts`), rotating signals paced by
+`getTrackZeroHudLabel`, slide windows re-measured in
+`wolves-track-zero-slides.ts` — so any hard-coded time or expected string in a
+test drifts the moment content is re-edited. Under the Vite dev server a
+Playwright page can import the authored modules directly:
+
+```js
+const timeline = await page.evaluate(async () => {
+  const mod = await import('/src/data/wolves-narrative-timeline.ts')
+  return mod.wolvesNarrativeTimeline
+})
+```
+
+Use this to compute slot boundaries, slide-window straddles (± a small
+epsilon; the hero-run windows have already shifted by 0.001 s once), the
+paced finale message list (`getTrackZeroSectionMessages(4)` — the old
+`wolves-incoming-signal.txt` is no longer the runtime source), and the air
+time of a specific rotating signal (scan `getTrackZeroHudLabel` over the
+window). Assert the DOM against those derived values. Selectors go stale the
+same way: the lore title is `.lore-dossier-title` (`LoreRecordHeader`), not
+the old `.conversation-title`, and the lore page viewport intentionally clips
+(`overflow: hidden` in `lore-dossier.scss`) — it is not a scroll surface.
