@@ -35,7 +35,17 @@ interface MockPlayerRecord {
   pauseVideo: MockPlayerMethod<() => void>
   playVideo: MockPlayerMethod<() => void>
   seekTo: MockPlayerMethod<(seconds: number) => void>
+  setVolume: MockPlayerMethod<(volume: number) => void>
+  getVolume: MockPlayerMethod<() => number>
   destroy: MockPlayerMethod<() => void>
+  /** Every volume level actually pushed to the player, in order. */
+  volumeLog: number[]
+  /** The player's live volume level (0–100). */
+  volume: number
+  /** The volume the player was sitting at when `destroy()` landed, or null if still alive. */
+  destroyedAtVolume: number | null
+  currentSeconds: number
+  setCurrentTime: (seconds: number) => void
   triggerReady: () => void
   triggerEnded: () => void
   triggerError: () => void
@@ -47,12 +57,14 @@ function installMockIframeApi() {
   class MockPlayer {
     config: any
     videoId: string
+    currentSeconds = 0
     getDuration = vi.fn(() => 120)
     getCurrentTime = vi.fn(() => 0)
     loadVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
       const nextVideoId = typeof video === 'string' ? video : video.videoId
       const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
       this.videoId = nextVideoId
+      this.currentSeconds = startSeconds
       this.getCurrentTime = vi.fn(() => startSeconds)
       this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.PLAYING, target: this })
     })
@@ -66,10 +78,33 @@ function installMockIframeApi() {
     })
 
     seekTo = vi.fn((seconds: number) => {
+      this.currentSeconds = seconds
       this.getCurrentTime = vi.fn(() => seconds)
     })
 
-    destroy = vi.fn()
+    volume = 100
+    volumeLog: number[] = []
+    destroyedAtVolume: number | null = null
+
+    setVolume = vi.fn((level: number) => {
+      this.volume = level
+      this.volumeLog.push(level)
+    })
+
+    getVolume = vi.fn(() => this.volume)
+
+    destroy = vi.fn(() => {
+      this.destroyedAtVolume = this.volume
+    })
+
+    /**
+     * Move the transport's own clock. A double whose clock never runs makes every timing
+     * assertion vacuously true, so fade tests drive this together with the fake timers.
+     */
+    setCurrentTime(seconds: number) {
+      this.currentSeconds = seconds
+      this.getCurrentTime = vi.fn(() => seconds)
+    }
 
     constructor(element: Element, config: any) {
       this.config = config
@@ -611,6 +646,117 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+})
+
+/**
+ * The intro→Track 0 junction. The trailer is a `video` segment on the main player, so the
+ * authored `audioFadeOutSeconds` (text segments' `audioPlayer` only) never reached it and
+ * `destroyPlayer()` severed its audio mid-air right as Track 0 came up at full volume.
+ */
+describe('wolvesIntroOverlay track 0 handoff fade', () => {
+  const finalVideoSequence = [
+    { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 10 },
+  ]
+
+  /** Runs the transport clock and the component's timers together, 200ms at a time. */
+  async function runTransport(record: MockPlayerRecord, seconds: number) {
+    const steps = Math.round((seconds * 1000) / 200)
+    for (let step = 0; step < steps; step += 1) {
+      record.setCurrentTime(Number((record.currentSeconds + 0.2).toFixed(3)))
+      await vi.advanceTimersByTimeAsync(200)
+    }
+    await flushPromises()
+  }
+
+  it('ramps the trailer down across its own closing seconds instead of cutting it dead', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+
+    // Well clear of the end: the trailer must play at full volume, never pre-ducked.
+    await runTransport(record, 7)
+    expect(record.currentSeconds).toBeCloseTo(7, 3)
+    expect(record.volumeLog).toEqual([])
+    expect(record.volume).toBe(100)
+
+    // Inside the fade window but before the end: audibly down, not yet silent.
+    await runTransport(record, 1.4)
+    expect(record.currentSeconds).toBeCloseTo(8.4, 3)
+    expect(record.volumeLog.length).toBeGreaterThan(0)
+    expect(record.volume).toBeLessThan(100)
+    expect(record.volume).toBeGreaterThan(0)
+    expect(record.destroy).not.toHaveBeenCalled()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    // Through the cutoff: silent first, destroyed second.
+    await runTransport(record, 2)
+    expect(record.destroyedAtVolume).toBe(0)
+    expect(record.volumeLog).toEqual([...record.volumeLog].sort((a, b) => b - a))
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+
+    wrapper.unmount()
+  })
+
+  it('emits complete without waiting for the ramp so Track 0 loads in parallel', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+
+    // An early natural end skips the lead fade entirely: the completion ramp has to cover it.
+    record.triggerEnded()
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+    expect(record.destroy).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(record.volume).toBeLessThan(100)
+    expect(record.volume).toBeGreaterThan(0)
+    expect(record.destroy).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1200)
+    expect(record.destroyedAtVolume).toBe(0)
+    expect(record.volumeLog).toEqual([...record.volumeLog].sort((a, b) => b - a))
+
+    wrapper.unmount()
+  })
+
+  it('stops the ramp when the overlay unmounts mid-fade rather than leaking a timer', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+    record.triggerEnded()
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(500)
+    wrapper.unmount()
+    expect(record.destroy).toHaveBeenCalledTimes(1)
+
+    const volumeCallsAtUnmount = record.setVolume.mock.calls.length
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(record.setVolume.mock.calls).toHaveLength(volumeCallsAtUnmount)
   })
 })
 

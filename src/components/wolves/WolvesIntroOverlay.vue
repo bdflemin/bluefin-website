@@ -64,6 +64,11 @@ const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(
 
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const canGoToPrevious = computed(() => sequenceState.value.index > 0)
+/**
+ * The last segment of the intro is the one that hands off to Track 0, so it is the only one
+ * whose video audio has to be taken down before the concert's first bar arrives.
+ */
+const isFinalSegment = computed(() => sequenceState.value.index === props.videos.length - 1)
 
 const activeCue = computed<IntroOverlayTextCue | undefined>(() => activeOverlayCue(currentSegment.value?.overlays, currentTime.value))
 const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>(() => {
@@ -402,6 +407,45 @@ let textTimer: ReturnType<typeof setInterval> | null = null
 let textClockOriginMs = 0
 
 /**
+ * How long the trailer's audio takes to reach silence at the intro→Track 0 junction.
+ *
+ * The authored `audioFadeOutSeconds` musical fade only exists on `text` segments and only
+ * touches `audioPlayer`, but the final intro segment is the Destiny trailer — a `video`
+ * segment on the main `player`. Without this the trailer's audio was severed mid-air by
+ * `destroyPlayer()` and Track 0 slammed in at full volume over the silence.
+ */
+const VIDEO_HANDOFF_FADE_SECONDS = 2
+/** Ramp resolution for the completion-time fallback fade; the poll loop drives the lead fade. */
+const VIDEO_HANDOFF_FADE_STEP_MS = 50
+/** Last volume actually pushed to the video player, so a ramp can resume from where it sits. */
+let videoVolume = 100
+let handoffFadeTimer: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Equal-power taper: two linear ramps sum to a dip in perceived loudness at the midpoint, and
+ * Track 0 is coming up underneath this one.
+ */
+function equalPowerFadeOut(progress: number): number {
+  return Math.cos(Math.min(Math.max(progress, 0), 1) * (Math.PI / 2))
+}
+
+function stopHandoffFade() {
+  if (handoffFadeTimer) {
+    clearInterval(handoffFadeTimer)
+    handoffFadeTimer = null
+  }
+}
+
+function applyVideoVolume(level: number) {
+  const clamped = Math.round(Math.min(Math.max(level, 0), 100))
+  if (clamped === videoVolume) {
+    return
+  }
+  videoVolume = clamped
+  player?.setVolume?.(clamped)
+}
+
+/**
  * Guard against a click landing a hair before the active cue's own start and "advancing" to
  * the cue already on screen, which reads to the presenter as a dead click.
  */
@@ -462,9 +506,67 @@ function stopTextTimer() {
 
 function destroyPlayer() {
   stopPolling()
+  stopHandoffFade()
   pendingPausedSourceSwitchTime = null
   player?.destroy?.()
   player = null
+  videoVolume = 100
+}
+
+/**
+ * Take the trailer's audio down across the final segment's own closing seconds, recomputed
+ * every tick so seeking back out of the window restores full volume instead of leaving the
+ * trailer stuck quiet. Same contract as the authored `audioFadeOutSeconds` text fade.
+ */
+function updateHandoffFade() {
+  if (!isFinalSegment.value || isPaused.value || activeSegmentDuration.value <= 0 || !player?.setVolume) {
+    return
+  }
+  const remaining = activeSegmentDuration.value - currentTime.value
+  if (remaining > VIDEO_HANDOFF_FADE_SECONDS) {
+    applyVideoVolume(100)
+    return
+  }
+  applyVideoVolume(equalPowerFadeOut(1 - remaining / VIDEO_HANDOFF_FADE_SECONDS) * 100)
+}
+
+/**
+ * Completion-time safety net for every path that reaches the end without running the lead
+ * fade above — an early `ENDED`, a player error, Skip, or the presenter pressing Next. It
+ * ramps from wherever the volume already sits (so a completed lead fade destroys at once)
+ * and destroys the player only when the ramp lands.
+ *
+ * This never delays `emit('complete')`: Track 0's load has to start in parallel with the
+ * ramp, because the overlay is held opaque until `stage.start()` resolves. Serialising them
+ * would lengthen the very gap this fade exists to close.
+ */
+function fadeOutAndDestroyPlayer() {
+  if (handoffFadeTimer) {
+    return
+  }
+  stopPolling()
+
+  const activePlayer = player
+  if (!activePlayer?.setVolume || videoVolume <= 0) {
+    destroyPlayer()
+    return
+  }
+
+  const rampMs = VIDEO_HANDOFF_FADE_SECONDS * 1000 * (videoVolume / 100)
+  const startVolume = videoVolume
+  const startedAtMs = performance.now()
+  handoffFadeTimer = setInterval(() => {
+    // Unmount or a fresh segment load can tear the player out from under the ramp.
+    if (player !== activePlayer) {
+      stopHandoffFade()
+      return
+    }
+    const progress = (performance.now() - startedAtMs) / rampMs
+    applyVideoVolume(equalPowerFadeOut(progress) * startVolume)
+    if (progress >= 1) {
+      destroyPlayer()
+    }
+  }, VIDEO_HANDOFF_FADE_STEP_MS)
 }
 
 function destroyAudioPlayer() {
@@ -637,6 +739,7 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         stopPolling()
         pollTimer = setInterval(() => {
           currentTime.value = player?.getCurrentTime?.() ?? 0
+          updateHandoffFade()
           if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
             advance()
           }
@@ -696,7 +799,7 @@ function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
 
 watch(() => sequenceState.value.done, (done) => {
   if (done) {
-    destroyPlayer()
+    fadeOutAndDestroyPlayer()
     stopTextTimer()
     destroyAudioPlayer()
     handoffPending.value = props.holdForHandoff ?? false

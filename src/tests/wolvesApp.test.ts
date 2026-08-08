@@ -4,13 +4,13 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 import WolvesApp from '@/WolvesApp.vue'
 
 const CinematicLobbyStub = defineComponent({
   name: 'CinematicLobby',
-  emits: ['enter', 'launchExperience'],
+  emits: ['enter', 'enter-directors-cut', 'launchExperience'],
   template: '<button class="cinematic-lobby-stub" @click="$emit(\'enter\')" />',
 })
 
@@ -121,6 +121,8 @@ describe('wolvesApp intro status handling', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    // The intro timeline is module-level state; restore the standard sequence.
+    useCinematicStore().setIntroSequence(buildIntroVideoSequence())
   })
 
   function stubs() {
@@ -480,5 +482,44 @@ describe('wolvesApp intro status handling', () => {
 
     expect(store.phase).toBe('cinematic')
     expect(store.overallElapsed).toBeCloseTo(INTRO_SEQUENCE_DURATION)
+  })
+
+  it('switches the store timeline to the Director\'s Cut sequence when that entry is used', async () => {
+    const store = useCinematicStore()
+    const directorsCut = buildDirectorsCutVideoSequence()
+    // Live binding, read while the standard sequence is still active.
+    const standardDuration = INTRO_SEQUENCE_DURATION
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    expect(store.phase).toBe('intro')
+    expect(store.sequenceDuration).toBeGreaterThan(standardDuration)
+    expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(store.sequenceDuration)
+
+    // Resolution follows the Director's Cut list: its last index exists and is
+    // no longer clamped into the shorter standard sequence.
+    const lastIndex = directorsCut.length - 1
+    const intro = wrapper.getComponent(WolvesIntroOverlayStub)
+    intro.vm.$emit('status', {
+      currentTime: 0,
+      duration: 0,
+      paused: false,
+      segmentId: directorsCut[lastIndex].id,
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(store.segmentIndex).toBe(lastIndex)
+    expect(store.overallDuration).toBeCloseTo(
+      store.sequenceDuration + WOLVES_EXPERIENCE.segments.reduce(
+        (sum, segment) => sum + (segment.durationSeconds ?? 0),
+        0,
+      ),
+    )
   })
 })

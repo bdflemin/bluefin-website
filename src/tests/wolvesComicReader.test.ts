@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
+import { CINEMATIC_SEGMENTS } from '../config/wolves-cinematic'
 import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
 import {
   TRACK_ZERO_BEAT_TIMES,
@@ -1073,5 +1074,294 @@ describe('track 0 locked windows', () => {
       expect(ordered[index].startTime, `gap before ${ordered[index].id}`)
         .toBeCloseTo(ordered[index - 1].endTime, 2)
     }
+  })
+})
+
+// ── Regression: segment index is not a playlist track index ────────────────
+//
+// CINEMATIC_SEGMENTS is a curated six-item subset of the seven authored tracks
+// in public/wolves-playlist.json — the show omits "End of You". Reading track
+// metadata by segment index therefore paced Part V on End of You's tempo and
+// the Part VI finale (the fastest song in the show) on Soulbound's.
+describe('wolves segment-to-playlist track identity', () => {
+  const playlist = JSON.parse(
+    readFileSync(resolve(process.cwd(), 'public/wolves-playlist.json'), 'utf8'),
+  ) as { tracks: SoundtrackTrack[] }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('never lets a cinematic segment index address the playlist directly', () => {
+    const showIds = CINEMATIC_SEGMENTS.map(segment => segment.youtubeId)
+    const byIndex = showIds.map((_, index) => playlist.tracks[index]?.youtubeVideoId)
+
+    // If this ever becomes true the subset was flattened and the fix below is
+    // no longer load bearing — but until then, indexing is wrong from 4 on.
+    expect(byIndex).not.toEqual(showIds)
+    expect(showIds.slice(4)).toEqual(['san94Q93IcY', 'rYkYLIYvI18'])
+  })
+
+  it.each([
+    { segmentIndex: 4, title: 'Soulbound', bpm: 124, phraseBeats: 32, hold: 16 * 60 / 124, crossfadeMs: 1200 },
+    { segmentIndex: 5, title: 'Last Ride of the Day', bpm: 174, phraseBeats: 64, hold: 32 * 60 / 174, crossfadeMs: 2500 },
+  ])(
+    'paces segment $segmentIndex with $title, the song actually playing',
+    async ({ segmentIndex, title, bpm, phraseBeats, hold, crossfadeMs }) => {
+      const segment = CINEMATIC_SEGMENTS[segmentIndex]
+      mockGalleryData(playlist.tracks)
+
+      const wrapper = mount(WolvesComicReader, {
+        props: {
+          trackIndex: segmentIndex,
+          trackId: segment.youtubeId,
+          playlistCurrentTime: 0,
+        },
+      })
+      await flushPromises()
+
+      const track = (wrapper.vm as any).currentTrack as SoundtrackTrack
+      expect(track.title).toBe(title)
+      expect(track.youtubeVideoId).toBe(segment.youtubeId)
+      expect(track.bpm).toBe(bpm)
+      expect(track.phraseBeats).toBe(phraseBeats)
+      expect((wrapper.vm as any).laterTrackSlideHold as number).toBeCloseTo(hold, 4)
+      expect(galleryCrossfadeDuration(wrapper)).toBe(crossfadeMs)
+    },
+  )
+
+  it('keeps ordering and branching on the segment index, not the resolved track', async () => {
+    mockGalleryData(playlist.tracks)
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 5,
+        trackId: CINEMATIC_SEGMENTS[5].youtubeId,
+        playlistCurrentTime: 0,
+      },
+    })
+    await flushPromises()
+
+    // trackIndex still drives the later-track branch (a Track 0 timeline would
+    // have been assembled instead if identity had leaked into the branching).
+    expect((wrapper.vm as any).mixedPhotosToUse).toBe((wrapper.vm as any).mixedPhotos)
+    expect(wrapper.props('trackIndex')).toBe(5)
+  })
+
+  it('leaves the ten catalogue albums on index-addressed playlist metadata', async () => {
+    const tracks: SoundtrackTrack[] = [
+      coverTrack,
+      {
+        id: 'album-track-one',
+        title: 'Album Track One',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/album-one.jpg',
+        youtubeVideoId: 'album-one',
+        bpm: 120,
+        phraseBeats: 32,
+        fadeDuration: 1500,
+      },
+      {
+        id: 'decoy',
+        title: 'Decoy',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/decoy.jpg',
+        youtubeVideoId: 'decoy-id',
+        bpm: 60,
+        phraseBeats: 8,
+        fadeDuration: 400,
+      },
+    ]
+    mockGalleryData(tracks)
+
+    // A catalogue album's segment youtubeId can also appear elsewhere in this
+    // playlist, so identity resolution must not apply outside the Wolves show.
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 1,
+        trackId: 'decoy-id',
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    expect(((wrapper.vm as any).currentTrack as SoundtrackTrack).id).toBe('album-track-one')
+    expect((wrapper.vm as any).laterTrackSlideHold as number).toBeCloseTo(8, 4)
+  })
+
+  it('keeps the non-Wolves albums on the mixedPhotos slideshow at index 0', async () => {
+    mockGalleryData()
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        trackId: 'LASru9j0oIc',
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.mixedPhotos.length).toBeGreaterThan(0)
+    expect(vm.mixedPhotosToUse).toBe(vm.mixedPhotos)
+    expect(vm.mixedPhotosToUse).not.toBe(vm.timelineSlides)
+  })
+})
+
+// ── Regression: no hard cut to an undecoded image at a segment boundary ────
+//
+// jsdom never fires image.onload, so the whole suite used to exercise the
+// synchronous cold-start branch and see nothing wrong. These tests drive the
+// image lifecycle by hand so the decode gate is observable.
+describe('segment boundary slide continuity', () => {
+  class ControlledImage {
+    static pending: ControlledImage[] = []
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    fetchPriority = 'auto'
+    private value = ''
+
+    set src(next: string) {
+      this.value = next
+      ControlledImage.pending.push(this)
+    }
+
+    get src() {
+      return this.value
+    }
+
+    decode() {
+      return Promise.resolve()
+    }
+  }
+
+  async function flushImageLoads() {
+    for (let round = 0; round < 5; round += 1) {
+      const pending = ControlledImage.pending
+      ControlledImage.pending = []
+      for (const image of pending) {
+        image.onload?.()
+      }
+      await flushPromises()
+      await nextTick()
+    }
+  }
+
+  const laterTracks: SoundtrackTrack[] = [
+    coverTrack,
+    {
+      id: 'part-one',
+      title: 'Part One',
+      artist: 'Artist',
+      artwork: 'wolves-artwork/part-one.jpg',
+      youtubeVideoId: 'part-one',
+      bpm: 120,
+      phraseBeats: 16,
+      fadeDuration: 1500,
+    },
+    {
+      id: 'part-two',
+      title: 'Part Two',
+      artist: 'Artist',
+      artwork: 'wolves-artwork/part-two.jpg',
+      youtubeVideoId: 'part-two',
+      bpm: 100,
+      phraseBeats: 16,
+      fadeDuration: 1200,
+    },
+  ]
+
+  const boundaryPhotos = Array.from({ length: 60 }, (_, index) => ({
+    id: `boundary-${index}`,
+    server: '1',
+    secret: String(index),
+    title: `Boundary ${index}`,
+  }))
+
+  beforeEach(() => {
+    ControlledImage.pending = []
+    vi.stubGlobal('Image', ControlledImage)
+    mockGalleryData(laterTracks, new Response(JSON.stringify(boundaryPhotos)))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('holds the outgoing slide across a segment boundary until the incoming image has decoded', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    const hold = (wrapper.vm as any).laterTrackSlideHold as number
+    await wrapper.setProps({ playlistCurrentTime: hold })
+    await flushImageLoads()
+
+    const beforeBoundary = activeTimelineImage(wrapper)
+    expect(beforeBoundary).toBeDefined()
+
+    // Exactly what advanceSegment() does: next segment and a reset clock in one
+    // reactive flush. Nothing may change on screen until the new image decodes.
+    await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+    expect(activeTimelineImage(wrapper)).toBe(beforeBoundary)
+
+    await flushImageLoads()
+    const afterBoundary = activeTimelineImage(wrapper)
+    expect(afterBoundary).toBeDefined()
+    expect(afterBoundary).not.toBe(beforeBoundary)
+  })
+
+  it('crossfades across a segment boundary instead of cutting', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    const hold = (wrapper.vm as any).laterTrackSlideHold as number
+    await wrapper.setProps({ playlistCurrentTime: hold })
+    await flushImageLoads()
+
+    await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+    await flushImageLoads()
+
+    const activeLayer = wrapper.findAll('.flickr-photo-layer')
+      .find(layer => (layer.attributes('style') ?? '').includes('z-index: 2'))
+    expect(activeLayer?.attributes('style')).toContain('transition: opacity')
+    expect((wrapper.vm as any).crossfadeActive).toBe(true)
+  })
+
+  it('never carries the outgoing segment photo into the incoming segment buffers', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    const hold = (wrapper.vm as any).laterTrackSlideHold as number
+    await wrapper.setProps({ playlistCurrentTime: hold })
+    await flushImageLoads()
+
+    const vm = wrapper.vm as any
+    const onStageId = (vm.activePhoto as { id: string }).id
+    const offStageId = (vm.activeBuffer === 'A' ? vm.photoB : vm.photoA)?.id
+
+    await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+
+    // The visible frame survives the boundary; the off-stage buffer is cleared
+    // so the outgoing song's slide can never be swapped back in.
+    expect((vm.activePhoto as { id: string }).id).toBe(onStageId)
+    expect(vm.activeBuffer === 'A' ? vm.photoB : vm.photoA).toBeNull()
+    expect(offStageId).toBeDefined()
+
+    await flushImageLoads()
+    expect((vm.activePhoto as { id: string }).id).not.toBe(onStageId)
+    expect((vm.activePhoto as { id: string }).id).not.toBe(offStageId)
   })
 })

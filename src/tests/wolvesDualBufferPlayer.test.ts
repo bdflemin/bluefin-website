@@ -1,8 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
-import { resetYoutubeIframeApiCacheForTests } from '@/composables/useYoutubeIframeApi'
+import { COLD_SKIP_PLAYBACK_TIMEOUT_MS, PREPARE_TIMEOUT_MS, START_PLAYBACK_TIMEOUT_MS, useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
+import { invalidateYoutubeIframeApiLoad, resetYoutubeIframeApiCacheForTests } from '@/composables/useYoutubeIframeApi'
 import { CINEMATIC_SEGMENTS, PRE_END_THRESHOLD_S, TIME_POLL_MS } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
 
@@ -38,6 +38,14 @@ class FakePlayer {
   loadedId = ''
   cuedId = ''
   destroyed = false
+  /** How many times playback was requested — the only evidence a prewarm happened. */
+  playCount = 0
+  /**
+   * Model a buffer that has been told to play but has no media yet: YouTube reports
+   * BUFFERING, never PLAYING, and the clock does not move. A double that always answers
+   * a play request with PLAYING cannot see a fade started against silence.
+   */
+  suppressPlayingEvent = false
   options: FakePlayerOptions
 
   constructor(_element: Element, options: FakePlayerOptions) {
@@ -51,14 +59,26 @@ class FakePlayer {
   }
 
   playVideo() {
+    this.playCount += 1
     // YouTube replays from the start when a finished video is played again.
     if (this.duration > 0 && this.currentTime >= this.duration) {
       this.currentTime = 0
+    }
+    if (this.suppressPlayingEvent) {
+      this.events.onStateChange?.({ data: 3 })
+      return
     }
     this.playing = true
     if (FakePlayer.emitPlayingOnPlay) {
       this.events.onStateChange?.({ data: 1 })
     }
+  }
+
+  /** The fetch lands: BUFFERING becomes PLAYING and the clock goes live. */
+  finishBuffering() {
+    this.suppressPlayingEvent = false
+    this.playing = true
+    this.events.onStateChange?.({ data: 1 })
   }
 
   seekTo(seconds: number) {
@@ -123,6 +143,34 @@ function installFakeYoutubeApi() {
   ;(window as any).YT = {
     Player: FakePlayer,
     PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+  }
+}
+
+/**
+ * A script tag matching the shared loader's. The `src` is set after the element is
+ * connected so happy-dom (which has script loading disabled) does not throw on append.
+ */
+function appendStalledApiScript() {
+  const script = document.createElement('script')
+  // happy-dom refuses to fetch, and throws on append, for an executable external
+  // script; a non-executable type keeps the element inert while still matching the
+  // loader's `script[src=...]` selector.
+  script.type = 'text/plain'
+  script.src = 'https://www.youtube.com/iframe_api'
+  document.head.appendChild(script)
+  return script
+}
+
+function buildPlayer() {
+  const hostA = ref<HTMLElement | null>(document.createElement('div'))
+  const hostB = ref<HTMLElement | null>(document.createElement('div'))
+  return useDualBufferPlayer({ hostA, hostB })
+}
+
+/** Drain the microtask queue so an awaited internal promise chain can settle. */
+async function flushMicrotasks() {
+  for (let i = 0; i < 8; i++) {
+    await Promise.resolve()
   }
 }
 
@@ -224,13 +272,87 @@ describe('useDualBufferPlayer', () => {
     const [playerA] = FakePlayer.instances
     playerA.duration = 424
 
-    // One second of content left. With an 800ms fade plus the trailing lead the swap
-    // must already be running, so the outgoing track decays into the incoming rather
-    // than stopping dead partway through the fade and leaving a hole in the music.
+    // One second of content left. With Part II's authored 1500ms fade plus the
+    // trailing lead the swap must already be running, so the outgoing track decays
+    // into the incoming rather than stopping dead partway through the fade and
+    // leaving a hole in the music.
     advancePlayback(423_000)
 
     expect(store.crossfading).toBe(true)
     expect(playerA.playing).toBe(true)
+  })
+
+  it('leads and ramps the boundary with the INCOMING segment authored crossfade', async () => {
+    const store = useCinematicStore()
+    await startPlayer()
+    const [playerA] = FakePlayer.instances
+    playerA.duration = 424
+
+    // The I→II boundary is Part II's 1500ms, not Part I's 800ms default: the fade
+    // belongs to the segment arriving, matching where transitionLore is authored.
+    // Lead is therefore 0.3 + 1.5 = 1.8s.
+    playerA.currentTime = 424 - 1.9
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.crossfading).toBe(false)
+
+    playerA.currentTime = 424 - 1.7
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    // With the outgoing segment's 800ms the lead would only be 1.1s and nothing
+    // would have started yet.
+    expect(store.crossfading).toBe(true)
+    expect(store.pendingSegmentIndex).toBe(1)
+
+    vi.advanceTimersByTime(900)
+    // An 800ms ramp would already have completed here.
+    expect(store.segmentIndex).toBe(0)
+    vi.advanceTimersByTime(800)
+    expect(store.segmentIndex).toBe(1)
+  })
+
+  it('applies Part VI authored 2500ms crossfade instead of leaving it dead config', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const last = CINEMATIC_SEGMENTS.length - 1
+
+    // Part VI authors the longest fade in the show. Read from the outgoing segment it
+    // could never be applied to any ramp, because nothing follows Part VI.
+    player.skip(last)
+    expect(store.pendingSegmentIndex).toBe(last)
+
+    vi.advanceTimersByTime(2000)
+    expect(store.segmentIndex).toBe(0)
+    vi.advanceTimersByTime(700)
+    expect(store.segmentIndex).toBe(last)
+  })
+
+  it('keeps publishing the outgoing segment clock for the whole crossfade', async () => {
+    const store = useCinematicStore()
+    await startPlayer()
+    const [playerA, playerB] = FakePlayer.instances
+    playerA.duration = 424
+    playerB.duration = 347
+
+    playerA.currentTime = 424 - 1.7
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.crossfading).toBe(true)
+    const elapsedAtSwapStart = store.segmentElapsed
+
+    // `activeSide` has already flipped to the incoming buffer, but segmentIndex still
+    // names Part I. Publishing the incoming clock here would report Part II's position
+    // against Part I; publishing nothing (the old behaviour) stuck the transport bar
+    // for the whole fade and then snapped it to zero.
+    playerB.currentTime = 5
+    playerA.currentTime = 424 - 1.2
+    vi.advanceTimersByTime(TIME_POLL_MS)
+
+    expect(store.segmentIndex).toBe(0)
+    expect(store.segmentElapsed).toBeGreaterThan(elapsedAtSwapStart)
+    expect(store.segmentElapsed).toBeCloseTo(424 - 1.2, 5)
+    expect(store.nativeTime).toBeCloseTo(424 - 1.2, 5)
+
+    vi.advanceTimersByTime(2000)
+    expect(store.segmentIndex).toBe(1)
+    expect(store.crossfading).toBe(false)
   })
 
   it('identifies the current origin to YouTube for both buffers', async () => {
@@ -252,12 +374,97 @@ describe('useDualBufferPlayer', () => {
     void start.then(() => {
       settled = true
     })
-    await Promise.resolve()
+    await flushMicrotasks()
     expect(settled).toBe(false)
 
+    // Side A's prewarm never reported PLAYING, so startup cancelled it and asked for
+    // playback itself rather than waiting the prewarm out. The first PLAYING that
+    // arrives is therefore the show's own, and startup completes on it.
     FakePlayer.instances[0].events.onStateChange?.({ data: 1 })
     await start
     expect(settled).toBe(true)
+  })
+
+  it('prewarms and parks the active side so Track 0 never enters the show cold', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA, playerB] = FakePlayer.instances
+
+    // Track 0 is the first thing the audience hears and used to be the ONE buffer
+    // that was never prewarmed: the Destiny trailer's audio stopped and the room sat
+    // in silence on a black overlay while YouTube fetched the opening song.
+    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
+    expect(playerA.playCount).toBeGreaterThan(0)
+    expect(playerA.playing).toBe(false)
+    expect(playerA.currentTime).toBe(0)
+    expect(playerA.volume).toBe(0)
+    expect(playerB.playCount).toBeGreaterThan(0)
+
+    await player.start()
+
+    expect(playerA.playing).toBe(true)
+    expect(playerA.volume).toBe(100)
+    expect(playerA.currentTime).toBe(0)
+    // Promoted by seek from its park, not re-fetched: a cold loadVideoById here is
+    // exactly the buffering gap this whole double buffer exists to avoid.
+    expect(playerA.loadedId).toBe('')
+  })
+
+  it('lands the active side\'s park before startup raises the volume', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    const start = player.start()
+    await Promise.resolve()
+    // The prewarm reports PLAYING only after start() was called. Its park sets volume
+    // 0 and pauses; if that landed after startup the whole show would run silent.
+    playerA.events.onStateChange?.({ data: 1 })
+    await flushMicrotasks()
+
+    expect(playerA.playing).toBe(true)
+    expect(playerA.volume).toBe(100)
+
+    vi.advanceTimersByTime(START_PLAYBACK_TIMEOUT_MS)
+    await start
+  })
+
+  it('gives up waiting for PLAYING instead of hanging the show on a black frame', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    const start = player.start()
+    let settled = false
+    void start.then(() => {
+      settled = true
+    })
+
+    // The prewarm never reports PLAYING, and neither does the playback startup asked
+    // for; the bounded wait is still running here.
+    await vi.advanceTimersByTimeAsync(START_PLAYBACK_TIMEOUT_MS / 2)
+    expect(settled).toBe(false)
+
+    // Nothing reports PLAYING at all. The show runs unattended, so startup must not
+    // block forever: it pushes play again, opens the poll loop, and proceeds.
+    await vi.advanceTimersByTimeAsync(START_PLAYBACK_TIMEOUT_MS)
+    await start
+
+    expect(settled).toBe(true)
+    playerA.currentTime = 7
+    playerA.duration = 300
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.segmentElapsed).toBe(7)
+
+    player.destroy()
   })
 
   it('settles pending startup and destroys the prepared buffers on teardown', async () => {
@@ -523,6 +730,172 @@ describe('useDualBufferPlayer', () => {
     player.skip(-1)
     vi.advanceTimersByTime(3000)
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 2)
+  })
+
+  it('abandons a stalled preparation instead of hanging the show on the intro overlay', async () => {
+    // onReady never fires. `prepare()` awaits the shared API load and both readiness
+    // callbacks, and neither await is bounded by the API itself.
+    FakePlayer.emitReadyOnConstruct = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+
+    let settled = false
+    const start = player.start().then(() => {
+      settled = true
+    })
+    await flushMicrotasks()
+    expect(FakePlayer.instances).toHaveLength(2)
+    expect(settled).toBe(false)
+
+    // Unbounded, this is a permanent hang: `start()` never returns, so
+    // handleIntroComplete() never reaches introTransparent = true and the audience
+    // watches an opaque intro overlay for the rest of the night.
+    await vi.advanceTimersByTimeAsync(PREPARE_TIMEOUT_MS)
+    await start
+    expect(settled).toBe(true)
+    expect(player.prepared.value).toBe(false)
+    // Partial players are released, not left half-built behind the overlay.
+    expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
+
+    // And a retry can actually recover, rather than re-awaiting the abandoned attempt.
+    FakePlayer.emitReadyOnConstruct = true
+    await player.start()
+    expect(player.prepared.value).toBe(true)
+    expect(FakePlayer.instances).toHaveLength(4)
+    expect(FakePlayer.instances[2].playing).toBe(true)
+
+    player.destroy()
+  })
+
+  it('discards a stalled API load so a retry requests the script again', async () => {
+    // The loader caches its promise for the page's lifetime on purpose, but a cached
+    // promise that never settles is a hang every later caller inherits — including the
+    // stage rebuilding itself after a startup timeout.
+    delete (window as any).YT
+    appendStalledApiScript()
+
+    invalidateYoutubeIframeApiLoad()
+    expect(document.querySelectorAll('script[src*="iframe_api"]')).toHaveLength(0)
+
+    // A load that already succeeded is left alone: the script must not be re-requested.
+    installFakeYoutubeApi()
+    const loaded = appendStalledApiScript()
+    invalidateYoutubeIframeApiLoad()
+    expect(document.querySelectorAll('script[src*="iframe_api"]')).toHaveLength(1)
+    loaded.remove()
+  })
+
+  it('does not gate startup on a prewarm that has not settled', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+    const prewarmPlays = playerA.playCount
+
+    const start = player.start()
+    await flushMicrotasks()
+
+    // Not one timer has advanced. Waiting for the park to settle burned the whole
+    // prewarm timeout before playback was even REQUESTED, on top of the intro's 2s
+    // audio fade-out: seconds of dead air in a theater. The prewarm is an
+    // optimisation, never a gate.
+    expect(playerA.playCount).toBeGreaterThan(prewarmPlays)
+    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
+    expect(playerA.volume).toBe(100)
+
+    // The abandoned prewarm's park must still never land on the running show.
+    playerA.events.onStateChange?.({ data: 1 })
+    await start
+    expect(playerA.playing).toBe(true)
+    expect(playerA.volume).toBe(100)
+    expect(store.playing).toBe(true)
+
+    player.destroy()
+  })
+
+  it('keeps the outgoing segment on air until a cold skip target reports playing', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const [playerA, playerB] = FakePlayer.instances
+
+    // Side B holds Part II, so a two-segment jump is cold: the target has no media.
+    playerB.suppressPlayingEvent = true
+    player.skip(2)
+
+    // Fading out a player that is working, toward one that has not loaded, is silence
+    // — and a black frame on the visible back-catalogue experiences.
+    expect(player.activeSide.value).toBe('a')
+    expect(playerA.playing).toBe(true)
+    expect(playerA.volume).toBe(100)
+    expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+
+    vi.advanceTimersByTime(COLD_SKIP_PLAYBACK_TIMEOUT_MS - 500)
+    expect(player.activeSide.value).toBe('a')
+    expect(playerA.volume).toBe(100)
+    expect(store.segmentIndex).toBe(0)
+
+    playerB.finishBuffering()
+    expect(player.activeSide.value).toBe('b')
+    vi.advanceTimersByTime(3000)
+    expect(store.segmentIndex).toBe(2)
+    expect(store.crossfading).toBe(false)
+
+    player.destroy()
+  })
+
+  it('completes a cold skip whose target never plays instead of stranding the presenter', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const [, playerB] = FakePlayer.instances
+
+    playerB.suppressPlayingEvent = true
+    player.skip(2)
+    expect(player.activeSide.value).toBe('a')
+
+    // Bounded: the wait protects the handoff, it does not own the show. On expiry the
+    // swap commits anyway rather than latching `crossfading` forever.
+    vi.advanceTimersByTime(COLD_SKIP_PLAYBACK_TIMEOUT_MS)
+    expect(player.activeSide.value).toBe('b')
+    vi.advanceTimersByTime(3000)
+    expect(store.segmentIndex).toBe(2)
+    expect(store.crossfading).toBe(false)
+
+    player.destroy()
+  })
+
+  it('promotes an already parked skip target immediately, keeping the warm path fast', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const [, playerB] = FakePlayer.instances
+
+    // Part II is parked on side B. No readiness wait belongs on this path.
+    player.skip(1)
+    expect(player.activeSide.value).toBe('b')
+    expect(playerB.playing).toBe(true)
+    expect(playerB.loadedId).toBe('')
+    vi.advanceTimersByTime(2000)
+    expect(store.segmentIndex).toBe(1)
+
+    player.destroy()
+  })
+
+  it('leaves no bounded-wait timer running after teardown', async () => {
+    const player = await startPlayer()
+    const [, playerB] = FakePlayer.instances
+
+    playerB.suppressPlayingEvent = true
+    player.skip(2)
+    player.destroy()
+
+    const activeSideAfterDestroy = player.activeSide.value
+    vi.advanceTimersByTime(COLD_SKIP_PLAYBACK_TIMEOUT_MS * 2)
+
+    // A timer that outlives its lifecycle fires into a torn-down player.
+    expect(player.activeSide.value).toBe(activeSideAfterDestroy)
+    expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
   })
 
   it('destroys both players on teardown', async () => {

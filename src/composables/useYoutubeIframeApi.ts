@@ -140,6 +140,23 @@ export function loadYoutubeIframeApi(): Promise<void> {
   return apiPromise
 }
 
+/**
+ * Discard a cached API load that never resolved, so a retry can actually request the
+ * script again. The promise is cached for the lifetime of the page on purpose, but a
+ * stalled load caches a promise that will never settle: every later caller — including
+ * the cinematic stage rebuilding itself after a startup timeout — would await the same
+ * dead promise forever. Dropping the promise is not enough; the stalled `<script>` is
+ * removed too, or `loadYoutubeIframeApi()` re-attaches to the same corpse. A load that
+ * already succeeded is left alone.
+ */
+export function invalidateYoutubeIframeApiLoad(): void {
+  apiPromise = null
+  if (typeof document === 'undefined' || (window as YoutubeIframeWindow).YT?.Player) {
+    return
+  }
+  document.querySelector(`script[src="${IFRAME_API_SRC}"]`)?.remove()
+}
+
 export function getYoutubePlayerConstructor(): YoutubePlayerConstructor | undefined {
   return (window as YoutubeIframeWindow).YT?.Player
 }

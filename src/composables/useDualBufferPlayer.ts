@@ -5,6 +5,7 @@ import {
   getChromeFreeYoutubePlayerVars,
   getYoutubePlayerConstructor,
   getYoutubePlayerState,
+  invalidateYoutubeIframeApiLoad,
   loadYoutubeIframeApi,
 } from '@/composables/useYoutubeIframeApi'
 import {
@@ -30,7 +31,35 @@ interface SideState {
    * parked back on its opening frame as soon as it reports PLAYING.
    */
   prewarming: boolean
+  /** This side has fetched media and is parked on its segment's opening frame. */
+  parked: boolean
 }
+
+/**
+ * How long `start()` will wait for preparation — the shared API script load plus both
+ * `onReady` callbacks — before abandoning it. Both of those awaits are unbounded in the
+ * API itself: a stalled script or an `onReady` that never fires used to hang `start()`
+ * forever, which hangs `handleIntroComplete()`, which leaves the audience staring at an
+ * opaque intro overlay with nobody in the booth. Ten seconds is far longer than a real
+ * preparation (sub-second on a warm cache, a couple of seconds cold on theater wifi)
+ * and still bounds the worst case at this plus `START_PLAYBACK_TIMEOUT_MS`.
+ */
+export const PREPARE_TIMEOUT_MS = 10_000
+
+/**
+ * How long a cold manual skip keeps the outgoing segment on air waiting for the newly
+ * loaded target to report PLAYING. Sized to sit inside the transition overlay's hold so
+ * the wait stays covered; on expiry the swap commits anyway rather than stranding the
+ * presenter mid-skip.
+ */
+export const COLD_SKIP_PLAYBACK_TIMEOUT_MS = 3000
+
+/**
+ * How long startup will wait for the active player to report PLAYING. The show runs
+ * unattended: an unbounded wait here is a black frame that nobody can recover from,
+ * so the wait is bounded and falls back to pushing play and opening the poll loop.
+ */
+export const START_PLAYBACK_TIMEOUT_MS = 8000
 
 /**
  * Double-buffered YouTube playback. While one player is on screen playing segment N,
@@ -48,16 +77,34 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1, prewarming: false },
-    b: { player: null, segmentIndex: -1, prewarming: false },
+    a: { player: null, segmentIndex: -1, prewarming: false, parked: false },
+    b: { player: null, segmentIndex: -1, prewarming: false, parked: false },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let swapping = false
+  /**
+   * The side that is still on air for store purposes while a swap runs. `activeSide`
+   * flips to the incoming buffer the moment the fade starts, but `store.segmentIndex`
+   * keeps naming the outgoing segment until the ramp completes.
+   */
+  let swapOutgoingSide: PlayerSide | null = null
   let rampFrame = 0
   let lifecycleToken = 0
   let preparePromise: Promise<void> | null = null
   let resolveStart: (() => void) | null = null
+  let startTimeout: ReturnType<typeof setTimeout> | null = null
+  /**
+   * Every bounded-wait timer this composable has in flight. `destroy()` clears the set:
+   * a timer that outlives its lifecycle fires into a torn-down player, and a timer that
+   * is never cleared is exactly the hang these bounds exist to prevent.
+   */
+  const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+  /** The side a cold skip is loading, while the outgoing side stays on air. */
+  let coldSkipSide: PlayerSide | null = null
+  /** Commits the pending cold skip (flip + ramp); cleared once it has run. */
+  let commitColdSkip: (() => void) | null = null
+  let coldSkipTimeout: ReturnType<typeof setTimeout> | null = null
   const pendingReadyRejectors = new Set<(reason: Error) => void>()
 
   const other = (side: PlayerSide): PlayerSide => (side === 'a' ? 'b' : 'a')
@@ -66,12 +113,81 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   function releasePlayers() {
     sides.a.player?.destroy?.()
     sides.b.player?.destroy?.()
-    sides.a.player = null
-    sides.b.player = null
-    sides.a.segmentIndex = -1
-    sides.b.segmentIndex = -1
-    sides.a.prewarming = false
-    sides.b.prewarming = false
+    for (const side of ['a', 'b'] as PlayerSide[]) {
+      const state = sides[side]
+      state.player = null
+      state.segmentIndex = -1
+      state.prewarming = false
+      state.parked = false
+    }
+  }
+
+  /** Every bounded wait's timer, so `destroy()` can never leave one running. */
+  function clearPendingTimers() {
+    for (const timer of pendingTimers) {
+      clearTimeout(timer)
+    }
+    pendingTimers.clear()
+  }
+
+  /** Drop a cold skip's pending readiness wait; safe to call repeatedly. */
+  function clearColdSkipWait() {
+    if (coldSkipTimeout) {
+      pendingTimers.delete(coldSkipTimeout)
+      clearTimeout(coldSkipTimeout)
+      coldSkipTimeout = null
+    }
+    coldSkipSide = null
+    commitColdSkip = null
+  }
+
+  /**
+   * Tear down a preparation that never finished. Everything the normal cancellation path
+   * does — bump the lifecycle token so the in-flight `prepare()` cannot publish players
+   * behind us, reject the pending `onReady` promises, destroy the half-built players —
+   * plus dropping the cached API-load promise. Without that last step a retry re-awaits
+   * the same never-resolving script load and cannot recover.
+   */
+  function abandonPreparation() {
+    lifecycleToken += 1
+    preparePromise = null
+    prepared.value = false
+    rejectPendingReadiness(new Error('YouTube player preparation timed out'))
+    releasePlayers()
+    invalidateYoutubeIframeApiLoad()
+  }
+
+  /**
+   * Run `prepare()` under a deadline. Resolves true only when the double buffer really
+   * is built. A rejection resolves false rather than propagating: `handleIntroComplete()`
+   * awaits `start()` before it makes the intro overlay transparent, so a throw here is
+   * the same permanent opaque-overlay hang as a stall.
+   */
+  function prepareWithinDeadline(): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      let deadline: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        deadline = null
+        abandonPreparation()
+        resolve(false)
+      }, PREPARE_TIMEOUT_MS)
+      pendingTimers.add(deadline)
+      const settle = (ready: boolean) => {
+        if (deadline) {
+          pendingTimers.delete(deadline)
+          clearTimeout(deadline)
+          deadline = null
+        }
+        resolve(ready)
+      }
+      prepare().then(() => settle(prepared.value), () => settle(false))
+    })
+  }
+
+  function clearStartTimeout() {
+    if (startTimeout) {
+      clearTimeout(startTimeout)
+      startTimeout = null
+    }
   }
 
   /** Native timeline position a segment must be sitting on before it goes to air. */
@@ -91,6 +207,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function cueNext(side: PlayerSide, segmentIndex: number) {
     const state = sides[side]
+    state.parked = false
     if (!state.player || segmentIndex >= store.segments.length) {
       state.segmentIndex = -1
       state.prewarming = false
@@ -101,17 +218,21 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.player.cueVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
     applyVolume(state.player, 0)
 
-    // Prewarm the inactive buffer so the next segment has real media buffered
-    // before the handoff. `playVideo` is the only reliable way to make YouTube
-    // fetch media, so it is started and then parked again the instant it reports
-    // PLAYING (see `parkPrewarmedSide`). Leaving it running was a show-breaking
-    // defect: its clock advanced for the whole outgoing segment, so the handoff
-    // joined the next track wherever that clock had reached — the back half of
-    // the cinematic opened mid-song and ran minutes short.
-    if (side !== activeSide.value) {
-      state.prewarming = true
-      state.player.playVideo?.()
-    }
+    // Prewarm the buffer so the segment has real media buffered before it goes to
+    // air. `playVideo` is the only reliable way to make YouTube fetch media, so it
+    // is started and then parked again the instant it reports PLAYING (see
+    // `parkPrewarmedSide`). Leaving it running was a show-breaking defect: its clock
+    // advanced for the whole outgoing segment, so the handoff joined the next track
+    // wherever that clock had reached — the back half of the cinematic opened
+    // mid-song and ran minutes short.
+    //
+    // BOTH sides prewarm, including the active one. Skipping the active side left
+    // Track 0 — the first thing the audience hears — as the only buffer that ever
+    // entered cold, so the Destiny trailer's audio stopped and the room sat in
+    // silence on a black overlay while YouTube fetched the opening song. `start()`
+    // waits for this park before it raises the volume.
+    state.prewarming = true
+    state.player.playVideo?.()
   }
 
   /** Park a buffer that has finished prewarming back on its authored opening frame. */
@@ -121,6 +242,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.player?.pauseVideo?.()
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     applyVolume(state.player, 0)
+    state.parked = true
   }
 
   /**
@@ -130,8 +252,19 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   function startIncoming(side: PlayerSide) {
     const state = sides[side]
     state.prewarming = false
+    state.parked = false
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     state.player?.playVideo?.()
+  }
+
+  /**
+   * The fade for a boundary belongs to the INCOMING segment, matching `transitionLore`,
+   * which is authored per-incoming on the same config records. Both the ramp and the
+   * lead that triggers it read through here so a fade can never be started earlier or
+   * later than the fade it actually runs.
+   */
+  function boundaryCrossfadeMs(targetIndex: number): number {
+    return store.crossfadeMsAt(targetIndex)
   }
 
   /**
@@ -193,8 +326,10 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     swapping = true
-    const crossfadeMs = store.crossfadeMsAt(store.segmentIndex)
-    store.beginCrossfade(store.segmentIndex + 1)
+    swapOutgoingSide = fromSide
+    const targetIndex = store.segmentIndex + 1
+    const crossfadeMs = boundaryCrossfadeMs(targetIndex)
+    store.beginCrossfade(targetIndex)
 
     applyVolume(incoming, 0)
     startIncoming(toSide)
@@ -203,6 +338,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     rampVolumes(outgoing, incoming, crossfadeMs, () => {
       outgoing?.pauseVideo?.()
       store.advanceSegment()
+      swapOutgoingSide = null
       cueNext(fromSide, store.segmentIndex + 1)
       swapping = false
     })
@@ -227,35 +363,67 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     swapping = true
+    swapOutgoingSide = fromSide
     store.beginCrossfade(target)
 
     const segment = store.segments[target]
     const targetIsPreloaded = sides[toSide].segmentIndex === target
     sides[toSide].segmentIndex = target
     applyVolume(incoming, 0)
+
+    const commit = () => {
+      activeSide.value = toSide // component CSS crossfades opacity on this change
+      rampVolumes(outgoing, incoming, boundaryCrossfadeMs(target), () => {
+        outgoing?.pauseVideo?.()
+        store.jumpToSegment(target)
+        swapOutgoingSide = null
+        cueNext(fromSide, target + 1)
+        swapping = false
+      })
+    }
+
     // Forward skips normally target the already-prewarmed buffer, which is parked
     // on its opening frame; promoting it avoids the decoder restart (and audible
-    // pop) that a redundant load would cause. Only hard-load when the target is
-    // not preloaded (backward or multi-segment jumps).
+    // pop) that a redundant load would cause. This path is fast and stays fast:
+    // the buffer has media, so it goes to air immediately.
     if (targetIsPreloaded) {
       startIncoming(toSide)
+      commit()
+      return
     }
-    else {
-      sides[toSide].prewarming = false
-      incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
-    }
-    activeSide.value = toSide
 
-    rampVolumes(outgoing, incoming, store.crossfadeMsAt(store.segmentIndex), () => {
-      outgoing?.pauseVideo?.()
-      store.jumpToSegment(target)
-      cueNext(fromSide, target + 1)
-      swapping = false
-    })
+    // Cold path (backward or multi-segment jumps): the target has no media yet.
+    // Fading out a player that is working, toward one that has not loaded, is
+    // silence — and for the visible back-catalogue experiences, a black frame.
+    // Keep the outgoing side on air and audible until the incoming actually reports
+    // PLAYING. Bounded: on expiry the swap commits anyway, because leaving the
+    // presenter stranded mid-skip with `crossfading` latched is worse than a gap.
+    sides[toSide].prewarming = false
+    sides[toSide].parked = false
+    clearColdSkipWait()
+    coldSkipSide = toSide
+    commitColdSkip = commit
+    const deadline = setTimeout(() => {
+      pendingTimers.delete(deadline)
+      const commitOnTimeout = commitColdSkip
+      clearColdSkipWait()
+      incoming.playVideo?.()
+      commitOnTimeout?.()
+    }, COLD_SKIP_PLAYBACK_TIMEOUT_MS)
+    pendingTimers.add(deadline)
+    coldSkipTimeout = deadline
+    incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
   }
 
   function pollActiveTime() {
-    const player = activePlayer()
+    // While a swap runs, `activeSide` already names the INCOMING buffer but
+    // `store.segmentIndex` still names the outgoing segment, so the outgoing side is
+    // the only clock whose time matches the identity the store is publishing. Reading
+    // the incoming buffer here would report the new track's position against the old
+    // segment. Keeping the outgoing clock alive is what stops the transport bar from
+    // sticking for the whole fade and then snapping to zero at `advanceSegment()`.
+    const timeSide = swapping && swapOutgoingSide ? swapOutgoingSide : activeSide.value
+    const player = sides[timeSide].player
     if (!player) {
       return
     }
@@ -266,8 +434,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // window, while `time` stays on the video's native timeline for caption sync.
     const startAt = segment?.startSeconds ?? 0
     const endAt = segment?.endSeconds ?? duration
-    if (!swapping) {
-      store.updateTime(Math.max(0, time - startAt), Math.max(0, endAt - startAt), time)
+    store.updateTime(Math.max(0, time - startAt), Math.max(0, endAt - startAt), time)
+    if (swapping) {
+      return
     }
     // A crossfade has to BEGIN one crossfade-length before the end, not finish there.
     // Leading by PRE_END_THRESHOLD_S alone meant the outgoing track reached its real
@@ -275,12 +444,13 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // the next one rise out of silence, with a hole in the music between them. Leading
     // by the full window lets the outgoing decay across its own final seconds while the
     // incoming comes up underneath it, which is what "one song becomes the next" means.
+    // The lead reads the same incoming-segment fade `beginSwap()` will ramp with.
     // The last segment has nothing to fade into, so it keeps the short trailing lead
     // that only hides YouTube's black frame.
     const swapLeadSeconds = store.isLastSegment
       ? PRE_END_THRESHOLD_S
-      : PRE_END_THRESHOLD_S + store.crossfadeMsAt(store.segmentIndex) / 1000
-    if (!swapping && endAt > 0 && time >= endAt - swapLeadSeconds) {
+      : PRE_END_THRESHOLD_S + boundaryCrossfadeMs(store.segmentIndex + 1) / 1000
+    if (endAt > 0 && time >= endAt - swapLeadSeconds) {
       beginSwap()
     }
   }
@@ -304,6 +474,14 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       // It has media; that is all the prewarm was for. Put it back on its mark.
       parkPrewarmedSide(side)
       return
+    }
+    // A cold skip held the outgoing side on air until this moment. The incoming
+    // buffer now has media, so the fade can start against something that is really
+    // playing instead of against silence.
+    if (coldSkipSide === side && playerState === states.PLAYING) {
+      const commit = commitColdSkip
+      clearColdSkipWait()
+      commit?.()
     }
     if (side !== activeSide.value) {
       return
@@ -434,26 +612,59 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       return
     }
 
-    await prepare()
-    if (!prepared.value) {
+    await prepareWithinDeadline()
+    if (!prepared.value || started.value) {
+      return
+    }
+
+    const side = activeSide.value
+    const state = sides[side]
+    // The prewarm is an OPTIMISATION, NEVER A GATE. Blocking startup on the active
+    // side's park burns the whole prewarm timeout before playback is even requested,
+    // while the intro overlay is already fading its audio out — dead air in front of
+    // the audience, which is worse than entering cold. So: if the park has landed,
+    // take the fast path and promote it; if it has not, cancel the prewarm and ask
+    // for playback right now. Clearing `prewarming` here is also the guard that stops
+    // a late park from pausing and muting the show after the volume goes up.
+    const segment = store.segments[store.segmentIndex]
+    const promoteParked = state.parked && state.segmentIndex === store.segmentIndex && Boolean(segment)
+    state.prewarming = false
+
+    const player = state.player
+    const playVideo = player?.playVideo
+    if (!player || !playVideo) {
       return
     }
 
     started.value = true
-    const player = activePlayer()
     applyVolume(player, 100)
-    const segment = store.segments[store.segmentIndex]
-    const playVideo = player?.playVideo
-    if (!player || !playVideo) {
-      started.value = false
-      return
-    }
+    // Album entry stays deterministic. Previously that meant an explicit
+    // `loadVideoById`, because a bare cue-then-play could race YouTube's async cue
+    // processing and begin on the prewarmed next segment. A parked buffer gives the
+    // same guarantee without the cold fetch: `startIncoming` seeks to the authored
+    // opening frame before playing, so the show can only begin on Track 0's first
+    // frame. Anything else (no park, or the store moved under us) still hard-loads.
     await new Promise<void>((resolve) => {
-      resolveStart = resolve
-      // Re-load the active side explicitly at startup. A cue followed immediately
-      // by play can race YouTube's async cue processing and begin on the already
-      // prewarmed next segment; the explicit load makes album entry deterministic.
-      if (player.loadVideoById && segment) {
+      const settle = () => {
+        clearStartTimeout()
+        resolveStart = null
+        resolve()
+      }
+      resolveStart = settle
+      // The show runs unattended: never wait forever on a black frame. If YouTube
+      // stalls, push play once more, open the poll loop, and let the cinematic
+      // proceed rather than hanging with nobody in the booth.
+      startTimeout = setTimeout(() => {
+        startTimeout = null
+        player.playVideo?.()
+        startPolling()
+        settle()
+      }, START_PLAYBACK_TIMEOUT_MS)
+
+      if (promoteParked) {
+        startIncoming(side)
+      }
+      else if (player.loadVideoById && segment) {
         player.loadVideoById({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
       }
       else {
@@ -494,6 +705,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     preparePromise = null
     stopPolling()
     cancelAnimationFrame(rampFrame)
+    clearStartTimeout()
+    clearColdSkipWait()
+    clearPendingTimers()
     resolveStart?.()
     resolveStart = null
     rejectPendingReadiness(new Error('YouTube player destroyed before readiness'))
@@ -502,6 +716,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     prepared.value = false
     started.value = false
     swapping = false
+    swapOutgoingSide = null
   }
 
   return { activeSide, prepared, started, prepare, start, togglePlay, seekTo, seekToRatio, skip, destroy }

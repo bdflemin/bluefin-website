@@ -48,6 +48,15 @@ import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
   trackIndex?: number
+  /**
+   * Identity of the playlist track backing this segment (a `youtubeVideoId`, or
+   * a manifest track `id`). `trackIndex` is a *segment* index, and the Wolves
+   * show is a curated six-item subset of the seven authored playlist tracks, so
+   * from segment 4 on the two do not line up. Passing the identity keeps the
+   * BPM, phrase length, and crossfade metadata attached to the song that is
+   * actually playing. Ordering and branching still use `trackIndex`.
+   */
+  trackId?: string
   playlistCurrentTime?: number
   experienceId?: string
   wolvesExperience?: boolean
@@ -111,13 +120,39 @@ const slideAIndex = ref(-1)
 const slideBIndex = ref(-1)
 const crossfadeActive = ref(false)
 let crossfadeTimer: ReturnType<typeof setTimeout> | null = null
+/**
+ * Bumped on every segment boundary so the slide watcher re-runs against the
+ * incoming track's list even when the display index happens to be unchanged.
+ * Without it a boundary could leave the outgoing song's slide on stage.
+ */
+const trackChangeSerial = ref(0)
 
 const activePhoto = computed(() => {
   return activeBuffer.value === 'A' ? photoA.value : photoB.value
 })
 
 const currentTrack = computed<SoundtrackTrack | null>(() => {
-  if (!manifest.value || props.trackIndex === undefined) {
+  if (!manifest.value) {
+    return null
+  }
+  // Resolve the Wolves show's metadata by identity, never by position: the
+  // cinematic omits playlist track 4 ("End of You"), so segment 4 is Soulbound
+  // and segment 5 is Last Ride of the Day. Indexing read the previous song's
+  // tempo for both, pacing the 174 BPM finale on a 124 BPM grid.
+  //
+  // The lookup is confined to the Wolves experience because the other albums in
+  // public/experiences/catalogue.json share youtube ids with unrelated entries
+  // further down this same playlist; for them a segment index is the intended
+  // addressing scheme and must keep working unchanged.
+  if (isWolvesExperience.value && props.trackId) {
+    const identified = manifest.value.tracks.find(
+      track => track.youtubeVideoId === props.trackId || track.id === props.trackId,
+    )
+    if (identified) {
+      return identified
+    }
+  }
+  if (props.trackIndex === undefined) {
     return null
   }
   return manifest.value.tracks[props.trackIndex] || null
@@ -884,9 +919,14 @@ const PRELOAD_WINDOW_SECONDS = 8
 /** Ceiling so a run of very short slides cannot fetch the whole gallery at once. */
 const MAX_LOOKAHEAD_SLIDES = 12
 
-watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
+watch([activeDisplayIndex, mixedPhotosToUse, trackChangeSerial], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
   if (!activePhotoObj) {
+    return
+  }
+  const displayedIndex = activeBuffer.value === 'A' ? slideAIndex.value : slideBIndex.value
+  if (activePhoto.value === activePhotoObj && displayedIndex === newVal) {
+    // Already on stage (a boundary bump that resolved to the same slide object).
     return
   }
   if ((props.trackIndex ?? 0) > 0) {
@@ -982,18 +1022,31 @@ watch(() => props.trackIndex, (trackIndex, previousTrackIndex) => {
   }
   if (previousTrackIndex !== undefined) {
     slideChangeToken++
-    photoA.value = null
-    photoB.value = null
-    opacityA.value = 1
-    opacityB.value = 0
-    slideAIndex.value = -1
-    slideBIndex.value = -1
-    activeBuffer.value = 'A'
+    // Do NOT blank both buffers here. Emptying them made the slide watcher take
+    // its cold-start branch, which assigns the incoming photo synchronously and
+    // skips both the decode gate and the crossfade — a hard cut to an empty
+    // frame that then popped in a multi-megabyte remote photo. Four of the five
+    // boundaries hid it behind the transition overlay; Part I -> Part II, which
+    // deliberately has no overlay, showed it to the room.
+    //
+    // The reset still happens, just on the buffer that is off stage: the
+    // outgoing track's photo is cleared so it can never be reused, while the
+    // visible frame holds until the incoming image has decoded and the normal
+    // preload-then-crossfade path swaps it out.
+    if (activeBuffer.value === 'A') {
+      photoB.value = null
+      slideBIndex.value = -1
+    }
+    else {
+      photoA.value = null
+      slideAIndex.value = -1
+    }
     if (crossfadeTimer) {
       clearTimeout(crossfadeTimer)
       crossfadeTimer = null
     }
     crossfadeActive.value = false
+    trackChangeSerial.value++
   }
 }, { immediate: true })
 

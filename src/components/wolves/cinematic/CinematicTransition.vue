@@ -18,11 +18,11 @@ const TERMINAL_LINES = [
   '// Deploy CNCF Projects Team, scramble all Guardians.',
 ]
 
-// The overlay is raised at the start of a handoff and held long enough for the
-// status terminal to be read from the back row, which outlasts the audio
-// crossfade underneath it. It doubles as cover for the brief buffering gap on
-// manual skips.
-const HOLD_MS = 11000
+// The overlay is raised at the start of a handoff, covers the seam, and clears
+// shortly after the audio ramp lands. It is held long enough for the status
+// terminal to be read from the back row and no longer: a card that outlasts the
+// ramp sits over the opening of the new song, which is what makes the show read
+// as a slide deck instead of one continuous concert. See `transitionHoldMs()`.
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let motionMedia: MediaQueryList | null = null
 let transitionRuns = 0
@@ -42,7 +42,7 @@ const renderedLines = computed<readonly (CinematicTransitionLine | { kind: 'term
   TERMINAL_LINES.map(text => ({ kind: 'terminal' as const, text })))
 const transitionStyle = computed(() => ({
   '--wc-transition-enter-ms': prefersReducedMotion.value ? '0ms' : '400ms',
-  '--wc-transition-leave-ms': prefersReducedMotion.value ? '0ms' : '1200ms',
+  '--wc-transition-leave-ms': prefersReducedMotion.value ? '0ms' : `${TRANSITION_LEAVE_MS}ms`,
 }))
 
 function syncReducedMotion() {
@@ -57,9 +57,11 @@ if (typeof window !== 'undefined' && 'matchMedia' in window) {
 }
 
 // The overlay rises when the crossfade *starts*, so it covers the seam between
-// two songs. Watching `segmentIndex` instead put it up after the fade had already
-// finished, which meant the opaque terminal sat over the first eleven seconds of
-// every new song and the handoff itself played uncovered.
+// two songs rather than the opening of the new one. Watching `segmentIndex`
+// instead put it up only after the fade had already landed. Note that watching
+// `crossfading` is only half the fix: the hold must also be derived from the
+// fade (see `transitionHoldMs()`), or the card still sits over most of the new
+// song, just starting one fade-length earlier.
 // Ghosts In The Mist opens on the Jorge guardian plate, so its handoff skips the
 // title slide instead of covering the plate.
 watch(
@@ -91,7 +93,7 @@ watch(
     }
     hideTimer = setTimeout(() => {
       active.value = false
-    }, HOLD_MS)
+    }, transitionHoldMs(store.crossfadeMsAt(targetIndex)))
   },
 )
 
@@ -110,6 +112,35 @@ onBeforeUnmount(() => {
   motionMedia?.removeListener?.(syncReducedMotion)
   sfxPlayer.destroy()
 })
+</script>
+
+<script lang="ts">
+/**
+ * Extra time the overlay stays up after the audio ramp has completed. The ramp
+ * lands `PRE_END_THRESHOLD_S` before the outgoing track's real end, so this is
+ * very nearly the amount of the *new* song the overlay covers.
+ */
+export const TRANSITION_POST_RAMP_MS = 2400
+
+/**
+ * Floor for the hold. The shortest authored crossfade is 1000ms; a hold derived
+ * from it alone would flash the terminal block past the back row. Nothing may
+ * shorten a transition below one readable beat.
+ */
+export const TRANSITION_MIN_HOLD_MS = 4000
+
+/** Fade-out length; the overlay is translucent and clearing for all of it. */
+export const TRANSITION_LEAVE_MS = 1200
+
+/**
+ * The hold is derived from the fade it covers rather than a fixed constant, so
+ * the overlay and the audio ramp cannot drift apart when an authored
+ * `crossfadeMs` changes. Both are keyed off the *incoming* segment, which is
+ * the same window the player ramps over.
+ */
+export function transitionHoldMs(crossfadeMs: number): number {
+  return Math.max(crossfadeMs + TRANSITION_POST_RAMP_MS, TRANSITION_MIN_HOLD_MS)
+}
 </script>
 
 <template>
@@ -170,6 +201,11 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+// The overlay holds contrast without painting a box: a radial falloff keeps the
+// centre dense enough to read the terminal from the back row while the incoming
+// visual still reads through the edges, so the handoff dissolves rather than
+// cutting to a black card. The blur carries the legibility the removed opacity
+// used to.
 .wc-transition-overlay {
   position: absolute;
   inset: 0;
@@ -177,7 +213,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(8 9 12 / 96%);
+  background: radial-gradient(
+    ellipse 78% 68% at 50% 50%,
+    rgb(6 7 10 / 88%) 0%,
+    rgb(6 7 10 / 74%) 52%,
+    rgb(6 7 10 / 34%) 100%
+  );
+  backdrop-filter: blur(16px) saturate(0.75);
 }
 
 .wc-transition-frame {
@@ -187,6 +229,9 @@ onBeforeUnmount(() => {
   width: min(64rem, 90vw);
   padding: 2.4rem;
   border-left: 2px solid var(--wc-gold);
+  // The fill is no longer opaque, so the type carries its own contrast against
+  // whatever the incoming visual puts behind it.
+  text-shadow: 0 0.1rem 0.6rem rgb(0 0 0 / 85%);
 }
 
 .wc-transition-terminal {

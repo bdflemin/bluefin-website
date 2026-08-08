@@ -122,6 +122,10 @@ async function enterIntro(startAtNativeTime: number | null = null, directorsCut 
   introHandoff.value = false
   introStartAt.value = startAtNativeTime
   introTransparent.value = false
+  // The Director's Cut is a different list with different segments and
+  // durations. Publish it before entering the phase so the store's timeline,
+  // index clamping, and TOTAL readout describe the intro actually playing.
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
   introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
   await nextTick()
@@ -242,6 +246,7 @@ async function restoreIntroForNavigation(): Promise<number | null> {
     ...meta,
     canPrevious: false,
   })
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
   await nextTick()
   if (unmounted || token !== handoffToken) {

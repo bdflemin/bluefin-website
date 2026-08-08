@@ -1,7 +1,12 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import CinematicTransition from '@/components/wolves/cinematic/CinematicTransition.vue'
+import CinematicTransition, {
+  TRANSITION_LEAVE_MS,
+  TRANSITION_MIN_HOLD_MS,
+  transitionHoldMs,
+} from '@/components/wolves/cinematic/CinematicTransition.vue'
+import { PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
 
 // These tests drive the store actions the player actually calls
@@ -68,7 +73,7 @@ describe('cinematicTransition overlay duration', () => {
     expect(wrapper.text()).not.toContain(store.segments[1].title)
   })
 
-  it('holds the transition overlay for 11 seconds then hides it', async () => {
+  it('holds the overlay for the hold derived from the incoming crossfade', async () => {
     const store = enterCinematicAt(1)
     const wrapper = mount(CinematicTransition)
 
@@ -76,11 +81,73 @@ describe('cinematicTransition overlay duration', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(true)
 
-    await vi.advanceTimersByTimeAsync(10900)
+    // Derived from the same window the player ramps over, never a literal: a
+    // hardcoded duration rots the moment an authored `crossfadeMs` changes.
+    const hold = transitionHoldMs(store.crossfadeMsAt(2))
+    await vi.advanceTimersByTimeAsync(hold - 100)
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(true)
 
     await vi.advanceTimersByTimeAsync(100)
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
+  })
+
+  // Regression for the defect where an opaque terminal card covered roughly the
+  // first ten seconds of four of the six songs. The overlay is raised
+  // `PRE_END_THRESHOLD_S + crossfadeMs` before the outgoing track ends, so the
+  // new song starts that far into the hold; everything after that point is
+  // overlay sitting on top of the incoming song.
+  it.each([2, 3, 4, 5])('clears segment %i shortly after the audio ramp lands', async (target) => {
+    const store = enterCinematicAt(target - 1)
+    const wrapper = mount(CinematicTransition)
+
+    store.beginCrossfade(target)
+    await wrapper.vm.$nextTick()
+
+    const crossfadeMs = store.crossfadeMsAt(target)
+    const hold = transitionHoldMs(crossfadeMs)
+
+    // The hold must outlast the ramp: the seam itself is never left uncovered.
+    expect(hold).toBeGreaterThan(crossfadeMs)
+
+    // ...and must not outlast it by much. The incoming song is already audible
+    // `PRE_END_THRESHOLD_S` before the ramp completes, so everything from that
+    // point until the leave transition finishes is card over new song. The
+    // budget is one readable beat plus the fade out, derived from the constants
+    // rather than pinned to a literal; the shipped defect measured ~10s here.
+    const newSongStartsAt = crossfadeMs - PRE_END_THRESHOLD_S * 1000
+    const overNewSong = hold - newSongStartsAt + TRANSITION_LEAVE_MS
+    expect(overNewSong).toBeLessThanOrEqual(TRANSITION_MIN_HOLD_MS + TRANSITION_LEAVE_MS)
+
+    await vi.advanceTimersByTimeAsync(hold)
+    expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
+  })
+
+  it('derives the hold from the incoming segment, not the outgoing one', async () => {
+    const store = enterCinematicAt(4)
+    const wrapper = mount(CinematicTransition)
+
+    // Part V authors 1200ms; Part VI authors 2500ms. The overlay must follow the
+    // segment it is announcing so it cannot drift from the player's ramp.
+    expect(store.crossfadeMsAt(4)).not.toBe(store.crossfadeMsAt(5))
+
+    store.beginCrossfade(5)
+    await wrapper.vm.$nextTick()
+
+    await vi.advanceTimersByTimeAsync(transitionHoldMs(store.crossfadeMsAt(4)))
+    expect(wrapper.find('.wc-transition-overlay').exists()).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(
+      transitionHoldMs(store.crossfadeMsAt(5)) - transitionHoldMs(store.crossfadeMsAt(4))
+    )
+    expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
+  })
+
+  it('never flashes the terminal block past the back row', () => {
+    // Every authored crossfade, plus the default, must still yield one readable
+    // beat of hold before the leave transition starts.
+    for (const ms of [800, 1000, 1200, 1500, 2000, 2500]) {
+      expect(transitionHoldMs(ms)).toBeGreaterThanOrEqual(TRANSITION_MIN_HOLD_MS)
+    }
   })
 
   it('does not trigger the transition overlay if phase is not cinematic', async () => {
