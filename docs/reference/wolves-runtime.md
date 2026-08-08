@@ -34,6 +34,24 @@ player synchronization, or generated files for content work.
 - Player buffers: `src/composables/useDualBufferPlayer.ts`
 - Content procedures: `docs/skills/wolves-content/SKILL.md`
 
+## Runtime engineering references
+
+Approved runtime engineering is gated by
+[`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md).
+The defect-derived detail behind that gate lives in these companion references:
+
+- [`wolves-transport-and-clocks.md`](wolves-transport-and-clocks.md) — dual-buffer
+  player, crossfades, clock derivation, bounded awaits, segment-vs-playlist
+  indexing.
+- [`wolves-intro-and-overlay.md`](wolves-intro-and-overlay.md) — intro sequences,
+  silent title card windows, presenter pacing, overlay text treatments.
+- [`wolves-lore-timing.md`](wolves-lore-timing.md) — lore page model, timeline
+  oversubscription math, anchoring text to measured beats.
+- [`wolves-slide-scheduling.md`](wolves-slide-scheduling.md) — beat grids, locked
+  slide windows, preload budgeting, slide buffer continuity.
+- [`wolves-test-harnesses.md`](wolves-test-harnesses.md) — browser harnesses and
+  player mocks.
+
 ## Open content surfaces
 
 - Lore: `src/data/lore/*.md` plus a manifest entry in
