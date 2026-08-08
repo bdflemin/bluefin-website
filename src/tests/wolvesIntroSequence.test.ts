@@ -328,8 +328,11 @@ describe('wolves intro overlay sequence', () => {
       throw new Error('Expected the Destiny segment to exist')
     }
 
+    // The comic title card renders its own artwork; its text was deliberately
+    // blanked in 6edf7f7d ("remove duplicate Destiny title") — the cue only
+    // carries the timing window and the comicHeroTitleCard flag.
     expect(destiny.burnedInCaptions).toEqual([
-      { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
+      { text: '', start: 24, end: 38, comicHeroTitleCard: true },
     ])
   })
 })
