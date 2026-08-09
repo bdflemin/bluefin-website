@@ -30,6 +30,14 @@ class FakePlayer {
   static instances: FakePlayer[] = []
   static emitPlayingOnPlay = true
   static emitReadyOnConstruct = true
+  /**
+   * A pause whose PAUSED never lands. The real API delivers state changes as
+   * cross-origin messages, so a park's pause event can be dropped or arrive after the
+   * lifecycle that issued it. Any suppression a side applies while a park is in flight
+   * must therefore be released by something other than that PAUSED, or the side goes
+   * permanently deaf to the presenter's real transport events.
+   */
+  static emitPausedOnPause = true
   events: FakeEvents
   currentTime = 0
   duration = 0
@@ -100,7 +108,9 @@ class FakePlayer {
 
   pauseVideo() {
     this.playing = false
-    this.events.onStateChange?.({ data: 2 })
+    if (FakePlayer.emitPausedOnPause) {
+      this.events.onStateChange?.({ data: 2 })
+    }
   }
 
   loadVideoById(video: string | { videoId: string, startSeconds?: number }) {
@@ -211,6 +221,7 @@ describe('useDualBufferPlayer', () => {
     FakePlayer.instances = []
     FakePlayer.emitPlayingOnPlay = true
     FakePlayer.emitReadyOnConstruct = true
+    FakePlayer.emitPausedOnPause = true
     installFakeYoutubeApi()
     vi.useFakeTimers({
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
@@ -432,6 +443,156 @@ describe('useDualBufferPlayer', () => {
 
     vi.advanceTimersByTime(START_PLAYBACK_TIMEOUT_MS)
     await start
+  })
+
+  it('never reports the show paused when the ACTIVE side parks its prewarm', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    // The intro player owns the transport while the cinematic buffers prepare behind
+    // it, and publishes that it is playing (WolvesApp does this from the intro
+    // player's own state).
+    store.setPlaying(true)
+
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    // The active side really was prewarmed and parked — the park's pause and seek
+    // both ran, so this is not passing because nothing happened.
+    expect(playerA.playCount).toBeGreaterThan(0)
+    expect(playerA.playing).toBe(false)
+    expect(playerA.currentTime).toBe(0)
+
+    // Parking pauses the buffer, and that PAUSED describes the BUFFER, not the show.
+    // Publishing it made the widget render "Play" while the intro was audibly playing
+    // and inverted the presenter's play/pause control, because `togglePlay()` branches
+    // on `store.playing`.
+    expect(store.playing).toBe(true)
+
+    player.destroy()
+  })
+
+  it('still reports a genuine pause of the on-air player', async () => {
+    const store = useCinematicStore()
+    const player = await startPlayer()
+    const [playerA] = FakePlayer.instances
+    expect(store.playing).toBe(true)
+
+    // The presenter's control. Suppressing PAUSED wholesale would "fix" the park
+    // problem by breaking the only pause the audience can see.
+    player.togglePlay()
+    expect(playerA.playing).toBe(false)
+    expect(store.playing).toBe(false)
+
+    player.togglePlay()
+    expect(playerA.playing).toBe(true)
+    expect(store.playing).toBe(true)
+
+    player.destroy()
+  })
+
+  it('re-arms the transport when a parked buffer is promoted to air', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    expect(playerA.playing).toBe(false)
+    expect(store.playing).toBe(false)
+
+    const startup = player.start()
+    await flushMicrotasks()
+
+    // Promotion is the show starting. A park's suppression that outlives its own
+    // PAUSED would swallow this PLAYING and leave the widget reading "Play" for the
+    // whole cinematic.
+    expect(playerA.playing).toBe(true)
+    expect(store.playing).toBe(true)
+
+    await startup
+    player.destroy()
+  })
+
+  it('re-arms the transport when startup hard-loads instead of promoting the park', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    // Side A is parked on Part I, and its park has been acknowledged. The presenter
+    // then selects a different part, so startup cannot promote the park and hard-loads
+    // the target instead — a path that never clears the park's suppression itself.
+    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
+    store.segmentIndex = 2
+
+    const startup = player.start()
+    await flushMicrotasks()
+
+    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+    expect(playerA.playing).toBe(true)
+    expect(store.playing).toBe(true)
+
+    await startup
+    player.destroy()
+  })
+
+  it('does not go deaf to real transport events when a park PAUSED never arrives', async () => {
+    FakePlayer.emitPausedOnPause = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+    expect(playerA.playCount).toBeGreaterThan(0)
+
+    // The park's pause event is lost. Promotion has to release the suppression by
+    // itself; nothing else will.
+    FakePlayer.emitPausedOnPause = true
+    const startup = player.start()
+    await flushMicrotasks()
+
+    expect(playerA.playing).toBe(true)
+    expect(store.playing).toBe(true)
+
+    player.togglePlay()
+    expect(store.playing).toBe(false)
+
+    await startup
+    player.destroy()
+  })
+
+  it('keeps the transport live on a promoted side whose park PAUSED was lost', async () => {
+    FakePlayer.emitPausedOnPause = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    // Both parks are unacknowledged. From here the pauses land normally again.
+    FakePlayer.emitPausedOnPause = true
+
+    const startup = player.start()
+    await flushMicrotasks()
+    expect(store.playing).toBe(true)
+    await startup
+
+    const [playerA, playerB] = FakePlayer.instances
+    playerA.duration = 424
+    playerB.duration = 347
+
+    advancePlayback(424_000)
+    expect(player.activeSide.value).toBe('b')
+    expect(store.segmentIndex).toBe(1)
+    expect(store.playing).toBe(true)
+
+    // Side B never acknowledged its park. It is on air now, so the presenter's pause
+    // has to reach the store from it.
+    player.togglePlay()
+    expect(playerB.playing).toBe(false)
+    expect(store.playing).toBe(false)
+
+    player.destroy()
   })
 
   it('gives up waiting for PLAYING instead of hanging the show on a black frame', async () => {

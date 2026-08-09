@@ -148,3 +148,24 @@ real coverage, stub `Image` with a controllable lifecycle (push instances on
 displayed `src` is *unchanged* immediately after the boundary flush. See
 `describe('segment boundary slide continuity')` in
 `src/tests/wolvesComicReader.test.ts`.
+
+**Holding the outgoing frame is only half the fix.** `preloadUpcoming()` walks
+the *current* track's list, so nothing warms the first slide of the next track.
+Gating the boundary on decode therefore traded a hard cut for a stall: Part II
+opened on Part I's final photo until the Jorge hero plate — a remote,
+multi-megabyte Flickr image — finished downloading. Measured in the browser, the
+correct image landed more than 250 ms after the boundary, which is why
+`tests/wolves-movie-flow.mjs` failed three Ghosts assertions while every unit
+test passed.
+
+The runtime already publishes the incoming segment one crossfade window early
+(`store.pendingSegmentIndex`, also set immediately on a manual skip). Pass it in
+as `pendingTrackIndex` and prefetch that track's **authored** opening at `'high'`
+priority, so the decode gate resolves from the HTTP cache instead of the network.
+Only Track 2's opening is authored and therefore knowable ahead of the boundary
+(`ghostsInTheMistOpeningSlide`); the other boundaries are covered by the
+transition overlay, so they can afford the fetch.
+
+The general rule: **a decode gate is only as good as what has been fetched before
+it.** Any time you make a swap wait for readiness, check what warms the thing it
+is waiting on — and if nothing does, the gate is a stall, not a guarantee.

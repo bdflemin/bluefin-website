@@ -33,6 +33,20 @@ interface SideState {
   prewarming: boolean
   /** This side has fetched media and is parked on its segment's opening frame. */
   parked: boolean
+  /**
+   * A park is in flight on this side. Parking pauses and seeks the player, and
+   * those events describe the *buffer*, not the show. Once the active side was
+   * prewarmed too, its own park reported PAUSED to the store and the transport
+   * read "Play" over a playing intro.
+   *
+   * Cleared by the park's own `PAUSED`, and by promotion / re-cue / release so a
+   * dropped event cannot leave a side permanently deaf. A counter was tried, to
+   * catch a park `PAUSED` arriving *after* promotion; it is not needed. The API
+   * delivers state changes FIFO over one postMessage channel, so the park's
+   * pause always precedes the promotion's play — and a counter turned a dropped
+   * event into a swallowed *real* pause, which is the worse failure.
+   */
+  parking: boolean
 }
 
 /**
@@ -77,8 +91,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1, prewarming: false, parked: false },
-    b: { player: null, segmentIndex: -1, prewarming: false, parked: false },
+    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false },
+    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -119,6 +133,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       state.segmentIndex = -1
       state.prewarming = false
       state.parked = false
+      state.parking = false
     }
   }
 
@@ -208,6 +223,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   function cueNext(side: PlayerSide, segmentIndex: number) {
     const state = sides[side]
     state.parked = false
+    state.parking = false
     if (!state.player || segmentIndex >= store.segments.length) {
       state.segmentIndex = -1
       state.prewarming = false
@@ -239,6 +255,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   function parkPrewarmedSide(side: PlayerSide) {
     const state = sides[side]
     state.prewarming = false
+    // Everything this function makes the player emit is buffer bookkeeping, not
+    // playback. Suppress it until the pause lands.
+    state.parking = true
     state.player?.pauseVideo?.()
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     applyVolume(state.player, 0)
@@ -253,6 +272,10 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const state = sides[side]
     state.prewarming = false
     state.parked = false
+    // Promotion outranks any park still in flight: this side is going to air, so
+    // its transport events are the show's again. This is also what releases a
+    // side whose park `PAUSED` was dropped.
+    state.parking = false
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     state.player?.playVideo?.()
   }
@@ -400,6 +423,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // presenter stranded mid-skip with `crossfading` latched is worse than a gap.
     sides[toSide].prewarming = false
     sides[toSide].parked = false
+    sides[toSide].parking = false
     clearColdSkipWait()
     coldSkipSide = toSide
     commitColdSkip = commit
@@ -473,6 +497,14 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     if (sides[side].prewarming && playerState === states.PLAYING) {
       // It has media; that is all the prewarm was for. Put it back on its mark.
       parkPrewarmedSide(side)
+      return
+    }
+    // A park in flight is buffer bookkeeping. Its pause/seek must never reach the
+    // store, or prewarming the *active* side reports the show as paused.
+    if (sides[side].parking) {
+      if (playerState === states.PAUSED) {
+        sides[side].parking = false
+      }
       return
     }
     // A cold skip held the outgoing side on air until this moment. The incoming

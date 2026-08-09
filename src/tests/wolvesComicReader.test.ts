@@ -1365,3 +1365,236 @@ describe('segment boundary slide continuity', () => {
     expect((vm.activePhoto as { id: string }).id).not.toBe(offStageId)
   })
 })
+
+// ── Regression: the next segment's authored opening is warmed before the cut ──
+//
+// preloadUpcoming() only looks inside the current track's photo list, so the
+// first slide of the *next* track was never warmed. With the decode gate in
+// place that meant Part II opened on Part I's final photo while a remote
+// multi-megabyte hero plate downloaded — at the one boundary
+// CinematicTransition.vue deliberately leaves uncovered.
+describe('pending segment preload of the authored opening slide', () => {
+  class RecordingImage {
+    static requests: Array<{ src: string, fetchPriority: string }> = []
+    static pending: RecordingImage[] = []
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    fetchPriority = 'auto'
+    private value = ''
+
+    set src(next: string) {
+      this.value = next
+      RecordingImage.requests.push({ src: next, fetchPriority: this.fetchPriority })
+      RecordingImage.pending.push(this)
+    }
+
+    get src() {
+      return this.value
+    }
+
+    decode() {
+      return Promise.resolve()
+    }
+  }
+
+  async function flushImageLoads() {
+    for (let round = 0; round < 5; round += 1) {
+      const pending = RecordingImage.pending
+      RecordingImage.pending = []
+      for (const image of pending) {
+        image.onload?.()
+      }
+      await flushPromises()
+      await nextTick()
+    }
+  }
+
+  function requestedUrls() {
+    return RecordingImage.requests.map(request => request.src)
+  }
+
+  const featuredPhoto = {
+    id: ghostsInTheMistOpeningSlide.photoId,
+    server: '65535',
+    secret: '32d7ace307',
+    title: 'KC+CNC_EU_260322_MaintainerSummitBreakouts_MN_047',
+  }
+
+  // Derived from the same authored record the component reads, so a change to
+  // the featured size suffix cannot silently drift away from this expectation.
+  const featuredOpeningUrl
+    = `https://live.staticflickr.com/${featuredPhoto.server}/${featuredPhoto.id}_${featuredPhoto.secret}_${ghostsInTheMistOpeningSlide.imageSizeSuffix}.jpg`
+  const featuredGenericUrl
+    = `https://live.staticflickr.com/${featuredPhoto.server}/${featuredPhoto.id}_${featuredPhoto.secret}_b.jpg`
+
+  const boundaryTracks: SoundtrackTrack[] = [
+    coverTrack,
+    {
+      id: 'ghosts-in-the-mist',
+      title: 'Ghosts In The Mist',
+      artist: 'Unleash The Archers',
+      artwork: 'wolves-artwork/ghosts.jpg',
+      youtubeVideoId: '1',
+      bpm: 100,
+      phraseBeats: 32,
+    },
+    {
+      id: 'part-three',
+      title: 'Part Three',
+      artist: 'Artist',
+      artwork: 'wolves-artwork/part-three.jpg',
+      youtubeVideoId: '2',
+      bpm: 120,
+      phraseBeats: 16,
+    },
+  ]
+
+  const boundaryPhotos = [
+    ...galleryPhotos,
+    featuredPhoto,
+    ...Array.from({ length: 20 }, (_, index) => ({
+      id: `filler-${index}`,
+      server: '1',
+      secret: `f${index}`,
+      title: `Filler ${index}`,
+    })),
+  ]
+
+  beforeEach(() => {
+    RecordingImage.requests = []
+    RecordingImage.pending = []
+    vi.stubGlobal('Image', RecordingImage)
+    mockGalleryData(boundaryTracks, new Response(JSON.stringify(boundaryPhotos)))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('fetches the featured track opening at high priority before the segment index changes', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    expect(requestedUrls()).not.toContain(featuredOpeningUrl)
+    RecordingImage.requests = []
+
+    await wrapper.setProps({ pendingTrackIndex: ghostsInTheMistOpeningSlide.trackIndex })
+    await nextTick()
+    await flushPromises()
+
+    // The warm-up must happen while the outgoing segment is still on screen.
+    expect(wrapper.props('trackIndex')).toBe(0)
+    const featuredRequest = RecordingImage.requests.find(request => request.src === featuredOpeningUrl)
+    expect(featuredRequest, 'authored opening slide was never requested').toBeDefined()
+    expect(featuredRequest?.fetchPriority).toBe('high')
+    // The featured plate is served at the authored size, not the generic one.
+    expect(requestedUrls()).not.toContain(featuredGenericUrl)
+  })
+
+  it('preloads nothing when the pending segment is the current one', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+    RecordingImage.requests = []
+
+    await wrapper.setProps({ pendingTrackIndex: 0 })
+    await nextTick()
+    await flushPromises()
+
+    expect(requestedUrls()).not.toContain(featuredOpeningUrl)
+  })
+
+  it('preloads nothing while no pending segment is published', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    // Move off undefined and back so the watcher genuinely fires with no
+    // pending segment, rather than never running at all.
+    await wrapper.setProps({ pendingTrackIndex: 2 })
+    await nextTick()
+    await flushPromises()
+    RecordingImage.requests = []
+
+    await wrapper.setProps({ pendingTrackIndex: undefined })
+    await nextTick()
+    await flushPromises()
+
+    expect(requestedUrls()).not.toContain(featuredOpeningUrl)
+  })
+
+  it('preloads nothing for a pending segment with no authored opening slide', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+    RecordingImage.requests = []
+
+    // Track 2's first slide is decided by the shuffle, so there is nothing
+    // knowable to warm; the transition overlay covers that boundary.
+    await wrapper.setProps({ pendingTrackIndex: 2 })
+    await nextTick()
+    await flushPromises()
+
+    expect(requestedUrls()).not.toContain(featuredOpeningUrl)
+  })
+
+  it('never warms the Wolves hero plate for a catalogue album', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+    await flushImageLoads()
+    RecordingImage.requests = []
+
+    await wrapper.setProps({ pendingTrackIndex: ghostsInTheMistOpeningSlide.trackIndex })
+    await nextTick()
+    await flushPromises()
+
+    // Ten other albums share this component; the featured size suffix belongs
+    // to the Wolves presentation alone.
+    expect(requestedUrls()).not.toContain(featuredOpeningUrl)
+  })
+
+  it('still decode-gates and crossfades into the warmed featured opening', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await flushImageLoads()
+
+    await wrapper.setProps({ pendingTrackIndex: ghostsInTheMistOpeningSlide.trackIndex })
+    await nextTick()
+    await flushPromises()
+
+    const beforeBoundary = activeTimelineImage(wrapper)
+    expect(beforeBoundary).toBeDefined()
+
+    await wrapper.setProps({
+      trackIndex: ghostsInTheMistOpeningSlide.trackIndex,
+      playlistCurrentTime: 0,
+      pendingTrackIndex: undefined,
+    })
+
+    // Warming the next opening must not turn the boundary back into a hard cut.
+    expect(activeTimelineImage(wrapper)).toBe(beforeBoundary)
+
+    await flushImageLoads()
+    expect(activeTimelineImage(wrapper)).toBe(featuredOpeningUrl)
+    expect((wrapper.vm as any).crossfadeActive).toBe(true)
+  })
+})

@@ -60,6 +60,21 @@ ramp ahead of the emit lengthens the very gap the fade exists to close. Start
 the ramp, emit, destroy on landing, and guard the ramp against unmount and a
 re-entrant `done` by comparing the captured player against the live one.
 
+**A park's transport events describe the buffer, not the show.**
+`parkPrewarmedSide()` pauses and seeks the player, and once *both* sides prewarm
+that pause happens on the ACTIVE side too. Published straight through, its
+`PAUSED` told the store the show was paused: the widget rendered "Play" while the
+intro was audibly playing, and `togglePlay()` — which branches on
+`store.playing` — inverted the presenter's control. Suppress a side's events
+while its park is in flight (`parking`), release the suppression on the `PAUSED`
+that park caused, and release it again from every path that puts the side back on
+air (`startIncoming()`, `cueNext()`, the cold-skip reset, `releasePlayers()`),
+because a `PAUSED` that never lands would otherwise leave that side permanently
+deaf to real transport events. Nothing but the unit suite covers this: a test
+double whose `pauseVideo()` does not emit `PAUSED` cannot see it at all, and only
+the standalone `tests/wolves-movie-flow.mjs` harness — which is not part of
+`npm run test:gate` — caught it in a browser.
+
 **Both buffers prewarm, and startup waits for the active side's park.** Gating
 the prewarm on `side !== activeSide` left Track 0 — the first thing the audience
 hears — as the only buffer that ever entered cold, while a track needed seven

@@ -63,7 +63,11 @@ an unidentified player request.
 - The transport clock stops publishing while a crossfade runs.
 - A clock advances by a hardcoded constant per tick, or by accumulating deltas.
 - A crossfade is triggered by a lead shorter than the fade it starts.
-- A test double for a player exposes `getCurrentTime()` that never advances.
+- A test double for a player exposes `getCurrentTime()` that never advances, or a
+  `pauseVideo()`/`playVideo()` that does not emit the state change the real
+  IFrame API emits.
+- Buffer bookkeeping (a prewarm park's pause and seek) is published to the store
+  as show transport state.
 
 ## Verification
 

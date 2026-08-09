@@ -57,6 +57,13 @@ const props = withDefaults(defineProps<{
    * actually playing. Ordering and branching still use `trackIndex`.
    */
   trackId?: string
+  /**
+   * Segment the runtime is currently crossfading *into*, or undefined when no
+   * handoff is in flight. Published one crossfade window ahead of the boundary,
+   * which is the only warning the gallery gets that its whole photo list is
+   * about to be replaced. See `preloadPendingTrackOpening()`.
+   */
+  pendingTrackIndex?: number
   playlistCurrentTime?: number
   experienceId?: string
   wolvesExperience?: boolean
@@ -913,6 +920,42 @@ function preloadPhoto(photo: any, priority: 'high' | 'low' = 'low'): Promise<voi
 }
 
 let slideChangeToken = 0
+
+/**
+ * URL of a track's authored opening slide, or null when its first slide is only
+ * decided by the shuffle at snapshot time.
+ *
+ * `preloadUpcoming()` only ever looks *within* the current track's list, so
+ * nothing warms the first slide of the next track. That slide is the one the
+ * decode gate then blocks on at the boundary, and for Track 2 it is a remote
+ * multi-megabyte hero photo — so Part II opened on Part I's last image until
+ * the fetch landed. Track 2's opening is authored and therefore knowable ahead
+ * of the boundary; the rest are covered by the transition overlay.
+ */
+function authoredOpeningUrlForTrack(trackIndex: number | undefined): string | null {
+  if (!isWolvesExperience.value || trackIndex !== ghostsInTheMistOpeningSlide.trackIndex) {
+    return null
+  }
+  const photo = flickrPhotos.value.find(candidate => candidate.id === ghostsInTheMistOpeningSlide.photoId)
+  if (!photo) {
+    return null
+  }
+  return `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_${ghostsInTheMistOpeningSlide.imageSizeSuffix}.jpg`
+}
+
+// The runtime publishes the incoming segment one crossfade window before the
+// boundary (and immediately on a manual skip), which is the head start this
+// needs. Fetching here leaves the bytes in the browser's HTTP cache, so the
+// decode gate at the boundary resolves in decode time instead of fetch time.
+watch(() => props.pendingTrackIndex, (pendingTrackIndex) => {
+  if (pendingTrackIndex === undefined || pendingTrackIndex === props.trackIndex) {
+    return
+  }
+  const url = authoredOpeningUrlForTrack(pendingTrackIndex)
+  if (url) {
+    void preloadUrl(url, 'high')
+  }
+}, { immediate: true })
 
 /** Seconds of upcoming slides to keep fetched and decoded ahead of the cue. */
 const PRELOAD_WINDOW_SECONDS = 8

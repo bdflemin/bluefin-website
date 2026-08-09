@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
         <WolvesComicReader
           :track-index="store.segmentIndex"
           :track-id="store.segment.youtubeId"
+          :pending-track-index="store.pendingSegmentIndex ?? undefined"
           :playlist-current-time="time"
           :experience-id="store.experienceId"
           :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"

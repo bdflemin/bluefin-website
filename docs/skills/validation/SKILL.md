@@ -180,3 +180,44 @@ Also confirm no service worker is registered; a cached worker produces the same
 ## Wolves timing validation
 
 For lore timing work, run typecheck, focused lore/timing/timeline tests, build, diff check, and a Chromium smoke of /wolves/. Report focused results separately from full-suite baseline failures. Assert a non-empty rendered body, zero page errors, no failed module requests, preserved locked anchors, contiguous unlocked slots, and readable representative short/long records.
+
+## A green `test:gate` proves nothing about the Wolves show
+
+`npm run test:gate` does **not** run `tests/wolves-movie-flow.mjs`. That harness is
+a separate CI job (`wolves-movie-flow` in `.github/workflows/ci.yml`) which boots a
+dev server and drives the real route. So the gate can be green, typecheck and lint
+clean, the build succeed, and every production route render with zero `pageerror`
+— while the show itself is broken.
+
+That is not hypothetical. A change that was validated exactly that way shipped two
+runtime defects: Part II opened on Part I's photo because the decode gate blocked
+on a cold remote fetch, and the transport read "Play" during the intro because the
+active buffer's prewarm park published `PAUSED` to the store. The harness caught
+both immediately and deterministically. A route-renders smoke test caught neither,
+because both defects render a perfectly valid-looking page.
+
+**For any change to the Wolves runtime — player, store, transitions, slideshow,
+intro overlay — run the harness before claiming the work is done:**
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort &
+WOLVES_BROWSER_FIXTURES=1 node tests/wolves-movie-flow.mjs
+```
+
+Read the **`Results:` line, not the tail of the output.** Assertions run in show
+order, so an early failure scrolls off the top; piping through `tail` hid a real
+failure and made a 3-failure run look like 2. Compare the pass count against the
+pre-change commit rather than against an absolute number — the count moves as
+assertions are added. `git worktree add` a detached checkout of the base commit,
+symlink `node_modules`, serve it on another port, and run the same harness against
+`WOLVES_BASE_URL` to get an honest baseline.
+
+Two failure modes to recognise before blaming your change:
+
+- **Not every failure is flake.** The transport auto-hides after 3 s without
+  pointer input, so `Visible Pause control` is the documented flaky assertion — but
+  a *deterministic* 3-of-3 failure is a real defect, not flake. Re-run before
+  concluding either way.
+- **Your own instrumentation perturbs it.** Adding `waitForTimeout` to a probe copy
+  will trip that same auto-hide assertion. Probe with a copy outside the repo, and
+  re-confirm against the unmodified harness.
