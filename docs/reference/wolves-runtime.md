@@ -129,8 +129,16 @@ Run the relevant typecheck, tests, and build. For intro, soundtrack, slideshow,
 timeline, or player-synchronized content, verify the affected timestamps with the
 Wolves browser flow and real player. For lore deletions, open `/wolves/` in
 Chromium and assert the page has rendered text with no `pageerror` events; a
-successful build does not prove eager lore loading succeeds. Finish with
-`docs/skills/validation/SKILL.md` before any production claim.
+successful build does not prove eager lore loading succeeds.
+
+For any transport, buffer, or player change, verify the **intro** and the
+**cinematic** as separate phases. The cinematic buffers are prewarmed while the
+intro is on screen, so a defect that only affects that window is invisible to a
+harness that skips straight to the show — a track once played over the entire
+opening with the gate, the build, and the movie-flow harness all green. See
+`docs/skills/validation/SKILL.md` for the harness list.
+
+Finish with `docs/skills/validation/SKILL.md` before any production claim.
 
 ## Presentation rules
 

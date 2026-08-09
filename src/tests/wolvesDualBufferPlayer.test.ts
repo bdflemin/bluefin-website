@@ -57,6 +57,8 @@ class FakePlayer {
   videoId = ''
   muted = false
   destroyed = false
+  /** Ordered log of API calls, so ordering guarantees can be asserted. */
+  calls: string[] = []
   /** How many times playback was requested — the only evidence a prewarm happened. */
   playCount = 0
   /**
@@ -140,6 +142,7 @@ class FakePlayer {
 
   cueVideoById(video: string | { videoId: string, startSeconds?: number }) {
     const id = typeof video === 'string' ? video : video.videoId
+    this.calls.push('cueVideoById')
     this.cuedId = id
     if (FakePlayer.failingVideoIds.has(id)) {
       this.videoId = ''
@@ -176,6 +179,7 @@ class FakePlayer {
    * path that forgets to unmute would ship green.
    */
   mute() {
+    this.calls.push('mute')
     this.muted = true
   }
 
@@ -1282,6 +1286,25 @@ describe('useDualBufferPlayer', () => {
       expect(playerB.audibleVolume).toBe(0)
       // Nothing may be hard-loaded to air before the show has started.
       expect(playerB.loadedId).toBe('')
+      player.destroy()
+    })
+
+    it('silences a buffer from the moment it is created, not from its first cue', async () => {
+      const player = buildPlayer()
+      await player.prepare()
+      await flushMicrotasks()
+
+      // A YouTube player is constructed at full volume and unmuted. Both buffers are
+      // built during the intro, so the gap between construction and the first cue is
+      // a window in which the cinematic can be heard under the intro — a real browser
+      // observed a buffer sitting at volume 100, unmuted, in exactly that gap.
+      // Silencing must therefore happen at readiness, BEFORE the first cue.
+      for (const instance of FakePlayer.instances) {
+        expect(instance.muted).toBe(true)
+        expect(instance.audibleVolume).toBe(0)
+        expect(instance.calls.indexOf('mute')).toBeGreaterThanOrEqual(0)
+        expect(instance.calls.indexOf('mute')).toBeLessThan(instance.calls.indexOf('cueVideoById'))
+      }
       player.destroy()
     })
 

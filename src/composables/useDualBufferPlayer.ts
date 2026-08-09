@@ -673,6 +673,13 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         }
         settled = true
         pendingReadyRejectors.delete(rejectBeforeReady)
+        // A fresh player is created at full volume and unmuted. Both buffers are
+        // built during the intro, so a side is silenced from the moment it exists
+        // rather than from its first cue — the gap between the two is a window in
+        // which the cinematic can be heard under the intro. Every path to air lifts
+        // this latch explicitly.
+        player.mute?.()
+        applyVolume(player, 0)
         resolve(player)
       }
       const PlayerCtor = getYoutubePlayerConstructor()

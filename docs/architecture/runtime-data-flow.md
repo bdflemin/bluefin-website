@@ -18,6 +18,21 @@ synchronized surfaces read that state.
 The active media player's clock drives synchronized content. Do not add a second
 clock or a second transport for a content change.
 
+Playback runs on two YouTube buffers (`src/composables/useDualBufferPlayer.ts`):
+one is on air while the other holds the next segment, prewarmed and parked. Two
+invariants govern that pair, and both have shipped broken:
+
+- **A buffer goes to air on verified identity, never on position.** The side's
+  recorded `segmentIndex` is only what the runtime *asked* for; the player's real
+  `getVideoData().video_id` is what the room will hear. Promoting on the record
+  alone puts the wrong song under the segment the screen is naming.
+- **Nothing goes to air before the show starts.** Both buffers are built and
+  prewarmed during the intro, so every path that can begin playback is gated on
+  `started`, and prewarms are muted until the moment they take over.
+
+Detail and the defects behind them:
+[`../reference/wolves-transport-and-clocks.md`](../reference/wolves-transport-and-clocks.md).
+
 ## Generated data
 
 Generated files are outputs, not editing surfaces. Change their source data or

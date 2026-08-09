@@ -130,6 +130,15 @@ the intro: a song playing over the entire opening, which is what "there's a song
 in my intro" was. Adding recovery to a boundary means adding a way for that boundary to
 start audio, so the guard has to be added in the same change.
 
+**Silence a buffer at readiness, not at its first cue.** A YouTube player is
+constructed at full volume and unmuted, and both buffers are built during the intro,
+so the gap between construction and the first `cueNext()` is a window in which the
+cinematic can be heard under the intro. A real browser was observed sitting at volume
+100, unmuted, in exactly that gap. Mute and zero each player in its `onReady`, before
+anything is cued. A unit test cannot see this by checking state after `prepare()` —
+`cueNext()` has already muted by then — so assert the *ordering*: `mute` must appear
+before `cueVideoById` in the player's call log.
+
 **A cold load is not yet on air.** `loadVideoById` autoplays, so the recovery load must
 stay muted at volume 0 and be lifted only by `commit()`, at the moment the side actually
 takes over. Unmuting at load time makes the incoming segment audible *underneath* the

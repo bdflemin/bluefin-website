@@ -223,3 +223,39 @@ Two failure modes to recognise before blaming your change:
 - **Your own instrumentation perturbs it.** Adding `waitForTimeout` to a probe copy
   will trip that same auto-hide assertion. Probe with a copy outside the repo, and
   re-confirm against the unmodified harness.
+
+### The movie-flow harness is not the whole show either
+
+It drives the cinematic, so it cannot see two things that have both shipped broken.
+For any transport, buffer, or player change, also run:
+
+```bash
+node tests/wolves-buffer-parking.mjs     # no buffer running away underneath the show
+node tests/wolves-ghosts-boundary.mjs    # the on-air buffer really holds the segment named on screen
+node tests/wolves-intro-silence.mjs      # the cinematic stays silent under the intro
+```
+
+`wolves-intro-silence.mjs` exists because of a defect this skill's own checklist
+missed: the cinematic buffers are prewarmed *during* the intro, a boundary ran in
+that window, and a track played over the whole opening. Gate, typecheck, lint,
+build, movie-flow, and a route smoke test were all green. **Validate the intro
+window separately from the cinematic** — "the show is fine" is a claim about two
+different phases.
+
+The general lesson: if a change adds a way for the runtime to *start audio* or
+*put something on air*, ask what stops that path running before the show has
+started. Then check that phase, not just the one you were working in.
+
+### These harnesses need real playback, and CI Chromium has none
+
+Playwright's bundled Chromium ships without proprietary codecs, so YouTube answers
+with error 150 and no media attaches. `wolves-ghosts-boundary.mjs` and
+`wolves-intro-silence.mjs` are written to tolerate that — an *empty* buffer passes,
+only a *wrong* or *audible* one fails — so they are still worth running locally, but
+a clean run in that environment is weaker evidence than it looks. Neither is wired
+into `.github/workflows/ci.yml`; only `wolves-movie-flow` is. Do not read a local
+pass as proof that real audio is correct, and say so when reporting.
+
+Two intro harnesses, `tests/wolves-intro-segments.mjs` and
+`tests/wolves-intro-destiny-toggle.mjs`, **fail on `main`** in that environment.
+Baseline them with a worktree before treating either as a regression.

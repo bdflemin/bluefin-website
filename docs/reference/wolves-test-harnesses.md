@@ -170,6 +170,27 @@ Two things about running it:
   `CinematicTransition.vue` deliberately runs without the overlay, so anything that
   goes wrong there is seen by the whole room.
 
+## The full harness inventory
+
+Every standalone Playwright script in `tests/`. Only `wolves-movie-flow` runs in
+CI (`.github/workflows/ci.yml`); the rest are run by hand, which is why they go
+stale unnoticed. All of them take `WOLVES_BASE_URL` (default
+`http://127.0.0.1:5173`), so a baseline worktree can be served on another port.
+
+| Harness | Covers |
+|---|---|
+| `wolves-movie-flow.mjs` | The show end to end from the lobby door. The CI job. |
+| `wolves-buffer-parking.mjs` | No prewarmed buffer runs away under the show. |
+| `wolves-ghosts-boundary.mjs` | The on-air buffer really holds the segment named on screen. |
+| `wolves-intro-silence.mjs` | The cinematic stays inaudible under the intro. |
+| `wolves-intro-segments.mjs` | Intro sequence segments and cue windows. Fails on `main` here. |
+| `wolves-intro-destiny-toggle.mjs` | Director's Cut toggle and widget bounds. Fails on `main` here. |
+| `wolves-transition-chat.mjs` | Authored transition lore between parts. |
+| `wolves-lobby-progress.mjs` | Lobby and progress readouts; reads live durations, never constants. |
+| `wolves-immersive-layout.mjs` | Track 0 immersive grid layout. |
+| `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
+| `navbar-visual.mjs` | Main-site navbar, not Wolves. |
+
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
 buffers are prewarmed *during* the intro, so it watches them through that window
 and fails if either becomes audible. It reads `__wolvesDurations.buffers()`, which

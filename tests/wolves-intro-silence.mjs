@@ -11,7 +11,8 @@
 import process from 'node:process'
 import { chromium } from 'playwright'
 
-const BASE = process.env.BASE ?? 'http://127.0.0.1:5173/wolves/'
+const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
+const BASE = `${BASE_URL}/wolves/`
 const WATCH_MS = Number(process.env.WATCH_MS ?? 45000)
 
 const log = (...args) => console.log(...args)
@@ -65,7 +66,8 @@ while (Date.now() - start < WATCH_MS) {
   }
 
   for (const side of [snap.a, snap.b]) {
-    if (side.audible > 0) {
+    // A buffer with no media attached cannot be heard whatever its volume says.
+    if (side.actual && side.audible > 0) {
       log(`FAIL: buffer ${side.side} is audible during the intro (volume ${side.volume}, muted ${side.muted}, holding ${side.actual})`)
       failures += 1
     }
