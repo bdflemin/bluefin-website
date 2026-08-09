@@ -155,20 +155,53 @@ the transition overlay's hold — the overlay is the only cover, and its hold is
 derived from the crossfade rather than a fixed 11 s, so it is much shorter than it
 used to be.
 
-## Segment index is not a playlist track index
+## Resolve a playlist track by identity, not by index
 
-`CINEMATIC_SEGMENTS` (`src/config/wolves-cinematic.ts`) is a **curated six-item
-subset** of the seven authored tracks in `public/wolves-playlist.json`. Playlist
-track 4, "End of You", is deliberately omitted. From segment index 4 onward the
-two orderings diverge: segment 4 is playlist track 5 (Soulbound), segment 5 is
-playlist track 6 (Last Ride of the Day).
+The show is **seven musical parts**. `CINEMATIC_SEGMENTS`
+(`src/config/wolves-cinematic.ts`) lines up 1:1 and in order with the first
+seven authored tracks of `public/wolves-playlist.json`:
 
-`CINEMATIC_AUTHORED_DURATIONS` in `src/stores/cinematic.ts` was built by taking
-the first six playlist durations, so Parts V and VI carried the wrong runtimes
-(193/234 instead of 234/271). Because `authoredSequenceElapsed()` **clamps**
-`segmentElapsed` to the authored value, the transport's TOTAL readout froze for
-the last 41 s of Part V and the last 37 s of the finale, and overall duration
-under-reported by 78 s. This shape of bug has now occurred three times.
+| segment index | chapter | id | playlist track |
+|---|---|---|---|
+| 0 | PART I | `seven-days-to-the-wolves` | 0 |
+| 1 | PART II | `ghosts-in-the-mist` | 1 |
+| 2 | PART III | `tonight-we-must-be-warriors` | 2 |
+| 3 | PART IV | `not-your-monster` | 3 |
+| 4 | PART V | `end-of-you` | 4 |
+| 5 | PART VI | `soulbound` | 5 |
+| 6 | PART VII | `last-ride-of-the-day` | 6 |
+
+`CINEMATIC_AUTHORED_DURATIONS` in `src/stores/cinematic.ts` is
+`[424, 347, 251, 384, 193, 234, 271]` for those segments in order.
+
+**Index-based lookup is still wrong, and the alignment above is the reason it
+looks safe.** The two lists agreed once before, then an automated change deleted
+a segment (see the next section) and every consumer that addressed the playlist
+by `segmentIndex` silently read the previous song's metadata. Nothing failed
+loudly, because an index is always in range. The alignment is a property of the
+current data, not an invariant — treat it as something that has already been
+broken once and can be broken again.
+
+Three shipped defects came from indexing the playlist by segment index:
+
+- `CINEMATIC_AUTHORED_DURATIONS` kept the deleted track's runtime and shifted
+  every later part, so Parts V and VI carried the wrong values (193/234 instead
+  of 234/271). Because `authoredSequenceElapsed()` **clamps** `segmentElapsed`
+  to the authored value, the transport's TOTAL readout froze for the last 41 s
+  of one part and the last 37 s of the finale, and overall duration
+  under-reported by 78 s.
+- `WolvesComicReader.vue` read `manifest.tracks[props.trackIndex]` and paced the
+  174 BPM finale on Soulbound's 124 BPM grid, with the wrong crossfade.
+- The same shape has now been fixed three separate times in this repository.
+
+The rule: **anything that reaches into the playlist resolves by identity.**
+`TheaterExperience.vue` passes `:track-id="store.segment.youtubeId"` and the
+reader matches on `youtubeVideoId`/`id`. Identity resolution is confined to the
+Wolves experience on purpose — catalogue albums in
+`public/experiences/catalogue.json` share youtube ids with unrelated entries
+further down the same playlist, so for them the index *is* the addressing
+scheme. `trackIndex` keeps driving ordering and branching (`trackIndex === 0`,
+`trackIndex > 0`, shuffle partitioning); only the metadata lookup changed.
 
 Rules:
 
@@ -182,25 +215,45 @@ Rules:
   *authored* timeline, so the two readouts could disagree mid-show. Both now
   read `CINEMATIC_TIMELINE`.
 - Guard the alignment in a test, not by eye: assert the authored duration array
-  matches `CINEMATIC_SEGMENTS` by length and by id/`youtubeId` order, and that
-  no omitted track's runtime appears in it.
+  matches `CINEMATIC_SEGMENTS` by length and by id/`youtubeId` order, and assert
+  the segment count and id order against `public/wolves-playlist.json` itself.
 
-## A segment index is not a playlist track index
+## A gap in an authored sequence is evidence of a deletion
 
-`CINEMATIC_SEGMENTS` is a curated six-item subset of the seven authored tracks
-in `public/wolves-playlist.json`: the show omits playlist track 4, **End of
-You**. So `segmentIndex` and playlist index agree only through 3, and diverge by
-one from 4 on (segment 4 = Soulbound, segment 5 = Last Ride of the Day). The
-same trap is already documented on `SEGMENT_DURATIONS_SECONDS` in
-`src/stores/cinematic.ts`; it has now bitten `WolvesComicReader.vue` too, which
-read `manifest.tracks[props.trackIndex]` and paced the 174 BPM finale on
-Soulbound's 124 BPM grid with the wrong crossfade.
+The most expensive Wolves defect so far was not a race or a clock: **the show
+was missing an entire song, and nobody noticed for a long time.**
 
-The rule: **anything that reaches into the playlist resolves by identity.**
-`TheaterExperience.vue` passes `:track-id="store.segment.youtubeId"` and the
-reader matches on `youtubeVideoId`/`id`. Identity resolution is confined to the
-Wolves experience on purpose — catalogue albums in
-`public/experiences/catalogue.json` share youtube ids with unrelated entries
-further down the same playlist, so for them the index *is* the addressing
-scheme. `trackIndex` keeps driving ordering and branching (`trackIndex === 0`,
-`trackIndex > 0`, shuffle partitioning); only the metadata lookup changed.
+What happened. Commit `c427f048` built `/wolves/` as a seven-part cinematic.
+Commit `24cf26b5`, an AI-assisted change titled "remove the extra ending
+segment", deleted a **middle** segment — `end-of-you`, Poppy, then PART V —
+together with its authored `TRANSITION_FOUR` lore, its team-chat entry, and its
+tests, then renumbered PART VI and PART VII down to PART V and PART VI. The
+commit message described the removal as an *ending* segment. It was not. The
+loss then propagated quietly: `CINEMATIC_AUTHORED_DURATIONS`, a **derived**
+array, kept the deleted track's runtime in place and shifted every value after
+it, and later readers rationalised the resulting mismatch as deliberate
+curation and wrote it down as a permanent trap.
+
+How to catch this class of loss:
+
+- **A gap in an authored sequence is evidence of a deletion, not a style.** The
+  surviving tell sat in the config for months: `TRANSITION_FIVE` assigned to
+  Soulbound with no `TRANSITION_FOUR` anywhere in the file. Authored constants
+  numbered ONE, TWO, THREE, FIVE mean FOUR was removed. The same goes for
+  chapter labels that stop short of the known part count, and for ids present in
+  the playlist but absent from the segment list.
+- **Count against the authored source, not the code.** `CINEMATIC_SEGMENTS`
+  cannot vouch for itself. Verify the segment count and id order against
+  `public/wolves-playlist.json`, which is the authored manifest.
+- **Derived arrays do not shrink when their source does.** Any hand-maintained
+  array that parallels a list — durations, BPM grids, chat keys — must be
+  asserted against that list by id, or a deletion at position *n* silently
+  re-labels everything after *n*.
+- **Distrust a removal whose justification does not match its diff.** "Extra
+  ending segment" removing a middle entry, renumbering survivors, and dropping
+  authored lore is three separate content losses in one change. Authored content
+  is never removed to make code tidier; if a change deletes authored prose,
+  lore, or a track, it needs the owner's explicit word.
+
+Restoring the segment restored the seven-part show, `TRANSITION_FOUR`, the
+PART I..PART VII chapter labels, and the 1:1 segment-to-track alignment.

@@ -78,12 +78,29 @@ entire same player-clock window.
 
 ## Later-track gallery policy
 
-Authored track numbering is fixed: Track 0 is the Destiny intro, Track 1 is
-“7 Days to the Wolves”, and Track 2 is “Ghosts In The Mist”. Track 2 opens
-with the single Jorge Castro hero plate and its 48.4-second quote sequence.
-After that opening, and for Tracks 3–6, use only the curated Flickr CNCF
-contributor-summit gallery. Do not carry Track 1 hero or local people images
-into later authored Wolves tracks. `.github/workflows/update-content.yml`
+**Two track numbering schemes exist. Do not conflate them.**
+
+- *Show numbering* (used in this section and in Wolves content docs): Track 0 is
+  the Destiny intro, Track 1 is “7 Days to the Wolves”, Track 2 is “Ghosts In
+  The Mist”, and so on through Track 7, “Last Ride of the Day”.
+- *Segment numbering* (used by `CINEMATIC_SEGMENTS`, `store.segmentIndex`, and
+  the comic reader's `trackIndex`): index 0 is “7 Days to the Wolves”, index 1
+  is “Ghosts In The Mist”, through index 6. Chapter labels run PART I..PART VII.
+
+The intro is the offset: show Track *n* is segment index *n − 1*. State which
+scheme is in play whenever a number could be read either way.
+
+The cinematic is **seven musical parts**, and they line up 1:1 with the first
+seven authored tracks in `public/wolves-playlist.json`. See
+[`wolves-transport-and-clocks.md`](wolves-transport-and-clocks.md) for why that
+alignment is still not an addressing scheme, and for the deletion that once
+broke it.
+
+In show numbering: Track 2 opens with the single Jorge Castro hero plate and its
+48.4-second quote sequence. After that opening, and for Tracks 3–7, use only the
+curated Flickr CNCF contributor-summit gallery. Do not carry Track 1 hero or
+local people images into later authored Wolves tracks.
+`.github/workflows/update-content.yml`
 rebuilds `public/flickr-photos.json` weekly from scratch from the configured
 summit albums in `scripts/flickr-curation.json`; KubeCon + CloudNativeCon Japan
 2026 is the first/current source album and must remain included.
@@ -131,7 +148,9 @@ derived from real failures on this route, not preferences.
   container-relative type scale. No lore surface scrolls or pans, and no view
   carries its own card chrome, footer telemetry, or body font size.
 - Every Wolves presentation image is single-use. Do not schedule duplicate
-  assets in Track 0 or repeat a Track 0 image in carry-forward tracks.
+  assets in the opening “7 Days to the Wolves” slide schedule (segment index 0,
+  the comic reader's Track 0) or repeat one of its images in carry-forward
+  tracks.
 - The active media-player clock remains the only synchronization clock.
 - A chat completion event may hold its active record on screen, but it is a
   display lifecycle gate, not a second clock: when it releases, resume from

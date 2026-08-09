@@ -50,11 +50,13 @@ const props = withDefaults(defineProps<{
   trackIndex?: number
   /**
    * Identity of the playlist track backing this segment (a `youtubeVideoId`, or
-   * a manifest track `id`). `trackIndex` is a *segment* index, and the Wolves
-   * show is a curated six-item subset of the seven authored playlist tracks, so
-   * from segment 4 on the two do not line up. Passing the identity keeps the
-   * BPM, phrase length, and crossfade metadata attached to the song that is
-   * actually playing. Ordering and branching still use `trackIndex`.
+   * a manifest track `id`). `trackIndex` is a *segment* index. Today the seven
+   * segments line up 1:1 with the seven authored playlist tracks — but that
+   * alignment has been silently broken before: an automated change deleted the
+   * `end-of-you` segment and every later segment then read the previous song's
+   * BPM, phrase length, and crossfade. Resolving by identity keeps that metadata
+   * attached to the song actually playing, whatever the list does next.
+   * Ordering and branching still use `trackIndex`.
    */
   trackId?: string
   /**

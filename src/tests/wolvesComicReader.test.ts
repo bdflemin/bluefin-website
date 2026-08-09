@@ -1077,12 +1077,16 @@ describe('track 0 locked windows', () => {
   })
 })
 
-// ── Regression: segment index is not a playlist track index ────────────────
+// ── Regression: resolve the playlist track by identity, not by position ────
 //
-// CINEMATIC_SEGMENTS is a curated six-item subset of the seven authored tracks
-// in public/wolves-playlist.json — the show omits "End of You". Reading track
-// metadata by segment index therefore paced Part V on End of You's tempo and
-// the Part VI finale (the fastest song in the show) on Soulbound's.
+// The seven segments line up 1:1 with the seven authored tracks in
+// public/wolves-playlist.json. That alignment is an invariant, not a
+// coincidence, and it has been broken silently before: an automated change
+// deleted the `end-of-you` segment, after which every later segment read the
+// previous song's tempo — pacing the finale, the fastest song in the show, on
+// Soulbound's grid. The completeness test below is the guard that would have
+// caught that deletion; identity resolution is what keeps the damage contained
+// if it ever happens again.
 describe('wolves segment-to-playlist track identity', () => {
   const playlist = JSON.parse(
     readFileSync(resolve(process.cwd(), 'public/wolves-playlist.json'), 'utf8'),
@@ -1093,19 +1097,27 @@ describe('wolves segment-to-playlist track identity', () => {
     vi.restoreAllMocks()
   })
 
-  it('never lets a cinematic segment index address the playlist directly', () => {
-    const showIds = CINEMATIC_SEGMENTS.map(segment => segment.youtubeId)
-    const byIndex = showIds.map((_, index) => playlist.tracks[index]?.youtubeVideoId)
-
-    // If this ever becomes true the subset was flattened and the fix below is
-    // no longer load bearing — but until then, indexing is wrong from 4 on.
-    expect(byIndex).not.toEqual(showIds)
-    expect(showIds.slice(4)).toEqual(['san94Q93IcY', 'rYkYLIYvI18'])
+  it('plays every authored track, in playlist order', () => {
+    // A segment silently disappearing is the defect this block exists to catch,
+    // so derive the expected set from the manifest instead of pinning a count —
+    // a hard-coded length shrinks along with the deletion and proves nothing.
+    //
+    // `wolves-playlist.json` also carries the back catalogue, so the show's own
+    // tracks have to be identified by a property rather than by position: every
+    // authored segment after the opener carries an authored `fadeDuration`, and
+    // no back-catalogue track does. The opener needs no fade *into* it.
+    const authored = playlist.tracks.filter(
+      (track, index) => index === 0 || track.fadeDuration !== undefined,
+    )
+    expect(authored.length).toBeGreaterThan(1)
+    expect(CINEMATIC_SEGMENTS.map(segment => segment.youtubeId))
+      .toEqual(authored.map(track => track.youtubeVideoId))
   })
 
   it.each([
-    { segmentIndex: 4, title: 'Soulbound', bpm: 124, phraseBeats: 32, hold: 16 * 60 / 124, crossfadeMs: 1200 },
-    { segmentIndex: 5, title: 'Last Ride of the Day', bpm: 174, phraseBeats: 64, hold: 32 * 60 / 174, crossfadeMs: 2500 },
+    { segmentIndex: 4, title: 'End of You', bpm: 95, phraseBeats: 16, hold: 16 * 60 / 95, crossfadeMs: 800 },
+    { segmentIndex: 5, title: 'Soulbound', bpm: 124, phraseBeats: 32, hold: 16 * 60 / 124, crossfadeMs: 1200 },
+    { segmentIndex: 6, title: 'Last Ride of the Day', bpm: 174, phraseBeats: 64, hold: 32 * 60 / 174, crossfadeMs: 2500 },
   ])(
     'paces segment $segmentIndex with $title, the song actually playing',
     async ({ segmentIndex, title, bpm, phraseBeats, hold, crossfadeMs }) => {
@@ -1135,8 +1147,8 @@ describe('wolves segment-to-playlist track identity', () => {
     mockGalleryData(playlist.tracks)
     const wrapper = mount(WolvesComicReader, {
       props: {
-        trackIndex: 5,
-        trackId: CINEMATIC_SEGMENTS[5].youtubeId,
+        trackIndex: 6,
+        trackId: CINEMATIC_SEGMENTS[6].youtubeId,
         playlistCurrentTime: 0,
       },
     })
@@ -1145,7 +1157,7 @@ describe('wolves segment-to-playlist track identity', () => {
     // trackIndex still drives the later-track branch (a Track 0 timeline would
     // have been assembled instead if identity had leaked into the branching).
     expect((wrapper.vm as any).mixedPhotosToUse).toBe((wrapper.vm as any).mixedPhotos)
-    expect(wrapper.props('trackIndex')).toBe(5)
+    expect(wrapper.props('trackIndex')).toBe(6)
   })
 
   it('leaves the ten catalogue albums on index-addressed playlist metadata', async () => {

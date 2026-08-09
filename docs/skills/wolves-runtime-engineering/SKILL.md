@@ -68,6 +68,15 @@ an unidentified player request.
   IFrame API emits.
 - Buffer bookkeeping (a prewarm park's pause and seek) is published to the store
   as show transport state.
+- The playlist is indexed by `segmentIndex`/`trackIndex` instead of resolved by
+  `id`/`youtubeVideoId`.
+- A hand-maintained array that parallels `CINEMATIC_SEGMENTS` (durations, BPM,
+  chat keys) is not asserted against it by id.
+- An authored sequence has a gap (`TRANSITION_FIVE` with no `TRANSITION_FOUR`,
+  chapter labels stopping short of the part count) and it is read as style
+  rather than as evidence of a deletion.
+- A change removes authored content — a segment, lore, prose — without the
+  owner's explicit word, or its justification does not match its diff.
 
 ## Verification
 
@@ -87,8 +96,9 @@ one links back to this skill.
   store ownership and clock flow.
 - [`../../reference/wolves-transport-and-clocks.md`](../../reference/wolves-transport-and-clocks.md) —
   dual-buffer parking and promotion, crossfade lead and curve, elapsed-time
-  derivation, bounded awaits, intro audio handoff, and why a segment index is
-  not a playlist track index.
+  derivation, bounded awaits, intro audio handoff, why a playlist track is
+  resolved by identity rather than by index, and the deleted-segment incident
+  that proves it.
 - [`../../reference/wolves-intro-and-overlay.md`](../../reference/wolves-intro-and-overlay.md) —
   intro sequence lists and everything that counts them, derived silent-card
   windows, presenter pacing, and the overlay's one-text-treatment rule.

@@ -6,7 +6,7 @@ import CinematicTransition, {
   TRANSITION_MIN_HOLD_MS,
   transitionHoldMs,
 } from '@/components/wolves/cinematic/CinematicTransition.vue'
-import { PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
+import { CINEMATIC_SEGMENTS, PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
 
 // These tests drive the store actions the player actually calls
@@ -123,22 +123,33 @@ describe('cinematicTransition overlay duration', () => {
   })
 
   it('derives the hold from the incoming segment, not the outgoing one', async () => {
-    const store = enterCinematicAt(4)
+    // Derive the handoff to exercise instead of pinning it to authored part
+    // numbers: pick the first adjacent pair whose authored crossfades produce
+    // different holds. Short crossfades both clamp to TRANSITION_MIN_HOLD_MS,
+    // so a pinned pair can silently stop distinguishing incoming from outgoing.
+    const probe = useCinematicStore()
+    const incoming = CINEMATIC_SEGMENTS.findIndex((_, index) => index > 0
+      && transitionHoldMs(probe.crossfadeMsAt(index))
+      !== transitionHoldMs(probe.crossfadeMsAt(index - 1)))
+    expect(incoming).toBeGreaterThan(0)
+    const outgoing = incoming - 1
+
+    const store = enterCinematicAt(outgoing)
     const wrapper = mount(CinematicTransition)
 
-    // Part V authors 1200ms; Part VI authors 2500ms. The overlay must follow the
-    // segment it is announcing so it cannot drift from the player's ramp.
-    expect(store.crossfadeMsAt(4)).not.toBe(store.crossfadeMsAt(5))
+    // The overlay must follow the segment it is announcing so it cannot drift
+    // from the player's ramp.
+    const outgoingHold = transitionHoldMs(store.crossfadeMsAt(outgoing))
+    const incomingHold = transitionHoldMs(store.crossfadeMsAt(incoming))
+    expect(incomingHold).toBeGreaterThan(outgoingHold)
 
-    store.beginCrossfade(5)
+    store.beginCrossfade(incoming)
     await wrapper.vm.$nextTick()
 
-    await vi.advanceTimersByTimeAsync(transitionHoldMs(store.crossfadeMsAt(4)))
+    await vi.advanceTimersByTimeAsync(outgoingHold)
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(true)
 
-    await vi.advanceTimersByTimeAsync(
-      transitionHoldMs(store.crossfadeMsAt(5)) - transitionHoldMs(store.crossfadeMsAt(4))
-    )
+    await vi.advanceTimersByTimeAsync(incomingHold - outgoingHold)
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
   })
 

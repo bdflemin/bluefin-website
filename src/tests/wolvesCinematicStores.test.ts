@@ -27,11 +27,10 @@ describe('cinematic store', () => {
   })
 
   it('carries one authored duration per curated segment, in segment order', () => {
-    // Regression guard: CINEMATIC_SEGMENTS is a curated six-item subset of the
-    // seven-track playlist (track 4, "End of You", is omitted), so the authored
-    // duration array cannot be built by slicing the playlist. A mismatch in
-    // length or order silently shifts every duration from index 4 onward and
-    // freezes the transport clock at the end of the affected segments.
+    // Regression guard: the authored duration array is built in
+    // CINEMATIC_SEGMENTS order, one entry per segment of this seven-part show.
+    // A mismatch in length or order silently shifts durations and freezes the
+    // transport clock at the end of the affected segments.
     expect(WOLVES_EXPERIENCE.segments).toHaveLength(CINEMATIC_SEGMENTS.length)
     expect(WOLVES_EXPERIENCE.segments.map(segment => segment.id))
       .toEqual(CINEMATIC_SEGMENTS.map(segment => segment.id))
@@ -41,9 +40,9 @@ describe('cinematic store', () => {
     for (const duration of AUTHORED_DURATIONS) {
       expect(duration).toBeGreaterThan(0)
     }
-    // "End of You" (193 s) is not a cinematic segment; its runtime appearing in
-    // the authored durations is the signature of the playlist off-by-one.
-    expect(AUTHORED_DURATIONS).not.toContain(193)
+    // Every segment carries a measured duration and none is a placeholder that
+    // would clamp the transport clock short of the real runtime.
+    expect(new Set(AUTHORED_DURATIONS).size).toBe(AUTHORED_DURATIONS.length)
   })
 
   it('reaches the end of every segment without the authored clock clamping early', () => {

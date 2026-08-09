@@ -3,28 +3,41 @@
 **Agents edit content. Agents never edit design.**
 
 Defect-derived invariants for `WolvesComicReader.vue`: locked slide windows,
-preload budgeting, beat grids for tracks 1-6, buffer continuity at segment
+preload budgeting, beat grids for segments 1-6, buffer continuity at segment
 boundaries, and the non-Wolves experiences the same component serves.
+
+Numbering in this file is the comic reader's `trackIndex`, which is a **segment**
+index: 0 is “7 Days to the Wolves”, 1 is “Ghosts In The Mist”, through 6, “Last
+Ride of the Day”. `wolves-runtime.md` uses show numbering, where Track 0 is the
+Destiny intro and every song is one higher. The show is seven parts and the
+segment list matches `public/wolves-playlist.json` 1:1; see
+[`wolves-transport-and-clocks.md`](wolves-transport-and-clocks.md).
 
 Procedure and approval gate: [`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md).
 Show-wide production facts: [`wolves-runtime.md`](wolves-runtime.md).
 
-## Only Track 0 has a measured beat grid, and that is a considered position
+## Only segment 0 has a measured beat grid, and that is a considered position
 
-Tracks 1-6 cut slides on a uniform `floor(elapsed / hold)` grid derived from the
-authored `bpm`/`phraseBeats` in `public/wolves-playlist.json`, not on measured
-beats. That is weaker than Track 0 and it is tempting to "just run librosa on the
-other five". This was attempted and **deliberately not shipped**. Measure before
-you retry it, and expect these results (librosa 0.11, 22050 Hz, hop 512, on the
-exact video audio):
+Segments 1-6 cut slides on a uniform `floor(elapsed / hold)` grid derived from
+the authored `bpm`/`phraseBeats` in `public/wolves-playlist.json`, not on
+measured beats. That is weaker than segment 0 and it is tempting to "just run
+librosa on the other six". This was attempted and **deliberately not shipped**.
+Measure before you retry it, and expect these results (librosa 0.11, 22050 Hz,
+hop 512, on the exact video audio):
 
 | segment | authored | librosa global | verdict |
 |---|---|---|---|
 | ghosts-in-the-mist | 100 | 99.34 | agrees |
 | tonight-we-must-be-warriors | 168 | 83.33 | **octave error** — exactly 168/2 |
 | not-your-monster | 86 | 86.08 | agrees |
+| end-of-you | 95 | not measured | see below |
 | soulbound | 124 | 99.34 | **suspect** |
 | last-ride-of-the-day | 174 | 161.73 | suspect |
+
+`end-of-you` has no librosa row because the segment had been deleted from
+`CINEMATIC_SEGMENTS` when that pass ran; it has since been restored, and its
+authored `bpm` 95 / `phraseBeats` 16 come from the playlist manifest. Measure it
+with the rest if the pass is ever repeated. Do not infer a value for it.
 
 Two traps, both visible in that table:
 
@@ -43,7 +56,7 @@ music — that is where "global tempo 152 BPM with a measured slowdown to ~136 B
 in roughly 172-270s" in `wolves-track-zero-beats.ts` comes from. Nothing in an
 automated run produces that annotation.
 
-So: a measured grid for tracks 1-6 is a real improvement and is still open, but it
+So: a measured grid for segments 1-6 is a real improvement and is still open, but it
 needs a human listening pass to resolve the octave and confirm each tempo. Do not
 ship generated beat times straight into the show. Phase is not the shortcut either
 — first-beat offsets measure 0.07-0.49 s, all under one beat, so re-phasing the
@@ -131,7 +144,7 @@ gate and `beginCrossfade()` — the two guarantees the file exists to provide.
 
 The segment-boundary reset used to blank both buffers, which put every boundary
 through that branch: the outgoing image vanished and a multi-megabyte remote
-photo popped in as it downloaded. The transition overlay hid it at four of five
+photo popped in as it downloaded. The transition overlay hid it at five of six
 boundaries, but not at Part I → Part II, where `CinematicTransition.vue`
 deliberately skips the overlay.
 
@@ -162,9 +175,10 @@ The runtime already publishes the incoming segment one crossfade window early
 (`store.pendingSegmentIndex`, also set immediately on a manual skip). Pass it in
 as `pendingTrackIndex` and prefetch that track's **authored** opening at `'high'`
 priority, so the decode gate resolves from the HTTP cache instead of the network.
-Only Track 2's opening is authored and therefore knowable ahead of the boundary
-(`ghostsInTheMistOpeningSlide`); the other boundaries are covered by the
-transition overlay, so they can afford the fetch.
+Only the “Ghosts In The Mist” opening (segment index 1, PART II) is authored and
+therefore knowable ahead of the boundary
+(`ghostsInTheMistOpeningSlide`, whose `trackIndex` is 1); the other boundaries
+are covered by the transition overlay, so they can afford the fetch.
 
 The general rule: **a decode gate is only as good as what has been fetched before
 it.** Any time you make a swap wait for readiness, check what warms the thing it

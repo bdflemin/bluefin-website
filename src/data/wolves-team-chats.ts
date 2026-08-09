@@ -26,6 +26,7 @@ export const WOLVES_TEAM_CHATS: Readonly<Record<string, WolvesTeamChatSequence>>
   'ghosts-in-the-mist': { messages: [], finalMessageEndsAtSeconds: 0 },
   'tonight-we-must-be-warriors': { messages: [], finalMessageEndsAtSeconds: 0 },
   'not-your-monster': { messages: [], finalMessageEndsAtSeconds: 0 },
+  'end-of-you': { messages: [], finalMessageEndsAtSeconds: 0 },
   'soulbound': { messages: [], finalMessageEndsAtSeconds: 0 },
   'last-ride-of-the-day': { messages: [], finalMessageEndsAtSeconds: 0 },
 }

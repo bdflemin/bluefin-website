@@ -7,10 +7,16 @@ import {
 } from '@/config/wolves-cinematic'
 
 describe('wolves cinematic config', () => {
-  it('defines the six musical parts with 7 Days first', () => {
-    expect(CINEMATIC_SEGMENTS).toHaveLength(6)
+  it('defines the seven musical parts with 7 Days first', () => {
+    expect(CINEMATIC_SEGMENTS).toHaveLength(7)
     expect(CINEMATIC_SEGMENTS[0].title).toBe('7 Days to the Wolves')
     expect(CINEMATIC_SEGMENTS[0].chapter).toBe('PART I')
+  })
+
+  it('numbers the chapters contiguously from PART I through the final part', () => {
+    const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+    expect(CINEMATIC_SEGMENTS.map(segment => segment.chapter))
+      .toEqual(CINEMATIC_SEGMENTS.map((_, index) => `PART ${roman[index]}`))
   })
 
   it('mounts the seven-days immersive experience only on the 7 Days segment', () => {
@@ -48,7 +54,7 @@ describe('wolves cinematic config', () => {
     expect(PRE_END_THRESHOLD_S).toBeLessThan(1)
   })
 
-  it('assigns the exact authored deployment chat to the first four transitions and keeps the fifth on default terminal fallback', () => {
+  it('assigns the exact authored deployment chat to the first five transitions and keeps the final segment on default terminal fallback', () => {
     expect(CINEMATIC_SEGMENTS[1].transitionLore).toEqual([
       { kind: 'speaker', speaker: 'krook', text: 'Ok let\'s do this one by the books, intel in your feeds. Remember, prioritize all Maintainer-Guardian workflows, they\'re depending on us.' },
       { kind: 'speaker', speaker: 'sabot-6', text: 'Practioner-Guardian efficiency is — what? Seven percent? That\'s —' },
@@ -74,6 +80,17 @@ describe('wolves cinematic config', () => {
     ])
 
     expect(CINEMATIC_SEGMENTS[4].transitionLore).toEqual([
+      { kind: 'speaker', speaker: 'Karena', text: 'Insertion approved, good hunting' },
+      { kind: 'speaker', speaker: 'Krook', text: 'Inbound in twelve' },
+      { kind: 'speaker', speaker: 'jeefy', text: 'See ya down there.' },
+      { kind: 'cue', text: '* knock the pod door *' },
+      { kind: 'sfx', text: '[Use one dramatic metal bulkhead knock here.]', effect: 'bulkhead-knock' },
+      { kind: 'speaker', speaker: 'sabot-6' },
+      { kind: 'sfx', text: '* knock * * knock *', effect: 'bulkhead-response' },
+      { kind: 'cue', text: '[Use two dramatic metal bulkhead knocks here.]' },
+    ])
+
+    expect(CINEMATIC_SEGMENTS[5].transitionLore).toEqual([
       { kind: 'speaker', speaker: 'angie', text: 'AAIF-7 on the net, someone need guidance?' },
       { kind: 'speaker', speaker: 'stacyp', text: 'SSF-7 here, howdy folks, deploying SIVA Nanites. For you New Lights that\'s our OpenSSF standard deployment kit for Guardians. Security - Inventory - Verification - Attestation) Nanites, but people say Asskicking for the A.' },
       { kind: 'speaker', speaker: 'krook', text: 'Oh yeah and I called for reinforcements' },
@@ -84,6 +101,6 @@ describe('wolves cinematic config', () => {
       { kind: 'sfx', text: '*** explosion sound', effect: 'explosion' },
     ])
 
-    expect(CINEMATIC_SEGMENTS[5].transitionLore).toBeUndefined()
+    expect(CINEMATIC_SEGMENTS[6].transitionLore).toBeUndefined()
   })
 })

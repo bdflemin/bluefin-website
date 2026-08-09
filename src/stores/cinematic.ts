@@ -45,34 +45,29 @@ let INTRO_SEGMENTS: readonly IntroVideoSpec[] = buildIntroVideoSequence()
  * Measured runtime, in seconds, of each cinematic segment's source video — in
  * `CINEMATIC_SEGMENTS` order, one entry per segment.
  *
- * ⚠️ TRAP — READ THIS BEFORE EDITING. `CINEMATIC_SEGMENTS` is a CURATED
- * SIX-ITEM SUBSET of the seven authored tracks in `public/wolves-playlist.json`.
- * Playlist track 4, "End of You" (193 s), is deliberately NOT in the cinematic.
- * A segment index is therefore NOT a playlist track index from index 4 on:
+ * This is a SEVEN-part show, and today the cinematic segments align 1:1 with the
+ * seven authored tracks in `public/wolves-playlist.json`: segment index N is
+ * playlist track N, for N = 0..6.
  *
- *   segment 0..3 = playlist tracks 0..3
- *   segment 4    = playlist track 5  ("Soulbound",           san94Q93IcY, 234 s)
- *   segment 5    = playlist track 6  ("Last Ride of the Day", rYkYLIYvI18, 271 s)
- *
- * Copying the first six playlist durations into this array silently shifts
- * everything from index 4 onward. That mistake has already produced three
- * separate defects. The tell is a `193` appearing in this array: it is End of
- * You's runtime and belongs to no segment. Because `authoredSequenceElapsed()`
- * CLAMPS `segmentElapsed` to these values, a too-short entry freezes the
- * transport's TOTAL readout for the remainder of that segment — a stalled clock
- * in front of a live audience with no way to recover.
- *
- * These are MEASURED values, not authored guesses. Re-measure by reading the
- * ids out of `CINEMATIC_SEGMENTS` in order (never out of the playlist) and
- * running:
+ * These are MEASURED values, not authored guesses. Re-measure by reading the ids
+ * out of `CINEMATIC_SEGMENTS` in order and running:
  *
  *   yt-dlp --skip-download --print "%(duration)s" \
- *     LASru9j0oIc amKIngGUvCk 9skBT5TUqzo Z--vLaXdlgk san94Q93IcY rYkYLIYvI18
+ *     LASru9j0oIc amKIngGUvCk 9skBT5TUqzo Z--vLaXdlgk 5OFLFVC11Cg san94Q93IcY rYkYLIYvI18
+ *
+ * The 1:1 alignment is a property of the current curation, not a guarantee: a
+ * future curation could again drop or reorder a track here. That is why
+ * consumers resolve a playlist track by segment id rather than by index, and why
+ * this array is always built from `CINEMATIC_SEGMENTS` order rather than by
+ * slicing the playlist. Because `authoredSequenceElapsed()` CLAMPS
+ * `segmentElapsed` to these values, a wrong entry freezes the transport's TOTAL
+ * readout for the remainder of that segment — a stalled clock in front of a live
+ * audience with no way to recover.
  *
  * `wolvesCinematicStores.test.ts` asserts this array stays aligned with
  * `CINEMATIC_SEGMENTS` by length and by segment id order.
  */
-const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 234, 271] as const
+const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
 
 /**
  * The authored Wolves cinematic expressed as a generic experience manifest —
