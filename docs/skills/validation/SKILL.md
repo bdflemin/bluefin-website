@@ -88,6 +88,13 @@ exact CI invocation when touching test infrastructure:
 npm run test:run -- --coverage
 ```
 
+**What CI actually enforces.** The `test` job runs, in order: `check:docs`,
+`lint`, `typecheck`, `test:run -- --coverage`, and `build`. The `lint`,
+`typecheck`, and `build` steps were added 2026-08-09 — before that CI ran only
+`check:docs` and the suite, so a type error or a broken production build could
+merge with a green tick. Run the full local list above before pushing; a green
+`test:gate` alone no longer predicts a green CI.
+
 Re-record only when you have deliberately changed the failure set, and say so in
 the commit message:
 
