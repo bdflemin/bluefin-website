@@ -124,10 +124,18 @@ against (learned 2026-08-09, issues #673–#676):
   `ERROR: Coverage for statements (X%) does not meet ...`, then set the real
   value.
 - **Ratchet below measured, never at aspirational targets.** Global thresholds
-  sit ~1pt under the current run; the components glob gets a wider margin
-  because one added component moves an aggregate more than the global figure.
-  Thresholds above measured fail CI on day one; thresholds far below allow
-  silent regression.
+  sit ~3pt under the *lowest* measured figure, and the components glob gets a
+  wider margin because one added component moves an aggregate more than the
+  global figure. Thresholds above measured fail CI on day one; thresholds far
+  below allow silent regression.
+- **v8 coverage is Node-version sensitive — floor thresholds against the
+  lowest supported version, not against CI.** The same commit measures
+  77.8/67.3/79.5/77.6 on Node 24 (what CI pins) but 73.6/65.1/77.6/73.2 on
+  Node 22 — a ~4pt spread with an identical test set. Thresholds derived from
+  a CI run alone therefore pass CI while failing every contributor on an older
+  Node, which reads as "the suite is broken on main" (hit 2026-08-09, right
+  after #712 set them ~1pt under the Node 24 figures). Measure on your local
+  Node *and* read the CI log before choosing numbers.
 
 Run coverage the way CI does — `CI=true npm run test:run -- --coverage`.
 `src/tests/wolvesBackCatalogue.test.ts` carries a live-network audit gated on
