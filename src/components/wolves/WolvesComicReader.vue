@@ -1089,7 +1089,18 @@ function photoObjectPosition(photo: any) {
   return isWolvesExperience.value && photo?.id === ghostsInTheMistOpeningSlide.photoId ? 'center top' : 'center'
 }
 
+/**
+ * Caption text. The frozen Wolves show keeps its historical raw titles: the
+ * derivation withholds a caption for titles that encode nothing, and 25 photos
+ * in the Wolves later-track rotation carry camera-roll names (`A7V06139`,
+ * `CRJ07242`). Suppressing those would take the `CNCF STREAM //` credit off the
+ * screen with them, which is a change to the authored show, not to the
+ * catalogue.
+ */
 function photoCaptionText(photo: any) {
+  if (isWolvesExperience.value) {
+    return photo?.title || 'Untitled slide'
+  }
   return formatGalleryCaption(photo?.title)
 }
 

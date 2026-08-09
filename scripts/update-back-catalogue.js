@@ -280,6 +280,12 @@ export async function main() {
 /**
  * Weekly refresh that needs no `yt-dlp`.
  *
+ * Reports missing albums rather than failing. A new album published upstream is
+ * routine, and this step runs before the cache save and the deploy trigger — so
+ * throwing here would discard that week's stream versions, Dakota versions,
+ * growth chart and Flickr refresh over a cosmetic gap in one grid. The caller
+ * escalates afterwards, via MISSING_ALBUMS_FILE, once the pipeline has run.
+ *
  * Album prose (title, subtitle) and cover art change upstream far more often
  * than tracklists do, and refreshing them is a plain `fetch`. Track ingestion
  * scrapes YouTube, which is rate-limited and unreliable from CI, so it stays a
@@ -328,10 +334,18 @@ export async function refreshMetadata() {
 
   if (missing.length > 0) {
     for (const album of missing) {
-      console.error(`Album not in the catalogue: ${album.title} (${album.id})`)
+      console.warn(`Album not in the catalogue: ${album.title} (${album.id})`)
     }
-    throw new Error(`${missing.length} album(s) need a full ingest: run "npm run update:back-catalogue" locally with yt-dlp installed.`)
+    console.warn(`${missing.length} album(s) need a full ingest: run "npm run update:back-catalogue" locally with yt-dlp installed.`)
+    if (process.env.MISSING_ALBUMS_FILE) {
+      await writeFile(
+        process.env.MISSING_ALBUMS_FILE,
+        `${missing.map(album => `${album.title} (${album.id})`).join('\n')}\n`,
+      )
+    }
   }
+
+  return { missing }
 }
 
 if (MODULE_PATH && process.argv[1] && MODULE_PATH === resolve(process.argv[1])) {
