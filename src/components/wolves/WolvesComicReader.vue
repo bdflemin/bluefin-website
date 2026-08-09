@@ -16,6 +16,9 @@ is a no-op kept only for the download link.
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { classifyCuratedSlide, isCncfSlide, orderBackCatalogueSlides } from '@/data/back-catalogue-order'
+import { formatGalleryCaption, getGalleryCaptionLabel } from '@/data/gallery-captions'
+import { wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
@@ -177,133 +180,6 @@ const currentBeat = computed(() => {
 
 // Evaluated to keep the computed active for vitest assertions without TS6133 unused error
 void currentBeat.value
-
-const mixedPhotos = computed(() => {
-  // NOT DEAD CODE. This is the slideshow for the ten non-Wolves album
-  // experiences in public/experiences/catalogue.json. `mixedPhotosToUse` only
-  // swaps in `timelineSlides` when `wolvesExperience` is true, so this branch
-  // still runs for every other album at trackIndex 0. Deleting it because the
-  // Wolves path looks like a replacement breaks those albums silently — the
-  // Wolves route keeps working, so a /wolves/ smoke test will not catch it.
-
-  // Rebuild the per-experience shuffle when the lobby launches another album.
-  void props.experienceId
-
-  // 1. Local Showcase and Story wallpapers (isPeople = false)
-  const localShowcase = wallpapers.filter((wp) => {
-    const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
-    return !isPeople && !wp.name?.endsWith('.gif')
-  }).map(wp => ({
-    id: wp.name,
-    isLocal: true,
-    path: wp.name,
-    title: wp.title,
-    type: wp.type,
-    dayName: wp.dayName,
-    nightName: wp.nightName,
-    fit: wp.fit,
-    description: wp.description
-  }))
-
-  // 2. Local People wallpapers (isPeople = true)
-  const localPeople = wallpapers.filter((wp) => {
-    const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
-    const id = wp.name ?? wp.dayName ?? wp.nightName ?? ''
-    return isPeople && !trackZeroReservedForLaterIds.has(id)
-  }).map(wp => ({
-    id: wp.name,
-    isLocal: true,
-    path: wp.name,
-    title: wp.title,
-    type: wp.type,
-    dayName: wp.dayName,
-    nightName: wp.nightName,
-    fit: wp.fit,
-    description: wp.description
-  }))
-
-  // 3. Flickr Remote People photos
-  const remotePeople = flickrPhotos.value.map(p => ({
-    id: p.id,
-    isLocal: false,
-    path: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
-    title: p.title,
-    type: 'single' as const,
-    dayName: undefined,
-    nightName: undefined,
-    rawPhoto: p
-  }))
-
-  const trackIdx = props.trackIndex ?? 1
-
-  if (trackIdx > 0) {
-    return laterTrackPhotos.value
-  }
-
-  // Shuffle inputs to vary the lists per-song
-  const shuffledShowcase = shuffleArray([...localShowcase])
-  const shuffledPeople = shuffleArray([
-    ...localPeople,
-    ...remotePeople
-  ])
-
-  // Every track starts with 3 showcase screenshots
-  const pinnedStart = shuffledShowcase.slice(0, 3)
-  const remainingShowcase = shuffledShowcase.slice(3)
-
-  if (trackIdx === 1) {
-    // Track 1 (First Song of Slideshow): Bias showcase at start and fade smoothly into people/Flickr photos
-    const result: any[] = [...pinnedStart]
-    const remainingShowcaseCopy = [...remainingShowcase]
-    const shuffledPeopleCopy = [...shuffledPeople]
-
-    const totalRemaining = remainingShowcaseCopy.length + shuffledPeopleCopy.length
-    for (let i = 0; i < totalRemaining; i++) {
-      // Linear fade-out of showcase probability from 0.8 to 0.0 over 40 slides
-      const showcaseProb = Math.max(0, 0.8 * (1 - i / 40))
-      if (remainingShowcaseCopy.length > 0 && (shuffledPeopleCopy.length === 0 || Math.random() < showcaseProb)) {
-        result.push(remainingShowcaseCopy.shift())
-      }
-      else if (shuffledPeopleCopy.length > 0) {
-        result.push(shuffledPeopleCopy.shift())
-      }
-      else {
-        result.push(remainingShowcaseCopy.shift())
-      }
-    }
-    return result
-  }
-  else {
-    // Tracks 2-6: Ensure showcase photos never go back-to-back, and each song starts with a showcase photo
-    const result: any[] = []
-    const showcaseCopy = [...shuffledShowcase]
-    const peopleCopy = [...shuffledPeople]
-
-    // Start with 1 showcase photo
-    if (showcaseCopy.length > 0) {
-      result.push(showcaseCopy.shift())
-    }
-
-    while (showcaseCopy.length > 0 || peopleCopy.length > 0) {
-      // Add up to 2 people/Flickr photos
-      let addedPeople = 0
-      for (let k = 0; k < 2; k++) {
-        if (peopleCopy.length > 0) {
-          result.push(peopleCopy.shift())
-          addedPeople++
-        }
-      }
-
-      // Add 1 showcase photo (only if we added at least 1 people/Flickr photo to prevent back-to-back!)
-      if (showcaseCopy.length > 0) {
-        if (addedPeople > 0 || result.length === 0) {
-          result.push(showcaseCopy.shift())
-        }
-      }
-    }
-    return result
-  }
-})
 
 interface TimelineSlide {
   id: string
@@ -750,8 +626,53 @@ const trackZeroCarryForwardPhotos = computed(() => {
       nightName: wallpaper.nightName,
       fit: wallpaper.fit,
       description: wallpaper.description,
+      kind: classifyCuratedSlide(wallpaper.name ?? '', wallpaper.title),
     }))
     .filter(photo => !scheduledIds.has(photo.id))
+})
+
+/**
+ * The rest of the curated catalogue, for back-catalogue albums only: product
+ * showcase, commissioned mascot art, and the comic hero shots.
+ *
+ * None of these could previously reach an album. `trackZeroCarryForwardPhotos`
+ * filters to `/people/`, so showcase and mascot art were excluded, and the hero
+ * shots were only ever wired into the intro overlay.
+ *
+ * Hero shots keep the authored order from `wolves-comic-hero-shots.ts`, where
+ * no character or species repeats back-to-back — a property a shuffle cannot
+ * reconstruct, because it has no idea which dinosaur is which. They resolve
+ * from `public/characters/` rather than `img/wallpapers/`, so they are marked
+ * remote and carry a fully-resolved path.
+ */
+const backCatalogueCuratedPhotos = computed(() => {
+  const showcaseAndArt = wallpapers
+    .filter(wallpaper => !wallpaper.name?.includes('/people/') && !wallpaper.name?.endsWith('.gif'))
+    .map(wallpaper => ({
+      id: wallpaper.name || wallpaper.dayName || wallpaper.nightName || '',
+      isLocal: true,
+      path: wallpaper.name,
+      title: wallpaper.title,
+      type: wallpaper.type,
+      dayName: wallpaper.dayName,
+      nightName: wallpaper.nightName,
+      fit: wallpaper.fit,
+      description: wallpaper.description,
+      kind: classifyCuratedSlide(wallpaper.name || wallpaper.dayName || '', wallpaper.title),
+    }))
+
+  const heroShots = wolvesComicHeroShots.map(shot => ({
+    id: shot.id,
+    isLocal: false,
+    path: `${baseUrl}characters/${shot.src.replace(/^characters\//, '')}`,
+    title: shot.label,
+    type: 'single' as const,
+    dayName: undefined,
+    nightName: undefined,
+    kind: 'hero' as const,
+  }))
+
+  return [...showcaseAndArt, ...heroShots]
 })
 
 const activeTimelineSlide = computed(() => {
@@ -837,6 +758,48 @@ const activeTimelineSlideIndex = computed(() => {
     return 0
   }
   return timelineSlides.value.indexOf(slide)
+})
+
+const mixedPhotos = computed(() => {
+  // NOT DEAD CODE. This is the slideshow for the ten non-Wolves album
+  // experiences in public/experiences/catalogue.json. `mixedPhotosToUse` only
+  // swaps in `timelineSlides` when `wolvesExperience` is true, so this branch
+  // still runs for every other album at trackIndex 0. Deleting it because the
+  // Wolves path looks like a replacement breaks those albums silently — the
+  // Wolves route keeps working, so a /wolves/ smoke test will not catch it.
+
+  // Rebuild the per-experience shuffle when the lobby launches another album.
+  void props.experienceId
+
+  const remotePeople = flickrPhotos.value.map(p => ({
+    id: p.id,
+    isLocal: false,
+    path: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
+    title: p.title,
+    type: 'single' as const,
+    dayName: undefined,
+    nightName: undefined,
+    kind: 'cncf' as const,
+    rawPhoto: p
+  }))
+
+  const trackIdx = props.trackIndex ?? 1
+
+  if (trackIdx > 0) {
+    return laterTrackPhotos.value
+  }
+
+  // The album's opening segment. Previously this pinned three showcase
+  // screenshots to the front and interleaved the rest on a fixed 1:2 ratio,
+  // which is a coded preference for product art over community photography.
+  // The catalogue now draws one unweighted pool — CNCF leads because it
+  // outnumbers everything else, not because anything here favours it — and
+  // relies on `orderBackCatalogueSlides` for event diversity and spacing.
+  return orderGalleryPool([
+    ...trackZeroCarryForwardPhotos.value,
+    ...backCatalogueCuratedPhotos.value,
+    ...remotePeople,
+  ])
 })
 
 const activeFlickrIndex = computed(() => {
@@ -1126,13 +1089,27 @@ function photoObjectPosition(photo: any) {
   return isWolvesExperience.value && photo?.id === ghostsInTheMistOpeningSlide.photoId ? 'center top' : 'center'
 }
 
-function shuffleArray<T>(array: T[]): T[] {
-  const copy = [...array]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]]
+function photoCaptionText(photo: any) {
+  return formatGalleryCaption(photo?.title)
+}
+
+function photoCaptionLabel(photo: any) {
+  return getGalleryCaptionLabel(photo ?? {})
+}
+
+/**
+ * The frozen Wolves show keeps its historical plain shuffle. Back-catalogue
+ * albums get event-diverse CNCF ordering with the curated slides merged in at
+ * uniformly random positions and spaced apart. See `back-catalogue-order.ts`.
+ */
+function orderGalleryPool(pool: any[]): any[] {
+  if (isWolvesExperience.value) {
+    return shuffleWolvesGalleryPhotos(pool)
   }
-  return copy
+  return orderBackCatalogueSlides(
+    pool.filter(photo => isCncfSlide(photo)),
+    pool.filter(photo => !isCncfSlide(photo)),
+  )
 }
 
 function snapshotLaterTrackPhotos() {
@@ -1150,15 +1127,21 @@ function snapshotLaterTrackPhotos() {
         type: 'single' as const,
         dayName: undefined,
         nightName: undefined,
+        kind: 'cncf' as const,
         rawPhoto: photo
       }
     })
   // Authored Wolves tracks use only the contributor-summit feed after the
-  // one Jorge hero opening in Track 2. Generic catalogue albums retain the
-  // carry-forward gallery behavior.
+  // one Jorge hero opening in Track 2. Generic catalogue albums mix the CNCF
+  // stream with the whole curated catalogue: portraits and lore, product
+  // showcase, mascot art, and the comic hero shots.
   const galleryCandidates = isWolvesExperience.value
     ? remotePhotos
-    : [...trackZeroCarryForwardPhotos.value, ...remotePhotos]
+    : [
+        ...trackZeroCarryForwardPhotos.value,
+        ...backCatalogueCuratedPhotos.value,
+        ...remotePhotos,
+      ]
   if (galleryCandidates.length === 0) {
     shuffledLaterTrackPhotos.value = []
     shownLaterTrackPhotoIds.clear()
@@ -1173,13 +1156,13 @@ function snapshotLaterTrackPhotos() {
     ? galleryCandidates.filter(photo => photo.id !== ghostsInTheMistOpeningSlide.photoId)
     : galleryCandidates
   if (shuffledLaterTrackPhotos.value.length === 0) {
-    shuffledLaterTrackPhotos.value = shuffleWolvesGalleryPhotos(shufflePool)
+    shuffledLaterTrackPhotos.value = orderGalleryPool(shufflePool)
   }
   else {
     const knownIds = new Set(shuffledLaterTrackPhotos.value.map(photo => photo.id))
     const newPhotos = shufflePool.filter(photo => !knownIds.has(photo.id))
     if (newPhotos.length > 0) {
-      shuffledLaterTrackPhotos.value.push(...shuffleWolvesGalleryPhotos(newPhotos))
+      shuffledLaterTrackPhotos.value.push(...orderGalleryPool(newPhotos))
     }
   }
 
@@ -1430,11 +1413,11 @@ onBeforeUnmount(() => {
                 </p>
               </template>
             </div>
-            <div v-else-if="activePhoto" class="flickr-caption font-mono">
+            <div v-else-if="activePhoto && photoCaptionText(activePhoto)" class="flickr-caption font-mono">
               <span class="caption-label text-cyan">
-                {{ activePhoto.isLocal ? 'BLUEFIN SHOWCASE //' : 'CNCF STREAM //' }}
+                {{ photoCaptionLabel(activePhoto) }}
               </span>
-              {{ activePhoto.title || 'Untitled slide' }}
+              {{ photoCaptionText(activePhoto) }}
             </div>
           </div>
 
