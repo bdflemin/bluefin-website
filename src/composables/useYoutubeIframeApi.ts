@@ -23,6 +23,8 @@ export interface YoutubePlayer {
   mute?: () => void
   /** Restores the player's audio output after `mute`. */
   unMute?: () => void
+  /** Whether the mute latch is set. Volume alone does not answer this. */
+  isMuted?: () => boolean
   /** Loads and immediately plays a new video in this same player instance. */
   loadVideoById?: (video: string | { videoId: string, startSeconds?: number, endSeconds?: number }) => void
   /**
@@ -30,6 +32,13 @@ export interface YoutubePlayer {
    * next video on an inactive side of a ping-pong player pair so switching is instant.
    */
   cueVideoById?: (video: string | { videoId: string, startSeconds?: number, endSeconds?: number }) => void
+  /**
+   * Ground truth about the media this player is actually holding. `cueVideoById` and
+   * `loadVideoById` are requests; this is the only way to observe whether one landed.
+   * Undocumented but long-stable on the IFrame API, so every call site treats it as
+   * optional and tolerates it throwing before the player has media.
+   */
+  getVideoData?: () => { video_id?: string, title?: string } | undefined
 }
 
 export interface YoutubePlayerState {
@@ -138,6 +147,23 @@ export function loadYoutubeIframeApi(): Promise<void> {
   })
 
   return apiPromise
+}
+
+/**
+ * Discard a cached API load that never resolved, so a retry can actually request the
+ * script again. The promise is cached for the lifetime of the page on purpose, but a
+ * stalled load caches a promise that will never settle: every later caller — including
+ * the cinematic stage rebuilding itself after a startup timeout — would await the same
+ * dead promise forever. Dropping the promise is not enough; the stalled `<script>` is
+ * removed too, or `loadYoutubeIframeApi()` re-attaches to the same corpse. A load that
+ * already succeeded is left alone.
+ */
+export function invalidateYoutubeIframeApiLoad(): void {
+  apiPromise = null
+  if (typeof document === 'undefined' || (window as YoutubeIframeWindow).YT?.Player) {
+    return
+  }
+  document.querySelector(`script[src="${IFRAME_API_SRC}"]`)?.remove()
 }
 
 export function getYoutubePlayerConstructor(): YoutubePlayerConstructor | undefined {

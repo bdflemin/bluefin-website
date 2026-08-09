@@ -31,9 +31,16 @@ Content or data changes:
 
 ```bash
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 ```
+
+`npm run test:gate` is the test signal, not `npm run test:run`: the suite
+carries a recorded baseline of known failures in `tests/known-failures.txt` and
+the gate fails only on new ones. The standalone browser harnesses under
+`tests/*.mjs` (for example `tests/wolves-movie-flow.mjs` and
+`tests/wolves-transition-chat.mjs`) need a running dev server and are not part
+of the gate.
 
 Code or runtime changes require explicit design or engineering approval and the
 full relevant validation workflow.
@@ -42,6 +49,18 @@ full relevant validation workflow.
 
 Use a Conventional Commit. Stage explicit paths only. Do not use `git add .` or
 `git add -A`. Do not modify, restore, or commit unrelated dirty files.
+
+AI-assisted commits carry both attribution trailers required by the factory
+contract (`projectbluefin/common` `docs/skills/human-gates.md`):
+
+```
+Assisted-by: <Model> via GitHub Copilot
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```
+
+Name the model and tool actually driving the session; this repo's history uses
+`via GitHub Copilot CLI` (see `AGENTS.md` under "Commit attribution").
+`Co-authored-by` alone does not satisfy the factory contract.
 
 The production remote is `upstream` (`projectbluefin/website`). Check remotes
 before pushing; remove an accidental fork remote rather than pushing production

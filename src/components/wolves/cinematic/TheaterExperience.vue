@@ -234,9 +234,14 @@ onBeforeUnmount(() => {
     <div class="wc-trackzero-grid" :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }">
       <div class="wc-trackzero-viewer">
         <!-- One persistent reader across every part preserves the single
-             Fisher-Yates gallery shuffle (no photo reuse between songs). -->
+             Fisher-Yates gallery shuffle (no photo reuse between songs).
+             `track-id` is required as well as `track-index`: the segment list is
+             a curated subset of the playlist, so the index alone reads another
+             song's tempo from Part V on. -->
         <WolvesComicReader
           :track-index="store.segmentIndex"
+          :track-id="store.segment.youtubeId"
+          :pending-track-index="store.pendingSegmentIndex ?? undefined"
           :playlist-current-time="time"
           :experience-id="store.experienceId"
           :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"

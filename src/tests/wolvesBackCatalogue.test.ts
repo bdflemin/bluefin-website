@@ -68,7 +68,7 @@ describe('back catalogue experiences', () => {
     const store = useCinematicStore()
     store.loadExperience(ALBUM)
     store.loadExperience(WOLVES_EXPERIENCE)
-    expect(store.segmentCount).toBe(6)
+    expect(store.segmentCount).toBe(WOLVES_EXPERIENCE.segments.length)
     expect(resolveOverallRatioTarget(0).phase).toBe('intro')
   })
 

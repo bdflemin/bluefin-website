@@ -23,8 +23,8 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
-  trackZeroEvenBeatCuts,
   trackZeroBeatCutsWithPickup,
+  trackZeroEvenBeatCuts,
 } from '@/data/wolves-track-zero-beats'
 import { TRACK_ZERO_PRESENTATION_SECTIONS } from '@/data/wolves-track-zero-manifest'
 import {
@@ -35,23 +35,37 @@ import {
   lauraTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
-  rezaContributorSlideId,
-  rezaContributorTrackZeroWindow,
-  topheeSlideId,
-  topheeTrackZeroWindow,
   pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
+  rezaContributorSlideId,
+  rezaContributorTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
+  topheeSlideId,
+  topheeTrackZeroWindow,
 } from '@/data/wolves-track-zero-slides'
-
-const trackZeroReservedForLaterIds = new Set([
-  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
-])
 import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
   trackIndex?: number
+  /**
+   * Identity of the playlist track backing this segment (a `youtubeVideoId`, or
+   * a manifest track `id`). `trackIndex` is a *segment* index. Today the seven
+   * segments line up 1:1 with the seven authored playlist tracks — but that
+   * alignment has been silently broken before: an automated change deleted the
+   * `end-of-you` segment and every later segment then read the previous song's
+   * BPM, phrase length, and crossfade. Resolving by identity keeps that metadata
+   * attached to the song actually playing, whatever the list does next.
+   * Ordering and branching still use `trackIndex`.
+   */
+  trackId?: string
+  /**
+   * Segment the runtime is currently crossfading *into*, or undefined when no
+   * handoff is in flight. Published one crossfade window ahead of the boundary,
+   * which is the only warning the gallery gets that its whole photo list is
+   * about to be replaced. See `preloadPendingTrackOpening()`.
+   */
+  pendingTrackIndex?: number
   playlistCurrentTime?: number
   experienceId?: string
   wolvesExperience?: boolean
@@ -59,6 +73,10 @@ const props = withDefaults(defineProps<{
   experienceId: 'seven-days-to-the-wolves',
   wolvesExperience: true,
 })
+
+const trackZeroReservedForLaterIds = new Set([
+  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
+])
 
 const isWolvesExperience = computed(() => props.wolvesExperience)
 
@@ -111,13 +129,39 @@ const slideAIndex = ref(-1)
 const slideBIndex = ref(-1)
 const crossfadeActive = ref(false)
 let crossfadeTimer: ReturnType<typeof setTimeout> | null = null
+/**
+ * Bumped on every segment boundary so the slide watcher re-runs against the
+ * incoming track's list even when the display index happens to be unchanged.
+ * Without it a boundary could leave the outgoing song's slide on stage.
+ */
+const trackChangeSerial = ref(0)
 
 const activePhoto = computed(() => {
   return activeBuffer.value === 'A' ? photoA.value : photoB.value
 })
 
 const currentTrack = computed<SoundtrackTrack | null>(() => {
-  if (!manifest.value || props.trackIndex === undefined) {
+  if (!manifest.value) {
+    return null
+  }
+  // Resolve the Wolves show's metadata by identity, never by position: the
+  // cinematic omits playlist track 4 ("End of You"), so segment 4 is Soulbound
+  // and segment 5 is Last Ride of the Day. Indexing read the previous song's
+  // tempo for both, pacing the 174 BPM finale on a 124 BPM grid.
+  //
+  // The lookup is confined to the Wolves experience because the other albums in
+  // public/experiences/catalogue.json share youtube ids with unrelated entries
+  // further down this same playlist; for them a segment index is the intended
+  // addressing scheme and must keep working unchanged.
+  if (isWolvesExperience.value && props.trackId) {
+    const identified = manifest.value.tracks.find(
+      track => track.youtubeVideoId === props.trackId || track.id === props.trackId,
+    )
+    if (identified) {
+      return identified
+    }
+  }
+  if (props.trackIndex === undefined) {
     return null
   }
   return manifest.value.tracks[props.trackIndex] || null
@@ -852,41 +896,115 @@ function beginCrossfade(duration: number) {
 
 // Keep the current buffer visible until the incoming image has loaded. Switching
 // buffers before decode briefly exposed the wallpaper behind the gallery.
-function preloadPhoto(photo: any): Promise<void> {
-  const urls = photo?.type === 'daynight'
-    ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
-    : [getFlickrPhotoUrl(photo)]
-  return Promise.all(urls.map(url => new Promise<void>((resolve) => {
+//
+// Repeat preloads of the same URL are left to the browser's HTTP cache rather
+// than a retained decoded-image map: holding decoded bitmaps for a gallery this
+// size costs real memory across a thirty-minute unattended run, and measuring it
+// against the movie-flow harness showed no improvement that could be told apart
+// from run-to-run noise.
+function preloadUrl(url: string, priority: 'high' | 'low'): Promise<void> {
+  return new Promise<void>((resolve) => {
     const image = new Image()
+    image.fetchPriority = priority
     image.onload = () => {
       void image.decode().catch(() => undefined).then(() => resolve())
     }
     image.onerror = () => resolve()
     image.src = url
-  }))).then(() => undefined)
+  })
+}
+
+function preloadPhoto(photo: any, priority: 'high' | 'low' = 'low'): Promise<void> {
+  const urls = photo?.type === 'daynight'
+    ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
+    : [getFlickrPhotoUrl(photo)]
+  return Promise.all(urls.map(url => preloadUrl(url, priority))).then(() => undefined)
 }
 
 let slideChangeToken = 0
 
-watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
+/**
+ * URL of a track's authored opening slide, or null when its first slide is only
+ * decided by the shuffle at snapshot time.
+ *
+ * `preloadUpcoming()` only ever looks *within* the current track's list, so
+ * nothing warms the first slide of the next track. That slide is the one the
+ * decode gate then blocks on at the boundary, and for Track 2 it is a remote
+ * multi-megabyte hero photo — so Part II opened on Part I's last image until
+ * the fetch landed. Track 2's opening is authored and therefore knowable ahead
+ * of the boundary; the rest are covered by the transition overlay.
+ */
+function authoredOpeningUrlForTrack(trackIndex: number | undefined): string | null {
+  if (!isWolvesExperience.value || trackIndex !== ghostsInTheMistOpeningSlide.trackIndex) {
+    return null
+  }
+  const photo = flickrPhotos.value.find(candidate => candidate.id === ghostsInTheMistOpeningSlide.photoId)
+  if (!photo) {
+    return null
+  }
+  return `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_${ghostsInTheMistOpeningSlide.imageSizeSuffix}.jpg`
+}
+
+// The runtime publishes the incoming segment one crossfade window before the
+// boundary (and immediately on a manual skip), which is the head start this
+// needs. Fetching here leaves the bytes in the browser's HTTP cache, so the
+// decode gate at the boundary resolves in decode time instead of fetch time.
+watch(() => props.pendingTrackIndex, (pendingTrackIndex) => {
+  if (pendingTrackIndex === undefined || pendingTrackIndex === props.trackIndex) {
+    return
+  }
+  const url = authoredOpeningUrlForTrack(pendingTrackIndex)
+  if (url) {
+    void preloadUrl(url, 'high')
+  }
+}, { immediate: true })
+
+/** Seconds of upcoming slides to keep fetched and decoded ahead of the cue. */
+const PRELOAD_WINDOW_SECONDS = 8
+/** Ceiling so a run of very short slides cannot fetch the whole gallery at once. */
+const MAX_LOOKAHEAD_SLIDES = 12
+
+watch([activeDisplayIndex, mixedPhotosToUse, trackChangeSerial], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
   if (!activePhotoObj) {
+    return
+  }
+  const displayedIndex = activeBuffer.value === 'A' ? slideAIndex.value : slideBIndex.value
+  if (activePhoto.value === activePhotoObj && displayedIndex === newVal) {
+    // Already on stage (a boundary bump that resolved to the same slide object).
     return
   }
   if ((props.trackIndex ?? 0) > 0) {
     shownLaterTrackPhotoIds.add(activePhotoObj.id)
   }
-  // Preload upcoming images to prevent decode/network stutter during exact
-  // beat crossfades; sub-second barrage slides need a deeper lookahead.
-  const activeDuration = (activePhotoObj as { duration?: number }).duration
-  const lookahead = activeDuration !== undefined && activeDuration < 1 ? 3 : 1
-  for (let ahead = 1; ahead <= lookahead; ahead++) {
-    const nextIndex = (newVal + ahead) % mixedPhotosToUse.value.length
-    const nextPhoto = mixedPhotosToUse.value[nextIndex]
-    if (!nextPhoto) {
-      continue
+  // Preload far enough ahead to cover a fetch and decode before the cue lands.
+  // The depth is measured in seconds of upcoming slides, not in slides: the old
+  // rule preloaded three slides only when the current one was under a second and
+  // one otherwise, so the finale barrage at roughly 1.76s per slide got a single
+  // slide of warning for a multi-megabyte photo. On a cold cache that is not
+  // enough time, and the swap below waits for decode, so the previous slide
+  // holds past its beat and the whole sequence walks off the music.
+  //
+  // This runs only after the slide that is going on screen *now* has been
+  // fetched. A browser opens about six connections per host, so starting a dozen
+  // lookahead fetches first puts the visible slide at the back of the queue and
+  // makes the very stall the lookahead exists to prevent.
+  function preloadUpcoming() {
+    let coveredSeconds = 0
+    for (let ahead = 1; ahead <= MAX_LOOKAHEAD_SLIDES; ahead++) {
+      const nextIndex = (newVal + ahead) % mixedPhotosToUse.value.length
+      const nextPhoto = mixedPhotosToUse.value[nextIndex]
+      if (!nextPhoto) {
+        continue
+      }
+      void preloadPhoto(nextPhoto)
+      // Assume a short slide when a duration is not authored, so the window
+      // over-covers rather than under-covers.
+      coveredSeconds += (nextPhoto as { duration?: number }).duration ?? 2
+      if (coveredSeconds >= PRELOAD_WINDOW_SECONDS) {
+        break
+      }
     }
-    void preloadPhoto(nextPhoto)
   }
 
   const changeToken = ++slideChangeToken
@@ -897,13 +1015,15 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
     opacityA.value = 1
     opacityB.value = 0
     crossfadeActive.value = false
+    preloadUpcoming()
     return
   }
 
-  void preloadPhoto(activePhotoObj).then(() => {
+  void preloadPhoto(activePhotoObj, 'high').then(() => {
     if (changeToken !== slideChangeToken) {
       return
     }
+    preloadUpcoming()
 
     // Swap only after the incoming image is decoded, so the wallpaper cannot
     // flash through an empty buffer during the crossfade.
@@ -947,18 +1067,31 @@ watch(() => props.trackIndex, (trackIndex, previousTrackIndex) => {
   }
   if (previousTrackIndex !== undefined) {
     slideChangeToken++
-    photoA.value = null
-    photoB.value = null
-    opacityA.value = 1
-    opacityB.value = 0
-    slideAIndex.value = -1
-    slideBIndex.value = -1
-    activeBuffer.value = 'A'
+    // Do NOT blank both buffers here. Emptying them made the slide watcher take
+    // its cold-start branch, which assigns the incoming photo synchronously and
+    // skips both the decode gate and the crossfade — a hard cut to an empty
+    // frame that then popped in a multi-megabyte remote photo. Four of the five
+    // boundaries hid it behind the transition overlay; Part I -> Part II, which
+    // deliberately has no overlay, showed it to the room.
+    //
+    // The reset still happens, just on the buffer that is off stage: the
+    // outgoing track's photo is cleared so it can never be reused, while the
+    // visible frame holds until the incoming image has decoded and the normal
+    // preload-then-crossfade path swaps it out.
+    if (activeBuffer.value === 'A') {
+      photoB.value = null
+      slideBIndex.value = -1
+    }
+    else {
+      photoA.value = null
+      slideAIndex.value = -1
+    }
     if (crossfadeTimer) {
       clearTimeout(crossfadeTimer)
       crossfadeTimer = null
     }
     crossfadeActive.value = false
+    trackChangeSerial.value++
   }
 }, { immediate: true })
 

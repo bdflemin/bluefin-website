@@ -1,6 +1,6 @@
 ---
 name: agent-workflow
-description: Use at session start, before commits, before pushes, and when a task crosses local, GitHub, Cloudflare, or production boundaries.
+description: Use at session start, before commits, before pushes, at factory gates, and when a task crosses local, GitHub, Cloudflare, or production boundaries.
 ---
 
 # Agent workflow
@@ -42,6 +42,7 @@ runtime, or hands work to another agent.
    manifests, imports, timelines, and generated-data sources before committing.
    Stage explicit paths only. Include regression coverage in the same commit.
    Use the repository's Conventional Commits format (`type(scope): description`).
+   Carry both attribution trailers (see `## Commit attribution`).
    Do not leave a tested fix uncommitted.
 
 6. **Push the production remote.**
@@ -56,6 +57,75 @@ runtime, or hands work to another agent.
    route with eager manifest loading, open it in Chromium and assert there are
    no page errors or failed module requests; a successful Vite build is not
    sufficient.
+
+## Commit attribution
+
+Every AI-authored commit carries both trailers, naming the model and tool
+actually driving the session:
+
+```
+Assisted-by: <Model> via GitHub Copilot CLI
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```
+
+The factory canonical form is `via GitHub Copilot`; this repository's history
+uses `via GitHub Copilot CLI`. Either satisfies the gate — both trailers are
+mandatory, and `Co-authored-by` alone does not satisfy the factory contract.
+Check the exact commits being pushed, not just the latest one:
+
+```bash
+git log --format='%h %(trailers)' upstream/main..HEAD
+```
+
+## Human gates
+
+The factory names four gates. At any of them, stop and request explicit human
+approval; never guess past a gate. When in doubt, the gate applies.
+
+- **Design** — layout, components, styles, animation, navigation, or behavior
+  visible to users. The `/wolves/` presentation is frozen design. Load
+  [`../design-gate/SKILL.md`](../design-gate/SKILL.md).
+- **Security** — credentials, secrets, tokens, signing, attestation, or
+  third-party package and supply-chain sources. Maintainer review is required
+  regardless of how minor the change appears.
+- **Breakage** — removing or renaming a public input, changing a default that
+  consumers depend on, or anything that could break another factory
+  repository. Identify every affected consumer and list it before opening the
+  PR.
+- **Merge** — always human. Agents never self-merge, never bypass branch
+  protection, and never force-push a protected branch.
+
+Production claims are gated locally in the same way: a change is not live
+until the exact pushed commit's deployment workflow and affected route are
+verified. See [`../validation/SKILL.md`](../validation/SKILL.md).
+
+## Signalling a gate
+
+1. Stop before opening a PR. Present the branch, the diff, and the decision
+   needed.
+2. Describe the gate: the proposed change, the property or surface affected,
+   your approach, and any alternatives.
+3. Label the related issue `hold` (hold for human review) and
+   `needs-human/agent-ready` (ready for a human to pick up). `queue/hold` is
+   maintainer-set; agents do not apply it. Common's canonical signal label
+   `agent/blocked` is not provisioned on this repository — the local labels
+   above are the stand-in until it is. Provisioning `agent/blocked` is a
+   follow-up for the repo owner. Verify workflow labels with `gh label list`
+   before applying them.
+4. Wait for explicit human approval before opening the PR.
+
+## PR evidence
+
+Before removing draft status and requesting review, all five must hold:
+
+- [ ] CI is passing, with the run linked in the PR description.
+- [ ] Where no automated test covers the change, the PR describes how it was
+      manually verified.
+- [ ] The skill file update is committed in this same PR, not a follow-up.
+- [ ] The PR title follows Conventional Commits (`feat:`, `fix:`, `docs:`, ...).
+- [ ] Every AI-authored commit carries both attribution trailers.
+
+A PR without evidence is not ready.
 
 ## Temporary artifacts
 
@@ -90,6 +160,11 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - A deleted file remains referenced by `import.meta.glob()`, a manifest, or a
   narrative timeline.
 - A local build is treated as proof that route initialization succeeds.
+- A commit authored by an agent is missing the `Assisted-by` or
+  `Co-authored-by` trailer.
+- A PR opened speculatively past a factory gate, or review requested without
+  the five evidence items.
+- A fork or feature-branch checkout of `common` cited as the shared contract.
 
 ## Verification
 
@@ -101,6 +176,9 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - [ ] Desktop and mobile rendered bounds were checked for design changes.
 - [ ] Cloudflare changes used `wrangler` and documented permissions.
 - [ ] The exact commit's CI/deploy status is reported.
+- [ ] Every AI-authored commit carries both attribution trailers.
+- [ ] Gate stops were signalled (`hold` + `needs-human/agent-ready`) and
+      explicitly approved before any PR was opened.
 
 ## Sources
 
@@ -113,3 +191,14 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - Preserve dirty user edits and classify every path before staging.
 - For timing changes, document anchors, estimator rules, tests, generated output, and browser observations.
 - Never call focused green tests a full-suite pass.
+- A requirement that is not written down locally gets skipped: commits shipped
+  without `Assisted-by` trailers until the rule was documented here. Check
+  trailers on the exact range being pushed, not just the latest commit.
+- A sibling checkout of `projectbluefin/common` on a fork or feature branch is
+  not the pinned sidecar. Verify the remote and branch of any local `common`
+  checkout before citing it; when in doubt, fetch canonical `main` via the
+  GitHub API.
+- Label vocabulary is repo-local: common's canonical `agent/blocked` is not
+  provisioned on this repository. Verify workflow labels with `gh label list`
+  before documenting or applying them; a doc naming a nonexistent label is
+  stale guidance.

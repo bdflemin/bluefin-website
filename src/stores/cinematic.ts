@@ -1,4 +1,5 @@
 import type { ExperienceManifest, ExperienceSegment } from '@/config/experience-manifest'
+import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { defineStore } from 'pinia'
 import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS } from '@/config/wolves-cinematic'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
@@ -31,8 +32,42 @@ export interface OverallTimelineTarget {
   overallDuration: number
 }
 
-const INTRO_SEGMENTS = buildIntroVideoSequence()
-const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234] as const
+/**
+ * The intro list currently on stage. `/wolves/` can run two different authored
+ * intros — the standard `buildIntroVideoSequence()` and the Director's Cut —
+ * and they differ in length, segments, and durations. `WolvesApp.vue` publishes
+ * the active one through `setIntroSequence()` before entering the intro phase,
+ * so index resolution and every duration readout follow the sequence the
+ * audience is actually watching.
+ */
+let INTRO_SEGMENTS: readonly IntroVideoSpec[] = buildIntroVideoSequence()
+/**
+ * Measured runtime, in seconds, of each cinematic segment's source video — in
+ * `CINEMATIC_SEGMENTS` order, one entry per segment.
+ *
+ * This is a SEVEN-part show, and today the cinematic segments align 1:1 with the
+ * seven authored tracks in `public/wolves-playlist.json`: segment index N is
+ * playlist track N, for N = 0..6.
+ *
+ * These are MEASURED values, not authored guesses. Re-measure by reading the ids
+ * out of `CINEMATIC_SEGMENTS` in order and running:
+ *
+ *   yt-dlp --skip-download --print "%(duration)s" \
+ *     LASru9j0oIc amKIngGUvCk 9skBT5TUqzo Z--vLaXdlgk 5OFLFVC11Cg san94Q93IcY rYkYLIYvI18
+ *
+ * The 1:1 alignment is a property of the current curation, not a guarantee: a
+ * future curation could again drop or reorder a track here. That is why
+ * consumers resolve a playlist track by segment id rather than by index, and why
+ * this array is always built from `CINEMATIC_SEGMENTS` order rather than by
+ * slicing the playlist. Because `authoredSequenceElapsed()` CLAMPS
+ * `segmentElapsed` to these values, a wrong entry freezes the transport's TOTAL
+ * readout for the remainder of that segment — a stalled clock in front of a live
+ * audience with no way to recover.
+ *
+ * `wolvesCinematicStores.test.ts` asserts this array stays aligned with
+ * `CINEMATIC_SEGMENTS` by length and by segment id order.
+ */
+const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
 
 /**
  * The authored Wolves cinematic expressed as a generic experience manifest —
@@ -97,14 +132,18 @@ function cinematicNativeStart(index: number): number {
   return activeSegments[index]?.startSeconds ?? 0
 }
 
-const INTRO_TIMELINE: TimelineEntry[] = INTRO_SEGMENTS.map((segment, index) => ({
-  phase: 'intro',
-  segmentIndex: index,
-  segmentId: segment.id,
-  segmentDuration: introSegmentDuration(index),
-  seekDuration: introSeekDuration(index),
-  nativeStart: introNativeStart(index),
-}))
+function buildIntroTimeline(): TimelineEntry[] {
+  return INTRO_SEGMENTS.map((segment, index) => ({
+    phase: 'intro',
+    segmentIndex: index,
+    segmentId: segment.id,
+    segmentDuration: introSegmentDuration(index),
+    seekDuration: introSeekDuration(index),
+    nativeStart: introNativeStart(index),
+  }))
+}
+
+let INTRO_TIMELINE: TimelineEntry[] = buildIntroTimeline()
 
 function buildCinematicTimeline(): TimelineEntry[] {
   return activeSegments.map((segment, index) => ({
@@ -124,7 +163,17 @@ function sumTimelineDurations(entries: readonly TimelineEntry[]): number {
   return entries.reduce((sum, entry) => sum + entry.segmentDuration, 0)
 }
 
-export const INTRO_SEQUENCE_DURATION = sumTimelineDurations(INTRO_TIMELINE)
+/**
+ * Total authored runtime of the intro sequence currently on stage.
+ *
+ * Deliberately a live `let`, not a `const` snapshot: the Director's Cut intro is
+ * a different list with a different runtime, and consumers import this binding
+ * directly (`WolvesApp.vue`'s DEV `__wolvesDurations.intro()` hook and
+ * `startCinematicStage()`). ES module bindings are live, so reassigning it here
+ * updates every importer without changing a single call site.
+ */
+// eslint-disable-next-line import/no-mutable-exports -- live binding is the point: see above.
+export let INTRO_SEQUENCE_DURATION = sumTimelineDurations(INTRO_TIMELINE)
 
 function introSequenceDuration(): number {
   return introIncluded ? INTRO_SEQUENCE_DURATION : 0
@@ -143,6 +192,14 @@ function rebuildTimelines() {
   OVERALL_TIMELINE = introIncluded
     ? [...INTRO_TIMELINE, ...CINEMATIC_TIMELINE]
     : [...CINEMATIC_TIMELINE]
+}
+
+/** Swap the intro list the timeline math is derived from. */
+function applyIntroSequence(segments: readonly IntroVideoSpec[]) {
+  INTRO_SEGMENTS = segments
+  INTRO_TIMELINE = buildIntroTimeline()
+  INTRO_SEQUENCE_DURATION = sumTimelineDurations(INTRO_TIMELINE)
+  rebuildTimelines()
 }
 
 function authoredSequenceElapsed(
@@ -220,6 +277,13 @@ export const useCinematicStore = defineStore('cinematic', {
     /** Segments of the active experience (defaults to the Wolves cinematic). */
     segments: WOLVES_EXPERIENCE.segments as ExperienceSegment[],
     segmentIndex: 0,
+    /**
+     * Bumped whenever the module-level timelines are rebuilt (experience swap or
+     * intro-sequence swap). Duration getters read it so they invalidate: without
+     * a reactive dependency a Pinia getter computed from module state would cache
+     * its first value forever.
+     */
+    timelineRevision: 0,
     /** Seconds elapsed inside the current segment (relative to any authored trim). */
     segmentElapsed: 0,
     /** Current time on the source video's native timeline (drives caption sync). */
@@ -230,6 +294,12 @@ export const useCinematicStore = defineStore('cinematic', {
     completedElapsed: 0,
     playing: false,
     crossfading: false,
+    /**
+     * Where a crossfade in flight is headed. The overlay has to decide on the
+     * incoming segment, and `segmentIndex` still names the outgoing one until
+     * the fade completes. Null whenever no crossfade is in flight.
+     */
+    pendingSegmentIndex: null as number | null,
     /** Whether the authored segment-transition overlay should appear for this experience. */
     showTransitionOverlay: true,
     /**
@@ -256,6 +326,7 @@ export const useCinematicStore = defineStore('cinematic', {
     segmentProgress: state =>
       state.segmentDuration > 0 ? Math.min(1, state.segmentElapsed / state.segmentDuration) : 0,
     sequenceDuration(state): number {
+      void state.timelineRevision
       if (state.phase === 'intro') {
         return INTRO_SEQUENCE_DURATION
       }
@@ -265,6 +336,7 @@ export const useCinematicStore = defineStore('cinematic', {
       return 0
     },
     sequenceElapsed(state): number {
+      void state.timelineRevision
       if (state.phase === 'intro') {
         return authoredSequenceElapsed(INTRO_TIMELINE, state.segmentIndex, state.segmentElapsed)
       }
@@ -273,8 +345,12 @@ export const useCinematicStore = defineStore('cinematic', {
       }
       return 0
     },
-    overallDuration: () => overallSequenceDuration(),
+    overallDuration: (state): number => {
+      void state.timelineRevision
+      return overallSequenceDuration()
+    },
     overallElapsed(): number {
+      void this.timelineRevision
       if (this.phase === 'intro') {
         return this.sequenceElapsed
       }
@@ -284,6 +360,7 @@ export const useCinematicStore = defineStore('cinematic', {
       return 0
     },
     overallProgress(): number {
+      void this.timelineRevision
       const duration = overallSequenceDuration()
       return duration > 0 ? Math.min(1, this.overallElapsed / duration) : 0
     },
@@ -326,6 +403,7 @@ export const useCinematicStore = defineStore('cinematic', {
       activeSegments = manifest.segments
       introIncluded = manifest.includeIntro === true
       rebuildTimelines()
+      this.timelineRevision += 1
       this.segments = manifest.segments
       this.experienceId = manifest.id
       this.phase = 'lobby'
@@ -336,8 +414,19 @@ export const useCinematicStore = defineStore('cinematic', {
       this.completedElapsed = 0
       this.playing = false
       this.crossfading = false
+      this.pendingSegmentIndex = null
       this.showTransitionOverlay = manifest.id === WOLVES_EXPERIENCE.id
       this.displayOverride = null
+    },
+    /**
+     * Publish the intro list about to be performed. `/wolves/` has two authored
+     * intros of different lengths and durations; the store's index clamping and
+     * every duration readout must follow the active one, so call this *before*
+     * `enterIntro()` and before any `syncIntroStatus()`.
+     */
+    setIntroSequence(segments: readonly IntroVideoSpec[]) {
+      applyIntroSequence(segments)
+      this.timelineRevision += 1
     },
     /** Lobby exit: the authored Destiny intro overlay plays first. */
     enterIntro() {
@@ -373,16 +462,23 @@ export const useCinematicStore = defineStore('cinematic', {
     setPlaying(playing: boolean) {
       this.playing = playing
     },
-    beginCrossfade() {
+    beginCrossfade(targetIndex: number) {
       this.crossfading = true
+      this.pendingSegmentIndex = Math.min(Math.max(targetIndex, 0), this.segments.length - 1)
     },
     advanceSegment() {
-      this.completedElapsed += this.segmentDuration || this.segmentElapsed
+      // Credit the AUTHORED duration of the segment being left, not whatever the
+      // player last reported. `sequenceElapsed` sums authored timeline values, so
+      // sourcing `completedElapsed` from the player would let the two elapsed
+      // readouts drift apart mid-show.
+      const authoredDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
+      this.completedElapsed += authoredDuration || this.segmentElapsed
       this.segmentIndex = Math.min(this.segmentIndex + 1, this.segments.length - 1)
       this.segmentElapsed = 0
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     /** Manual skip to an arbitrary segment (prev/next); only watched time accrues. */
     jumpToSegment(index: number) {
@@ -392,6 +488,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     finish() {
       this.segmentIndex = this.segments.length - 1
@@ -400,6 +497,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = cinematicNativeStart(this.segmentIndex) + this.segmentDuration
       this.playing = false
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     setDisplayOverride(override: typeof this.displayOverride) {
       this.displayOverride = override

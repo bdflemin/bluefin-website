@@ -4,12 +4,13 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 import WolvesApp from '@/WolvesApp.vue'
 
 const CinematicLobbyStub = defineComponent({
   name: 'CinematicLobby',
-  emits: ['enter', 'launchExperience'],
+  emits: ['enter', 'enter-directors-cut', 'launchExperience'],
   template: '<button class="cinematic-lobby-stub" @click="$emit(\'enter\')" />',
 })
 
@@ -120,6 +121,8 @@ describe('wolvesApp intro status handling', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    // The intro timeline is module-level state; restore the standard sequence.
+    useCinematicStore().setIntroSequence(buildIntroVideoSequence())
   })
 
   function stubs() {
@@ -441,6 +444,22 @@ describe('wolvesApp intro status handling', () => {
       },
     })
 
+    // Derive expectations from the authored intro data (src/data/wolves-intro-sequence.ts)
+    // instead of hardcoding: the Destiny segment plays natively from `startOffset` to
+    // `maxDuration`, and any authored segments before it (the opening title card) shift
+    // its position in the intro sequence timeline.
+    const introSegments = buildIntroVideoSequence()
+    const destinyIndex = introSegments.findIndex(segment => segment.id === 'wolves-intro')
+    const destiny = introSegments[destinyIndex]
+    if (!destiny || destiny.kind !== 'video') {
+      throw new Error('Expected the Destiny segment to exist')
+    }
+    const nativeStart = destiny.startOffset ?? 0
+    const priorElapsed = introSegments.slice(0, destinyIndex).reduce((sum, segment) => sum
+      + (segment.kind === 'text'
+        ? segment.duration
+        : Math.max(0, (segment.maxDuration ?? (segment.startOffset ?? 0)) - (segment.startOffset ?? 0))), 0)
+
     const intro = wrapper.getComponent(WolvesIntroOverlayStub)
     intro.vm.$emit('status', {
       currentTime: 62,
@@ -451,17 +470,56 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(store.segmentIndex).toBe(0)
-    expect(store.segmentElapsed).toBeCloseTo(60)
-    expect(store.segmentDuration).toBeCloseTo(119.5)
+    expect(store.segmentIndex).toBe(destinyIndex)
+    expect(store.segmentElapsed).toBeCloseTo(62 - nativeStart)
+    expect(store.segmentDuration).toBeCloseTo(121.5 - nativeStart)
     expect(store.nativeTime).toBe(62)
-    expect(store.sequenceElapsed).toBeCloseTo(60)
-    expect(store.overallElapsed).toBeCloseTo(60)
+    expect(store.sequenceElapsed).toBeCloseTo(priorElapsed + (62 - nativeStart))
+    expect(store.overallElapsed).toBeCloseTo(priorElapsed + (62 - nativeStart))
 
     intro.vm.$emit('complete')
     await wrapper.vm.$nextTick()
 
     expect(store.phase).toBe('cinematic')
-    expect(store.overallElapsed).toBeCloseTo(119.5)
+    expect(store.overallElapsed).toBeCloseTo(INTRO_SEQUENCE_DURATION)
+  })
+
+  it('switches the store timeline to the Director\'s Cut sequence when that entry is used', async () => {
+    const store = useCinematicStore()
+    const directorsCut = buildDirectorsCutVideoSequence()
+    // Live binding, read while the standard sequence is still active.
+    const standardDuration = INTRO_SEQUENCE_DURATION
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    expect(store.phase).toBe('intro')
+    expect(store.sequenceDuration).toBeGreaterThan(standardDuration)
+    expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(store.sequenceDuration)
+
+    // Resolution follows the Director's Cut list: its last index exists and is
+    // no longer clamped into the shorter standard sequence.
+    const lastIndex = directorsCut.length - 1
+    const intro = wrapper.getComponent(WolvesIntroOverlayStub)
+    intro.vm.$emit('status', {
+      currentTime: 0,
+      duration: 0,
+      paused: false,
+      segmentId: directorsCut[lastIndex].id,
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(store.segmentIndex).toBe(lastIndex)
+    expect(store.overallDuration).toBeCloseTo(
+      store.sequenceDuration + WOLVES_EXPERIENCE.segments.reduce(
+        (sum, segment) => sum + (segment.durationSeconds ?? 0),
+        0,
+      ),
+    )
   })
 })

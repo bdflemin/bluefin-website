@@ -21,9 +21,12 @@ jobs:
       - run: npm ci
       - name: Check agent documentation system
         run: npm run check:docs
+      - run: npm run lint
+      - run: npm run typecheck
       - name: Install playlist test dependency
         run: sudo apt-get update && sudo apt-get install --yes yt-dlp
       - run: npm run test:run -- --coverage
+      - run: npm run build
 
   wolves-movie-flow:
     runs-on: ubuntu-latest

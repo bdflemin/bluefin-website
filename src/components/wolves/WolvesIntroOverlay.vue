@@ -64,6 +64,11 @@ const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(
 
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const canGoToPrevious = computed(() => sequenceState.value.index > 0)
+/**
+ * The last segment of the intro is the one that hands off to Track 0, so it is the only one
+ * whose video audio has to be taken down before the concert's first bar arrives.
+ */
+const isFinalSegment = computed(() => sequenceState.value.index === props.videos.length - 1)
 
 const activeCue = computed<IntroOverlayTextCue | undefined>(() => activeOverlayCue(currentSegment.value?.overlays, currentTime.value))
 const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>(() => {
@@ -398,6 +403,54 @@ let player: YoutubePlayer | null = null
 let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
+/** performance.now() corresponding to elapsed 0 on a silent text card. */
+let textClockOriginMs = 0
+
+/**
+ * How long the trailer's audio takes to reach silence at the intro→Track 0 junction.
+ *
+ * The authored `audioFadeOutSeconds` musical fade only exists on `text` segments and only
+ * touches `audioPlayer`, but the final intro segment is the Destiny trailer — a `video`
+ * segment on the main `player`. Without this the trailer's audio was severed mid-air by
+ * `destroyPlayer()` and Track 0 slammed in at full volume over the silence.
+ */
+const VIDEO_HANDOFF_FADE_SECONDS = 2
+/** Ramp resolution for the completion-time fallback fade; the poll loop drives the lead fade. */
+const VIDEO_HANDOFF_FADE_STEP_MS = 50
+/** Last volume actually pushed to the video player, so a ramp can resume from where it sits. */
+let videoVolume = 100
+let handoffFadeTimer: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Equal-power taper: two linear ramps sum to a dip in perceived loudness at the midpoint, and
+ * Track 0 is coming up underneath this one.
+ */
+function equalPowerFadeOut(progress: number): number {
+  return Math.cos(Math.min(Math.max(progress, 0), 1) * (Math.PI / 2))
+}
+
+function stopHandoffFade() {
+  if (handoffFadeTimer) {
+    clearInterval(handoffFadeTimer)
+    handoffFadeTimer = null
+  }
+}
+
+function applyVideoVolume(level: number) {
+  const clamped = Math.round(Math.min(Math.max(level, 0), 100))
+  if (clamped === videoVolume) {
+    return
+  }
+  videoVolume = clamped
+  player?.setVolume?.(clamped)
+}
+
+/**
+ * Guard against a click landing a hair before the active cue's own start and "advancing" to
+ * the cue already on screen, which reads to the presenter as a dead click.
+ */
+const CUE_ADVANCE_EPSILON_SECONDS = 0.05
+
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
 /** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
@@ -413,7 +466,9 @@ function seekToSeconds(targetSeconds: number) {
   }
   else {
     // Text segments follow the background audio's clock, so the audio must move too.
+    // A silent card has no audio player, so rebase its own clock origin instead.
     audioPlayer?.seekTo?.(clamped, true)
+    textClockOriginMs = performance.now() - clamped * 1000
   }
 }
 
@@ -451,9 +506,67 @@ function stopTextTimer() {
 
 function destroyPlayer() {
   stopPolling()
+  stopHandoffFade()
   pendingPausedSourceSwitchTime = null
   player?.destroy?.()
   player = null
+  videoVolume = 100
+}
+
+/**
+ * Take the trailer's audio down across the final segment's own closing seconds, recomputed
+ * every tick so seeking back out of the window restores full volume instead of leaving the
+ * trailer stuck quiet. Same contract as the authored `audioFadeOutSeconds` text fade.
+ */
+function updateHandoffFade() {
+  if (!isFinalSegment.value || isPaused.value || activeSegmentDuration.value <= 0 || !player?.setVolume) {
+    return
+  }
+  const remaining = activeSegmentDuration.value - currentTime.value
+  if (remaining > VIDEO_HANDOFF_FADE_SECONDS) {
+    applyVideoVolume(100)
+    return
+  }
+  applyVideoVolume(equalPowerFadeOut(1 - remaining / VIDEO_HANDOFF_FADE_SECONDS) * 100)
+}
+
+/**
+ * Completion-time safety net for every path that reaches the end without running the lead
+ * fade above — an early `ENDED`, a player error, Skip, or the presenter pressing Next. It
+ * ramps from wherever the volume already sits (so a completed lead fade destroys at once)
+ * and destroys the player only when the ramp lands.
+ *
+ * This never delays `emit('complete')`: Track 0's load has to start in parallel with the
+ * ramp, because the overlay is held opaque until `stage.start()` resolves. Serialising them
+ * would lengthen the very gap this fade exists to close.
+ */
+function fadeOutAndDestroyPlayer() {
+  if (handoffFadeTimer) {
+    return
+  }
+  stopPolling()
+
+  const activePlayer = player
+  if (!activePlayer?.setVolume || videoVolume <= 0) {
+    destroyPlayer()
+    return
+  }
+
+  const rampMs = VIDEO_HANDOFF_FADE_SECONDS * 1000 * (videoVolume / 100)
+  const startVolume = videoVolume
+  const startedAtMs = performance.now()
+  handoffFadeTimer = setInterval(() => {
+    // Unmount or a fresh segment load can tear the player out from under the ramp.
+    if (player !== activePlayer) {
+      stopHandoffFade()
+      return
+    }
+    const progress = (performance.now() - startedAtMs) / rampMs
+    applyVideoVolume(equalPowerFadeOut(progress) * startVolume)
+    if (progress >= 1) {
+      destroyPlayer()
+    }
+  }, VIDEO_HANDOFF_FADE_STEP_MS)
 }
 
 function destroyAudioPlayer() {
@@ -502,21 +615,30 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
+  textClockOriginMs = performance.now()
   void loadAudioTrack(segment.audioYoutubeVideoId)
 
   textTimer = setInterval(() => {
+    const now = performance.now()
     if (isPaused.value) {
+      // Hold the clock by trailing the origin, so resuming continues where it stopped.
+      textClockOriginMs = now - currentTime.value * 1000
       return
     }
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    // Without an audio embed there is nothing to sync to, so wall-clock ticks.
     if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
       currentTime.value = audioPlayer.getCurrentTime() ?? 0
     }
     else {
-      currentTime.value += 0.2
+      // A silent card (the presenter's welcome slide) has no player to read, so it
+      // derives elapsed time from a fixed origin. Two rules this encodes the hard
+      // way: never assume the interval fired on schedule — a hardcoded `+= 0.2` on
+      // a 100ms tick ran every silent card at double speed, so the 59s opening slide
+      // played in 29.5s and nobody in the back row finished a paragraph — and never
+      // accumulate deltas, which drifts over a card this long.
+      currentTime.value = (now - textClockOriginMs) / 1000
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The
@@ -617,6 +739,7 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         stopPolling()
         pollTimer = setInterval(() => {
           currentTime.value = player?.getCurrentTime?.() ?? 0
+          updateHandoffFade()
           if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
             advance()
           }
@@ -676,7 +799,7 @@ function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
 
 watch(() => sequenceState.value.done, (done) => {
   if (done) {
-    destroyPlayer()
+    fadeOutAndDestroyPlayer()
     stopTextTimer()
     destroyAudioPlayer()
     handoffPending.value = props.holdForHandoff ?? false
@@ -692,6 +815,49 @@ function handleNext() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
+/**
+ * Presenter pacing for a silent text card: jump to the next authored cue, or into the next
+ * segment once the last cue is up.
+ *
+ * This is an operator affordance, not a narrative dependency. The card still advances itself
+ * on its own clock, so an unattended run behaves exactly as before and never waits for input.
+ * It exists because the welcome card is spoken live: the presenter finishes a line and wants
+ * the next one, rather than standing in silence until the authored window expires.
+ *
+ * Scored cards are deliberately excluded. A card with a music bed has its cues written against
+ * that track, so moving the text without moving the music desyncs the segment for the rest of
+ * its run. Only a silent card, where the presenter's own voice is the soundtrack, is safe to
+ * pace by hand.
+ */
+function advanceTextCue() {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || segment.audioYoutubeVideoId || isPaused.value) {
+    return
+  }
+
+  const nextCue = segment.overlays
+    ?.filter(cue => cue.start > currentTime.value + CUE_ADVANCE_EPSILON_SECONDS)
+    .sort((a, b) => a.start - b.start)[0]
+
+  if (!nextCue) {
+    handleNext()
+    return
+  }
+
+  seekToSeconds(nextCue.start)
+}
+
+/**
+ * Advance the welcome card when the presenter clicks it. Clicks on the transport chrome are
+ * left alone so Play/Pause/Next keep their own meaning, and video and scored segments are
+ * untouched: only a silent, presenter-spoken text card is click-advanced.
+ */
+function handleOverlayClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a, input, [role="button"]')) {
+    return
+  }
+  advanceTextCue()
+}
 function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
@@ -809,6 +975,7 @@ defineExpose({
       v-if="currentSegment && (!sequenceState.done || handoffPending)"
       class="wolves-intro-overlay"
       :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+      @click="handleOverlayClick"
     >
       <template v-if="currentSegment.kind === 'video'">
         <div ref="mountHost" class="wolves-intro-overlay-player" />

@@ -54,15 +54,17 @@ npm run test:gate
 npm run build
 ```
 
-## The suite is red; use the gate
+## The baseline gate
 
-`npm run test:run` is **not** a pass/fail signal in this repository. The vitest
-suite has carried failures for over a week (35 failing on 2026-07-29, 33 on
-2026-08-05 afternoon, 26 now). A bare run prints a large failure count whether or
-not you broke anything, so agents learned to ignore it — which is how a series of
-real regressions shipped unnoticed in a single afternoon.
+`npm run test:run` is the pass/fail signal again: as of 2026-08-09 the vitest
+suite is fully green and `tests/known-failures.txt` is empty (issue #705). The
+suite was red for weeks before that (35 failing on 2026-07-29, 23 on 2026-08-09
+morning), and agents learned to ignore the bare run — which is how real
+regressions shipped unnoticed. If the baseline grows again, the current count
+is `tests/known-failures.txt`'s line count, not any prose figure; re-derive it
+instead of trusting documentation.
 
-Use the baseline gate instead:
+Keep the gate as the guard:
 
 ```bash
 npm run test:gate
@@ -72,6 +74,27 @@ It runs the suite, compares the failing set against `tests/known-failures.txt`,
 and exits non-zero **only for failures you introduced**. It also lists baseline
 failures that now pass, so the baseline shrinks as the suite is repaired.
 
+**CI does not use the gate.** The `test` job in `.github/workflows/ci.yml` runs
+`npm run test:run -- --coverage` directly, so `tests/known-failures.txt` was
+never applied in CI: every baseline failure failed every PR, which is why a red
+`main` hid in plain sight while the local gate stayed green (found 2026-08-09,
+issue #705). Until the workflow is changed, a nonzero baseline means red CI no
+matter what the gate says — treat any `test:gate:update` re-record as a CI
+break. The same CI command also enforces the v8 coverage thresholds in
+`vite.config.ts` (50% statements/branches/functions/lines), so verify with the
+exact CI invocation when touching test infrastructure:
+
+```bash
+npm run test:run -- --coverage
+```
+
+**What CI actually enforces.** The `test` job runs, in order: `check:docs`,
+`lint`, `typecheck`, `test:run -- --coverage`, and `build`. The `lint`,
+`typecheck`, and `build` steps were added 2026-08-09 — before that CI ran only
+`check:docs` and the suite, so a type error or a broken production build could
+merge with a green tick. Run the full local list above before pushing; a green
+`test:gate` alone no longer predicts a green CI.
+
 Re-record only when you have deliberately changed the failure set, and say so in
 the commit message:
 
@@ -79,8 +102,29 @@ the commit message:
 npm run test:gate:update
 ```
 
-Never re-record to silence a failure you caused. Never delete an entry by hand.
+Never re-record to silence a failure you caused. Never delete an entry by hand
+to hide a still-failing test.
 A shrinking `tests/known-failures.txt` is good; a growing one needs a reason.
+
+### Baseline entry format and shrinking it deliberately
+
+Each baseline line is `<test file path> :: <full concatenated describe + test
+name>`, one test per line, sorted (see `scripts/test-baseline.mjs`). When you
+repair a stale test (the test was wrong, the code was right), the correct
+shrink is: fix the test, delete exactly its line from
+`tests/known-failures.txt` in the same change, and prove it with
+`npm run test:gate` — the gate must report `no new failures (N known,
+baseline N)` with the count reduced. Prefer deriving repaired expectations
+from the owning source data (e.g. import `buildIntroVideoSequence` /
+`INTRO_SEQUENCE_DURATION`) over fresh hardcoded literals, so authored-timing
+changes don't re-stale the test. Issue #705 drained the baseline to zero; keep
+it there.
+
+When triaging a baseline failure, read the git history of both the test and the
+code under test before choosing a side: an authored commit that deliberately
+changed the behavior (its message usually says so) means the *test* is stale.
+On `/wolves/` the design gate makes that the strong default — correct the test
+to match the shipped show; escalate instead of editing show behavior.
 
 ## Red Flags
 
@@ -166,3 +210,80 @@ Also confirm no service worker is registered; a cached worker produces the same
 ## Wolves timing validation
 
 For lore timing work, run typecheck, focused lore/timing/timeline tests, build, diff check, and a Chromium smoke of /wolves/. Report focused results separately from full-suite baseline failures. Assert a non-empty rendered body, zero page errors, no failed module requests, preserved locked anchors, contiguous unlocked slots, and readable representative short/long records.
+
+## A green `test:gate` proves nothing about the Wolves show
+
+`npm run test:gate` does **not** run `tests/wolves-movie-flow.mjs`. That harness is
+a separate CI job (`wolves-movie-flow` in `.github/workflows/ci.yml`) which boots a
+dev server and drives the real route. So the gate can be green, typecheck and lint
+clean, the build succeed, and every production route render with zero `pageerror`
+— while the show itself is broken.
+
+That is not hypothetical. A change that was validated exactly that way shipped two
+runtime defects: Part II opened on Part I's photo because the decode gate blocked
+on a cold remote fetch, and the transport read "Play" during the intro because the
+active buffer's prewarm park published `PAUSED` to the store. The harness caught
+both immediately and deterministically. A route-renders smoke test caught neither,
+because both defects render a perfectly valid-looking page.
+
+**For any change to the Wolves runtime — player, store, transitions, slideshow,
+intro overlay — run the harness before claiming the work is done:**
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort &
+WOLVES_BROWSER_FIXTURES=1 node tests/wolves-movie-flow.mjs
+```
+
+Read the **`Results:` line, not the tail of the output.** Assertions run in show
+order, so an early failure scrolls off the top; piping through `tail` hid a real
+failure and made a 3-failure run look like 2. Compare the pass count against the
+pre-change commit rather than against an absolute number — the count moves as
+assertions are added. `git worktree add` a detached checkout of the base commit,
+symlink `node_modules`, serve it on another port, and run the same harness against
+`WOLVES_BASE_URL` to get an honest baseline.
+
+Two failure modes to recognise before blaming your change:
+
+- **Not every failure is flake.** The transport auto-hides after 3 s without
+  pointer input, so `Visible Pause control` is the documented flaky assertion — but
+  a *deterministic* 3-of-3 failure is a real defect, not flake. Re-run before
+  concluding either way.
+- **Your own instrumentation perturbs it.** Adding `waitForTimeout` to a probe copy
+  will trip that same auto-hide assertion. Probe with a copy outside the repo, and
+  re-confirm against the unmodified harness.
+
+### The movie-flow harness is not the whole show either
+
+It drives the cinematic, so it cannot see two things that have both shipped broken.
+For any transport, buffer, or player change, also run:
+
+```bash
+node tests/wolves-buffer-parking.mjs     # no buffer running away underneath the show
+node tests/wolves-ghosts-boundary.mjs    # the on-air buffer really holds the segment named on screen
+node tests/wolves-intro-silence.mjs      # the cinematic stays silent under the intro
+```
+
+`wolves-intro-silence.mjs` exists because of a defect this skill's own checklist
+missed: the cinematic buffers are prewarmed *during* the intro, a boundary ran in
+that window, and a track played over the whole opening. Gate, typecheck, lint,
+build, movie-flow, and a route smoke test were all green. **Validate the intro
+window separately from the cinematic** — "the show is fine" is a claim about two
+different phases.
+
+The general lesson: if a change adds a way for the runtime to *start audio* or
+*put something on air*, ask what stops that path running before the show has
+started. Then check that phase, not just the one you were working in.
+
+### These harnesses need real playback, and CI Chromium has none
+
+Playwright's bundled Chromium ships without proprietary codecs, so YouTube answers
+with error 150 and no media attaches. `wolves-ghosts-boundary.mjs` and
+`wolves-intro-silence.mjs` are written to tolerate that — an *empty* buffer passes,
+only a *wrong* or *audible* one fails — so they are still worth running locally, but
+a clean run in that environment is weaker evidence than it looks. Neither is wired
+into `.github/workflows/ci.yml`; only `wolves-movie-flow` is. Do not read a local
+pass as proof that real audio is correct, and say so when reporting.
+
+Two intro harnesses, `tests/wolves-intro-segments.mjs` and
+`tests/wolves-intro-destiny-toggle.mjs`, **fail on `main`** in that environment.
+Baseline them with a worktree before treating either as a regression.

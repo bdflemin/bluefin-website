@@ -18,6 +18,19 @@ const player = useDualBufferPlayer({ hostA, hostB })
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const isWolvesExperience = computed(() => store.experienceId === WOLVES_EXPERIENCE.id)
 
+// The visual dissolve must run the same window as the audio ramp, and the ramp
+// is sized by the *incoming* segment. Binding to `segmentIndex` alone made the
+// picture fade on the outgoing segment's window, and — worse — the value flipped
+// the instant `advanceSegment()` landed, retiming a transition that was still
+// running. Reading the pending target first keeps one value in place for the
+// whole fade: while a crossfade is in flight `pendingSegmentIndex` names the
+// incoming segment, and when it clears `segmentIndex` has already become that
+// same segment.
+// Wolves itself runs both layers as `--audio-only` with `transition: none`, so
+// this only drives the back-catalogue album experiences.
+const layerFadeMs = computed(() =>
+  store.crossfadeMsAt(store.pendingSegmentIndex ?? store.segmentIndex))
+
 // The plate is the single title placard on every segment. During the seven-days
 // segment the time-varying incoming signal is the large label and the track title
 // sits in the detail line; elsewhere it shows chapter + title.
@@ -38,6 +51,7 @@ defineExpose({
   seekToRatio: player.seekToRatio,
   skip: player.skip,
   destroy: player.destroy,
+  bufferSnapshot: player.bufferSnapshot,
 })
 </script>
 
@@ -51,7 +65,7 @@ defineExpose({
         'wc-layer--active': player.activeSide.value === 'a',
         'wc-layer--audio-only': isWolvesExperience,
       }"
-      :style="{ transitionDuration: `${store.crossfadeMsAt(store.segmentIndex)}ms` }"
+      :style="{ transitionDuration: `${layerFadeMs}ms` }"
     >
       <div ref="hostA" class="wc-iframe-host" />
     </div>
@@ -61,7 +75,7 @@ defineExpose({
         'wc-layer--active': player.activeSide.value === 'b',
         'wc-layer--audio-only': isWolvesExperience,
       }"
-      :style="{ transitionDuration: `${store.crossfadeMsAt(store.segmentIndex)}ms` }"
+      :style="{ transitionDuration: `${layerFadeMs}ms` }"
     >
       <div ref="hostB" class="wc-iframe-host" />
     </div>

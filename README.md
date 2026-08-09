@@ -15,7 +15,7 @@ workflow needed for the task.
 | Path | Entry | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public experience |
+| `/wolves/` | `wolves/index.html` | Public presentation |
 | `/dakota/` | `dakota/index.html` | Unlisted |
 | `/server/` | `server/index.html` | Separate entry |
 
@@ -31,10 +31,15 @@ Available checks:
 ```bash
 npm run lint
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 npm run preview
 ```
+
+`npm run test:gate` is the test signal: it runs the suite against the recorded
+baseline in `tests/known-failures.txt` and fails only on new failures. The
+browser harnesses under `tests/*.mjs` need a running dev server and are not
+part of the gate.
 
 ## Documentation
 

@@ -124,6 +124,19 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
 - Verify the exact pushed commit's deployment workflow and affected live route
   before saying the change is live.
 
+## Commit attribution
+
+Every AI-authored commit carries both trailers:
+
+    Assisted-by: <Model> via GitHub Copilot CLI
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+Name the model and tool actually driving the session (the factory canonical
+form is `via GitHub Copilot`; this repo's history uses
+`via GitHub Copilot CLI`). Both trailers are mandatory — `Co-authored-by`
+alone does not satisfy the factory contract. Detail:
+`docs/skills/agent-workflow/SKILL.md`.
+
 ## Authored content
 
 Do not invent lore, fiction, dialogue, quotes, attributions, or release-note
@@ -161,13 +174,32 @@ Full contract: `docs/skills/skill-improvement/SKILL.md`.
 This repository is part of the Project Bluefin factory. Local authority wins:
 this file and `docs/SKILL.md` are authoritative for paths, boundaries, and
 commands. `projectbluefin/common` attaches as a pinned shared-contract sidecar
-supplying factory-wide rules; it never overrides local authority, and an
-unreachable sidecar is degraded mode rather than permission to use a stale
-sibling checkout.
+supplying factory-wide rules; it never overrides local authority. The contract
+this repo implements is `projectbluefin/common`
+`docs/skills/factory-onboarding.md`; link to it rather than copying its policy
+tree here. An unreachable sidecar is degraded mode, not permission to
+substitute a sibling checkout — a fork or feature-branch checkout of `common`
+is not the sidecar and must not be cited as the contract.
 
-Every task loop runs preflight, the smallest scoped change, validation, and a
-durable write-back. Stop at named human gates: design changes, production
-claims, credentials, and cross-repository breakage.
+Every task loop runs the factory self-repair sequence: preflight, detect,
+repair, validate, write back, escalate.
+
+Stop at the four factory gates:
+
+- **Design** — any design or behavior change, including the frozen `/wolves/`
+  presentation. See `## Design gate` and `docs/skills/design-gate/SKILL.md`.
+- **Security** — credentials, secrets, tokens, signing, or the supply chain.
+- **Breakage** — anything that could break another factory repository or a
+  downstream consumer.
+- **Merge** — agents never self-merge, never bypass branch protection, and
+  never force-push a protected branch.
+
+Production claims are gated locally: never call a change live until the exact
+pushed commit's deployment and route are verified. Signal any gate by stopping
+before the PR, describing the decision, labelling the related issue `hold`
+(hold for human review) and `needs-human/agent-ready`, and waiting for
+explicit approval. Procedure and PR evidence:
+`docs/skills/agent-workflow/SKILL.md`.
 
 Cross-repo learning goes to an issue in `projectbluefin/common` with the
 learning, affected component, and evidence. Never edit `ublue-os/*`; ask a human
@@ -176,6 +208,7 @@ to report upstream manually.
 ## References
 
 - `docs/SKILL.md`
+- `docs/skills/agent-workflow/SKILL.md`
 - `docs/skills/skill-improvement/SKILL.md`
 - `docs/reference/content-map.md`
 - `docs/reference/production-entrypoints.md`

@@ -33,6 +33,11 @@ if (import.meta.env.DEV) {
     intro: () => INTRO_SEQUENCE_DURATION,
     overall: () => store.overallDuration,
     skipIntro: () => enterCinematic(),
+    // Published from app start, unlike `__wolvesCinematic`, so a harness can watch the
+    // cinematic buffers DURING the intro. They are built and prewarmed in that window
+    // and must stay inaudible; the absence of any way to observe that is how a segment
+    // playing over the intro reached a build.
+    buffers: () => stage.value?.bufferSnapshot?.(),
   }
 }
 
@@ -51,6 +56,12 @@ async function startCinematicStage() {
       seekTo: (s: number) => stage.value?.seekTo(s),
       introDuration: () => INTRO_SEQUENCE_DURATION,
       overallDuration: () => store.overallDuration,
+      // What each YouTube buffer is really holding versus what the runtime thinks
+      // it holds. The runtime promotes a buffer at every boundary on the strength
+      // of its own bookkeeping alone, so this is the only way a harness can catch
+      // a buffer that has drifted off its intended segment.
+      buffers: () => stage.value?.bufferSnapshot?.(),
+      skip: (delta: number) => stage.value?.skip(delta),
     }
   }
 }
@@ -122,6 +133,10 @@ async function enterIntro(startAtNativeTime: number | null = null, directorsCut 
   introHandoff.value = false
   introStartAt.value = startAtNativeTime
   introTransparent.value = false
+  // The Director's Cut is a different list with different segments and
+  // durations. Publish it before entering the phase so the store's timeline,
+  // index clamping, and TOTAL readout describe the intro actually playing.
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
   introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
   await nextTick()
@@ -242,6 +257,7 @@ async function restoreIntroForNavigation(): Promise<number | null> {
     ...meta,
     canPrevious: false,
   })
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
   await nextTick()
   if (unmounted || token !== handoffToken) {
@@ -327,6 +343,7 @@ onBeforeUnmount(() => {
 
       <MediaWidget
         v-else
+        auto-hide
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
         @seek="handleSegmentSeek"

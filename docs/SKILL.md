@@ -30,7 +30,7 @@ control, add more words — are defects there. Read `AGENTS.md` under
 | Change layout, styling, a component, animation, or navigation | [`design-gate/SKILL.md`](skills/design-gate/SKILL.md) |
 | Handle lore, fiction, quotes, or attribution | [`editorial-provenance/SKILL.md`](skills/editorial-provenance/SKILL.md) |
 | Run tests, builds, staging, deployment, or claim live status | [`validation/SKILL.md`](skills/validation/SKILL.md) |
-| Route a session, set remotes, commit, or hand off production | [`agent-workflow/SKILL.md`](skills/agent-workflow/SKILL.md) |
+| Route a session, set remotes, commit, signal a factory gate, or hand off production | [`agent-workflow/SKILL.md`](skills/agent-workflow/SKILL.md) |
 | Work on Cloudflare DNS, Workers, Pages, domains, or Wrangler | [`cloudflare/SKILL.md`](skills/cloudflare/SKILL.md) |
 | Edit Wolves content or assets | [`wolves-content/SKILL.md`](skills/wolves-content/SKILL.md) |
 | Edit Wolves guardian cards, share pages, or lobby gallery data | [`guardian-character-cards/SKILL.md`](skills/guardian-character-cards/SKILL.md) |
@@ -58,21 +58,30 @@ that supplies factory-wide rules; it never overrides local authority.
   `docs/factory/agentic-model.md`
 - Onboarding contract this repo implements: `projectbluefin/common`
   `docs/skills/factory-onboarding.md`
+- Four human gates and PR evidence rules: `projectbluefin/common`
+  `docs/skills/human-gates.md`
 - Cross-repo learning: open an issue in `projectbluefin/common` with the
   learning, affected component, and evidence. Never edit `ublue-os/*`.
 
 A missing or unreachable sidecar is degraded mode, not permission to substitute
-a stale sibling checkout.
+a stale sibling checkout. A sibling checkout on a fork or a feature branch is
+not the sidecar; fetch canonical `projectbluefin/common` `main` or proceed
+without it.
 
 ## Every task loop
 
 1. **Preflight** — verify repository, remote, branch, dirty paths, and the
    skill set you loaded.
-2. **Act** — make the smallest scoped change inside the approved boundary.
-3. **Validate** — run the smallest relevant check from
+2. **Detect** — treat stale, contradictory, missing, or failed guidance as a
+   repair signal; do not silently fall back.
+3. **Repair** — make the smallest scoped change inside the approved boundary.
+4. **Validate** — run the smallest relevant check from
    [`skills/validation/SKILL.md`](skills/validation/SKILL.md).
-4. **Write back** — update the skill that owns the area in the same commit.
+5. **Write back** — update the skill that owns the area in the same commit.
    See [`skills/skill-improvement/SKILL.md`](skills/skill-improvement/SKILL.md).
+6. **Escalate** — stop at the four factory gates (Design, Security, Breakage,
+   Merge) or a production claim. See
+   [`skills/agent-workflow/SKILL.md`](skills/agent-workflow/SKILL.md).
 
 ## Supporting references
 
@@ -83,5 +92,10 @@ roles separate.
 - [`reference/production-entrypoints.md`](reference/production-entrypoints.md)
 - [`reference/locale-schema.md`](reference/locale-schema.md)
 - [`reference/wolves-runtime.md`](reference/wolves-runtime.md)
+- [`reference/wolves-transport-and-clocks.md`](reference/wolves-transport-and-clocks.md)
+- [`reference/wolves-intro-and-overlay.md`](reference/wolves-intro-and-overlay.md)
+- [`reference/wolves-lore-timing.md`](reference/wolves-lore-timing.md)
+- [`reference/wolves-slide-scheduling.md`](reference/wolves-slide-scheduling.md)
+- [`reference/wolves-test-harnesses.md`](reference/wolves-test-harnesses.md)
 - [`architecture/application-map.md`](architecture/application-map.md)
 - [`architecture/runtime-data-flow.md`](architecture/runtime-data-flow.md)
