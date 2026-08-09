@@ -14,6 +14,7 @@ import {
   loadExistingPhotos,
   normalizePhoto,
   scrapeAlbum,
+  selectFreshPhotos,
   selectSpreadPages,
   shuffleArray,
 } from '../update-flickr-photos.js'
@@ -47,6 +48,17 @@ describe('update-flickr-photos helpers', () => {
       secret: 'abc',
       title: 'Photo',
     })
+  })
+
+  it('builds a fresh, deduplicated cache without retaining stale entries', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const photos = selectFreshPhotos([
+      { id: 'current-japan', server: '1', secret: 'a', title: 'Japan contributor summit' },
+      { id: 'current-japan', server: '1', secret: 'a', title: 'Duplicate' },
+      { id: 'current-europe', server: '2', secret: 'b', title: 'Europe maintainer summit' },
+    ], 2)
+
+    expect(photos.map(photo => photo.id).sort()).toEqual(['current-europe', 'current-japan'])
   })
 
   it('retries on 429 and respects Retry-After', async () => {

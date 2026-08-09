@@ -373,6 +373,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/Bluefin Contributor Reza Jelveh.jpg',
+    title: 'Bluefin Contributor Reza Jelveh',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
     title: 'CNCF Executive Directory Jonathan Bryce',
   },
@@ -428,11 +433,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/Yikes!.webp',
-    title: 'Yikes!',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/abigailcabunoc30360.web_.webp',
     title: 'Abigailcabunoc30360',
   },
@@ -460,6 +460,141 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/chen.jpg',
     title: 'Chen',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-52466921801.jpg',
+    title: 'Cncf 52466921801',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-52467359330.jpg',
+    title: 'Cncf 52467359330',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-52467382760.jpg',
+    title: 'Cncf 52467382760',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54413939348.jpg',
+    title: 'Cncf 54413939348',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54433693969.jpg',
+    title: 'Cncf 54433693969',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926535297.jpg',
+    title: 'Cncf 54926535297',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926535347.jpg',
+    title: 'Cncf 54926535347',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54926555127.jpg',
+    title: 'Cncf 54926555127',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927401696.jpg',
+    title: 'Cncf 54927401696',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927401841.jpg',
+    title: 'Cncf 54927401841',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927404581.jpg',
+    title: 'Cncf 54927404581',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927603113.jpg',
+    title: 'Cncf 54927603113',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927603143.jpg',
+    title: 'Cncf 54927603143',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927618613.jpg',
+    title: 'Cncf 54927618613',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927651509.jpg',
+    title: 'Cncf 54927651509',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927667344.jpg',
+    title: 'Cncf 54927667344',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-54927709700.jpg',
+    title: 'Cncf 54927709700',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55163321757.jpg',
+    title: 'Cncf 55163321757',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55163325232.jpg',
+    title: 'Cncf 55163325232',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164222721.jpg',
+    title: 'Cncf 55164222721',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164225146.jpg',
+    title: 'Cncf 55164225146',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164226151.jpg',
+    title: 'Cncf 55164226151',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164466499.jpg',
+    title: 'Cncf 55164466499',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164467374.jpg',
+    title: 'Cncf 55164467374',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164467589.jpg',
+    title: 'Cncf 55164467589',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164601140.jpg',
+    title: 'Cncf 55164601140',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/cncf-55164601225.jpg',
+    title: 'Cncf 55164601225',
   },
   {
     type: 'single',
@@ -513,6 +648,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/flickr-53610201845.webp',
+    title: 'KC+CNC_EU_240319_KCS_GroupPhoto_MN_001',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/flickr-53610202870.webp',
     title: 'KC+CNC_EU_240319_KCS_MN_001',
   },
@@ -535,6 +675,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/flickr-53777005074.webp',
     title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0029',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/flickr-53777005474.webp',
+    title: '2024-06-06_OHSNAP_KuberTENes_BirthdayBash_HL_0135',
   },
   {
     type: 'single',
@@ -568,6 +713,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/flickr-54137331261.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_196',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/flickr-54137613073.webp',
     title: 'KC+CNC_NA_241111_BF_KCS_evening_240',
   },
@@ -595,6 +745,16 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/flickr-54137782045.webp',
     title: 'KC+CNC_NA_241111_BF_KCS_012',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/flickr-54137782365.webp',
+    title: 'Christoph Blecker - First Amongst Equals - Platinum Member',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/flickr-54137788650.webp',
+    title: 'KC+CNC_NA_241111_BF_KCS_177',
   },
   {
     type: 'single',
@@ -724,6 +884,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/kubecon-54926555242.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 011',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/kubecon-54926587622.webp',
     title: 'ArgoCon North America 2025 ArgoCon BF 001',
   },
@@ -764,6 +929,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/kubecon-54927669159.webp',
+    title: 'Maintainer Summit North America 2025 Maintainer Summit GroupPhoto ML-MN 008',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/kubecon-54927705495.webp',
     title: 'Maintainer Summit North America 2025 Maintainer Summit Badgepickup+Welcome ML-MN',
   },
@@ -801,6 +971,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/kubecon-55164225526.webp',
     title: 'Maintainer Summit Group Photo - LM 003',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/kubecon-55164225541.webp',
+    title: 'Maintainer Summit Group Photo - LM 007',
   },
   {
     type: 'single',
@@ -866,6 +1041,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/kubecon-55164466574.webp',
     title: 'Maintainer Summit Breaks & Lunch - LM 018',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/kubecon-55164467009.webp',
+    title: 'Maintainer Summit Group Photo - LM 005',
   },
   {
     type: 'single',
@@ -1044,6 +1224,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/m2.jpg',
+    title: 'M2',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/meiss.jpg',
     title: 'Meiss',
   },
@@ -1064,11 +1249,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/reza.jpg',
-    title: 'Reza',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/rikkiendsley28095-2.webp',
     title: 'Rikkiendsley28095 2',
   },
@@ -1076,6 +1256,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/sherman-m2.webp',
     title: 'Sherman + M2',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/sherman.webp',
+    title: 'Sherman',
   },
   {
     type: 'single',
@@ -1104,8 +1289,18 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/temp_image_20230915_011731_aeb0b8f4-e66a-455b-ab39-3122768e6825.webp',
+    title: 'Temp Image 20230915 011731 Aeb0b8f4 E66a 455b Ab39 3122768e6825',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/tle.webp',
     title: 'Tle',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/topheememe.jpg',
+    title: 'Christoph Blecker - First Amongst Equals - Platinum Member',
   },
   {
     type: 'single',

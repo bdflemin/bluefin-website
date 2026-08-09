@@ -4,8 +4,8 @@
  * The authored Destiny guardian trailer intro is NOT part of this list — it plays first through
  * WolvesIntroOverlay, driven by
  * buildIntroVideoSequence() in src/data/wolves-intro-sequence.ts. The segments
- * below are the six musical parts, derived from the authored Wolves soundtrack
- * manifest (public/wolves-playlist.json, tracks 1-6). Adding, removing, or
+ * below are the seven musical parts, derived from the authored Wolves soundtrack
+ * manifest (public/wolves-playlist.json, tracks 1-7). Adding, removing, or
  * reordering segments is a data change here — no component code changes.
  */
 
@@ -154,6 +154,46 @@ const TRANSITION_THREE: readonly CinematicTransitionLine[] = [
   },
 ]
 
+const TRANSITION_FOUR: readonly CinematicTransitionLine[] = [
+  {
+    kind: 'speaker',
+    speaker: 'Karena',
+    text: 'Insertion approved, good hunting',
+  },
+  {
+    kind: 'speaker',
+    speaker: 'Krook',
+    text: 'Inbound in twelve',
+  },
+  {
+    kind: 'speaker',
+    speaker: 'jeefy',
+    text: 'See ya down there.',
+  },
+  {
+    kind: 'cue',
+    text: '* knock the pod door *',
+  },
+  {
+    kind: 'sfx',
+    text: '[Use one dramatic metal bulkhead knock here.]',
+    effect: 'bulkhead-knock',
+  },
+  {
+    kind: 'speaker',
+    speaker: 'sabot-6',
+  },
+  {
+    kind: 'sfx',
+    text: '* knock * * knock *',
+    effect: 'bulkhead-response',
+  },
+  {
+    kind: 'cue',
+    text: '[Use two dramatic metal bulkhead knocks here.]',
+  },
+]
+
 const TRANSITION_FIVE: readonly CinematicTransitionLine[] = [
   {
     kind: 'speaker',
@@ -214,6 +254,14 @@ export const PRE_END_THRESHOLD_S = 0.3
  */
 export const TIME_POLL_MS = 100
 
+/**
+ * How often the crossfade pushes a new volume into each player. Every setVolume is a
+ * cross-origin postMessage into the iframe, so ramping at full frame rate floods both
+ * players with hundreds of messages during the exact moments the transition overlay is
+ * animating. 40ms (25Hz) is inaudible as steps and cuts that traffic by ~60%.
+ */
+export const VOLUME_STEP_MS = 40
+
 export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   {
     id: 'seven-days-to-the-wolves',
@@ -255,9 +303,19 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     transitionLore: TRANSITION_THREE,
   },
   {
+    id: 'end-of-you',
+    youtubeId: '5OFLFVC11Cg',
+    chapter: 'PART V',
+    title: 'End of You',
+    artist: 'Poppy',
+    artwork: 'wolves-artwork/5OFLFVC11Cg.jpg',
+    crossfadeMs: 800,
+    transitionLore: TRANSITION_FOUR,
+  },
+  {
     id: 'soulbound',
     youtubeId: 'san94Q93IcY',
-    chapter: 'PART V',
+    chapter: 'PART VI',
     title: 'Soulbound',
     artist: 'Unleash The Archers',
     artwork: 'wolves-artwork/san94Q93IcY.jpg',
@@ -267,7 +325,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   {
     id: 'last-ride-of-the-day',
     youtubeId: 'rYkYLIYvI18',
-    chapter: 'PART VI',
+    chapter: 'PART VII',
     title: 'Last Ride of the Day',
     artist: 'Nightwish',
     artwork: 'wolves-artwork/rYkYLIYvI18.jpg',

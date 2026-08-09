@@ -17,10 +17,10 @@ import './lore/lore-dossier.scss'
 const props = defineProps<{
   artifactId: string
   duration: number
+  elapsed?: number
   warning?: string
   records?: readonly LoreRecord[]
 }>()
-
 const loreViewByKind: Record<LoreKind, Component> = {
   'chatlog': ChatlogLoreView,
   'quote': QuoteLoreView,
@@ -59,6 +59,7 @@ const selectedLoreView = computed(() => {
         :record="currentRecord"
         :records="records"
         :duration="duration"
+        :elapsed="elapsed"
         :warning="warning"
       />
     </div>

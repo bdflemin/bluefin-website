@@ -13,6 +13,8 @@ import {
   jorgeBluefinTrackZeroWindow,
   kyleSlideId,
   kyleTrackZeroWindow,
+  lauraSlideId,
+  lauraTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
   pinBluefinMicroraptorSlide,
@@ -20,9 +22,12 @@ import {
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
   postHeroOpeningSequenceIds,
+  rezaContributorTrackZeroWindow,
   shermanM2CompositeSlideId,
   shermanM2CompositeTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
+  topheeSlideId,
+  topheeTrackZeroWindow,
   trackZeroFastFinalePhotoIds,
 } from '../data/wolves-track-zero-slides'
 
@@ -43,7 +48,7 @@ describe('wolves Track 0 slide locks', () => {
     const jono = { id: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp' }
     const marina = { id: 'wolves/people/kubecon-55168684055.webp' }
     const shermanM2 = { id: 'wolves/people/sherman-m2.webp' }
-    const kyle = { id: 'wolves/people/kyle.jpg' }
+    const kyle = { id: 'wolves/people/NOT John Bazzite.jpg' }
     const hikari = { id: 'wolves/people/hikari.JPG' }
     const hikari2 = { id: 'wolves/people/hikari2.JPG' }
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
@@ -61,6 +66,21 @@ describe('wolves Track 0 slide locks', () => {
       { id: 'people-b' },
       { id: 'people-c' },
     ])
+  })
+
+  it('locks Laura and Tophee after Jorge in the hero run', () => {
+    const laura = { id: lauraSlideId }
+    const tophee = { id: topheeSlideId }
+    const jorge = { id: jorgeBluefinSlideId }
+
+    expect(pinTrackZeroHeroSlides([{ id: 'people-a' }, laura, tophee, jorge]))
+      .toEqual([jorge, laura, tophee, { id: 'people-a' }])
+    expect(lauraTrackZeroWindow.startTime).toBe(jorgeBluefinTrackZeroWindow.endTime)
+    expect(topheeTrackZeroWindow.startTime).toBe(lauraTrackZeroWindow.endTime)
+  })
+
+  it('holds Reza for two regular slide windows', () => {
+    expect(rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime).toBeCloseTo(8.16)
   })
 
   it('keeps the authored hero locks unique, exact, and contiguous', () => {
@@ -118,7 +138,7 @@ describe('wolves Track 0 slide locks', () => {
     const jono = { id: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp' }
     const marina = { id: 'wolves/people/kubecon-55168684055.webp' }
     const shermanM2 = { id: 'wolves/people/sherman-m2.webp' }
-    const kyle = { id: 'wolves/people/kyle.jpg' }
+    const kyle = { id: 'wolves/people/NOT John Bazzite.jpg' }
     const hikari = { id: 'wolves/people/hikari.JPG' }
     const hikari2 = { id: 'wolves/people/hikari2.JPG' }
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
@@ -143,35 +163,37 @@ describe('wolves Track 0 slide locks', () => {
     expect(finaleSlides).toEqual([newPhoto])
   })
 
-  it('locks the post-hero opening run in order: walters, tophee, kirkland, 0R0A9083, 052', () => {
+  it('locks the post-hero opening run to registered contributor photos', () => {
     expect(postHeroOpeningSequenceIds).toEqual([
-      'wolves/people/walters.JPG',
-      'wolves/people/flickr-54137782365.webp',
       'wolves/people/kirkland.webp',
+      'wolves/people/bootc creator Colin Walters.JPG',
+      'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
+      'wolves/people/CNCF Projects Team.webp',
       'wolves/people/flickr-55343975781.webp',
       'wolves/people/kubecon-55168545279.webp',
     ])
 
     const sequence = postHeroOpeningSequenceIds.map(id => ({ id }))
     const scrambled = [
-      { id: 'people-a' },
-      sequence[3],
+      sequence[5],
       sequence[0],
       { id: 'people-b' },
       sequence[4],
       sequence[1],
+      { id: 'people-a' },
       sequence[2],
+      sequence[3],
     ]
 
     expect(pinTrackZeroPostHeroOpening(scrambled)).toEqual([
       ...sequence,
-      { id: 'people-a' },
       { id: 'people-b' },
+      { id: 'people-a' },
     ])
   })
 
   it('skips missing post-hero opening members without breaking the pool', () => {
-    const walters = { id: 'wolves/people/walters.JPG' }
+    const walters = { id: 'wolves/people/bootc creator Colin Walters.JPG' }
     const regular = { id: 'people-a' }
 
     expect(pinTrackZeroPostHeroOpening([regular, walters])).toEqual([walters, regular])

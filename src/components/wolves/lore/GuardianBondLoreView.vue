@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
+import type { LoreSpecEntry } from './LoreRecordHeader.vue'
 import { computed } from 'vue'
 import { validateGuardianBonds } from '../../../data/wolves-lore-records'
 import { renderLoreParagraphs } from '../lore'
+import { pickBlockPage } from './lore-pages'
+import LoreRecordHeader from './LoreRecordHeader.vue'
 
 const props = defineProps<LoreViewProps>()
 
@@ -32,7 +35,18 @@ const validationState = computed(() => {
   }
 })
 
+const spec = computed<LoreSpecEntry[]>(() => [
+  ...props.record.metadata.relations?.guardian
+    ? [{ key: 'guardian', value: props.record.metadata.relations.guardian }]
+    : [],
+  ...props.record.metadata.relations?.dinosaur
+    ? [{ key: 'dinosaur', value: props.record.metadata.relations.dinosaur }]
+    : [],
+  { key: 'validation', value: validationState.value },
+])
+
 const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
+const page = computed(() => pickBlockPage(paragraphs.value, para => para, props.elapsed, props.duration))
 </script>
 
 <template>
@@ -40,45 +54,11 @@ const paragraphs = computed(() => renderLoreParagraphs(props.record.body))
     class="lore-dossier-panel"
     data-lore-view="guardian-bond"
   >
-    <header class="lore-dossier-header">
-      <p class="lore-dossier-eyebrow">
-        GUARDIANBOND
-      </p>
-      <h2 v-if="record.metadata.title" class="lore-dossier-title">
-        {{ record.metadata.title }}
-      </h2>
-    </header>
+    <LoreRecordHeader eyebrow="GUARDIAN BOND" :title="record.metadata.title" :spec="spec" />
 
-    <dl class="lore-spec lore-spec--boxed">
-      <div v-if="record.metadata.relations?.guardian">
-        <dt>
-          guardian:
-        </dt>
-        <dd>
-          {{ record.metadata.relations.guardian }}
-        </dd>
-      </div>
-      <div v-if="record.metadata.relations?.dinosaur">
-        <dt>
-          dinosaur:
-        </dt>
-        <dd>
-          {{ record.metadata.relations.dinosaur }}
-        </dd>
-      </div>
-      <div>
-        <dt>
-          validation:
-        </dt>
-        <dd>
-          {{ validationState }}
-        </dd>
-      </div>
-    </dl>
-
-    <article class="lore-dossier-body">
+    <article class="lore-dossier-body" :data-lore-page-index="page.index">
       <p
-        v-for="(para, index) in paragraphs"
+        v-for="(para, index) in page.blocks"
         :key="index"
 
         v-html="para"

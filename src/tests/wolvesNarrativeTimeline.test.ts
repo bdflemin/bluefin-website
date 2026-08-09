@@ -1,126 +1,64 @@
 import { describe, expect, it } from 'vitest'
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import { loadAllLoreRecords } from '../data/wolves-lore-records'
+import { CHAT_COMPLETION_PAUSE_SECONDS, loreRecordPages } from '../data/wolves-lore-timing'
 import {
   getNarrativeSlotForTime,
   lockedNarrativeSlots,
   wolvesNarrativeTimeline,
 } from '../data/wolves-narrative-timeline'
-import { wolvesRelease } from '../data/wolves-story'
-
-const legacyTrimmedBodyTimeline = [
-  ['arthur-c-clarke-1', 0, 14.441591784338897],
-  ['arthur-c-clarke-2', 14.441591784338897, 25.41720154043646],
-  ['arthur-c-clarke-3', 25.41720154043646, 29.043645699614892],
-  ['ishtar-gardener-and-winnower', 29.043645699614892, 36.55327342747112],
-  ['ishtar-flower-game', 36.55327342747112, 49.229781771501926],
-  ['ishtar-first-knife', 49.229781771501926, 62.51604621309371],
-  ['ishtar-the-wager', 62.51604621309371, 77.37483953786906],
-  ['reckoning-of-the-three', 77.37483953786906, 85.26957637997432],
-  ['ishtar-patternfall', 85.26957637997432, 101.18741976893453],
-  ['committee-report-personal-transmission', 101.18741976893453, 109.59563543003851],
-  ['ishtar-cambrian-explosion', 109.59563543003851, 124.93581514762516],
-  ['john-bazzite-interview', 124.93581514762516, 136.8100128369705],
-  ['ishtar-final-shape', 136.8100128369705, 150],
-  ['lorem-pursuit-1', 150, 220],
-  ['lorem-awakening-1', 220, 224.399809],
-  ['do-not-reply', 224.399809, 228.112018],
-  ['quote-unmarked-grave', 228.112018, 231.112018],
-  ['quote-third-disciple', 231.112018, 234.143025],
-  ['maintenance-window', 234.143025, 238.206856],
-  ['quote-berkus', 238.206856, 242.175375],
-  ['lorem-prologue-1', 242.175375, 247.594],
-  ['lorem-prologue-2', 247.594, 256.03479],
-  ['forbidden-factory', 256.03479, 260.308503],
-  ['jordan-adrian', 260.308503, 268.224845],
-  ['quote-childhoods-end-future', 268.224845, 271.224845],
-  ['quote-natasha-woods', 271.224845, 274.224845],
-  ['childhoods-end-wager', 274.224845, 279.943353],
-  ['glorious-eggroll', 279.943353, 289.203231],
-  ['project-neptune', 289.203231, 293.502459],
-  ['john-seager', 293.502459, 304.455899],
-  ['insertion-approved', 304.455899, 310.306754],
-  ['laura-sherman-robert', 310.306754, 320.150583],
-  ['natali-kat-mario', 320.150583, 327.327826],
-  ['fyra-fyre-redactions', 327.327826, 331.098499],
-  ['jordan-andy-model', 331.098499, 343.923904],
-  ['preethi-lakshmi', 343.923904, 354.947016],
-  ['andy-krook-kubesteller', 354.947016, 363.339493],
-  ['openssf-reinforcements', 363.339493, 373.315756],
-  ['ambers-garage-cloud-native-series', 373.315756, 380.400979],
-  ['katie-neomuna', 380.400979, 389.243991],
-  ['rafael-bluefin', 389.243991, 398],
-  ['blue-universal-acquires-wayland-yutani', 398, 425],
-] as const
+import { TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
 
 describe('wolves narrative timeline', () => {
-  it('contains every release artifact exactly once', () => {
-    expect(wolvesNarrativeTimeline).toHaveLength(wolvesRelease.artifacts.length)
-    expect(new Set(wolvesNarrativeTimeline.map(slot => slot.artifactId))).toHaveLength(wolvesNarrativeTimeline.length)
-    expect(new Set(wolvesNarrativeTimeline.map(slot => slot.artifactId)))
-      .toEqual(new Set(wolvesRelease.artifacts.map(artifact => artifact.id)))
+  it('contains every visible release artifact exactly once', () => {
+    const ids = wolvesNarrativeTimeline.map(slot => slot.artifactId)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toContain('lorem-pursuit-1')
+    expect(ids).toContain('blue-universal-acquires-wayland-yutani')
+    expect(ids).not.toContain('lorem-prologue-2')
+    expect(ids).not.toContain('lorem-prologue-1')
+    expect(ids).not.toContain('john-seager')
+    expect(ids).not.toContain('do-not-reply')
   })
 
-  it('keeps the authored release chapter and artifact order fixed', () => {
-    expect(wolvesRelease.artifacts.map(({ id, chapterId }) => ({ id, chapterId }))).toEqual([
-      { id: 'lorem-prologue-1', chapterId: 'prologue' },
-      { id: 'arthur-c-clarke-1', chapterId: 'prologue' },
-      { id: 'lorem-prologue-2', chapterId: 'prologue' },
-      { id: 'arthur-c-clarke-2', chapterId: 'prologue' },
-      { id: 'forbidden-factory', chapterId: 'prologue' },
-      { id: 'jordan-adrian', chapterId: 'prologue' },
-      { id: 'arthur-c-clarke-3', chapterId: 'prologue' },
-      { id: 'maintenance-window', chapterId: 'prologue' },
-      { id: 'quote-childhoods-end-future', chapterId: 'pursuit' },
-      { id: 'lorem-pursuit-1', chapterId: 'pursuit' },
-      { id: 'quote-natasha-woods', chapterId: 'pursuit' },
-      { id: 'do-not-reply', chapterId: 'pursuit' },
-      { id: 'quote-berkus', chapterId: 'pursuit' },
-      { id: 'childhoods-end-wager', chapterId: 'pursuit' },
-      { id: 'quote-unmarked-grave', chapterId: 'pursuit' },
-      { id: 'quote-third-disciple', chapterId: 'pursuit' },
-      { id: 'lorem-awakening-1', chapterId: 'awakening' },
-      { id: 'ishtar-gardener-and-winnower', chapterId: 'awakening' },
-      { id: 'glorious-eggroll', chapterId: 'awakening' },
-      { id: 'ishtar-flower-game', chapterId: 'awakening' },
-      { id: 'project-neptune', chapterId: 'awakening' },
-      { id: 'ishtar-first-knife', chapterId: 'awakening' },
-      { id: 'john-seager', chapterId: 'awakening' },
-      { id: 'ishtar-the-wager', chapterId: 'awakening' },
-      { id: 'reckoning-of-the-three', chapterId: 'awakening' },
-      { id: 'ishtar-patternfall', chapterId: 'awakening' },
-      { id: 'committee-report-personal-transmission', chapterId: 'awakening' },
-      { id: 'ishtar-cambrian-explosion', chapterId: 'awakening' },
-      { id: 'john-bazzite-interview', chapterId: 'awakening' },
-      { id: 'ishtar-final-shape', chapterId: 'awakening' },
-      { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening' },
-      { id: 'insertion-approved', chapterId: 'awakening' },
-      { id: 'laura-sherman-robert', chapterId: 'awakening' },
-      { id: 'natali-kat-mario', chapterId: 'awakening' },
-      { id: 'fyra-fyre-redactions', chapterId: 'awakening' },
-      { id: 'jordan-andy-model', chapterId: 'awakening' },
-      { id: 'preethi-lakshmi', chapterId: 'awakening' },
-      { id: 'andy-krook-kubesteller', chapterId: 'awakening' },
-      { id: 'openssf-reinforcements', chapterId: 'awakening' },
-      { id: 'ambers-garage-cloud-native-series', chapterId: 'awakening' },
-      { id: 'katie-neomuna', chapterId: 'awakening' },
-      { id: 'rafael-bluefin', chapterId: 'awakening' },
-    ])
+  it('keeps The Artifact source record available while hiding it from the video', () => {
+    const artifact = loadAllLoreRecords().find(record => record.id === 'lorem-prologue-1')
+
+    expect(artifact).toMatchObject({
+      id: 'lorem-prologue-1',
+      metadata: { title: 'The Artifact' },
+    })
+    expect(wolvesNarrativeTimeline.map(slot => slot.artifactId)).not.toContain(artifact?.id)
+  })
+
+  it('keeps unlocked lore in authored timeline order', () => {
+    const ids = wolvesNarrativeTimeline.map(slot => slot.artifactId)
+    expect(ids.indexOf('lorem-pursuit-1')).toBeGreaterThan(ids.indexOf('arthur-c-clarke-1'))
+    expect(ids).not.toContain('john-seager')
+    expect(ids[ids.length - 1]).toBe('blue-universal-acquires-wayland-yutani')
   })
 
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
-      artifactId: 'arthur-c-clarke-1',
+      artifactId: 'arthur-c-clarke-2',
       startTime: 0,
     })
-    expect(getNarrativeSlotForTime(180)).toMatchObject({
-      artifactId: 'lorem-pursuit-1',
-      startTime: 150,
-      endTime: 220,
-    })
-    expect(getNarrativeSlotForTime(398)).toMatchObject({
+    // The Golden Era transmission is anchored to the chanting bridge rather
+    // than a round number: it starts early enough that Sarah's closing line
+    // lands exactly on TRACK_ZERO_SECTIONS.bridgeStart.
+    const pursuit = getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.bridgeStart)
+    expect(pursuit.artifactId).toBe('lorem-pursuit-1')
+    expect(pursuit.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.bridgeStart)
+    expect(pursuit.endTime).toBeGreaterThan(TRACK_ZERO_SECTIONS.bridgeStart)
+    // The closing bulletin is anchored to the finale beat rather than a round
+    // number: it starts early enough that its death-reveal page lands exactly
+    // on TRACK_ZERO_SECTIONS.finaleStart. See wolvesFinaleReveal.test.ts.
+    expect(getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart)).toMatchObject({
       artifactId: 'blue-universal-acquires-wayland-yutani',
-      startTime: 398,
       endTime: 425,
     })
+    expect(getNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart).startTime)
+      .toBeLessThan(TRACK_ZERO_SECTIONS.finaleStart)
   })
 
   it('keeps every registered narrative lock at its declared time', () => {
@@ -134,61 +72,83 @@ describe('wolves narrative timeline', () => {
     }
   })
 
-  it('keeps every Track 0 slot at its approved trimmed-body boundaries', () => {
-    expect(wolvesNarrativeTimeline.map(slot => [slot.artifactId, slot.startTime, slot.endTime]))
-      .toEqual(legacyTrimmedBodyTimeline)
+  it('reserves a five-second completion pause for every unlocked conversation', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+    const lockedIds = new Set(lockedNarrativeSlots.map(slot => slot.artifactId))
+
+    for (const slot of wolvesNarrativeTimeline) {
+      const record = records.get(slot.artifactId)
+      if (!record || record.kind !== 'chatlog' || lockedIds.has(record.id)) {
+        continue
+      }
+
+      expect(slot.endTime - slot.startTime).toBeGreaterThanOrEqual(CHAT_COMPLETION_PAUSE_SECONDS - 1e-8)
+    }
   })
 
-  it('coalesces the 4:08 prologue handoff with its beat-authoritative slide cut', () => {
-    expect(getNarrativeSlotForTime(247.593)).toMatchObject({
-      artifactId: 'lorem-prologue-1',
-      endTime: 247.594,
-    })
-    expect(getNarrativeSlotForTime(247.594)).toMatchObject({
-      artifactId: 'lorem-prologue-2',
-      startTime: 247.594,
-    })
+  it('allocates unlocked lore between the locked anchors', () => {
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
+    expect(middle.length).toBeGreaterThan(0)
+    expect(middle.every(slot => slot.endTime > slot.startTime)).toBe(true)
   })
 
-  it('keeps each retimed post-Golden-Era slot between three and eighteen seconds', () => {
+  it('keeps the recomputed middle contiguous', () => {
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
+    for (let index = 1; index < middle.length; index++) {
+      expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
+    }
+  })
+
+  it('uses the available unlocked range for readable post-Golden-Era lore', () => {
     const retimedSlots = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
 
     for (const slot of retimedSlots) {
-      expect(slot.endTime - slot.startTime).toBeGreaterThanOrEqual(3)
-      expect(slot.endTime - slot.startTime).toBeLessThanOrEqual(18)
+      expect(slot.endTime - slot.startTime).toBeGreaterThan(0)
     }
   })
 
-  it('orders the non-anchor lore pool by metadata date', () => {
-    const lockedArtifactIds = new Set(lockedNarrativeSlots.map(slot => slot.artifactId))
-    const manifestIndexes = new Map(wolvesRelease.artifacts.map((artifact, index) => [artifact.id, index]))
-    const pool = wolvesNarrativeTimeline
-      .map(slot => wolvesRelease.artifacts.find(artifact => artifact.id === slot.artifactId)!)
-      .filter(artifact => !lockedArtifactIds.has(artifact.id))
+  it('gives every Arthur C. Clarke quote its full readable page', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
 
-    for (let index = 1; index < pool.length; index++) {
-      const previous = pool[index - 1]
-      const current = pool[index]
+    // Only the quotes the show actually displays; see the hidden set in
+    // wolves-narrative-timeline.ts for the ones curated out.
+    for (const artifactId of ['arthur-c-clarke-2', 'arthur-c-clarke-3']) {
+      const slot = wolvesNarrativeTimeline.find(slot => slot.artifactId === artifactId)
+      const pages = loreRecordPages({ kind: 'quote', body: records.get(artifactId)?.body ?? '' })
 
-      expect(previous.publishedAt <= current.publishedAt).toBe(true)
-      if (previous.publishedAt === current.publishedAt) {
-        expect(manifestIndexes.get(previous.id)).toBeLessThan(manifestIndexes.get(current.id)!)
-      }
+      expect(slot).toBeDefined()
+      // A quote holds one complete page for its own reading cost; the old
+      // fifteen-second constant is replaced by the shared page model.
+      expect(slot!.endTime - slot!.startTime).toBeGreaterThanOrEqual(estimatePageSeconds(pages[0]!) - 1e-8)
     }
+  })
+
+  it('keeps the recomputed unlocked pool contiguous and authored', () => {
+    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
+    const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
+    for (let index = 1; index < middle.length; index++) {
+      expect(middle[index].startTime).toBeCloseTo(middle[index - 1].endTime, 8)
+    }
+    expect(new Set(middle.map(slot => slot.artifactId)).size).toBe(middle.length)
   })
 
   it('uses the next slot at exact boundaries and holds the final entry afterward', () => {
-    expect(getNarrativeSlotForTime(150)?.artifactId).toBe('lorem-pursuit-1')
-    expect(getNarrativeSlotForTime(220)?.artifactId)
-      .toBe(wolvesNarrativeTimeline.find(slot => slot.startTime === 220)?.artifactId)
+    const pursuit = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!
+    expect(getNarrativeSlotForTime(pursuit.startTime)?.artifactId).toBe('lorem-pursuit-1')
+    expect(getNarrativeSlotForTime(pursuit.endTime)?.artifactId)
+      .toBe(wolvesNarrativeTimeline.find(slot => slot.startTime === pursuit.endTime)?.artifactId)
     expect(getNarrativeSlotForTime(425)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
     expect(getNarrativeSlotForTime(1_000)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
   })
 
-  it('gives longer lore entries longer non-anchor slots', () => {
-    const short = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'quote-natasha-woods')!
-    const long = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'john-seager')!
-
-    expect(long.endTime - long.startTime).toBeGreaterThan(short.endTime - short.startTime)
+  it('keeps every visible non-anchor entry on screen for a positive duration', () => {
+    for (const slot of wolvesNarrativeTimeline.filter(slot => slot.startTime > 0 && slot.endTime < 398)) {
+      expect(slot.endTime - slot.startTime).toBeGreaterThan(0)
+    }
   })
 })

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { LoreViewProps } from '../lore'
+import type { LoreSpecEntry } from './LoreRecordHeader.vue'
 import { computed } from 'vue'
 import { dinosaurSpecies } from '../../../data/wolves-dinosaur-species'
+import { pickBlockPage } from './lore-pages'
+import LoreRecordHeader from './LoreRecordHeader.vue'
 
 const props = defineProps<LoreViewProps>()
 
@@ -23,6 +26,17 @@ const artworkSource = computed(() =>
     ? `${import.meta.env.BASE_URL}${species.value.artwork.slice(2)}`
     : undefined,
 )
+
+const spec = computed<LoreSpecEntry[]>(() => [
+  ...species.value ? [{ key: 'species', value: species.value.scientificName }] : [],
+  ...guardian.value
+    ? [{ key: 'rider', value: guardian.value.metadata.title || guardian.value.metadata.subject || '' }]
+    : [],
+  ...bond.value ? [{ key: 'bond', value: bond.value.id }] : [],
+])
+
+const paragraphs = computed(() => props.record.body.split(/\n{2,}/).map(para => para.trim()).filter(Boolean))
+const page = computed(() => pickBlockPage(paragraphs.value, para => para, props.elapsed, props.duration))
 </script>
 
 <template>
@@ -30,41 +44,14 @@ const artworkSource = computed(() =>
     class="lore-dossier-panel"
     data-lore-view="dinosaur-dossier"
   >
-    <header class="lore-dossier-header">
-      <p class="lore-dossier-eyebrow">
-        DINOSAUR // SUBJECT PROFILE
-      </p>
-      <h2 v-if="record.metadata.epic_name" class="lore-dossier-title">
-        {{ record.metadata.epic_name }}
-      </h2>
-    </header>
+    <LoreRecordHeader
+      eyebrow="DINOSAUR // SUBJECT PROFILE"
+      :title="record.metadata.epic_name"
+      :spec="spec"
+    />
 
-    <dl class="lore-spec lore-spec--boxed">
-      <div v-if="species">
-        <dt>
-          species:
-        </dt>
-        <dd>
-          {{ species.scientificName }}
-        </dd>
-      </div>
-      <div v-if="guardian">
-        <dt>
-          rider:
-        </dt>
-        <dd>
-          {{ guardian.metadata.title || guardian.metadata.subject }}
-        </dd>
-      </div>
-      <div v-if="bond">
-        <dt>
-          bond:
-        </dt>
-        <dd>
-          {{ bond.id }}
-        </dd>
-      </div>
-      <div v-if="record.metadata.titles?.length">
+    <dl v-if="record.metadata.titles?.length" class="lore-spec lore-spec--boxed">
+      <div>
         <dt>
           titles:
         </dt>
@@ -74,8 +61,10 @@ const artworkSource = computed(() =>
       </div>
     </dl>
 
-    <article class="lore-dossier-body">
-      <p>{{ record.body }}</p>
+    <article class="lore-dossier-body" :data-lore-page-index="page.index">
+      <p v-for="(para, index) in page.blocks" :key="index">
+        {{ para }}
+      </p>
     </article>
 
     <figure v-if="species && artworkSource" class="lore-dossier-figure">

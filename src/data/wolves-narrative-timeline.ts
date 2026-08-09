@@ -1,3 +1,9 @@
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import { loadAllLoreRecords } from './wolves-lore-records'
+import { allocateLoreSlots, estimateLoreReadDuration, loreRecordPages } from './wolves-lore-timing'
+import { wolvesRelease } from './wolves-story'
+import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats'
+
 export interface WolvesNarrativeSlot {
   artifactId: string
   startTime: number
@@ -10,54 +16,137 @@ interface WolvesNarrativeLock {
   endTime?: number
 }
 
+const FINAL_ARTIFACT_ID = 'blue-universal-acquires-wayland-yutani'
+
+/** The closing bulletin holds until the track hands off to silence. */
+const FINAL_ARTIFACT_END = 425
+
+/** The page that names the dead doctor; the show's dramatic reveal. */
+const DEATH_REVEAL_MARKER = 'Andy Anderson'
+
+/**
+ * Put the reveal up a hair early so it is provably on screen when the beat
+ * lands. `pickPageIndexForElapsed` selects with a strict `<`, so a page timed
+ * to the exact beat wins or loses on float rounding. Ten milliseconds is well
+ * under a video frame and settles it.
+ */
+const REVEAL_LEAD_SECONDS = 0.01
+
+const finalRecordPages = loreRecordPages({
+  kind: 'prose',
+  body: loadAllLoreRecords().find(record => record.id === FINAL_ARTIFACT_ID)?.body ?? '',
+})
+
+/**
+ * Start the closing bulletin so its death-reveal page turns up exactly on
+ * `finaleStart`, the measured beat the "Become Legend" cue fires on. The reveal
+ * and the finale must land together: the audience reads that the doctor is dead
+ * on the same beat the music says Become Legend.
+ *
+ * Derived rather than written down, because the answer depends on what the
+ * pages before the reveal cost to read. A hard-coded start silently drifts off
+ * the beat the moment the bulletin is re-edited or the reading pace changes.
+ */
+const finalRecordStartTime = TRACK_ZERO_SECTIONS.finaleStart - REVEAL_LEAD_SECONDS - finalRecordPages
+  .slice(0, Math.max(0, finalRecordPages.findIndex(page => page.includes(DEATH_REVEAL_MARKER))))
+  .reduce((total, page) => total + estimatePageSeconds(page), 0)
+
+const PURSUIT_ARTIFACT_ID = 'lorem-pursuit-1'
+
+const pursuitRecordPages = loreRecordPages({
+  kind: 'chatlog',
+  body: loadAllLoreRecords().find(record => record.id === PURSUIT_ARTIFACT_ID)?.body ?? '',
+})
+
+/**
+ * Start the Golden Era transmission so its closing line, "Thus becoming One,
+ * from the Seven...", lands on `bridgeStart` — the chanting bridge. Sarah's
+ * last line is the reveal this conversation exists for, and it has to arrive
+ * with the chant, not near it.
+ *
+ * The record used to run 150-220, which was 19 seconds short of its own
+ * content: the conversation was cut off at page 8 of 11 and Sarah's line never
+ * reached the screen at all.
+ */
+const pursuitStartTime = TRACK_ZERO_SECTIONS.bridgeStart - REVEAL_LEAD_SECONDS - pursuitRecordPages
+  .slice(0, -1)
+  .reduce((total, page) => total + estimatePageSeconds(page), 0)
+
+const pursuitEndTime = pursuitStartTime + estimateLoreReadDuration({
+  kind: 'chatlog',
+  body: loadAllLoreRecords().find(record => record.id === PURSUIT_ARTIFACT_ID)?.body ?? '',
+})
+
 export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
-  { artifactId: 'arthur-c-clarke-1', startTime: 0 },
-  { artifactId: 'lorem-pursuit-1', startTime: 150, endTime: 220 },
-  { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
+  { artifactId: PURSUIT_ARTIFACT_ID, startTime: pursuitStartTime, endTime: pursuitEndTime },
+  { artifactId: FINAL_ARTIFACT_ID, startTime: finalRecordStartTime, endTime: FINAL_ARTIFACT_END },
 ]
 
+/**
+ * Records the show does not display.
+ *
+ * The first four were hidden deliberately and stay hidden.
+ *
+ * The rest are oversubscription. The lore column has about 400 seconds of
+ * screen time and the authored records cost roughly 900 seconds to read at a
+ * theater pace. Every record kept in the running order takes time from the
+ * others, and the allocator's response is to floor each one at a single page —
+ * so a record with eight authored pages showed page one and vanished. Nineteen
+ * of twenty-seven records were being cut off mid-thought, including Sarah's
+ * closing line and the death of Dr. Andy Anderson.
+ *
+ * Hiding a record removes it cleanly instead of showing a fragment of it. What
+ * remains now plays in full. Restoring any of these means taking the time back
+ * from a record that currently completes, which is a decision about the show,
+ * not about the scheduler.
+ */
+const hiddenFromWolvesVideoArtifactIds = new Set([
+  'do-not-reply',
+  'lorem-prologue-1',
+  'lorem-prologue-2',
+  'john-seager',
+  // Oversubscribed: cut to let the surviving records play in full.
+  'arthur-c-clarke-1',
+  'childhoods-end-wager',
+  'committee-report-personal-transmission',
+  'glorious-eggroll',
+  'ishtar-cambrian-explosion',
+  'ishtar-final-shape',
+  'ishtar-first-knife',
+  'ishtar-flower-game',
+  'ishtar-patternfall',
+  'ishtar-the-wager',
+  'reckoning-of-the-three',
+])
+const authoredArtifactIds = wolvesRelease.artifacts
+  .map(artifact => artifact.id)
+  .filter(id => !hiddenFromWolvesVideoArtifactIds.has(id))
+const recordsById = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+function timingInput(id: string) {
+  const record = recordsById.get(id)
+  const kind = record?.kind === 'chatlog'
+    ? 'chatlog' as const
+    : record?.kind === 'quote' ? 'quote' as const : 'prose' as const
+  return {
+    id,
+    kind,
+    body: record?.body ?? id,
+    attribution: record?.metadata.attribution ?? record?.metadata.sender,
+  }
+}
+function allocateRange(ids: readonly string[], startTime: number, endTime: number): WolvesNarrativeSlot[] {
+  return allocateLoreSlots(ids.map(timingInput), startTime, endTime)
+    .map(slot => ({ artifactId: slot.id, startTime: slot.startTime, endTime: slot.endTime }))
+}
+const pursuitIndex = authoredArtifactIds.indexOf(PURSUIT_ARTIFACT_ID)
+const finalIndex = authoredArtifactIds.indexOf(FINAL_ARTIFACT_ID)
+const opening = authoredArtifactIds.slice(0, pursuitIndex)
+const middle = authoredArtifactIds.slice(pursuitIndex + 1, finalIndex)
 export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
-  { artifactId: 'arthur-c-clarke-1', startTime: 0, endTime: 14.441591784338897 },
-  { artifactId: 'arthur-c-clarke-2', startTime: 14.441591784338897, endTime: 25.41720154043646 },
-  { artifactId: 'arthur-c-clarke-3', startTime: 25.41720154043646, endTime: 29.043645699614892 },
-  { artifactId: 'ishtar-gardener-and-winnower', startTime: 29.043645699614892, endTime: 36.55327342747112 },
-  { artifactId: 'ishtar-flower-game', startTime: 36.55327342747112, endTime: 49.229781771501926 },
-  { artifactId: 'ishtar-first-knife', startTime: 49.229781771501926, endTime: 62.51604621309371 },
-  { artifactId: 'ishtar-the-wager', startTime: 62.51604621309371, endTime: 77.37483953786906 },
-  { artifactId: 'reckoning-of-the-three', startTime: 77.37483953786906, endTime: 85.26957637997432 },
-  { artifactId: 'ishtar-patternfall', startTime: 85.26957637997432, endTime: 101.18741976893453 },
-  { artifactId: 'committee-report-personal-transmission', startTime: 101.18741976893453, endTime: 109.59563543003851 },
-  { artifactId: 'ishtar-cambrian-explosion', startTime: 109.59563543003851, endTime: 124.93581514762516 },
-  { artifactId: 'john-bazzite-interview', startTime: 124.93581514762516, endTime: 136.8100128369705 },
-  { artifactId: 'ishtar-final-shape', startTime: 136.8100128369705, endTime: 150 },
-  { artifactId: 'lorem-pursuit-1', startTime: 150, endTime: 220 },
-  { artifactId: 'lorem-awakening-1', startTime: 220, endTime: 224.399809 },
-  { artifactId: 'do-not-reply', startTime: 224.399809, endTime: 228.112018 },
-  { artifactId: 'quote-unmarked-grave', startTime: 228.112018, endTime: 231.112018 },
-  { artifactId: 'quote-third-disciple', startTime: 231.112018, endTime: 234.143025 },
-  { artifactId: 'maintenance-window', startTime: 234.143025, endTime: 238.206856 },
-  { artifactId: 'quote-berkus', startTime: 238.206856, endTime: 242.175375 },
-  { artifactId: 'lorem-prologue-1', startTime: 242.175375, endTime: 247.594 },
-  { artifactId: 'lorem-prologue-2', startTime: 247.594, endTime: 256.03479 },
-  { artifactId: 'forbidden-factory', startTime: 256.03479, endTime: 260.308503 },
-  { artifactId: 'jordan-adrian', startTime: 260.308503, endTime: 268.224845 },
-  { artifactId: 'quote-childhoods-end-future', startTime: 268.224845, endTime: 271.224845 },
-  { artifactId: 'quote-natasha-woods', startTime: 271.224845, endTime: 274.224845 },
-  { artifactId: 'childhoods-end-wager', startTime: 274.224845, endTime: 279.943353 },
-  { artifactId: 'glorious-eggroll', startTime: 279.943353, endTime: 289.203231 },
-  { artifactId: 'project-neptune', startTime: 289.203231, endTime: 293.502459 },
-  { artifactId: 'john-seager', startTime: 293.502459, endTime: 304.455899 },
-  { artifactId: 'laura-sherman-robert', startTime: 310.306754, endTime: 320.150583 },
-  { artifactId: 'natali-kat-mario', startTime: 320.150583, endTime: 327.327826 },
-  { artifactId: 'fyra-fyre-redactions', startTime: 327.327826, endTime: 331.098499 },
-  { artifactId: 'jordan-andy-model', startTime: 331.098499, endTime: 343.923904 },
-  { artifactId: 'preethi-lakshmi', startTime: 343.923904, endTime: 354.947016 },
-  { artifactId: 'andy-krook-kubesteller', startTime: 354.947016, endTime: 363.339493 },
-  { artifactId: 'openssf-reinforcements', startTime: 363.339493, endTime: 373.315756 },
-  { artifactId: 'ambers-garage-cloud-native-series', startTime: 373.315756, endTime: 380.400979 },
-  { artifactId: 'katie-neomuna', startTime: 380.400979, endTime: 389.243991 },
-  { artifactId: 'rafael-bluefin', startTime: 389.243991, endTime: 398 },
-  { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
+  ...allocateRange(opening, 0, pursuitStartTime),
+  { artifactId: PURSUIT_ARTIFACT_ID, startTime: pursuitStartTime, endTime: pursuitEndTime },
+  ...allocateRange(middle, pursuitEndTime, finalRecordStartTime),
+  { artifactId: FINAL_ARTIFACT_ID, startTime: finalRecordStartTime, endTime: FINAL_ARTIFACT_END },
 ]
 
 export function getNarrativeSlotForTime(time: number): WolvesNarrativeSlot {

@@ -70,7 +70,7 @@ async function readIntroState(page) {
   }))
 }
 
-async function assertBounds(page, pausedExpected) {
+async function assertBounds(page) {
   const bounds = await page.evaluate(() => {
     const toRect = element => {
       if (!element) {
@@ -104,17 +104,15 @@ async function assertBounds(page, pausedExpected) {
     }
   })
 
-  expectContained('Top-left mask', bounds.mask, bounds.viewport)
-  expectContained('Pause veil', bounds.veil, bounds.viewport)
-  expectContained('Voice toggle', bounds.toggle, bounds.viewport)
   expectContained('Widget', bounds.widget, bounds.viewport)
+  expectContained('Voice toggle', bounds.toggle, bounds.viewport)
   if (bounds.toggle.left < bounds.widget.left || bounds.toggle.right > bounds.widget.right
     || bounds.toggle.top < bounds.widget.top || bounds.toggle.bottom > bounds.widget.bottom) {
     throw new Error(`Voice toggle escaped widget bounds: ${JSON.stringify(bounds)}`)
   }
-  expectEqual('Pause veil display', bounds.veilDisplay, 'block')
-  expectEqual('Voice toggle display', bounds.toggleDisplay, 'flex')
-  expectEqual('Pause veil active state', bounds.veilActive, pausedExpected)
+  expectEqual('Top-left mask remains absent', bounds.mask, null)
+  expectEqual('Pause veil remains absent', bounds.veil, null)
+  expectEqual('Pause veil active state', bounds.veilActive, false)
 }
 
 async function assertComicHeroQrLayout(page) {
@@ -141,49 +139,53 @@ async function assertComicHeroQrLayout(page) {
     const qrImage = document.querySelector('[data-comic-hero-qr-image]')
     const qrDialogue = document.querySelector('[data-comic-hero-qr-dialogue]')
     const qrDomain = document.querySelector('[data-comic-hero-qr-domain]')
+    const amberQuote = document.querySelector('[data-amber-quote]')
     const widget = document.querySelector('.wc-widget')
-    const paidArtists = document.querySelector('[data-comic-hero-paid-artists]')
 
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       titleCard: toRect(titleCard),
+      titleCardText: titleCard?.textContent?.trim() ?? '',
       heroShot: toRect(heroShot),
       qrCard: toRect(qrCard),
       qrLink: toRect(qrLink),
       qrImage: toRect(qrImage),
       qrDialogue: toRect(qrDialogue),
       qrDomain: toRect(qrDomain),
+      amberQuote: toRect(amberQuote),
       widget: toRect(widget),
-      paidArtists: toRect(paidArtists),
       qrHref: qrLink?.getAttribute('href') ?? '',
       qrLabel: qrLink?.getAttribute('aria-label') ?? '',
       qrAlt: qrImage?.getAttribute('alt') ?? '',
       qrSrc: qrImage?.getAttribute('src') ?? '',
       domainText: qrDomain?.textContent?.trim() ?? '',
       dialogueText: qrDialogue?.textContent?.trim() ?? '',
-      paidArtistsText: paidArtists?.textContent?.trim() ?? '',
       qrCardDisplay: qrCard ? getComputedStyle(qrCard).display : '',
       qrLinkDisplay: qrLink ? getComputedStyle(qrLink).display : '',
       qrLinkRadius: qrLink ? getComputedStyle(qrLink).borderRadius : '',
       qrCardRadius: qrCard ? getComputedStyle(qrCard).borderRadius : '',
-      paidArtistsTextStrokeWidth: paidArtists ? getComputedStyle(paidArtists).webkitTextStrokeWidth : '',
-      paidArtistsFontSize: paidArtists ? getComputedStyle(paidArtists).fontSize : '',
-      paidArtistsTextShadow: paidArtists ? getComputedStyle(paidArtists).textShadow : '',
+      qrCardBackground: qrCard ? getComputedStyle(qrCard).backgroundColor : '',
+      qrImageFilter: qrImage ? getComputedStyle(qrImage).filter : '',
+      quoteBackground: amberQuote ? getComputedStyle(amberQuote).backgroundColor : '',
+      quoteBorderWidth: amberQuote ? getComputedStyle(amberQuote).borderTopWidth : '',
+      quoteTextAlign: amberQuote ? getComputedStyle(amberQuote).textAlign : '',
     }
   })
 
   expectContained('Title card', layout.titleCard, layout.viewport)
+  expectTruthy('Title card does not duplicate the top status copy', !layout.titleCardText.includes('A Project to Bring Their Stories to life'))
   expectContained('Comic hero shot', layout.heroShot, layout.viewport)
   expectContained('Comic hero QR card', layout.qrCard, layout.viewport)
   expectContained('Comic hero QR link', layout.qrLink, layout.viewport)
   expectContained('Comic hero QR image', layout.qrImage, layout.viewport)
   expectContained('Comic hero QR dialogue', layout.qrDialogue, layout.viewport)
   expectContained('Comic hero QR domain', layout.qrDomain, layout.viewport)
+  expectContained('Amber Graner quote', layout.amberQuote, layout.viewport)
   expectEqual('Comic hero QR href', layout.qrHref, 'https://makemeacomic.com')
   expectEqual('Comic hero QR aria label', layout.qrLabel, 'Open makemeacomic.com')
   expectEqual('Comic hero QR alt text', layout.qrAlt, 'QR code linking to makemeacomic.com')
   expectEqual('Comic hero QR domain text', layout.domainText, 'makemeacomic.com')
-  expectEqual('Comic hero QR dialogue text', layout.dialogueText, 'Immortalize a Maintainer')
+  expectEqual('Comic hero QR dialogue text', layout.dialogueText, 'Level Up a Maintainer')
   expectEqual('Comic hero QR card display', layout.qrCardDisplay, 'block')
   expectEqual('Comic hero QR link display', layout.qrLinkDisplay, 'flex')
   expectTruthy(
@@ -191,18 +193,28 @@ async function assertComicHeroQrLayout(page) {
     layout.qrSrc.includes('qr-makemeacomic')
     || layout.qrSrc.startsWith('data:image/svg+xml'),
   )
-  expectTruthy('Comic hero QR remains large enough to scan', layout.qrImage.width >= (VIEWPORT.width <= 600 ? 150 : 200))
+  expectTruthy('Comic hero QR remains large enough to scan', layout.qrImage.width >= 300)
   expectTruthy('Comic hero monitor has rounded corners', Number.parseFloat(layout.qrLinkRadius) >= 20)
   expectTruthy('Comic hero QR screen has rounded corners', Number.parseFloat(layout.qrCardRadius) >= 12)
+  expectEqual('Comic hero QR screen uses the dark palette', layout.qrCardBackground, 'rgb(2, 6, 23)')
+  expectEqual('Comic hero QR image inverts for dark contrast', layout.qrImageFilter, 'invert(1)')
   expectNoOverlap('Comic hero QR does not cover the Chonky hero shot', layout.heroShot, layout.qrCard)
+  expectNoOverlap('Amber quote stays below the dinosaur artwork', layout.amberQuote, layout.heroShot)
+  expectNoOverlap('Amber quote stays below the QR code', layout.amberQuote, layout.qrCard)
   expectNoOverlap('Comic hero monitor stays above the footer widget', layout.qrLink, layout.widget)
-  expectContained('Paid-artists pill', layout.paidArtists, layout.viewport)
-  expectEqual('Paid-artists pill text', layout.paidArtistsText, 'Made by Paid Artists')
+  expectNoOverlap('Amber quote stays above the footer widget', layout.amberQuote, layout.widget)
+  expectTruthy('Dinosaur artwork remains left of the QR code', layout.heroShot.left < layout.qrCard.left)
   expectTruthy(
-    `Paid-artists pill must not use the oversized hero-title outline at its own font size (stroke ${layout.paidArtistsTextStrokeWidth} would occlude ${layout.paidArtistsFontSize} glyphs)`,
-    Number.parseFloat(layout.paidArtistsTextStrokeWidth) <= 1,
+    'Dinosaur and QR form a centered composition',
+    Math.abs(((layout.heroShot.left + layout.qrCard.right) / 2) - (layout.viewport.width / 2)) <= 40,
   )
-  expectEqual('Paid-artists pill must not carry the hero-title drop shadow', layout.paidArtistsTextShadow, 'none')
+  expectTruthy(
+    'Amber quote is centered along the bottom',
+    Math.abs(((layout.amberQuote.left + layout.amberQuote.right) / 2) - (layout.viewport.width / 2)) <= 1,
+  )
+  expectEqual('Amber quote is centered', layout.quoteTextAlign, 'center')
+  expectEqual('Amber quote has no panel border', layout.quoteBorderWidth, '0px')
+  expectEqual('Amber quote has no panel background', layout.quoteBackground, 'rgba(0, 0, 0, 0)')
 }
 
 const browser = await chromium.launch({ headless: true })
@@ -265,17 +277,21 @@ try {
 
   const initialState = await readIntroState(page)
   expectEqual('Default Destiny source', initialState.videoId, 'BV3BZKbpBns')
-  expectEqual('Default authored cutoff', initialState.duration, 121.5)
-  expectEqual('Voice and CC toggles visible on the initial Destiny segment', await page.locator('.wc-widget-toggle').count(), 2)
-  await assertBounds(page, false)
+  expectEqual('Default authored cutoff', initialState.duration, 118.8)
+  expectEqual('Voice toggle visible on the initial Destiny segment', await page.locator('.wc-widget-toggle').count(), 1)
+  await assertBounds(page)
 
-  await page.getByLabel('CC').check()
   await page.evaluate(() => window.__wolvesIntro.seekTo(24.2))
   await page.waitForTimeout(900)
-  await page.waitForFunction(() => {
-    const title = document.querySelector('.wolves-intro-overlay-title-card')
-    return title?.textContent?.includes('COMIC HERO SHOTS OF OPEN SOURCE MAINTAINERS SHREDDING A BUNCH OF CLANKERS')
-  }, null, { timeout: 10_000 })
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const titleCardVisible = await page.locator('.wolves-intro-overlay-title-card').isVisible()
+    if (titleCardVisible) {
+      break
+    }
+    await page.evaluate(() => window.__wolvesIntro.seekTo(24.2))
+    await page.waitForTimeout(900)
+  }
+  await page.waitForSelector('.wolves-intro-overlay-title-card', { state: 'visible', timeout: 10_000 })
   await assertComicHeroQrLayout(page)
   await capture(page, 'destiny-title-card-qr')
 
@@ -290,7 +306,7 @@ try {
 
   await page.locator('.wc-widget').getByLabel('Pause').click()
   await page.waitForFunction(() => window.__wolvesIntro?.isPaused?.() === true, null, { timeout: 10_000 })
-  await assertBounds(page, true)
+  await assertBounds(page)
   await capture(page, 'destiny-paused-voice-mask')
 
   const beforeUnvoiceWhilePaused = await readIntroState(page)

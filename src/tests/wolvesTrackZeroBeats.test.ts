@@ -5,6 +5,7 @@ import {
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
   trackZeroBeatCutsWithPickup,
+  trackZeroEvenBeatCuts,
 } from '@/data/wolves-track-zero-beats'
 
 describe('track zero measured beat grid', () => {
@@ -34,7 +35,7 @@ describe('track zero measured beat grid', () => {
     expect(TRACK_ZERO_SECTIONS.pivotalEnd).toBeLessThanOrEqual(351)
     expect(TRACK_ZERO_SECTIONS.bkEnd).toBeGreaterThan(351)
     // The music-authoritative barrage resolves on the Become Legend cue.
-    expect(TRACK_ZERO_SECTIONS.bkEnd).toBeGreaterThanOrEqual(359)
+    expect(TRACK_ZERO_SECTIONS.bkEnd).toBe(355.219)
     expect(TRACK_ZERO_SECTIONS.finaleStart).toBe(408.137)
   })
 
@@ -90,45 +91,27 @@ describe('track zero measured beat grid', () => {
     expect(durations.slice(6, 10).every(duration => duration < durations[0])).toBe(true)
   })
 
-  it('picks up from eight-beat to four-beat cuts at 6:00', () => {
-    const cuts = trackZeroBeatCutsWithPickup(359.166, TRACK_ZERO_TEMPO_PICKUPS.finale, 408.137, 30, 8, 4)
-    const starts = [359.166, ...cuts.slice(0, -1)]
+  it('starts the sustained fast barrage on the measured 5:55 pickup', () => {
+    const cuts = trackZeroEvenBeatCuts(TRACK_ZERO_TEMPO_PICKUPS.finale, 408.137, 30)
+    const starts = [TRACK_ZERO_TEMPO_PICKUPS.finale, ...cuts.slice(0, -1)]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
-    expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.finale) < 0.5)).toBe(true)
-    expect(durations.slice(1, 5).every(duration => duration < 2)).toBe(true)
+    expect(cuts.every(cut => TRACK_ZERO_BEAT_TIMES.includes(cut))).toBe(true)
+    expect(durations.every(duration => duration > 1 && duration < 3)).toBe(true)
   })
 
-  it('allocates a restrained barrage that resolves on the legend cue', () => {
-    const cuts = trackZeroBeatCuts(
+  it('keeps the fast barrage evenly paced through the legend cue', () => {
+    const cuts = trackZeroEvenBeatCuts(
       TRACK_ZERO_SECTIONS.bkEnd,
       TRACK_ZERO_SECTIONS.finaleStart,
       30,
-      [8, 4, 2],
     )
     expect(cuts.length).toBe(30)
     const cutIndices = cuts.map(cut => TRACK_ZERO_BEAT_TIMES.indexOf(cut))
     const startIndex = TRACK_ZERO_BEAT_TIMES.indexOf(TRACK_ZERO_SECTIONS.bkEnd)
-    expect(cutIndices.slice(0, 16).map((cut, index) =>
-      cut - (index === 0 ? startIndex : cutIndices[index - 1]))).toEqual([
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      4,
-      4,
-      2,
-      2,
-      2,
-      2,
-    ])
-    expect(cutIndices.slice(16).every((cut, index) => cut - cutIndices[index + 15] === 2)).toBe(true)
+    const beatDurations = cutIndices.map((cut, index) =>
+      cut - (index === 0 ? startIndex : cutIndices[index - 1]))
+    expect(beatDurations.every(duration => duration >= 4 && duration <= 5)).toBe(true)
     expect(cuts[cuts.length - 1]).toBe(TRACK_ZERO_SECTIONS.finaleStart)
   })
 

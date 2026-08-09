@@ -4,10 +4,18 @@
 
 ## Start
 
-- `../AGENTS.md`: repository rules and task routing.
-- `skills/INDEX.md`: choose one lazy-loaded workflow.
+- `../AGENTS.md`: repository rules and boundaries.
+- `SKILL.md`: task→skill router; choose one lazy-loaded workflow.
 - `reference/content-map.md`: locate production content.
 - `reference/production-entrypoints.md`: locate mounted applications.
+
+## Two different products
+
+This repository ships a **website** at `/` and a **presentation** at
+`/wolves/`. They have different rules. The presentation is performed to a live
+audience in theater seats, is read from a distance, is paced by music, and
+cannot be interacted with. See `../AGENTS.md` under "`/wolves/` is a
+presentation" and `reference/wolves-runtime.md`.
 
 ## Architecture
 
@@ -23,3 +31,9 @@ references only when the selected skill links to them.
 
 Reference files state current production facts. Skills define procedures. Keep
 those roles separate and update the canonical owner when source code changes.
+
+The Wolves runtime detail is split into companion references, all reached from
+`reference/wolves-runtime.md` and the router: `reference/wolves-transport-and-clocks.md`,
+`reference/wolves-intro-and-overlay.md`, `reference/wolves-lore-timing.md`,
+`reference/wolves-slide-scheduling.md`, and `reference/wolves-test-harnesses.md`.
+Also on file: `reference/locale-schema.md` for locale value formats.

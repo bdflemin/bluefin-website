@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
 const props = withDefaults(defineProps<{
@@ -7,10 +7,12 @@ const props = withDefaults(defineProps<{
   showVoiceOverToggle?: boolean
   voiceOverEnabled?: boolean
   voiceOverLabel?: string
+  autoHide?: boolean
 }>(), {
   showVoiceOverToggle: false,
   voiceOverEnabled: false,
   voiceOverLabel: 'Ikora voice over',
+  autoHide: false,
 })
 
 // The widget is a pure store subscriber: playback intents are emitted upward and
@@ -40,8 +42,13 @@ const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${form
 const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
 const segmentPercent = computed(() => Math.round(store.segmentProgress * 100))
 const PROGRESS_CELLS = 40
+// Split so the cell array only rebuilds when a cell actually changes. The clock
+// polls ten times a second, but at 40 cells across a segment of several minutes
+// roughly one cell changes every ten seconds; keying the array off the filled
+// count instead of the raw progress lets Vue's computed cache absorb the rest.
+const filledProgressCells = computed(() => Math.round(store.segmentProgress * PROGRESS_CELLS))
 const progressCells = computed(() => {
-  const filled = Math.round(store.segmentProgress * PROGRESS_CELLS)
+  const filled = filledProgressCells.value
   return Array.from({ length: PROGRESS_CELLS }, (_, index) => ({
     filled: index < filled,
     dino: index < filled && (index + 1) % 10 === 0,
@@ -50,8 +57,74 @@ const progressCells = computed(() => {
 
 const canPrevious = computed(() => store.widgetCanPrevious)
 const canNext = computed(() => store.widgetCanNext)
+const NOVA_GLITCH_RANGES = [
+  [0.7, 0.78],
+  [0.79, 0.87],
+  [0.88, 0.96],
+] as const
+const NOVA_GLITCH_DURATION_SECONDS = 0.45
+const novaGlitchWindows = ref<readonly [number, number][]>([])
+
+// Placed at the midpoint of each authored range. This used to be
+// `start + (end - start) * Math.random()`, which meant no two runs of the show
+// were the same and a glitch seen in rehearsal could not be reproduced or ruled
+// out as a defect. Nothing in a single unattended performance benefits from the
+// variation, and the ranges are already authored to differ from one another.
+function scheduleNovaGlitches() {
+  const duration = store.segments[0]?.durationSeconds ?? 424
+  novaGlitchWindows.value = NOVA_GLITCH_RANGES.map(([start, end]) => {
+    const time = duration * ((start + end) / 2)
+    return [time, time + NOVA_GLITCH_DURATION_SECONDS]
+  })
+}
+
+watch(() => store.phase, (phase) => {
+  if (phase === 'cinematic' && store.segmentIndex === 0) {
+    scheduleNovaGlitches()
+  }
+  else {
+    novaGlitchWindows.value = []
+  }
+}, { immediate: true })
+
+const showNovaGlitch = computed(() =>
+  store.phase === 'cinematic'
+  && store.segmentIndex === 0
+  && novaGlitchWindows.value.some(([start, end]) => store.nativeTime >= start && store.nativeTime < end),
+)
 
 const progressEl = ref<HTMLElement | null>(null)
+const isVisible = ref(true)
+let autoHideTimer: ReturnType<typeof setTimeout> | null = null
+
+function resetAutoHide() {
+  if (!props.autoHide) {
+    return
+  }
+  isVisible.value = true
+  if (autoHideTimer) {
+    clearTimeout(autoHideTimer)
+  }
+  autoHideTimer = setTimeout(() => {
+    isVisible.value = false
+  }, 3000)
+}
+
+onMounted(() => {
+  if (props.autoHide) {
+    window.addEventListener('pointermove', resetAutoHide, { passive: true })
+    window.addEventListener('touchstart', resetAutoHide, { passive: true })
+    resetAutoHide()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (autoHideTimer) {
+    clearTimeout(autoHideTimer)
+  }
+  window.removeEventListener('pointermove', resetAutoHide)
+  window.removeEventListener('touchstart', resetAutoHide)
+})
 
 function handleSeek(event: MouseEvent) {
   const rect = progressEl.value?.getBoundingClientRect()
@@ -89,7 +162,27 @@ function handleVoiceOverChange(event: Event) {
 </script>
 
 <template>
-  <footer class="wc-widget wc-plate wc-plate--sheen">
+  <footer
+    class="wc-widget wc-plate wc-plate--sheen"
+    :class="{ 'wc-widget--hidden': props.autoHide && !isVisible }"
+    @focusin="resetAutoHide"
+  >
+    <span
+      class="wc-widget-slogan wc-widget-slogan--left"
+      :class="{ 'wc-widget-slogan--glitch': showNovaGlitch }"
+      aria-hidden="true"
+    >
+      <template v-if="showNovaGlitch">#NOVA4EVER</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORMAINTAINERS</template>
+    </span>
+    <span
+      class="wc-widget-slogan wc-widget-slogan--right"
+      :class="{ 'wc-widget-slogan--glitch': showNovaGlitch }"
+      aria-hidden="true"
+    >
+      <template v-if="showNovaGlitch">#NOVA4EVER</template>
+      <template v-else>#<span class="wc-widget-slogan-bluefin">F</span>IGHT<span class="wc-widget-slogan-bluefin">F</span>ORMAINTAINERS</template>
+    </span>
     <img
       class="wc-widget-art"
       :src="artworkSrc"
@@ -180,6 +273,66 @@ function handleVoiceOverChange(event: Event) {
   padding: 12px 16px;
   transform: translateX(-50%);
   touch-action: manipulation;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.wc-widget--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(100% + 1rem));
+}
+
+.wc-widget-slogan {
+  position: absolute;
+  top: 50%;
+  color: var(--wc-white);
+  font-family: var(--wc-font-weyland-mono);
+  font-size: clamp(1.4rem, 1.8vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 85%);
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.wc-widget-slogan--left {
+  right: calc(100% + clamp(1.2rem, 3vw, 4rem));
+}
+
+.wc-widget-slogan--right {
+  left: calc(100% + clamp(1.2rem, 3vw, 4rem));
+}
+
+.wc-widget-slogan-bluefin {
+  color: #38bdf8;
+}
+
+.wc-widget-slogan--glitch {
+  animation: wc-widget-slogan-glitch 0.18s steps(2, jump-none) infinite;
+}
+
+@keyframes wc-widget-slogan-glitch {
+  0% {
+    transform: translate(-2px, -50%) skewX(-4deg);
+    text-shadow:
+      2px 0 0 rgb(255 0 64 / 75%),
+      -2px 0 0 rgb(0 220 255 / 75%);
+  }
+
+  50% {
+    transform: translate(2px, -50%) skewX(3deg);
+    text-shadow:
+      -3px 0 0 rgb(255 0 64 / 75%),
+      3px 0 0 rgb(0 220 255 / 75%);
+  }
+
+  100% {
+    transform: translate(-1px, -50%);
+  }
 }
 
 .wc-widget-art,
@@ -394,7 +547,7 @@ function handleVoiceOverChange(event: Event) {
   .wc-widget {
     width: calc(100vw - 24px);
     gap: 8px;
-    padding: 10px 12px;
+    padding: 10px 12px 4rem;
   }
 
   .wc-widget-info {
@@ -408,8 +561,7 @@ function handleVoiceOverChange(event: Event) {
   }
 
   .wc-widget-meta {
-    gap: 8px;
-    flex-wrap: wrap;
+    display: none;
   }
 
   .wc-widget-time {
@@ -436,8 +588,16 @@ function handleVoiceOverChange(event: Event) {
     gap: 8px;
   }
 
-  // The block readout wraps badly at phone widths; times remain.
-  .wc-widget-meta .wc-widget-time:first-child {
+  .wc-widget-progress {
+    position: absolute;
+    right: 1.2rem;
+    bottom: 0.2rem;
+    left: 1.2rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .wc-widget-slogan {
     display: none;
   }
 }

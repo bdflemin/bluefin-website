@@ -1,40 +1,8 @@
 <script setup lang="ts">
-import qrDonate from '@/assets/svg/qr-donate.svg'
-import qrStore from '@/assets/svg/qr-store.svg'
 </script>
 
 <template>
   <section class="qr-grid" aria-label="Support Project Bluefin">
-    <article class="qr-card">
-      <h3 class="qr-title">
-        Store
-      </h3>
-      <div class="qr-image-box">
-        <img :src="qrStore" alt="QR code for the Project Bluefin store">
-      </div>
-      <div class="qr-action-wrap">
-        <a href="https://store.projectbluefin.io" target="_blank" rel="noopener noreferrer" class="qr-btn blue">
-          VISIT STORE
-        </a>
-        <span class="qr-domain">store.projectbluefin.io</span>
-      </div>
-    </article>
-
-    <article class="qr-card">
-      <h3 class="qr-title">
-        Donate to Project Bluefin
-      </h3>
-      <div class="qr-image-box">
-        <img :src="qrDonate" alt="QR code for Project Bluefin donations">
-      </div>
-      <div class="qr-action-wrap">
-        <a href="https://github.com/sponsors/castrojo" target="_blank" rel="noopener noreferrer" class="qr-btn dark">
-          DONATE
-        </a>
-        <span class="qr-domain">github.com/sponsors/castrojo</span>
-      </div>
-    </article>
-
     <article class="qr-card">
       <h3 class="qr-title">
         Cast Soundtrack

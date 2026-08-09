@@ -16,7 +16,7 @@ export const shermanM2CompositeTrackZeroWindow = {
   endTime: 184.12,
 } as const
 
-export const kyleSlideId = 'wolves/people/kyle.jpg'
+export const kyleSlideId = 'wolves/people/NOT John Bazzite.jpg'
 export const kyleTrackZeroWindow = {
   startTime: shermanM2CompositeTrackZeroWindow.endTime,
   endTime: 188.2,
@@ -40,9 +40,21 @@ export const jorgeBluefinTrackZeroWindow = {
   endTime: 196.36,
 } as const
 
+export const lauraSlideId = 'wolves/people/laura.webp'
+export const lauraTrackZeroWindow = {
+  startTime: jorgeBluefinTrackZeroWindow.endTime,
+  endTime: 200.44,
+} as const
+
+export const topheeSlideId = 'wolves/people/topheememe.jpg'
+export const topheeTrackZeroWindow = {
+  startTime: lauraTrackZeroWindow.endTime,
+  endTime: lauraTrackZeroWindow.endTime + 4.08,
+} as const
+
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
- * back-to-back after Marina's window (Sherman + m2 composite -> kyle -> Hikari -> Hikari2 -> Jorge).
+ * back-to-back after Marina's window (Sherman + m2 composite -> NOT John Bazzite -> Hikari -> Hikari2 -> Jorge).
  */
 export const bluefinGroupSlides = [
   { id: shermanM2CompositeSlideId, window: shermanM2CompositeTrackZeroWindow },
@@ -53,6 +65,15 @@ export const bluefinGroupSlides = [
 ] as const
 
 export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
+
+// Reza receives two standard 4.08-second slide windows so the HAMI Bazzite
+// quote and top title remain readable for the full portrait hold.
+const REZA_HOLD_SECONDS = 8.16
+export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
+export const rezaContributorTrackZeroWindow = {
+  startTime: topheeTrackZeroWindow.endTime,
+  endTime: topheeTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
+} as const
 
 /**
  * The first People slot is Jono's fixed 167.8s–171.88s Track 0 window.
@@ -72,7 +93,7 @@ export function pinJonoBaconAtTrackZeroWindow<T extends { id: string }>(slides: 
 }
 
 export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonly T[]): T[] {
-  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds]
+  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds, lauraSlideId, topheeSlideId]
   const heroSlides = heroSlideIds
     .map(id => slides.find(slide => slide.id === id))
     .filter((slide): slide is T => slide !== undefined)
@@ -85,13 +106,15 @@ export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonl
 
 /**
  * Locked opening run of the post-hero People stretch (starts right after the
- * Bluefin group hands off at 196.36s): Walters -> Tophee -> Kirkland ->
- * 0R0A9083 -> Daily Highlights 052, back-to-back in this exact order.
+ * Reza's contributor window ends): Kirkland -> Walters -> Jonathan Bryce -> CNCF
+ * Projects Team -> 0R0A9083 -> Daily Highlights 052,
+ * back-to-back in this exact order.
  */
 export const postHeroOpeningSequenceIds = [
-  'wolves/people/walters.JPG',
-  'wolves/people/flickr-54137782365.webp',
   'wolves/people/kirkland.webp',
+  'wolves/people/bootc creator Colin Walters.JPG',
+  'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
+  'wolves/people/CNCF Projects Team.webp',
   'wolves/people/flickr-55343975781.webp',
   'wolves/people/kubecon-55168545279.webp',
 ] as const
@@ -154,12 +177,12 @@ export const trackZeroFastFinalePhotoIds: ReadonlySet<string> = new Set([
   'wolves/people/20260709-osc26-distrobox-1.webp',
   'wolves/people/abigailcabunoc30360.web_.webp',
   'wolves/people/amberleighruth_reference.webp',
-  'wolves/people/ashleymcnamara35365.webp',
+  'wolves/people/Bluefin Advisor Ashley McNamara.webp',
   'wolves/people/dirkhohndel.faces21994.web_.webp',
   'wolves/people/faces.jessiefrazella25358.web_.webp',
   'wolves/people/liz.webp',
   'wolves/people/rikkiendsley28095-2.webp',
-  'wolves/people/stormy.faces23764.web_.webp',
+  'wolves/people/Bluefin Advisor Stormy Peters.webp',
   'wolves/people/vmbrasseur.webp',
 ] as const)
 

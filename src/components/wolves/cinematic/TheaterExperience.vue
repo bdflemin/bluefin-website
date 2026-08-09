@@ -14,8 +14,15 @@ import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 const store = useCinematicStore()
 
 const time = computed(() => store.nativeTime)
-const narrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
-const slotDuration = computed(() => Math.max(1, narrativeSlot.value.endTime - narrativeSlot.value.startTime))
+// The lore column follows the player clock and nothing else. A record used to
+// be able to pin this to its own slot until it finished rendering, which let a
+// long transmission run past its window and start every record after it late.
+const displayedNarrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
+const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
+const slotElapsed = computed(() => Math.min(
+  slotDuration.value,
+  Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
+))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
@@ -227,9 +234,14 @@ onBeforeUnmount(() => {
     <div class="wc-trackzero-grid" :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }">
       <div class="wc-trackzero-viewer">
         <!-- One persistent reader across every part preserves the single
-             Fisher-Yates gallery shuffle (no photo reuse between songs). -->
+             Fisher-Yates gallery shuffle (no photo reuse between songs).
+             `track-id` is required as well as `track-index`: the segment list is
+             a curated subset of the playlist, so the index alone reads another
+             song's tempo from Part V on. -->
         <WolvesComicReader
           :track-index="store.segmentIndex"
+          :track-id="store.segment.youtubeId"
+          :pending-track-index="store.pendingSegmentIndex ?? undefined"
           :playlist-current-time="time"
           :experience-id="store.experienceId"
           :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"
@@ -256,8 +268,9 @@ onBeforeUnmount(() => {
       <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
         <div class="wc-trackzero-lore-row">
           <WolvesLoreColumn
-            :artifact-id="narrativeSlot.artifactId"
+            :artifact-id="displayedNarrativeSlot.artifactId"
             :duration="slotDuration"
+            :elapsed="slotElapsed"
             :warning="thesis.warning"
           />
         </div>
@@ -428,7 +441,7 @@ onBeforeUnmount(() => {
 .wc-trackzero-lore-row {
   display: flex;
   min-height: 0;
-  overflow: hidden auto;
+  overflow: hidden;
 }
 
 .wc-trackzero-lore-row :deep(.wolves-lore-column) {

@@ -36,6 +36,22 @@ translations presented as authored copy.
 - New prose has no authoritative source.
 - A quote or attribution was reworded.
 - Missing text was reconstructed from memory.
+- Authored content is *deleted* to simplify code, tidy a list, or make a test
+  pass.
+- A removal's stated justification does not match its diff (a commit titled
+  "remove the extra ending segment" that deleted a middle segment, its authored
+  lore, and its chat, then renumbered the survivors — `24cf26b5`).
+- A numbered authored sequence has a gap after a change (`TRANSITION_ONE`,
+  `_TWO`, `_THREE`, `_FIVE`), which means an entry was removed.
+
+## Deleting authored content
+
+Deleting authored content is an editorial act and needs the owner's explicit
+word, exactly like writing new copy does. A deletion is harder to notice than an
+invention: it leaves no wrong sentence to read, only an absence, and the loss in
+`24cf26b5` went unnoticed for a long time. Before removing an authored record,
+count the survivors against the authored source of truth (for Wolves segments,
+`public/wolves-playlist.json`) and check every parallel array keyed by position.
 
 ## Verification
 
@@ -48,3 +64,7 @@ translations presented as authored copy.
 
 - `../../reference/content-map.md`
 - `../../reference/wolves-runtime.md`
+
+## Timing authored content
+
+Changing when authored prose appears still requires exact wording, attribution, and order. Preserve locked anchors; distribute unlocked records by content cost rather than shortening, summarizing, or repeating authored prose. Verify that the available interval can display the complete record.

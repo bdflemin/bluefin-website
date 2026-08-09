@@ -6,10 +6,31 @@ const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').m
 const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR
 
-const INTRO_DURATION = 119.5
-const OVERALL_DURATION = 1952.5
+// NOTE: these are FALLBACKS only. The live values are read from
+// `window.__wolvesCinematic.introDuration()` / `.overallDuration()` once the
+// app is up (see `readLiveDurations`). Hard-coding them caused this harness to
+// silently stop escaping the Destiny intro when the timeline changed.
+let INTRO_DURATION = 119.5
+let OVERALL_DURATION = 1952.5
 const PART_VII_START = 1718.5
 const DESTINY_SEEK_ELAPSED = 62
+
+// Replace the fallback durations with the live timeline as soon as the app
+// publishes them, so a timeline edit cannot silently strand this harness.
+async function readLiveDurations(page) {
+  const live = await page.evaluate(() => {
+    const d = window.__wolvesDurations
+    return d ? { intro: d.intro(), overall: d.overall() } : null
+  }).catch(() => null)
+  if (live && live.intro > 0 && live.overall > 0) {
+    INTRO_DURATION = live.intro
+    OVERALL_DURATION = live.overall
+    console.log(`  durations: intro=${INTRO_DURATION} overall=${OVERALL_DURATION} (live)`)
+  }
+  else {
+    console.log(`  durations: intro=${INTRO_DURATION} overall=${OVERALL_DURATION} (FALLBACK - hook missing)`)
+  }
+}
 
 let passed = 0
 let failed = 0
@@ -207,6 +228,7 @@ try {
   assert('Lobby brand label fits inside the frame', lobbyMetrics.brandFits, true)
   await capture(page, '01-lobby')
 
+  await readLiveDurations(page)
   await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION|MEET YOUR TEAMMATES/i }).click()
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 10_000 })
 

@@ -1,15 +1,50 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
+import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
-const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest] }>()
+const emit = defineEmits<{ enter: [], enterDirectorsCut: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
 
 const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.webp`
+
+// Mission waypoint: once the hero enter button scrolls away, a thin HUD bar
+// keeps the trip through Wolves one click away above the maintainer dispatch.
+const enterButton = ref<HTMLElement | null>(null)
+const waypointVisible = ref(false)
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  if (!enterButton.value || typeof IntersectionObserver === 'undefined') {
+    return
+  }
+  observer = new IntersectionObserver(([entry]) => {
+    waypointVisible.value = !entry.isIntersecting
+  })
+  observer.observe(enterButton.value)
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+})
 </script>
 
 <template>
   <div class="wc-lobby" :style="{ '--wc-lobby-background': `url('${lobbyBackground}')` }">
+    <Transition name="wc-waypoint">
+      <div v-if="waypointVisible" class="wc-waypoint wc-plate">
+        <span class="wc-waypoint-title">SEVEN DAYS TO THE WOLVES</span>
+        <span class="wc-label wc-waypoint-status">2 NOVEMBER 2026</span>
+        <div class="wc-waypoint-entry">
+          <span class="wc-cta-instruction">Click to begin the Wolves Experience</span>
+          <button class="wc-waypoint-enter wc-cta--primary" type="button" @click="emit('enter')">
+            <span class="wc-cta-icon" aria-hidden="true">▶</span>
+            Meet your Teammates
+          </button>
+        </div>
+      </div>
+    </Transition>
     <div class="wc-lobby-frame">
       <p class="wc-label wc-lobby-brand">
         PROJECT BLUEFIN PRESENTS
@@ -23,16 +58,30 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       </p>
 
       <p class="wc-lobby-status wc-label">
-        COMING IN 2027
+        2 NOVEMBER 2026
       </p>
 
-      <button
-        class="wc-lobby-enter wc-plate"
-        type="button"
-        @click="emit('enter')"
-      >
-        MEET YOUR TEAMMATES
-      </button>
+      <div class="wc-lobby-entry">
+        <p class="wc-cta-instruction">
+          Click to begin the Wolves Experience
+        </p>
+        <button
+          ref="enterButton"
+          class="wc-lobby-enter wc-cta--primary wc-plate"
+          type="button"
+          @click="emit('enter')"
+        >
+          <span class="wc-cta-icon" aria-hidden="true">▶</span>
+          Meet your Teammates
+        </button>
+      </div>
+
+      <div class="wc-lobby-dispatch">
+        <span class="wc-lobby-dispatch-dot" aria-hidden="true" />
+        <span class="wc-label">PRIORITY DISPATCH // MAINTAINERS NEEDED</span>
+      </div>
+
+      <WolvesCharacterGallery @watch-guardian="name => emit('watchGuardian', name)" />
 
       <blockquote class="wc-lobby-quote wc-plate wc-plate--sheen">
         <p>
@@ -57,6 +106,16 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       </blockquote>
       <WolvesQrCodes />
       <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
+
+      <div class="wc-lobby-directors-cut">
+        <button
+          class="wc-lobby-directors-cut-btn wc-plate"
+          type="button"
+          @click="emit('enterDirectorsCut')"
+        >
+          DIRECTOR'S CUT (PROLOGUE + DESTINY)
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -105,6 +164,121 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
   text-align: center;
 }
 
+// Tactical HUD bar pinned once the hero enter button scrolls away.
+.wc-waypoint {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  width: min(78rem, calc(100% - 2rem));
+  margin-top: 0.6rem;
+  padding: 0.7rem 1.6rem;
+}
+
+.wc-waypoint-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--wc-white);
+  white-space: nowrap;
+}
+
+.wc-waypoint-entry,
+.wc-lobby-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wc-lobby-entry {
+  align-self: center;
+}
+
+.wc-cta-instruction {
+  margin: 0;
+  font-family: var(--wc-font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--wc-grey);
+}
+
+.wc-waypoint-status {
+  font-size: 1rem;
+}
+
+.wc-waypoint-enter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 0.5rem 1.6rem;
+  border: 1px solid var(--wc-gold);
+  background: var(--wc-gold);
+  font-family: var(--wc-font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--wc-bg);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--wc-bg);
+    color: var(--wc-gold);
+  }
+}
+
+.wc-waypoint-enter-active,
+.wc-waypoint-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.wc-waypoint-enter-from,
+.wc-waypoint-leave-to {
+  opacity: 0;
+}
+
+// Dispatch strip: hands the reader from the trip to the maintainer call.
+.wc-lobby-dispatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.wc-lobby-dispatch-dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--wc-gold);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: wc-dispatch-pulse 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes wc-dispatch-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .wc-lobby-brand {
   font-size: clamp(1rem, 0.9vw, 1.35rem);
   letter-spacing: 0.44em;
@@ -133,12 +307,16 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
 }
 
 .wc-lobby-enter {
-  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   padding: 1.4rem 4.8rem;
   font-size: clamp(1.5rem, 1.45vw, 1.8rem);
   font-weight: 700;
   letter-spacing: 0.3em;
-  color: var(--wc-gold);
+  background: var(--wc-gold);
+  color: var(--wc-bg);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -146,14 +324,32 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
 
   &:hover:not(:disabled),
   &:focus-visible {
-    background: var(--wc-gold);
-    color: var(--wc-bg);
+    background: var(--wc-bg);
+    color: var(--wc-gold);
   }
 
   &:disabled {
     opacity: 0.35;
     cursor: default;
   }
+}
+
+.wc-cta-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 1.55em;
+  aspect-ratio: 1;
+  place-items: center;
+  background: var(--wc-bg);
+  color: var(--wc-gold);
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.wc-cta--primary:hover:not(:disabled) .wc-cta-icon,
+.wc-cta--primary:focus-visible .wc-cta-icon {
+  background: var(--wc-gold);
+  color: var(--wc-bg);
 }
 
 .wc-lobby-quote {
@@ -195,6 +391,34 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
   color: var(--wc-grey);
 }
 
+.wc-lobby-directors-cut {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.2rem;
+}
+
+.wc-lobby-directors-cut-btn {
+  align-self: center;
+  padding: 1.2rem 3rem;
+  font-family: var(--wc-font-mono);
+  font-size: clamp(1.2rem, 1.2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--wc-gold);
+  background: transparent;
+  border: 1px solid var(--wc-gold);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: var(--wc-gold);
+    color: var(--wc-bg);
+  }
+}
+
 @media (max-width: 640px) {
   .wc-lobby {
     padding: 3rem 1.4rem;
@@ -228,6 +452,20 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
 
   .wc-lobby-quote {
     padding: 1.8rem;
+  }
+
+  .wc-waypoint {
+    gap: 0.8rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .wc-waypoint-title {
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+  }
+
+  .wc-waypoint-status {
+    display: none;
   }
 }
 </style>

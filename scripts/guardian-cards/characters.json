@@ -1,0 +1,88 @@
+{
+  "characters": [
+    {
+      "slug": "bob",
+      "label": "TRUSTEE // GUARDIAN",
+      "trustee": true,
+      "class": "Voidwalker Warlock",
+      "name": "Bob Killen",
+      "title": "Reconciler of the Plane",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 10,
+      "linkTime": 5,
+      "dino": { "id": "bob-torosaurus", "species": "Torosaurus latus", "artwork": "characters/bob-torosaurus.webp" }
+    },
+    {
+      "slug": "kat",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Sentinel Titan",
+      "name": "Kat Cosgrove",
+      "title": "Defender Queen of the Lost",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 20.5,
+      "linkTime": 14,
+      "dino": { "id": "karl", "name": "Karl", "species": "Amargasaurus cazaui", "artwork": "characters/karl.webp" }
+    },
+    {
+      "slug": "kaslin",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Stormcaller Warlock",
+      "name": "Kaslin Fields",
+      "title": "Rage of the Paradox",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 42,
+      "linkTime": 38,
+      "dino": { "id": "kentrosaurus", "name": "Katerina", "species": "Kentrosaurus aethiopicus", "artwork": "characters/header/katharina.webp" }
+    },
+    {
+      "slug": "laura",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Gunslinger Hunter",
+      "name": "Laura Santamaria",
+      "title": "The Order of Seven",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 75,
+      "linkTime": 70
+    },
+    {
+      "slug": "christoph",
+      "label": "TRUSTEE // GUARDIAN",
+      "trustee": true,
+      "leader": true,
+      "class": "Broodweaver Warlock",
+      "name": "Christoph Blecker",
+      "title": "First Among Equals — The North Star",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 86.5,
+      "linkTime": 83
+    },
+    {
+      "slug": "natali",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Behemoth Titan",
+      "name": "Natali Vlatko",
+      "title": "Shipwright of Kubernetes",
+      "videoId": "BV3BZKbpBns",
+      "videoTitle": "Destiny 2: Into the Light Cinematic",
+      "sceneTime": 91,
+      "linkTime": 87,
+      "dino": { "id": "alamosaurus", "name": "Alamo", "species": "Alamosaurus sanjuanensis", "artwork": "characters/alamosaurus.webp" }
+    },
+    {
+      "slug": "andy",
+      "label": "MAINTAINER // GUARDIAN",
+      "class": "Shadebinder Warlock",
+      "name": "Doctor Andy Anderson",
+      "title": "Foundry of the Forbidden",
+      "videoId": "Mcwyz09Q--o",
+      "videoTitle": "Destiny 2: Beyond Light – Warlock Shadebinder Gameplay Trailer",
+      "sceneTime": 18,
+      "linkTime": 12
+    }
+  ]
+}

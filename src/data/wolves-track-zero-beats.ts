@@ -1076,8 +1076,8 @@ export const TRACK_ZERO_TEMPO_PICKUPS = {
   chorus: 155,
   /** Chanting bridge pickup at 4:04. */
   bridge: 244,
-  /** Finale barrage pickup at 6:00. */
-  finale: 360,
+  /** Finale barrage pickup at 5:55, snapped to the measured beat. */
+  finale: 355.219,
 } as const
 
 export const TRACK_ZERO_SECTIONS = {
@@ -1093,8 +1093,8 @@ export const TRACK_ZERO_SECTIONS = {
   pivotalStart: 344.956,
   /** Pivotal freeze end / bketelsen freeze start (beat 867); covers 351s. */
   pivotalEnd: 350.482,
-  /** bketelsen freeze end / beat barrage start (beat 889). */
-  bkEnd: 359.166,
+  /** bketelsen freeze end / beat barrage start (beat 879). */
+  bkEnd: 355.219,
   /**
    * Measured beat aligned to the Become Legend cue; the finale hold rides the
    * remaining ring-out and fade to silence through the 423s handoff.
@@ -1145,6 +1145,7 @@ export function trackZeroBeatCuts(
   if (count <= 0) {
     return []
   }
+
   const beats = TRACK_ZERO_BEAT_TIMES
   const startIndex = nearestBeatIndex(startTime)
   const endIndex = nearestBeatIndex(endTime)
@@ -1175,6 +1176,33 @@ export function trackZeroBeatCuts(
   }
   cuts[count - 1] = endTime
   return cuts
+}
+
+/** Distributes cuts evenly across measured beats for a sustained fast barrage. */
+export function trackZeroEvenBeatCuts(
+  startTime: number,
+  endTime: number,
+  count: number,
+): number[] {
+  if (count <= 0) {
+    return []
+  }
+
+  const startIndex = nearestBeatIndex(startTime)
+  const endIndex = nearestBeatIndex(endTime)
+  const totalBeats = endIndex - startIndex
+  if (totalBeats < count) {
+    return Array.from({ length: count }, (_, index) =>
+      index === count - 1 ? endTime : startTime + ((endTime - startTime) * (index + 1)) / count)
+  }
+
+  return Array.from({ length: count }, (_, index) => {
+    if (index === count - 1) {
+      return endTime
+    }
+    const beatIndex = startIndex + Math.round((totalBeats * (index + 1)) / count)
+    return TRACK_ZERO_BEAT_TIMES[beatIndex] ?? endTime
+  })
 }
 
 /**

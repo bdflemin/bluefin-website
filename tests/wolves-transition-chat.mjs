@@ -43,6 +43,26 @@ async function assertVisibleText(page, label, text) {
   assert(label, visible, true)
 }
 
+async function clickControl(page, label) {
+  // The transport widget auto-hides without pointer input, and scripted seeks do
+  // not count as input. Nudge the pointer, then click the *visible* match: the
+  // overlay and the transport both expose a control with this label, and a raw
+  // getByLabel intermittently resolves to the off-screen one.
+  await page.mouse.move(720, 450)
+  await page.mouse.move(722, 452)
+  await page.waitForTimeout(800)
+  const control = page.getByLabel(label)
+  const count = await control.count()
+  for (let index = 0; index < count; index += 1) {
+    const candidate = control.nth(index)
+    if (await candidate.isVisible()) {
+      await candidate.click()
+      return
+    }
+  }
+  throw new Error(`No visible "${label}" control to click`)
+}
+
 async function capture(page, name) {
   if (SCREENSHOT_DIR) {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/${name}.png`, fullPage: false })
@@ -57,11 +77,14 @@ const TERMINAL_TEXTS = [
 // The authored lore conversations are hidden from the overlay; every
 // transition renders the terminal block instead.
 const transitions = [
-  { name: 'transition-1', chapter: 'PART II', title: 'Ghosts In The Mist' },
+  // Ghosts In The Mist opens on the Jorge Castro guardian plate, so
+  // CinematicTransition deliberately renders no terminal card for this handoff.
+  { name: 'transition-1', chapter: 'PART II', title: 'Ghosts In The Mist', skipsOverlay: true },
   { name: 'transition-2', chapter: 'PART III', title: 'Tonight We Must Be Warriors' },
   { name: 'transition-3', chapter: 'PART IV', title: 'Not Your Monster' },
-  { name: 'transition-4', chapter: 'PART V', title: 'Soulbound' },
-  { name: 'transition-5', chapter: 'PART VI', title: 'Last Ride of the Day' },
+  { name: 'transition-4', chapter: 'PART V', title: 'End of You' },
+  { name: 'transition-5', chapter: 'PART VI', title: 'Soulbound' },
+  { name: 'transition-6', chapter: 'PART VII', title: 'Last Ride of the Day' },
 ].map(transition => ({
   ...transition,
   texts: TERMINAL_TEXTS,
@@ -183,10 +206,17 @@ try {
 
   await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION|MEET YOUR TEAMMATES/i }).click()
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 10_000 })
-  await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
 
-  await page.getByLabel('Next').click()
-  await page.waitForSelector('.wolves-intro-overlay', { state: 'hidden', timeout: 10_000 })
+  // The show opens on the silent welcome title card, which runs for the best part
+  // of a minute before the Destiny trailer mounts its player. Step past it rather
+  // than waiting it out — a harness that waits on the player first dies here with
+  // zero assertions run, which reads as a hang rather than a stale selector.
+  await page.waitForSelector('.wolves-intro-title-card-plate', { state: 'visible', timeout: 10_000 })
+  await clickControl(page, 'Next')
+
+  await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 15_000 })
+  await clickControl(page, 'Next')
+  await page.waitForSelector('.wolves-intro-overlay', { state: 'hidden', timeout: 15_000 })
 
   await page.waitForSelector('.wc-stage', { state: 'visible', timeout: 10_000 })
   const compactPlayerBounds = await page.locator('.wc-stage .wc-layer').evaluateAll(layers =>
@@ -202,8 +232,21 @@ try {
   )
 
   for (const transition of transitions) {
-    await page.getByLabel('Next').click()
+    await clickControl(page, 'Next')
     assertTruthy(`Triggered ${transition.name}`, true)
+
+    if (transition.skipsOverlay) {
+      // Assert the deliberate absence rather than stepping over it, so losing the
+      // skip shows up here instead of in front of an audience.
+      await page.waitForTimeout(1500)
+      assert(
+        `${transition.name} renders no terminal card by design`,
+        await page.locator('.wc-transition-overlay').isVisible().catch(() => false),
+        false,
+      )
+      continue
+    }
+
     await page.waitForSelector('.wc-transition-overlay', { state: 'visible', timeout: 10_000 })
 
     assert(`${transition.name} chapter`, await page.locator('.wc-transition-overlay .wc-label').textContent(), transition.chapter)

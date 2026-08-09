@@ -27,6 +27,12 @@ const props = defineProps<{
   videos: readonly IntroVideoSpec[]
   holdForHandoff?: boolean
   transparentHandoff?: boolean
+  /**
+   * Native (video-absolute) seconds to open the first video segment at, e.g. a Guardian's
+   * nameplate cue when deep-linked from the lobby character gallery. Only applied once, on
+   * that segment's initial `onReady`; ignored when it falls before the authored startOffset.
+   */
+  startAtNativeTime?: number
 }>()
 
 const emit = defineEmits<{
@@ -37,8 +43,7 @@ const emit = defineEmits<{
 const baseUrl = import.meta.env.BASE_URL
 const comicHeroQrUrl = 'https://makemeacomic.com'
 const comicHeroQrDomain = 'makemeacomic.com'
-const comicHeroQrDialogue = 'Immortalize a Maintainer'
-
+const comicHeroQrDialogue = 'Level Up a Maintainer'
 const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
 const isPaused = ref(false)
@@ -59,6 +64,11 @@ const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(
 
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const canGoToPrevious = computed(() => sequenceState.value.index > 0)
+/**
+ * The last segment of the intro is the one that hands off to Track 0, so it is the only one
+ * whose video audio has to be taken down before the concert's first bar arrives.
+ */
+const isFinalSegment = computed(() => sequenceState.value.index === props.videos.length - 1)
 
 const activeCue = computed<IntroOverlayTextCue | undefined>(() => activeOverlayCue(currentSegment.value?.overlays, currentTime.value))
 const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>(() => {
@@ -86,6 +96,14 @@ const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => 
 const activeComicHeroShot = computed(() => activeComicTitleCardCue.value
   ? getActiveComicHeroShot(currentTime.value, activeComicTitleCardCue.value)
   : undefined)
+/**
+ * The opening title card's cue, if one is on screen. Its quote is rendered inside the
+ * nameplate block rather than as a standard caption, so the normal overlay text is
+ * suppressed while it is active — otherwise the same words would paint twice.
+ */
+const activeTitlePlateCue = computed<IntroOverlayTextCue | undefined>(() =>
+  activeCue.value?.titlePlate ? activeCue.value : undefined,
+)
 const comicHeroLeftOffsets = ref<Record<string, number>>({})
 const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
@@ -385,8 +403,58 @@ let player: YoutubePlayer | null = null
 let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
+/** performance.now() corresponding to elapsed 0 on a silent text card. */
+let textClockOriginMs = 0
+
+/**
+ * How long the trailer's audio takes to reach silence at the intro→Track 0 junction.
+ *
+ * The authored `audioFadeOutSeconds` musical fade only exists on `text` segments and only
+ * touches `audioPlayer`, but the final intro segment is the Destiny trailer — a `video`
+ * segment on the main `player`. Without this the trailer's audio was severed mid-air by
+ * `destroyPlayer()` and Track 0 slammed in at full volume over the silence.
+ */
+const VIDEO_HANDOFF_FADE_SECONDS = 2
+/** Ramp resolution for the completion-time fallback fade; the poll loop drives the lead fade. */
+const VIDEO_HANDOFF_FADE_STEP_MS = 50
+/** Last volume actually pushed to the video player, so a ramp can resume from where it sits. */
+let videoVolume = 100
+let handoffFadeTimer: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Equal-power taper: two linear ramps sum to a dip in perceived loudness at the midpoint, and
+ * Track 0 is coming up underneath this one.
+ */
+function equalPowerFadeOut(progress: number): number {
+  return Math.cos(Math.min(Math.max(progress, 0), 1) * (Math.PI / 2))
+}
+
+function stopHandoffFade() {
+  if (handoffFadeTimer) {
+    clearInterval(handoffFadeTimer)
+    handoffFadeTimer = null
+  }
+}
+
+function applyVideoVolume(level: number) {
+  const clamped = Math.round(Math.min(Math.max(level, 0), 100))
+  if (clamped === videoVolume) {
+    return
+  }
+  videoVolume = clamped
+  player?.setVolume?.(clamped)
+}
+
+/**
+ * Guard against a click landing a hair before the active cue's own start and "advancing" to
+ * the cue already on screen, which reads to the presenter as a dead click.
+ */
+const CUE_ADVANCE_EPSILON_SECONDS = 0.05
+
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
+/** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
+let deepLinkStartConsumed = false
 const handoffPending = ref(false)
 
 /** Seek within the active segment by 0..1 ratio, driven by the hero widget's progress bar. */
@@ -398,7 +466,9 @@ function seekToSeconds(targetSeconds: number) {
   }
   else {
     // Text segments follow the background audio's clock, so the audio must move too.
+    // A silent card has no audio player, so rebase its own clock origin instead.
     audioPlayer?.seekTo?.(clamped, true)
+    textClockOriginMs = performance.now() - clamped * 1000
   }
 }
 
@@ -436,9 +506,67 @@ function stopTextTimer() {
 
 function destroyPlayer() {
   stopPolling()
+  stopHandoffFade()
   pendingPausedSourceSwitchTime = null
   player?.destroy?.()
   player = null
+  videoVolume = 100
+}
+
+/**
+ * Take the trailer's audio down across the final segment's own closing seconds, recomputed
+ * every tick so seeking back out of the window restores full volume instead of leaving the
+ * trailer stuck quiet. Same contract as the authored `audioFadeOutSeconds` text fade.
+ */
+function updateHandoffFade() {
+  if (!isFinalSegment.value || isPaused.value || activeSegmentDuration.value <= 0 || !player?.setVolume) {
+    return
+  }
+  const remaining = activeSegmentDuration.value - currentTime.value
+  if (remaining > VIDEO_HANDOFF_FADE_SECONDS) {
+    applyVideoVolume(100)
+    return
+  }
+  applyVideoVolume(equalPowerFadeOut(1 - remaining / VIDEO_HANDOFF_FADE_SECONDS) * 100)
+}
+
+/**
+ * Completion-time safety net for every path that reaches the end without running the lead
+ * fade above — an early `ENDED`, a player error, Skip, or the presenter pressing Next. It
+ * ramps from wherever the volume already sits (so a completed lead fade destroys at once)
+ * and destroys the player only when the ramp lands.
+ *
+ * This never delays `emit('complete')`: Track 0's load has to start in parallel with the
+ * ramp, because the overlay is held opaque until `stage.start()` resolves. Serialising them
+ * would lengthen the very gap this fade exists to close.
+ */
+function fadeOutAndDestroyPlayer() {
+  if (handoffFadeTimer) {
+    return
+  }
+  stopPolling()
+
+  const activePlayer = player
+  if (!activePlayer?.setVolume || videoVolume <= 0) {
+    destroyPlayer()
+    return
+  }
+
+  const rampMs = VIDEO_HANDOFF_FADE_SECONDS * 1000 * (videoVolume / 100)
+  const startVolume = videoVolume
+  const startedAtMs = performance.now()
+  handoffFadeTimer = setInterval(() => {
+    // Unmount or a fresh segment load can tear the player out from under the ramp.
+    if (player !== activePlayer) {
+      stopHandoffFade()
+      return
+    }
+    const progress = (performance.now() - startedAtMs) / rampMs
+    applyVideoVolume(equalPowerFadeOut(progress) * startVolume)
+    if (progress >= 1) {
+      destroyPlayer()
+    }
+  }, VIDEO_HANDOFF_FADE_STEP_MS)
 }
 
 function destroyAudioPlayer() {
@@ -487,21 +615,30 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
+  textClockOriginMs = performance.now()
   void loadAudioTrack(segment.audioYoutubeVideoId)
 
   textTimer = setInterval(() => {
+    const now = performance.now()
     if (isPaused.value) {
+      // Hold the clock by trailing the origin, so resuming continues where it stopped.
+      textClockOriginMs = now - currentTime.value * 1000
       return
     }
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    // Without an audio embed there is nothing to sync to, so wall-clock ticks.
     if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
       currentTime.value = audioPlayer.getCurrentTime() ?? 0
     }
     else {
-      currentTime.value += 0.2
+      // A silent card (the presenter's welcome slide) has no player to read, so it
+      // derives elapsed time from a fixed origin. Two rules this encodes the hard
+      // way: never assume the interval fired on schedule — a hardcoded `+= 0.2` on
+      // a 100ms tick ran every silent card at double speed, so the 59s opening slide
+      // played in 29.5s and nobody in the back row finished a paragraph — and never
+      // accumulate deltas, which drifts over a card this long.
+      currentTime.value = (now - textClockOriginMs) / 1000
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The
@@ -567,11 +704,16 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
   const mountNode = document.createElement('div')
   mountHost.value.appendChild(mountNode)
 
+  // A gallery deep link overrides the authored opening frame, once, for the first player.
+  const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
+  deepLinkStartConsumed = true
+  const startTime = Math.max(segment.startOffset ?? 0, deepLinkTime ?? 0)
+
   const playerVars = getChromeFreeYoutubePlayerVars({
     autoplay: 1,
     // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
     cc_load_policy: 0,
-    ...(segment.startOffset ? { start: Math.round(segment.startOffset) } : {}),
+    ...(startTime ? { start: Math.round(startTime) } : {}),
   })
 
   player = new PlayerCtor(mountNode, {
@@ -584,8 +726,12 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         // YouTube may restore a prior watch position for a reused video ID even
         // when playerVars.start is present. Reassert the authored opening frame
         // after readiness so revisiting Wolves always begins at the beginning.
-        const openingTime = segment.startOffset ?? 0
-        player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+        const openingTime = startTime
+        if (deepLinkTime == null) {
+          // Reload only for front-door entries: loadVideoById restarts playback from the
+          // buffered beginning, which would discard a deep-linked Guardian opening time.
+          player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+        }
         player?.seekTo?.(openingTime, true)
         currentTime.value = openingTime
         activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
@@ -593,6 +739,7 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         stopPolling()
         pollTimer = setInterval(() => {
           currentTime.value = player?.getCurrentTime?.() ?? 0
+          updateHandoffFade()
           if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
             advance()
           }
@@ -652,7 +799,7 @@ function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
 
 watch(() => sequenceState.value.done, (done) => {
   if (done) {
-    destroyPlayer()
+    fadeOutAndDestroyPlayer()
     stopTextTimer()
     destroyAudioPlayer()
     handoffPending.value = props.holdForHandoff ?? false
@@ -668,6 +815,49 @@ function handleNext() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
+/**
+ * Presenter pacing for a silent text card: jump to the next authored cue, or into the next
+ * segment once the last cue is up.
+ *
+ * This is an operator affordance, not a narrative dependency. The card still advances itself
+ * on its own clock, so an unattended run behaves exactly as before and never waits for input.
+ * It exists because the welcome card is spoken live: the presenter finishes a line and wants
+ * the next one, rather than standing in silence until the authored window expires.
+ *
+ * Scored cards are deliberately excluded. A card with a music bed has its cues written against
+ * that track, so moving the text without moving the music desyncs the segment for the rest of
+ * its run. Only a silent card, where the presenter's own voice is the soundtrack, is safe to
+ * pace by hand.
+ */
+function advanceTextCue() {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || segment.audioYoutubeVideoId || isPaused.value) {
+    return
+  }
+
+  const nextCue = segment.overlays
+    ?.filter(cue => cue.start > currentTime.value + CUE_ADVANCE_EPSILON_SECONDS)
+    .sort((a, b) => a.start - b.start)[0]
+
+  if (!nextCue) {
+    handleNext()
+    return
+  }
+
+  seekToSeconds(nextCue.start)
+}
+
+/**
+ * Advance the welcome card when the presenter clicks it. Clicks on the transport chrome are
+ * left alone so Play/Pause/Next keep their own meaning, and video and scored segments are
+ * untouched: only a silent, presenter-spoken text card is click-advanced.
+ */
+function handleOverlayClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a, input, [role="button"]')) {
+    return
+  }
+  advanceTextCue()
+}
 function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
@@ -785,6 +975,7 @@ defineExpose({
       v-if="currentSegment && (!sequenceState.done || handoffPending)"
       class="wolves-intro-overlay"
       :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+      @click="handleOverlayClick"
     >
       <template v-if="currentSegment.kind === 'video'">
         <div ref="mountHost" class="wolves-intro-overlay-player" />
@@ -800,7 +991,10 @@ defineExpose({
               <img
                 v-if="activeCue?.backgroundImage"
                 class="wolves-intro-overlay-background"
-                :class="{ 'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns' }"
+                :class="{
+                  'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns',
+                  'wolves-intro-overlay-background-title-card': activeCue.titlePlate,
+                }"
                 :style="activeCue.backgroundMotion === 'kenburns' ? { animationDuration: `${activeCue.end - activeCue.start}s` } : undefined"
                 :src="`${baseUrl}${activeCue.backgroundImage}`"
                 alt=""
@@ -834,7 +1028,10 @@ defineExpose({
         <div v-if="activeComicTitleCardCue" class="wolves-intro-overlay-title-card">
           <div class="wolves-intro-overlay-title-card-layout">
             <div class="wolves-intro-overlay-title-card-main">
-              <p class="wolves-intro-overlay-title-card-line">
+              <p
+                v-if="activeComicTitleCardCue.text"
+                class="wolves-intro-overlay-title-card-line"
+              >
                 {{ activeComicTitleCardCue.text }}
               </p>
               <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">
@@ -850,12 +1047,6 @@ defineExpose({
                   >
                 </Transition>
               </div>
-              <p
-                class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
-                data-comic-hero-paid-artists
-              >
-                Made by Paid Artists
-              </p>
             </div>
 
             <a
@@ -874,10 +1065,7 @@ defineExpose({
                   data-comic-hero-qr-image
                 >
               </div>
-              <span
-                class="wolves-intro-overlay-title-card-qr-dialogue"
-                data-comic-hero-qr-dialogue
-              >
+              <span class="wolves-intro-overlay-title-card-qr-dialogue" data-comic-hero-qr-dialogue>
                 {{ comicHeroQrDialogue }}
               </span>
               <span class="wolves-intro-overlay-title-card-qr-domain" data-comic-hero-qr-domain>
@@ -885,6 +1073,13 @@ defineExpose({
               </span>
             </a>
           </div>
+          <blockquote class="wolves-intro-overlay-title-card-amber-quote" data-amber-quote>
+            <p>"You don't need permission to contribute to your own destiny."</p>
+            <div class="wolves-intro-overlay-title-card-amber-attribution">
+              <strong>— Amber Graner</strong>
+              <span>Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]</span>
+            </div>
+          </blockquote>
         </div>
         <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
           <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
@@ -982,7 +1177,7 @@ defineExpose({
       </template>
 
       <p
-        v-else-if="overlayText"
+        v-else-if="overlayText && !activeTitlePlateCue"
         :key="overlayText"
         class="wolves-intro-overlay-text font-mono"
         :class="{
@@ -1007,6 +1202,41 @@ defineExpose({
           >{{ part.char }}</span>
         </template>
       </p>
+
+      <!-- Opening title card lower third. Replicates the Ghosts In The Mist guardian
+           nameplate from WolvesComicReader.vue (crest, horizon rules, gradient name) with
+           the class and honorific lines dropped, then renders the welcome quote beneath it
+           one authored paragraph at a time. Rendered verbatim: this quote states real
+           figures and organisation names, so it never goes through the theater punctuation
+           strip that the cinematic display cues use. -->
+      <div v-if="activeTitlePlateCue" class="wolves-intro-title-card-plate font-mono">
+        <div class="wolves-intro-title-card-header" aria-hidden="true">
+          <div class="wolves-intro-title-card-horizon wolves-intro-title-card-horizon-left" />
+          <svg class="wolves-intro-title-card-crest" viewBox="0 0 100 100">
+            <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-intro-title-card-crest-outer" />
+            <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-intro-title-card-crest-inner" />
+            <path d="M35,45 L50,60 L65,45" class="wolves-intro-title-card-crest-chevron" />
+          </svg>
+          <div class="wolves-intro-title-card-horizon wolves-intro-title-card-horizon-right" />
+        </div>
+        <p class="wolves-intro-title-card-name">
+          {{ activeTitlePlateCue.titlePlate!.name }}
+        </p>
+        <p class="wolves-intro-title-card-subtitle">
+          {{ activeTitlePlateCue.titlePlate!.subtitle }}
+        </p>
+        <Transition name="wolves-intro-title-card-quote-fade" mode="out-in">
+          <div :key="activeTitlePlateCue.text" class="wolves-intro-title-card-quote">
+            <p
+              v-for="(paragraph, index) in activeTitlePlateCue.text.split('\n\n')"
+              :key="index"
+              class="wolves-intro-title-card-quote-body"
+            >
+              {{ paragraph }}
+            </p>
+          </div>
+        </Transition>
+      </div>
 
     <!-- Transport now lives in the app-level Destiny hero widget; the overlay
          exposes next/previous/toggle/seekToRatio and emits status instead. -->
@@ -1079,6 +1309,155 @@ defineExpose({
   /* Dims still images (e.g. the KubeCon Ken Burns beat) behind the overlaid text; the
      day/night crossfade beats override this via their own animated opacity below. */
   opacity: 0.55;
+}
+
+/* The opening title card's photo is the subject of the slide, not a backdrop for text, so
+   it is dimmed far less than the cinematic still beats above. The lower third carries its
+   own panel, which keeps the quote legible without darkening the whole frame. */
+.wolves-intro-overlay-background-title-card {
+  opacity: 0.92;
+  /* Portrait keeps `cover` (inherited above) biased to the upper frame, because `contain` in
+     a tall viewport shrinks the 3:2 photo to a stamp floating in black. */
+  object-position: center 30%;
+}
+
+/* Landscape, which is what a projector shows: the photo is 3:2 and the frame is wider, so
+   `cover` scaled it to the frame width and cropped the top and bottom away. `contain` shows
+   the whole photo, keeping the full gesture in frame for the back of the room. */
+@media (min-aspect-ratio: 4 / 3) {
+  .wolves-intro-overlay-background-title-card {
+    object-fit: contain;
+    object-position: center center;
+  }
+}
+
+/* Opening title card lower third. Palette, crest geometry and gradient name mirror
+   `.theater-guardian-*` in WolvesComicReader.vue so the two plates read as the same object;
+   only the class and honorific lines are absent here. */
+.wolves-intro-title-card-plate {
+  position: absolute;
+  /* Clears the transport widget's fixed bottom dock (z-index 1000, ~100px tall). The widget
+     auto-hides during the intro, but the quote must stay readable while it is on screen. */
+  bottom: max(4%, 11.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  /* Narrow enough that the quote breaks into readable lines. At the old 96rem the body ran
+     to roughly 90 characters per line, far past the ~50-75 an audience can track. */
+  width: min(92%, 68rem);
+  max-height: 58%;
+  overflow-y: auto;
+  z-index: 12;
+  padding: clamp(1.1rem, 0.9rem + 0.8vw, 1.7rem) clamp(1.5rem, 1.2rem + 1.4vw, 2.6rem);
+  /* A soft scrim rather than a panel: the photo is the slide, so the plate darkens just
+     enough to hold contrast and fades out at its edges instead of drawing a lit box on
+     top of the frame. Legibility is carried by the blur and the text shadow. */
+  border: 0;
+  border-radius: 1.5rem;
+  background: radial-gradient(
+    120% 140% at 50% 50%,
+    rgb(6 9 14 / 82%) 0%,
+    rgb(6 9 14 / 74%) 55%,
+    rgb(6 9 14 / 30%) 100%
+  );
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+  text-align: center;
+  color: #f5f5f5;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
+}
+
+.wolves-intro-title-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.wolves-intro-title-card-horizon {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 2rem;
+  background: linear-gradient(to right, transparent, #d1d5db 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(226 232 240 / 55%);
+}
+
+.wolves-intro-title-card-horizon-right {
+  background: linear-gradient(to left, transparent, #d1d5db 60%, #fff 100%);
+}
+
+.wolves-intro-title-card-crest {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgb(226 232 240 / 65%));
+}
+
+.wolves-intro-title-card-crest-outer {
+  fill: none;
+  stroke: #d1d5db;
+  stroke-width: 2;
+}
+
+.wolves-intro-title-card-crest-inner {
+  fill: rgb(8 12 20 / 95%);
+  stroke: #f5f5f5;
+  stroke-width: 1;
+}
+
+.wolves-intro-title-card-crest-chevron {
+  fill: none;
+  stroke: #d1d5db;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wolves-intro-title-card-name {
+  margin: 0.2rem 0 0;
+  font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #f5f5f5;
+  background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
+}
+
+.wolves-intro-title-card-subtitle {
+  margin: 0.35rem 0 1.1rem;
+  font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.7rem);
+  color: #94a3b8;
+}
+
+/* Sized for readers in theater seats rather than at a desk: this is the slide's message,
+   not a caption under a photo, so it runs larger than the Ghosts plate's body copy. */
+.wolves-intro-title-card-quote-body {
+  /* `balance` splits the paragraph into even lines so no beat ends on a one-word orphan,
+     which is the single most distracting thing about projected text. */
+  margin: 0 auto 0.6rem;
+  max-width: 46ch;
+  font-size: clamp(1.5rem, 1.2rem + 0.8vw, 2.1rem);
+  line-height: 1.5;
+  text-wrap: balance;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Each authored paragraph cross-dissolves into the next rather than cutting, matching the
+   unhurried pace of the rest of the intro. */
+.wolves-intro-title-card-quote-fade-enter-active,
+.wolves-intro-title-card-quote-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.wolves-intro-title-card-quote-fade-enter-from,
+.wolves-intro-title-card-quote-fade-leave-to {
+  opacity: 0;
 }
 
 .wolves-intro-overlay-background-day {
@@ -1234,15 +1613,17 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: clamp(1.2rem, 2.5vw, 2.4rem);
-  width: min(100%, 100rem);
+  gap: clamp(2rem, 4vw, 5rem);
+  width: fit-content;
+  max-width: 100%;
+  transform: translate(-6.25vw, -5rem);
 }
 
 .wolves-intro-overlay-title-card-main {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -1254,7 +1635,7 @@ defineExpose({
      bounds, not its transparent canvas. The title and pill remain pinned outside
      the frame, so the hero art cannot move either text band. */
   position: relative;
-  width: min(72vw, 42vh, 60rem);
+  width: min(58vw, 50vh, 52rem);
   aspect-ratio: 1;
 }
 
@@ -1296,13 +1677,12 @@ defineExpose({
 }
 
 .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
-  /* Pinned to the screen, out of the art's layout flow: the cycling art can
-     never move the title. */
+  /* Pinned above the art so the cycling image can never move the title. */
   position: absolute;
   top: clamp(11rem, 17vh, 14rem);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(90vw, 96rem);
+  left: clamp(1.6rem, 4vw, 4rem);
+  width: min(72vw, 80rem);
+  text-align: left;
 }
 
 .wolves-intro-overlay-title-card-line-small {
@@ -1326,49 +1706,77 @@ defineExpose({
   -webkit-text-stroke: 0;
 }
 
+.wolves-intro-overlay-title-card-amber-quote {
+  position: absolute;
+  bottom: clamp(12.5rem, 14vh, 13rem);
+  left: 50%;
+  width: min(90vw, 90rem);
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  text-align: center;
+  text-shadow:
+    0 3px 12px rgb(0 0 0 / 95%),
+    0 0 24px rgb(0 0 0 / 75%);
+  transform: translateX(-50%);
+}
+
+.wolves-intro-overlay-title-card-amber-quote p {
+  margin: 0;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(2rem, 3.4vw, 4rem);
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.wolves-intro-overlay-title-card-amber-attribution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  text-align: center;
+}
+
+.wolves-intro-overlay-title-card-amber-quote strong {
+  color: #93c5fd;
+  font-size: clamp(1.15rem, 1.4vw, 1.6rem);
+}
+
+.wolves-intro-overlay-title-card-amber-quote span {
+  color: #cbd5e1;
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
+  line-height: 1.35;
+}
+
 .wolves-intro-overlay-title-card-qr {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 0.9rem;
   justify-self: end;
-  width: min(100%, 24rem);
+  width: min(100%, 38rem);
   padding: 1.2rem;
   border: 1px solid rgb(147 197 253 / 32%);
   border-radius: 2rem;
   background: linear-gradient(180deg, rgb(9 11 16 / 92%) 0%, rgb(5 7 10 / 96%) 100%);
-  box-shadow:
-    0 0 32px rgb(0 0 0 / 55%),
-    inset 0 0 0 1px rgb(255 255 255 / 5%);
   color: #fff;
   text-decoration: none;
-  transform: translateY(-3rem);
-}
-
-.wolves-intro-overlay-title-card-qr-dialogue {
-  width: 100%;
-  min-height: 3.8rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgb(147 197 253 / 40%);
-  border-radius: 0.85rem;
-  background: rgb(5 18 31 / 88%);
-  box-shadow: inset 0 0 18px rgb(59 130 246 / 14%);
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  font-size: clamp(1.05rem, 1.15vw, 1.3rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  line-height: 1.35;
-  text-transform: uppercase;
-  color: #93c5fd;
 }
 
 .wolves-intro-overlay-title-card-qr-frame {
-  width: min(100%, 21rem);
+  width: min(100%, 32rem);
   aspect-ratio: 1;
   padding: 0.65rem;
-  overflow: hidden;
   border-radius: 1.35rem;
-  background: #fff;
+  border: 1px solid rgb(147 197 253 / 45%);
+  background: #020617;
+  box-shadow: inset 0 0 24px rgb(59 130 246 / 14%);
 }
 
 .wolves-intro-overlay-title-card-qr-image {
@@ -1376,30 +1784,28 @@ defineExpose({
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
-  image-rendering: pixelated;
+  filter: invert(1);
 }
 
+.wolves-intro-overlay-title-card-qr-dialogue,
 .wolves-intro-overlay-title-card-qr-domain {
-  font-family: var(--wc-font-weyland, 'Michroma', 'Arial Narrow', sans-serif);
-  font-size: clamp(1rem, 1.2vw, 1.25rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  color: #93c5fd;
 }
 
 @media (max-width: 700px) {
   .wolves-intro-overlay-title-card {
-    justify-content: center;
     padding: 21rem 1.2rem 24rem;
   }
 
   .wolves-intro-overlay-title-card-layout {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     align-items: center;
     justify-items: center;
     gap: 0.8rem;
+    transform: none;
     width: 100%;
   }
 
@@ -1410,13 +1816,14 @@ defineExpose({
   .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
     /* Below the taller two-line mobile nameplate. */
     top: 17rem;
-    width: 94vw;
+    left: 1.2rem;
+    width: 86vw;
   }
 
   .wolves-intro-overlay-title-card-art-frame {
     grid-column: 1;
     grid-row: 1;
-    width: min(48vw, 34vh, 26rem);
+    width: min(52vw, 34vh, 26rem);
   }
 
   .wolves-intro-overlay-title-card-line-small {
@@ -1434,21 +1841,24 @@ defineExpose({
     -webkit-text-stroke: 0;
   }
 
+  .wolves-intro-overlay-title-card-amber-quote {
+    bottom: 19rem;
+    left: 50%;
+    width: min(92vw, 36rem);
+  }
+
+  .wolves-intro-overlay-title-card-amber-quote p {
+    font-size: clamp(1.6rem, 5.2vw, 2.4rem);
+  }
+
   .wolves-intro-overlay-title-card-qr {
-    grid-column: 2;
-    grid-row: 1;
-    width: min(48vw, 18.5rem);
-    padding: 1rem;
-    transform: none;
+    width: min(100%, 22rem);
+    padding: 0.8rem;
   }
 
   .wolves-intro-overlay-title-card-qr-frame {
-    width: min(100%, 16.5rem);
+    width: min(100%, 20rem);
     padding: 0.5rem;
-  }
-
-  .wolves-intro-overlay-title-card-qr-dialogue {
-    font-size: clamp(0.9rem, 2.8vw, 1.15rem);
   }
 
   /* Narrow screens: tighten the guardian + companion pair so both cards fit

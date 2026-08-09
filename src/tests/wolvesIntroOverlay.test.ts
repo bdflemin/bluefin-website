@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
 
@@ -36,7 +35,17 @@ interface MockPlayerRecord {
   pauseVideo: MockPlayerMethod<() => void>
   playVideo: MockPlayerMethod<() => void>
   seekTo: MockPlayerMethod<(seconds: number) => void>
+  setVolume: MockPlayerMethod<(volume: number) => void>
+  getVolume: MockPlayerMethod<() => number>
   destroy: MockPlayerMethod<() => void>
+  /** Every volume level actually pushed to the player, in order. */
+  volumeLog: number[]
+  /** The player's live volume level (0–100). */
+  volume: number
+  /** The volume the player was sitting at when `destroy()` landed, or null if still alive. */
+  destroyedAtVolume: number | null
+  currentSeconds: number
+  setCurrentTime: (seconds: number) => void
   triggerReady: () => void
   triggerEnded: () => void
   triggerError: () => void
@@ -48,12 +57,14 @@ function installMockIframeApi() {
   class MockPlayer {
     config: any
     videoId: string
+    currentSeconds = 0
     getDuration = vi.fn(() => 120)
     getCurrentTime = vi.fn(() => 0)
     loadVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
       const nextVideoId = typeof video === 'string' ? video : video.videoId
       const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
       this.videoId = nextVideoId
+      this.currentSeconds = startSeconds
       this.getCurrentTime = vi.fn(() => startSeconds)
       this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.PLAYING, target: this })
     })
@@ -67,10 +78,33 @@ function installMockIframeApi() {
     })
 
     seekTo = vi.fn((seconds: number) => {
+      this.currentSeconds = seconds
       this.getCurrentTime = vi.fn(() => seconds)
     })
 
-    destroy = vi.fn()
+    volume = 100
+    volumeLog: number[] = []
+    destroyedAtVolume: number | null = null
+
+    setVolume = vi.fn((level: number) => {
+      this.volume = level
+      this.volumeLog.push(level)
+    })
+
+    getVolume = vi.fn(() => this.volume)
+
+    destroy = vi.fn(() => {
+      this.destroyedAtVolume = this.volume
+    })
+
+    /**
+     * Move the transport's own clock. A double whose clock never runs makes every timing
+     * assertion vacuously true, so fade tests drive this together with the fake timers.
+     */
+    setCurrentTime(seconds: number) {
+      this.currentSeconds = seconds
+      this.getCurrentTime = vi.fn(() => seconds)
+    }
 
     constructor(element: Element, config: any) {
       this.config = config
@@ -108,7 +142,11 @@ function resolveIframeApi() {
 
 beforeEach(() => {
   players = []
-  vi.useFakeTimers()
+  // Silent text cards measure real elapsed time via performance.now(), so it has to
+  // advance with the fake clock (same config the dual-buffer suite uses).
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'performance'],
+  })
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
@@ -258,7 +296,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('Guardians')
   })
 
-  it('renders a comic-book placeholder card for an active title-card cue', async () => {
+  it('renders the MakeMeAComic QR and Amber Graner quote on the title card', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
         videos: [{
@@ -271,18 +309,13 @@ describe('wolvesIntroOverlay video segments', () => {
     })
 
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
-    expect(wrapper.text()).toContain('Made by Paid Artists')
-    expect(wrapper.get('[data-comic-hero-qr-dialogue]').text()).toBe('Immortalize a Maintainer')
-    expect(wrapper.text()).toContain('makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('aria-label')).toBe('Open makemeacomic.com')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('target')).toBe('_blank')
-    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('rel')).toBe('noopener noreferrer')
-    expect(wrapper.get('[data-comic-hero-qr-link]').classes()).toContain('wolves-intro-overlay-title-card-qr')
-    expect(wrapper.find('[data-comic-hero-qr-card]').exists()).toBe(true)
-    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('src')).toBe(qrMakeMeAComic)
     expect(wrapper.get('[data-comic-hero-qr-image]').attributes('alt')).toBe('QR code linking to makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-domain]').text()).toBe('makemeacomic.com')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('You don\'t need permission to contribute to your own destiny.')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('— Amber Graner')
+    expect(wrapper.get('[data-amber-quote]').text()).toContain('Maintainer Guardian // The Iron Standard - Subclass [ REDACTED ]')
+    expect(wrapper.find('[data-amber-quote] footer').exists()).toBe(false)
   })
 
   it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {
@@ -402,8 +435,8 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
-    players[0].getCurrentTime = vi.fn(() => 2)
     players[0].triggerReady()
+    players[0].setCurrentTime(2)
 
     await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
@@ -567,7 +600,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('We built a city none of us dared')
   })
 
-  it('renders the makemeacomic QR only during the comic title-card cue', async () => {
+  it('renders the QR and Amber quote only during the comic title-card cue', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
@@ -575,6 +608,7 @@ describe('wolvesIntroOverlay video segments', () => {
     players[0].triggerReady()
     await flushPromises()
 
+    expect(wrapper.find('[data-amber-quote]').exists()).toBe(false)
     expect(wrapper.find('[data-comic-hero-qr-link]').exists()).toBe(false)
 
     const titleCardWrapper = mountOverlay(WolvesIntroOverlay, {
@@ -588,6 +622,7 @@ describe('wolvesIntroOverlay video segments', () => {
       },
     })
 
+    expect(titleCardWrapper.find('[data-amber-quote]').exists()).toBe(true)
     expect(titleCardWrapper.find('[data-comic-hero-qr-link]').exists()).toBe(true)
   })
 
@@ -611,6 +646,117 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+})
+
+/**
+ * The intro→Track 0 junction. The trailer is a `video` segment on the main player, so the
+ * authored `audioFadeOutSeconds` (text segments' `audioPlayer` only) never reached it and
+ * `destroyPlayer()` severed its audio mid-air right as Track 0 came up at full volume.
+ */
+describe('wolvesIntroOverlay track 0 handoff fade', () => {
+  const finalVideoSequence = [
+    { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 10 },
+  ]
+
+  /** Runs the transport clock and the component's timers together, 200ms at a time. */
+  async function runTransport(record: MockPlayerRecord, seconds: number) {
+    const steps = Math.round((seconds * 1000) / 200)
+    for (let step = 0; step < steps; step += 1) {
+      record.setCurrentTime(Number((record.currentSeconds + 0.2).toFixed(3)))
+      await vi.advanceTimersByTimeAsync(200)
+    }
+    await flushPromises()
+  }
+
+  it('ramps the trailer down across its own closing seconds instead of cutting it dead', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+
+    // Well clear of the end: the trailer must play at full volume, never pre-ducked.
+    await runTransport(record, 7)
+    expect(record.currentSeconds).toBeCloseTo(7, 3)
+    expect(record.volumeLog).toEqual([])
+    expect(record.volume).toBe(100)
+
+    // Inside the fade window but before the end: audibly down, not yet silent.
+    await runTransport(record, 1.4)
+    expect(record.currentSeconds).toBeCloseTo(8.4, 3)
+    expect(record.volumeLog.length).toBeGreaterThan(0)
+    expect(record.volume).toBeLessThan(100)
+    expect(record.volume).toBeGreaterThan(0)
+    expect(record.destroy).not.toHaveBeenCalled()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    // Through the cutoff: silent first, destroyed second.
+    await runTransport(record, 2)
+    expect(record.destroyedAtVolume).toBe(0)
+    expect(record.volumeLog).toEqual([...record.volumeLog].sort((a, b) => b - a))
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+
+    wrapper.unmount()
+  })
+
+  it('emits complete without waiting for the ramp so Track 0 loads in parallel', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+
+    // An early natural end skips the lead fade entirely: the completion ramp has to cover it.
+    record.triggerEnded()
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+    expect(record.destroy).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(record.volume).toBeLessThan(100)
+    expect(record.volume).toBeGreaterThan(0)
+    expect(record.destroy).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1200)
+    expect(record.destroyedAtVolume).toBe(0)
+    expect(record.volumeLog).toEqual([...record.volumeLog].sort((a, b) => b - a))
+
+    wrapper.unmount()
+  })
+
+  it('stops the ramp when the overlay unmounts mid-fade rather than leaking a timer', async () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: finalVideoSequence, holdForHandoff: true },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const record = players[0]
+    record.triggerReady()
+    await flushPromises()
+    record.triggerEnded()
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(500)
+    wrapper.unmount()
+    expect(record.destroy).toHaveBeenCalledTimes(1)
+
+    const volumeCallsAtUnmount = record.setVolume.mock.calls.length
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(record.setVolume.mock.calls).toHaveLength(volumeCallsAtUnmount)
   })
 })
 
@@ -826,6 +972,101 @@ surrounded by predators`)
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
+  it('holds a silent card for its full authored duration', async () => {
+    const textSequence = [
+      { id: 'wolves-title-card', kind: 'text' as const, duration: 59 },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    // Half way through the authored window the card must still be on screen. It used
+    // not to be: a silent card advanced its own clock at double speed, so the 59s
+    // presenter welcome slide left the screen at 29.5s and each paragraph got half
+    // the reading time it was written for.
+    await vi.advanceTimersByTimeAsync(30_000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(29_500)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  // The welcome card is spoken live, so the presenter needs to move a line on when they have
+  // finished saying it. This is an operator affordance only: the card must still advance
+  // itself on its own clock, because an unattended theater run has nobody to click it.
+  describe('presenter can click the welcome card along', () => {
+    const cardSequence = () => [{
+      id: 'wolves-title-card',
+      kind: 'text' as const,
+      duration: 30,
+      overlays: [
+        { text: 'First line.', start: 0, end: 10 },
+        { text: 'Second line.', start: 10, end: 20 },
+        { text: 'Third line.', start: 20, end: 30 },
+      ],
+    }]
+
+    function visibleText(wrapper: any) {
+      return wrapper.find('.wolves-intro-overlay-text').text()
+    }
+
+    it('advances to the next authored cue instead of skipping the card', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+      expect(visibleText(wrapper)).toContain('First line')
+
+      await wrapper.find('.wolves-intro-overlay').trigger('click')
+      await flushPromises()
+
+      expect(visibleText(wrapper)).toContain('Second line')
+      expect(wrapper.emitted('complete')).toBeUndefined()
+    })
+
+    it('leaves the card once the last cue has been clicked past', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+
+      for (let click = 0; click < 3; click++) {
+        await wrapper.find('.wolves-intro-overlay').trigger('click')
+        await flushPromises()
+      }
+
+      expect(wrapper.emitted('complete')).toHaveLength(1)
+    })
+
+    it('ignores clicks on a scored card so the text cannot outrun its music bed', async () => {
+      // The Director's Cut prologue is written against the Gayane Ballet Suite. Moving its
+      // text by hand without moving the track would desync the segment for the rest of its
+      // run, so a card with a music bed is left entirely to its own clock.
+      const scored = cardSequence().map(segment => ({ ...segment, audioYoutubeVideoId: 'EB3IokHelRk' }))
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: scored } })
+      await flushPromises()
+      resolveIframeApi()
+      await flushPromises()
+      const before = visibleText(wrapper)
+
+      await wrapper.find('.wolves-intro-overlay').trigger('click')
+      await flushPromises()
+
+      expect(visibleText(wrapper)).toBe(before)
+      expect(wrapper.emitted('complete')).toBeUndefined()
+    })
+
+    it('still advances itself with no click at all', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+
+      await vi.advanceTimersByTimeAsync(29_000)
+      await flushPromises()
+      expect(wrapper.emitted('complete')).toBeUndefined()
+
+      await vi.advanceTimersByTimeAsync(1_500)
+      await flushPromises()
+      expect(wrapper.emitted('complete')).toHaveLength(1)
+    })
+  })
+
   it('mounts a background-only audio embed when audioYoutubeVideoId is set', async () => {
     const textSequence = [
       { id: 'wolves-prologue', kind: 'text' as const, duration: 45, audioYoutubeVideoId: 'EB3IokHelRk' },
@@ -936,7 +1177,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).not.toContain('wolves-guardian-plate-dinosaur-icon')
   })
 
-  it('locks Christoph Blecker\'s leader label to gold while the plate chrome stays blue', () => {
+  it('gilds Christoph Blecker\'s leader plate gold while the other plates keep their chrome', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
     const leaderRule = overlay.match(/\.wolves-guardian-plate\.wolves-guardian-plate-leader \{([\s\S]*?)\n\}/)?.[1]
     const leaderSelectors = [
@@ -949,15 +1190,15 @@ describe('wolvesIntroOverlay guardian plate', () => {
       '.wolves-guardian-plate-title',
     ]
 
-    expect(leaderRule).toContain('border-color: rgb(56 189 248 / 55%)')
-    expect(leaderRule).toContain('box-shadow: 0 0 24px rgb(56 189 248 / 20%)')
+    expect(leaderRule).toContain('border-color: rgb(250 204 21 / 55%)')
+    expect(leaderRule).toContain('box-shadow: 0 0 24px rgb(250 204 21 / 20%)')
     for (const selector of leaderSelectors) {
       expect(overlay).toContain(`.wolves-guardian-plate-leader ${selector}`)
     }
-    expect(overlay).toContain('stroke: #38bdf8')
+    expect(overlay).toContain('stroke: #facc15')
     const leaderLabelRule = overlay.match(/\.wolves-guardian-plate-leader \.wolves-guardian-plate-label \{([\s\S]*?)\n\}/)?.[1]
     expect(leaderLabelRule).toContain('color: #facc15')
-    expect(overlay).toContain('color: #bae6fd')
+    expect(overlay).toContain('color: #93c5fd')
     expect(overlay).not.toContain('wolves-guardian-plate-name-gold')
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the

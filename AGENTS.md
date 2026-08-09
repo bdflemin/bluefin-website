@@ -21,21 +21,53 @@ approval if the requested result needs a design file or runtime behavior change.
 ## Start here
 
 1. Read this file.
-2. Read `docs/skills/INDEX.md`.
-3. Load one matching skill from `docs/skills/`.
-4. Read the source file that owns the requested content.
-5. Check `git status --short` before editing.
+2. Read `docs/SKILL.md` and load the one matching skill it names.
+3. Read the source file that owns the requested content.
+4. Check `git status --short` before editing.
+5. Before finishing, write back what you learned. See `## Self-Improvement`.
 
 ## Production entry points
 
 | Path | Entry file | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public experience |
+| `/wolves/` | `wolves/index.html` | Public presentation (see below) |
 | `/dakota/` | `dakota/index.html` | Unlisted sub-application |
 | `/server/` | `server/index.html` | Separate production entry |
 
 Do not promote an unlisted path through navigation, metadata, or a sitemap.
+
+## `/wolves/` is a presentation
+
+`/wolves/` is not a web page that happens to animate. It is a cinematic
+presentation performed to a live audience seated in a theater, projected on a
+large screen and synchronized to music by the media player clock.
+
+That single fact decides most arguments about it:
+
+- **Nobody can interact with it.** The audience has no input device and the
+  presenter is not driving it. Never require, offer, or depend on click, hover,
+  pointer, touch, keyboard, or scroll to follow the narrative. If text needs
+  input to be finished reading, it is broken.
+- **It is read from the back row.** Type is sized for projection distance, not
+  for a laptop. Small, dense, or low-contrast text is a defect.
+- **Nothing scrolls or pans.** Every beat is a complete, self-contained page
+  that appears, holds long enough to be read, and is replaced.
+- **Consistency is the product.** Identical chrome, metadata, and type scale on
+  every record. On a large screen, per-view variation does not read as variety;
+  it reads as a broken slide deck.
+- **A quote is never split across pages.** Splitting re-renders the quote mark
+  and attribution and destroys the beat.
+- **Time is the binding constraint.** Every record is allocated a window from
+  the music. Content that does not fit its window never reaches the audience,
+  no matter how good it is. Adding words removes other words.
+- **It must survive unattended.** There is no chance to recover live. A
+  mid-show failure is seen by everyone.
+
+Judge every Wolves change by "can the back row read this in the time the music
+allows", not by whether it looks right on your monitor.
+
+Detail lives in `docs/reference/wolves-runtime.md`.
 
 ## Content sources
 
@@ -51,13 +83,17 @@ Use `import.meta.env.BASE_URL` for public runtime asset paths.
 
 ```bash
 npm install --include=dev
-npm run dev
+npm run dev -- --host :: --port 5173 --strictPort
 npm run lint
 npm run typecheck
-npm run test:run
+npm run test:gate
 npm run build
 npm run preview
 ```
+
+Run exactly one dev server. `npm run test:gate` is the test signal, not
+`npm run test:run`: the suite carries a recorded baseline of known failures in
+`tests/known-failures.txt` and the gate fails only on new ones.
 
 For documentation-only changes:
 
@@ -88,6 +124,19 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
 - Verify the exact pushed commit's deployment workflow and affected live route
   before saying the change is live.
 
+## Commit attribution
+
+Every AI-authored commit carries both trailers:
+
+    Assisted-by: <Model> via GitHub Copilot CLI
+    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+Name the model and tool actually driving the session (the factory canonical
+form is `via GitHub Copilot`; this repo's history uses
+`via GitHub Copilot CLI`). Both trailers are mandatory — `Co-authored-by`
+alone does not satisfy the factory contract. Detail:
+`docs/skills/agent-workflow/SKILL.md`.
+
 ## Authored content
 
 Do not invent lore, fiction, dialogue, quotes, attributions, or release-note
@@ -99,8 +148,68 @@ narrative. Preserve supplied wording, provenance, URLs, and placeholders. Read
 If the diff would touch a component, template, style, layout, animation, control,
 or navigation surface, stop and load `docs/skills/design-gate/SKILL.md`.
 
+## Self-Improvement
+
+Every session ships two outputs: the work **and** the updated skill file in
+`docs/skills/`. Same commit. Not a follow-up.
+
+Banned:
+
+- No changelog files. Delete `IMPROVEMENTS.md`, `CHANGELOG.md`, `CHANGES.md`,
+  or `SESSION.md` if found.
+- No session notes committed to the repo (`NOTES.md`, `PLAN.md`, `TODO.md`,
+  progress files). Session state stays in the agent's session folder.
+- No "append here" docs. Route the learning to `docs/skills/` instead.
+
+Before marking work done:
+
+- [ ] Discovered a workaround, pattern, convention, or corrected fact?
+- [ ] Skill file updated (or created)?
+- [ ] Committed in this same PR?
+
+Full contract: `docs/skills/skill-improvement/SKILL.md`.
+
+## Factory context
+
+This repository is part of the Project Bluefin factory. Local authority wins:
+this file and `docs/SKILL.md` are authoritative for paths, boundaries, and
+commands. `projectbluefin/common` attaches as a pinned shared-contract sidecar
+supplying factory-wide rules; it never overrides local authority. The contract
+this repo implements is `projectbluefin/common`
+`docs/skills/factory-onboarding.md`; link to it rather than copying its policy
+tree here. An unreachable sidecar is degraded mode, not permission to
+substitute a sibling checkout — a fork or feature-branch checkout of `common`
+is not the sidecar and must not be cited as the contract.
+
+Every task loop runs the factory self-repair sequence: preflight, detect,
+repair, validate, write back, escalate.
+
+Stop at the four factory gates:
+
+- **Design** — any design or behavior change, including the frozen `/wolves/`
+  presentation. See `## Design gate` and `docs/skills/design-gate/SKILL.md`.
+- **Security** — credentials, secrets, tokens, signing, or the supply chain.
+- **Breakage** — anything that could break another factory repository or a
+  downstream consumer.
+- **Merge** — agents never self-merge, never bypass branch protection, and
+  never force-push a protected branch.
+
+Production claims are gated locally: never call a change live until the exact
+pushed commit's deployment and route are verified. Signal any gate by stopping
+before the PR, describing the decision, labelling the related issue `hold`
+(hold for human review) and `needs-human/agent-ready`, and waiting for
+explicit approval. Procedure and PR evidence:
+`docs/skills/agent-workflow/SKILL.md`.
+
+Cross-repo learning goes to an issue in `projectbluefin/common` with the
+learning, affected component, and evidence. Never edit `ublue-os/*`; ask a human
+to report upstream manually.
+
 ## References
 
+- `docs/SKILL.md`
+- `docs/skills/agent-workflow/SKILL.md`
+- `docs/skills/skill-improvement/SKILL.md`
 - `docs/reference/content-map.md`
 - `docs/reference/production-entrypoints.md`
 - `docs/architecture/application-map.md`

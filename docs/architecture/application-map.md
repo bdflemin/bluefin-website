@@ -28,5 +28,9 @@ lists live in `src/content.ts`.
 
 ## Wolves areas
 
+`/wolves/` is a cinematic presentation performed to a live seated audience, not
+a browsable page. See `AGENTS.md` under "`/wolves/` is a presentation" for the
+production rules that constrain every change.
+
 The Wolves runtime is documented in `docs/reference/wolves-runtime.md`. Do not
 infer its content surfaces from this overview.

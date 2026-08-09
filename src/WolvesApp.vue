@@ -7,8 +7,8 @@ import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
-import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
+import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -19,6 +19,28 @@ const showIntroOverlay = computed(() => store.phase === 'intro' || introHandoff.
 let handoffToken = 0
 let unmounted = false
 
+if (import.meta.env.DEV) {
+  // Published from app start (unlike `__wolvesCinematic`, which only exists
+  // once the stage has started) so browser harnesses can compute a seek ratio
+  // while still inside the intro instead of hard-coding durations.
+  //
+  // `skipIntro` exists because the media widget's progress bar cannot be used
+  // to leave the intro: `handleSegmentSeek` routes a click to
+  // `intro.seekToRatio()`, which seeks *within* the intro sequence. Harnesses
+  // that clicked the bar at an "overall" ratio were silently stuck in the
+  // intro forever.
+  ;(window as any).__wolvesDurations = {
+    intro: () => INTRO_SEQUENCE_DURATION,
+    overall: () => store.overallDuration,
+    skipIntro: () => enterCinematic(),
+    // Published from app start, unlike `__wolvesCinematic`, so a harness can watch the
+    // cinematic buffers DURING the intro. They are built and prewarmed in that window
+    // and must stay inaudible; the absence of any way to observe that is how a segment
+    // playing over the intro reached a build.
+    buffers: () => stage.value?.bufferSnapshot?.(),
+  }
+}
+
 async function startCinematicStage() {
   await nextTick()
   await stage.value?.start?.()
@@ -26,8 +48,21 @@ async function startCinematicStage() {
     return
   }
   if (import.meta.env.DEV) {
-    // Dev-only hook so browser-based boundary verification can drive the real player.
-    ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
+    // Dev-only hook so browser-based boundary verification can drive the real
+    // player. Durations are published here so standalone Playwright harnesses
+    // read the live timeline instead of hard-coding constants that silently
+    // drift out of date and leave the harness stuck in the intro.
+    ;(window as any).__wolvesCinematic = {
+      seekTo: (s: number) => stage.value?.seekTo(s),
+      introDuration: () => INTRO_SEQUENCE_DURATION,
+      overallDuration: () => store.overallDuration,
+      // What each YouTube buffer is really holding versus what the runtime thinks
+      // it holds. The runtime promotes a buffer at every boundary on the strength
+      // of its own bookkeeping alone, so this is the only way a harness can catch
+      // a buffer that has drifted off its intended segment.
+      buffers: () => stage.value?.bufferSnapshot?.(),
+      skip: (delta: number) => stage.value?.skip(delta),
+    }
   }
 }
 
@@ -55,20 +90,30 @@ async function launchExperience(manifest: ExperienceManifest) {
   await enterCinematic()
 }
 
-const introVideos = buildIntroVideoSequence()
+const isDirectorsCut = ref(false)
+const introVideos = computed(() =>
+  isDirectorsCut.value ? buildDirectorsCutVideoSequence() : buildIntroVideoSequence()
+)
 const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
 const introNameplateVisible = ref(true)
 const introNameplateGlitch = ref(false)
-const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segment.id, index]))
+const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segment, index) => [segment.id, index])))
 
 // Factual display metadata for the authored intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
+  'wolves-prologue': {
+    chapter: 'PROLOGUE',
+    title: 'Gayane Ballet Suite (Adagio)',
+    mediaTitle: 'PROLOGUE — Gayane Ballet Suite',
+    artist: 'Aram Khachaturian',
+    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+  },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
-    title: 'fighting for something greater than themselves',
+    title: 'a project to bring their stories to life',
     mediaTitle: 'The Wolves are Coming',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
@@ -76,12 +121,24 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
 }
 const introMediaTitle = ref(INTRO_DISPLAY['wolves-intro'].mediaTitle)
 
-async function enterIntro() {
+/**
+ * Native start time forwarded to the intro overlay when a gallery thumbnail deep-links
+ * into a Guardian's section; null for a normal front-door entry.
+ */
+const introStartAt = ref<number | null>(null)
+
+async function enterIntro(startAtNativeTime: number | null = null, directorsCut = false) {
+  isDirectorsCut.value = directorsCut
   const token = ++handoffToken
   introHandoff.value = false
+  introStartAt.value = startAtNativeTime
   introTransparent.value = false
+  // The Director's Cut is a different list with different segments and
+  // durations. Publish it before entering the phase so the store's timeline,
+  // index clamping, and TOTAL readout describe the intro actually playing.
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
-  introMediaTitle.value = INTRO_DISPLAY['wolves-intro'].mediaTitle
+  introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -94,9 +151,17 @@ async function enterIntro() {
   }
 }
 
+/**
+ * Gallery thumbnail deep link: start the intro at the Guardian's own nameplate cue.
+ * Guardians without a section in the intro fall back to the normal opening.
+ */
+async function watchGuardian(name: string) {
+  await enterIntro(guardianIntroStartTime(name))
+}
+
 function normalizeIntroStatus(payload: IntroStatusPayload) {
-  const segmentIndex = introSegmentIndexById.get(payload.segmentId) ?? 0
-  const segment = introVideos[segmentIndex]
+  const segmentIndex = introSegmentIndexById.value.get(payload.segmentId) ?? 0
+  const segment = introVideos.value[segmentIndex]
   if (!segment) {
     return {
       segmentIndex: 0,
@@ -181,6 +246,8 @@ async function restoreIntroForNavigation(): Promise<number | null> {
   stage.value?.destroy?.()
   introHandoff.value = false
   introTransparent.value = false
+  // Back-navigation into the intro is a fresh front-door entry, not a deep link.
+  introStartAt.value = null
   await nextTick()
   if (unmounted || token !== handoffToken) {
     return null
@@ -190,6 +257,7 @@ async function restoreIntroForNavigation(): Promise<number | null> {
     ...meta,
     canPrevious: false,
   })
+  store.setIntroSequence(introVideos.value)
   store.enterIntro()
   await nextTick()
   if (unmounted || token !== handoffToken) {
@@ -235,7 +303,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wolves-cinematic">
-    <CinematicLobby v-if="store.phase === 'lobby'" @enter="enterIntro" @launch-experience="launchExperience" />
+    <CinematicLobby
+      v-if="store.phase === 'lobby'"
+      @enter="enterIntro(null, false)"
+      @enter-directors-cut="enterIntro(null, true)"
+      @launch-experience="launchExperience"
+      @watch-guardian="watchGuardian"
+    />
 
     <!-- The Destiny intro shares the cinematic transport and universal top title placard. -->
     <div v-else-if="store.phase === 'intro' || store.phase === 'cinematic'" class="wc-runtime">
@@ -247,6 +321,7 @@ onBeforeUnmount(() => {
           hold-for-handoff
           :transparent-handoff="introTransparent"
           :videos="introVideos"
+          :start-at-native-time="introStartAt ?? undefined"
           @status="handleIntroStatus"
           @complete="handleIntroComplete"
         />
@@ -255,6 +330,7 @@ onBeforeUnmount(() => {
         </div>
         <MediaWidget
           :title="introMediaTitle"
+          auto-hide
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"
@@ -267,6 +343,7 @@ onBeforeUnmount(() => {
 
       <MediaWidget
         v-else
+        auto-hide
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
         @seek="handleSegmentSeek"

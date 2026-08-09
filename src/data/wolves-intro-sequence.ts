@@ -13,6 +13,7 @@
  *   YouTube embed for audio (`audioYoutubeVideoId`) and per-cue background artwork.
  */
 
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import destinyCaptions from './wolves-destiny-captions.txt?raw'
 
 export interface IntroBackgroundCrossfade {
@@ -45,6 +46,16 @@ export interface IntroOverlayTextCue {
   readonly backgroundImage?: string
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
   readonly comicHeroTitleCard?: boolean
+  /**
+   * Renders the opening title card's lower third: the Ghosts In The Mist guardian nameplate
+   * (crest, horizon rules, gradient name, subtitle) with this cue's `text` as the quote body
+   * beneath it, rather than the standard centered caption. The quote is rendered verbatim,
+   * paragraph-split on blank lines, and is never run through the theater punctuation strip.
+   */
+  readonly titlePlate?: {
+    readonly name: string
+    readonly subtitle: string
+  }
   /**
    * Day/night crossfade background(s) shown behind the text for this cue only. Accepts one or
    * more stages: a single-stage cue crossfades day->night once over its full duration; a
@@ -340,7 +351,7 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   const cues = parseDestinyCaptionFile(destinyCaptions)
   return [
     ...cues,
-    { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
+    { text: '', start: 24, end: 38, comicHeroTitleCard: true },
   ]
 }
 
@@ -357,6 +368,23 @@ export function isVideoCutoffReached(segment: IntroVideoSegment, currentTime: nu
  */
 export function isTextSegmentComplete(segment: IntroTextSegment, elapsed: number): boolean {
   return elapsed >= segment.duration
+}
+
+/**
+ * Native start time (seconds, video-absolute) of a Guardian's nameplate cue in the wolves
+ * intro, looked up by the Guardian's full display name against the authored overlay cues.
+ * Returns `null` for Guardians without a section in the intro (their thumbnails fall back
+ * to starting the intro from the beginning).
+ */
+export function guardianIntroStartTime(guardianName: string): number | null {
+  for (const segment of buildIntroVideoSequence()) {
+    for (const cue of segment.overlays ?? []) {
+      if (cue.text.includes(guardianName)) {
+        return cue.start
+      }
+    }
+  }
+  return null
 }
 
 /**
@@ -385,6 +413,13 @@ export const PROLOGUE_TEXT_FADE_SECONDS = 7.8
 export const PROLOGUE_SCENE_CROSSFADE_SECONDS = PROLOGUE_TEXT_FADE_SECONDS / 2
 
 /**
+ * The recovered full-resolution Flickr original of the orange-shirt stage photo (2048x1365),
+ * used as the opening title card's backdrop. The earlier low-resolution copy was replaced
+ * from the Amsterdam gallery; do not swap this back to a thumbnail-sized source.
+ */
+const OPENING_TITLE_CARD_IMAGE = 'img/wallpapers/wolves/people/Yikes!.webp'
+
+/**
  * The sequence played before the live playlist experience begins:
  *
  * `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
@@ -399,8 +434,85 @@ export const PROLOGUE_SCENE_CROSSFADE_SECONDS = PROLOGUE_TEXT_FADE_SECONDS / 2
  * `startSoundtrack()` already starts once this sequence completes, so there is no separate
  * local hero video to chain here.
  */
+/**
+ * The opening title card, played before the Destiny trailer.
+ *
+ * Deliberately silent: it is the presenter's own welcome slide, so the room hears the
+ * speaker rather than a music bed, and the segment simply fades into the Destiny video
+ * when it ends. The nameplate replicates the Ghosts In The Mist lower third
+ * (`src/data/wolves-gallery-featured.ts`) with the guardian class and honorifics dropped
+ * per explicit user request (2026-08-06) — just the name and one affiliation subtitle.
+ *
+ * The quote is authored verbatim and must stay that way: it names a real device count and
+ * two real foundations, so paraphrasing it would misstate fact from the stage.
+ */
+/**
+ * How much of each paragraph's silent-reading cost the card actually holds for.
+ *
+ * The windows are still *derived* — hand-picked numbers are what this card had before
+ * and they rotted immediately — but the reading model is the wrong yardstick here, and
+ * this factor is the correction. `estimatePageSeconds` prices text for an audience
+ * reading it off a projector in silence. Nobody reads this card in silence: it is the
+ * presenter's own welcome slide and he is speaking these lines from the stage, so the
+ * room is listening, not reading. Holding every paragraph for its full silent-reading
+ * cost leaves the speaker waiting on his own slide.
+ *
+ * Halved on owner instruction (2026-08-09): 37s to 19s across the four paragraphs.
+ * Every authored word is kept — this is a pacing change, not a cut. If this ever needs
+ * to move again, move this factor, never the individual windows.
+ */
+export const TITLE_CARD_PACE = 0.5
+
+function buildOpeningTitleCardSegment(): IntroTextSegment {
+  const parts = [
+    'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices, let me explain who we are.',
+    'This summer the Apache Foundation and CNCF collided. Buildstream, Kubernetes, and bootc. None of you have any idea what that means. But let\'s just say ...',
+    'Modern Linux is unified. Don\'t believe me? Meet your new teammates.',
+    'The people in these slides were once just like you. Ask them. The Linux you want exists ... suit up.',
+  ]
+  // Each paragraph holds for a fixed fraction of what it costs to read from the back row,
+  // using the same theater reading model every other Wolves text surface uses
+  // (`estimatePageSeconds`: a fixed beat for putting a page up and taking it down, plus its
+  // word count at theater pace), scaled by `TITLE_CARD_PACE`. That keeps the relative
+  // weighting the card was authored for -- the long CNCF beat still holds longest, the
+  // "Don't believe me?" punch still holds shortest -- without hand-picking any number.
+  //
+  // These windows used to be a hand-written [14, 16, 12, 17]. That ran 59 seconds against
+  // 34 seconds of actual reading cost: roughly six seconds of dead air on every paragraph,
+  // before a single frame of the show. A welcome slide that outstays its own content is the
+  // one thing an audience is guaranteed to notice, because nothing has started yet.
+  const windows = parts.map(text => Math.max(1, Math.ceil(estimatePageSeconds(text) * TITLE_CARD_PACE)))
+  const titlePlate = {
+    name: 'Jorge Castro',
+    subtitle: 'Project Bluefin // Universal Blue // Kubernetes',
+  } as const
+
+  let start = 0
+  const overlays = parts.map((text, index) => {
+    const end = start + windows[index]
+    const cue: IntroOverlayTextCue = {
+      text,
+      start,
+      end,
+      titlePlate,
+      backgroundImage: OPENING_TITLE_CARD_IMAGE,
+      preservePunctuation: true,
+    }
+    start = end
+    return cue
+  })
+
+  return {
+    id: 'wolves-title-card',
+    kind: 'text',
+    duration: start,
+    overlays,
+  }
+}
+
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
+    buildOpeningTitleCardSegment(),
     {
       // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
       // toggle. Guardian window timings below were re-verified frame-by-frame
@@ -418,12 +530,13 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
       //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
       //   17.5 without a fresh user request.
-      // - Kaslin Fields' Arc Warlock lightning duel runs the full 38-48s (previously cut off at
+      // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
+      //   electric reveal (previously cut off at
       //   40s, well before the footage itself ends).
       // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
       // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
-      //   the same shot from ~87.5-90s onward, so their windows overlap (83-95s and
-      //   87.5-96s) with `position` anchoring each to its own side of the frame instead of one
+      //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
+      //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
       //   caption overwriting the other. Christoph's plate ends a second before Natali's so
       //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
       //   trustee label remains authoritative. His title line carries two segments joined the same way
@@ -456,17 +569,118 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       overlays: [
         { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
         { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
-        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
+        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
         // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
         // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
         { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 95, position: 'left', trustee: true, leader: true },
-        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 87.5, end: 96, position: 'right', raised: true },
+        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
+        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
         { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
       ],
     },
+  ] as const
+}
+
+/**
+ * Director's Cut video sequence: includes the Gayane Ballet Suite (Adagio) prologue cold open
+ * before the Destiny 2 trailer sequence.
+ */
+export function buildDirectorsCutVideoSequence(): readonly IntroVideoSpec[] {
+  return [
+    buildOpeningTitleCardSegment(),
+    {
+      id: 'wolves-prologue',
+      kind: 'text',
+      duration: 94,
+      audioFadeOutSeconds: 2.5,
+      audioYoutubeVideoId: 'EB3IokHelRk',
+      overlays: [
+        { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
+        {
+          text: `One to spread life,
+and one to cull the dross
+to shape the Garden of Earth.`,
+          start: 5,
+          end: 13.75,
+          backgroundCrossfade: [
+            {
+              day: 'img/wallpapers/bluefin-06-day.webp',
+              night: 'img/wallpapers/bluefin-06-night.webp',
+            },
+          ],
+          textPosition: 'bottom-right',
+          highlightSubstrings: ['life', 'dross', 'Garden'],
+        },
+        {
+          text: 'One day changed the Garden forever.',
+          start: 13.75,
+          end: 21.5,
+          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
+        },
+        {
+          text: 'New Children arose and filled the pattern.',
+          start: 21.5,
+          end: 29.5,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
+        },
+        {
+          text: 'For eons, Maintainer-Guardians cultivated the Garden...',
+          start: 29.5,
+          end: 36.25,
+          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
+        },
+        {
+          text: `Until an AI-fueled Society deemed Guardians unnecessary.
+And then, a threat.`,
+          start: 36.25,
+          end: 45,
+          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
+        },
+        {
+          text: 'Others came to claim a bountiful and unprotected Garden.',
+          start: 45,
+          end: 50,
+        },
+        {
+          text: `In the space of a few days,
+humanity had lost its future`,
+          start: 50,
+          end: 59.375,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+          nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
+        },
+        {
+          text: `For the heart of any race is destroyed
+And its will to survive is utterly Broken`,
+          start: 59.375,
+          end: 65,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+        },
+        {
+          text: 'When its children are taken from it',
+          start: 65,
+          end: 72.5,
+          textPosition: 'bottom',
+        },
+        {
+          text: `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
+          start: 72.5,
+          end: 78.5,
+          emphasis: 'dominant',
+          textPosition: 'bottom',
+          highlightSubstring: 'fights',
+        },
+        { text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 78.5, end: 94, slim: true },
+      ],
+    },
+    ...buildIntroVideoSequence(),
   ] as const
 }

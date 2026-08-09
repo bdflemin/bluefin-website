@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
+import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
 import { useCinematicStore } from '@/stores/cinematic'
 
 describe('wolves hero typography timeline', () => {
@@ -28,7 +29,7 @@ describe('wolves hero typography timeline', () => {
 
   it.each([
     [405, 'legend', 'You have ascended ...'],
-    [408, 'legend', 'Become Legend'],
+    [TRACK_ZERO_SECTIONS.finaleStart, 'legend', 'Become Legend'],
     [425, 'legend', 'Become Legend'],
   ])('renders the exact authored cue at %s seconds', async (time, mode, text) => {
     const wrapper = await renderAt(Number(time))
@@ -36,7 +37,7 @@ describe('wolves hero typography timeline', () => {
   })
 
   it('does not apply the back-treatment to the legend cues', async () => {
-    const legend = await renderAt(408)
+    const legend = await renderAt(TRACK_ZERO_SECTIONS.finaleStart)
     expect(legend.get('.wc-thesis').classes()).not.toContain('wc-thesis--welcome-back')
   })
 

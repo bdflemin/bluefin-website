@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import {
   activeOverlayCue,
   activeOverlayText,
@@ -14,6 +15,7 @@ import {
   parseDestinyCaptionFile,
   previousIntroSequence,
   skipIntroSequence,
+  TITLE_CARD_PACE,
 } from '../data/wolves-intro-sequence'
 
 describe('wolves intro overlay sequence', () => {
@@ -166,12 +168,75 @@ describe('wolves intro overlay sequence', () => {
     ])
   })
 
-  it('starts directly with the Destiny trailer', () => {
+  it('opens on the silent title card and then runs the Destiny trailer', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(1)
-    expect(sequence.map(segment => segment.id)).toEqual(['wolves-intro'])
+    expect(sequence).toHaveLength(2)
+    expect(sequence.map(segment => segment.id)).toEqual(['wolves-title-card', 'wolves-intro'])
     expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
     expect(JSON.stringify(sequence)).not.toContain('Bluefin Cinematic Universe')
+  })
+
+  it('gives the opening title card the recovered orange portrait, the plain nameplate and no music bed', () => {
+    const card = buildIntroVideoSequence()[0]
+    if (!card || !isTextSegment(card)) {
+      throw new Error('Expected the opening title card to be a text segment')
+    }
+
+    // Silent by design: the presenter speaks over this slide, so any audio here would
+    // fight the person on stage.
+    expect(card.audioYoutubeVideoId).toBeUndefined()
+    expect(card.overlays).toBeDefined()
+    expect(card.overlays!.length).toBe(4)
+
+    // The card holds for exactly what its paragraphs cost to read, so its duration is
+    // derived here too rather than re-recorded as a literal that rots on the next edit.
+    // The card holds a fixed fraction of its silent-reading cost, because the presenter
+    // narrates these lines rather than leaving the room to read them. Derive the pace from
+    // the module so a retime moves one constant instead of rotting a literal here.
+    const pacedCost = card.overlays!.reduce(
+      (total, cue) => total + Math.max(1, Math.ceil(estimatePageSeconds(cue.text) * TITLE_CARD_PACE)),
+      0,
+    )
+    expect(card.duration).toBe(pacedCost)
+    expect(TITLE_CARD_PACE).toBeGreaterThan(0)
+    expect(TITLE_CARD_PACE).toBeLessThanOrEqual(1)
+
+    for (const cue of card.overlays!) {
+      expect(cue.backgroundImage).toBe('img/wallpapers/wolves/people/Yikes!.webp')
+      // The quote names real figures and organisations, so it must never be run through
+      // the theater punctuation strip.
+      expect(cue.preservePunctuation).toBe(true)
+      expect(cue.titlePlate).toEqual({
+        name: 'Jorge Castro',
+        subtitle: 'Project Bluefin // Universal Blue // Kubernetes',
+      })
+    }
+
+    // The cues tile the segment without gaps or overlaps, so no paragraph is skipped, and
+    // each window is its own paragraph's reading cost rather than a padded constant.
+    let cursor = 0
+    for (const cue of card.overlays!) {
+      expect(cue.start).toBe(cursor)
+      expect(cue.end - cue.start).toBe(
+        Math.max(1, Math.ceil(estimatePageSeconds(cue.text) * TITLE_CARD_PACE)),
+      )
+      cursor = cue.end
+    }
+    expect(cursor).toBe(card.duration)
+  })
+
+  it('keeps the opening title card quote verbatim', () => {
+    const card = buildIntroVideoSequence()[0]
+    if (!card || !isTextSegment(card)) {
+      throw new Error('Expected the opening title card to be a text segment')
+    }
+
+    expect(card.overlays!.map(cue => cue.text)).toEqual([
+      'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices, let me explain who we are.',
+      'This summer the Apache Foundation and CNCF collided. Buildstream, Kubernetes, and bootc. None of you have any idea what that means. But let\'s just say ...',
+      'Modern Linux is unified. Don\'t believe me? Meet your new teammates.',
+      'The people in these slides were once just like you. Ask them. The Linux you want exists ... suit up.',
+    ])
   })
 
   it('defaults the Destiny segment to the unvoiced source and keeps the Ikora track optional', () => {
@@ -193,7 +258,7 @@ describe('wolves intro overlay sequence', () => {
 
     expect(destiny.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5 }),
-      expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 }),
+      expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 }),
     ]))
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
@@ -207,8 +272,8 @@ describe('wolves intro overlay sequence', () => {
     expect(destiny.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 }),
       expect.objectContaining({ text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 }),
-      expect.objectContaining({ text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', trustee: true, leader: true }),
-      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 87.5, end: 96, position: 'right' }),
+      expect.objectContaining({ text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true }),
+      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right' }),
     ]))
     expect(destiny.overlays?.find(cue => cue.text.includes('Christoph Blecker'))).toHaveProperty('leader', true)
   })
@@ -271,8 +336,11 @@ describe('wolves intro overlay sequence', () => {
       throw new Error('Expected the Destiny segment to exist')
     }
 
+    // The comic title card renders its own artwork; its text was deliberately
+    // blanked in 6edf7f7d ("remove duplicate Destiny title") — the cue only
+    // carries the timing window and the comicHeroTitleCard flag.
     expect(destiny.burnedInCaptions).toEqual([
-      { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
+      { text: '', start: 24, end: 38, comicHeroTitleCard: true },
     ])
   })
 })

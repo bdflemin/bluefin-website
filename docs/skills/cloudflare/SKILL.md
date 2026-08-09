@@ -5,9 +5,19 @@ description: Use when configuring Cloudflare DNS, Workers, Pages, custom domains
 
 # Cloudflare operations
 
+## Overview
+
+Change live delivery resources only through documented Wrangler flows, and
+verify the result at the live hostname.
+
 ## When to Use
 
 Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
+
+## When NOT to Use
+
+Do not use for application code, content, or GitHub Pages build changes, and
+never deploy a Worker as a substitute for a DNS record.
 
 ## Core Process
 
@@ -18,7 +28,7 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
    wrangler whoami
    ```
 3. Identify whether the request is DNS/custom-domain configuration or an
-   application Worker. Do not deploy a Worker as a substitute for a DNS record.
+   application Worker.
 4. Use the documented Wrangler config/command for the requested resource. Keep
    the configuration in the repository when it is meant to be repeatable.
 5. Verify the live hostname with `curl -I` and a browser after propagation.
@@ -28,6 +38,10 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
 
 - **DNS/subdomain request:** create or update the zone record/custom-domain
   configuration only.
+- **Current website delivery:** `projectbluefin.io` is Cloudflare-proxied
+  GitHub Pages, not a Cloudflare Pages project. `public/_headers` therefore
+  documents a Pages-compatible policy but does not set live response headers;
+  verify live cache behavior with `curl -I` before relying on it.
 - **Existing redirect-subdomain pattern:** before changing DNS, inspect the
   account's existing routes. Project subdomains backed by GitHub Pages may use
   a dedicated redirect Worker route (`host.example/*`) because GitHub Pages
@@ -59,7 +73,15 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
 - [ ] No credentials are in the repository or command output.
 - [ ] The resulting hostname returns the intended status and content.
 
-## Sources
+## Delivery topology verification
+
+```bash
+curl -I https://projectbluefin.io/wolves/
+curl -I https://projectbluefin.io/img/wallpapers/wolves/people/kubecon-54927422306.webp
+wrangler pages project list
+```
+
+## References
 
 - Cloudflare Workers SDK: `/cloudflare/workers-sdk`
 - Wrangler custom-domain route configuration: `routes[].custom_domain = true`
