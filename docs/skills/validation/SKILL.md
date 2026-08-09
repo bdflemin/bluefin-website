@@ -74,6 +74,20 @@ It runs the suite, compares the failing set against `tests/known-failures.txt`,
 and exits non-zero **only for failures you introduced**. It also lists baseline
 failures that now pass, so the baseline shrinks as the suite is repaired.
 
+**CI does not use the gate.** The `test` job in `.github/workflows/ci.yml` runs
+`npm run test:run -- --coverage` directly, so `tests/known-failures.txt` was
+never applied in CI: every baseline failure failed every PR, which is why a red
+`main` hid in plain sight while the local gate stayed green (found 2026-08-09,
+issue #705). Until the workflow is changed, a nonzero baseline means red CI no
+matter what the gate says — treat any `test:gate:update` re-record as a CI
+break. The same CI command also enforces the v8 coverage thresholds in
+`vite.config.ts` (50% statements/branches/functions/lines), so verify with the
+exact CI invocation when touching test infrastructure:
+
+```bash
+npm run test:run -- --coverage
+```
+
 Re-record only when you have deliberately changed the failure set, and say so in
 the commit message:
 
