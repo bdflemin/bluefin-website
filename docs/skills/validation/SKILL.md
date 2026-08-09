@@ -81,8 +81,9 @@ never applied in CI: every baseline failure failed every PR, which is why a red
 issue #705). Until the workflow is changed, a nonzero baseline means red CI no
 matter what the gate says — treat any `test:gate:update` re-record as a CI
 break. The same CI command also enforces the v8 coverage thresholds in
-`vite.config.ts` (50% statements/branches/functions/lines), so verify with the
-exact CI invocation when touching test infrastructure:
+`vite.config.ts` — ratcheted 2026-08-09 from a flat 50% to just below measured
+coverage, plus a `src/components/**` glob backstop (issues #674/#676) — so
+verify with the exact CI invocation when touching test infrastructure:
 
 ```bash
 npm run test:run -- --coverage
@@ -105,6 +106,33 @@ npm run test:gate:update
 Never re-record to silence a failure you caused. Never delete an entry by hand
 to hide a still-failing test.
 A shrinking `tests/known-failures.txt` is good; a growing one needs a reason.
+
+### Coverage measurement and thresholds
+
+Vitest 4 with the v8 provider has three traps this repo's config now guards
+against (learned 2026-08-09, issues #673–#676):
+
+- **Untested files are invisible by default.** Only files imported by tests are
+  counted; a component with zero tests does not appear in the report at all, so
+  "All files" ran ~3 points high while 24 components sat outside it.
+  `coverage.include: ['src/**']` in `vite.config.ts` forces every source file
+  into the report at its true 0%.
+- **Glob thresholds check the aggregate of matched files.**
+  `thresholds['src/components/**']` is the backstop that stops new untested
+  components from regressing the group. Verify semantics before trusting a new
+  threshold: set it impossibly high, expect
+  `ERROR: Coverage for statements (X%) does not meet ...`, then set the real
+  value.
+- **Ratchet below measured, never at aspirational targets.** Global thresholds
+  sit ~1pt under the current run; the components glob gets a wider margin
+  because one added component moves an aggregate more than the global figure.
+  Thresholds above measured fail CI on day one; thresholds far below allow
+  silent regression.
+
+Run coverage the way CI does — `CI=true npm run test:run -- --coverage`.
+`src/tests/wolvesBackCatalogue.test.ts` carries a live-network audit gated on
+`skipIf(process.env.CI)`, and `wolvesComicReader` timing tests are slow on a
+loaded box; a bare local `vitest run` can show failures CI never sees.
 
 ### Baseline entry format and shrinking it deliberately
 
