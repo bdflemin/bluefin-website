@@ -1254,6 +1254,54 @@ describe('useDualBufferPlayer', () => {
       expect(playerA.audibleVolume).toBe(100)
     })
 
+    /**
+     * The cinematic buffers are built and prewarmed DURING the Destiny intro, minutes
+     * before the show starts. Nothing in that window may become audible: the room is
+     * watching the intro and hearing its audio.
+     */
+    it('stays silent through the intro, before the show has started', async () => {
+      const player = buildPlayer()
+      await player.prepare()
+      await flushMicrotasks()
+
+      const [playerA, playerB] = FakePlayer.instances
+
+      // Both cinematic buffers prewarm here. Prewarming plays real media, so the
+      // only thing keeping the room quiet is that both are muted.
+      expect(playerA.audibleVolume).toBe(0)
+      expect(playerB.audibleVolume).toBe(0)
+
+      // A YouTube error during the intro must not start the show underneath it.
+      playerA.events.onError?.({ data: 150 })
+      await flushMicrotasks()
+      // Let any crossfade this triggered actually run: the symptom is a segment
+      // ramping UP over the intro, which a check taken before the ramp cannot see.
+      vi.advanceTimersByTime(5000)
+
+      expect(playerA.audibleVolume).toBe(0)
+      expect(playerB.audibleVolume).toBe(0)
+      // Nothing may be hard-loaded to air before the show has started.
+      expect(playerB.loadedId).toBe('')
+      player.destroy()
+    })
+
+    it('does not advance the cinematic before start() has been called', async () => {
+      const store = useCinematicStore()
+      const player = buildPlayer()
+      await player.prepare()
+      await flushMicrotasks()
+
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.events.onError?.({ data: 150 })
+      playerB.events.onError?.({ data: 150 })
+      await flushMicrotasks()
+
+      // The intro owns the screen and the clock until `start()` runs.
+      expect(store.segmentIndex).toBe(0)
+      expect(store.crossfading).toBe(false)
+      player.destroy()
+    })
+
     it('lifts the prewarm mute on the segment it promotes at a boundary', async () => {
       const store = useCinematicStore()
       await startPlayer()

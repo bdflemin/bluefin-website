@@ -33,6 +33,11 @@ if (import.meta.env.DEV) {
     intro: () => INTRO_SEQUENCE_DURATION,
     overall: () => store.overallDuration,
     skipIntro: () => enterCinematic(),
+    // Published from app start, unlike `__wolvesCinematic`, so a harness can watch the
+    // cinematic buffers DURING the intro. They are built and prewarmed in that window
+    // and must stay inaudible; the absence of any way to observe that is how a segment
+    // playing over the intro reached a build.
+    buffers: () => stage.value?.bufferSnapshot?.(),
   }
 }
 

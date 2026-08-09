@@ -23,6 +23,8 @@ export interface YoutubePlayer {
   mute?: () => void
   /** Restores the player's audio output after `mute`. */
   unMute?: () => void
+  /** Whether the mute latch is set. Volume alone does not answer this. */
+  isMuted?: () => boolean
   /** Loads and immediately plays a new video in this same player instance. */
   loadVideoById?: (video: string | { videoId: string, startSeconds?: number, endSeconds?: number }) => void
   /**

@@ -169,3 +169,16 @@ Two things about running it:
 - The seam is uncovered by design. Part I → Part II is the one boundary
   `CinematicTransition.vue` deliberately runs without the overlay, so anything that
   goes wrong there is seen by the whole room.
+
+`tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
+buffers are prewarmed *during* the intro, so it watches them through that window
+and fails if either becomes audible. It reads `__wolvesDurations.buffers()`, which
+is published from app start precisely because `__wolvesCinematic` does not exist
+until the stage has started — the absence of any intro-time view of the buffers is
+how a segment playing over the intro reached a build.
+
+Two intro harnesses, `wolves-intro-segments.mjs` and
+`wolves-intro-destiny-toggle.mjs`, **fail on `main` in a codec-free Chromium** — the
+first times out waiting for `.wolves-intro-overlay-player`, the second reports the
+widget out of viewport bounds. Confirm against a baseline worktree before blaming a
+change for either.

@@ -61,6 +61,8 @@ an unidentified player request.
   holding the *next* segment is discarded.
 - A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
   puts a side on air forgets to lift the mute.
+- A boundary, skip, or recovery load can run before `start()`, so it plays a
+  segment underneath the intro.
 - Only the inactive buffer is prewarmed, so the first track enters cold.
 - A crossfade length is read from the outgoing segment.
 - A startup or readiness await has no timeout.

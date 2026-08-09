@@ -405,7 +405,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   }
 
   function beginSwap() {
-    if (swapping) {
+    // The cinematic buffers are built and prewarmed during the Destiny intro, minutes
+    // before the audience is meant to hear anything from them. A boundary that runs in
+    // that window puts a segment on air underneath the intro — a song playing over the
+    // whole opening. Nothing may advance the show before `start()` has run.
+    if (swapping || !started.value) {
       return
     }
     const fromSide = activeSide.value
@@ -431,6 +435,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     applyVolume(incoming, 0)
 
     const commit = () => {
+      // This side is going to air now, whether it was promoted warm or loaded cold.
+      sides[toSide].player?.unMute?.()
       activeSide.value = toSide // component CSS crossfades opacity on this change
       rampVolumes(outgoing, incoming, crossfadeMs, () => {
         outgoing?.pauseVideo?.()
@@ -476,7 +482,6 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.parked = false
     state.parking = false
     state.failed = false
-    player.unMute?.()
     clearColdSkipWait()
     coldSkipSide = side
     commitColdSkip = commit
@@ -490,6 +495,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     pendingTimers.add(deadline)
     coldSkipTimeout = deadline
     player.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+    // `loadVideoById` autoplays, and the real API restores the player's own volume
+    // when the new media attaches. This side is not on air yet — the outgoing segment
+    // is still playing — so re-assert silence and let `commit()` lift it.
+    player.mute?.()
+    applyVolume(player, 0)
   }
 
   /**
@@ -499,7 +509,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
    */
   function skip(delta: number) {
     const target = Math.min(Math.max(store.segmentIndex + delta, 0), store.segments.length - 1)
-    if (swapping || target === store.segmentIndex) {
+    // Same reason as `beginSwap`: nothing may put a segment on air while the intro
+    // still owns the room.
+    if (swapping || !started.value || target === store.segmentIndex) {
       return
     }
     const fromSide = activeSide.value
@@ -519,6 +531,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     applyVolume(incoming, 0)
 
     const commit = () => {
+      sides[toSide].player?.unMute?.()
       activeSide.value = toSide // component CSS crossfades opacity on this change
       rampVolumes(outgoing, incoming, boundaryCrossfadeMs(target), () => {
         outgoing?.pauseVideo?.()
@@ -877,12 +890,32 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         prewarming: state.prewarming,
         parking: state.parking,
         active: activeSide.value === side,
+        muted: (() => {
+          try {
+            return state.player?.isMuted?.() ?? null
+          }
+          catch {
+            return null
+          }
+        })(),
         volume: (() => {
           try {
             return state.player?.getVolume?.() ?? null
           }
           catch {
             return null
+          }
+        })(),
+        /** What the room would actually hear from this buffer right now. */
+        audible: (() => {
+          try {
+            if (state.player?.isMuted?.()) {
+              return 0
+            }
+            return state.player?.getVolume?.() ?? 0
+          }
+          catch {
+            return 0
           }
         })(),
         time: (() => {

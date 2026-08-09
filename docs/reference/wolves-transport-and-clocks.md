@@ -121,6 +121,21 @@ Miss one and the whole show plays to a silent room. A test double that folds `mu
 into `volume` cannot tell those two states apart, so model the latch separately and
 assert an `audibleVolume`.
 
+**Nothing may go to air before `start()`.** The cinematic buffers are built and
+prewarmed by `prepare()` *during the Destiny intro*, minutes before the audience is
+meant to hear anything from them. Every path that puts a segment on air — `beginSwap()`
+and `skip()` — must therefore refuse to run while `started` is false. Without that
+guard, a single `onError` from a prewarming buffer ran the whole boundary underneath
+the intro: a song playing over the entire opening, which is what "there's a song playing
+in my intro" was. Adding recovery to a boundary means adding a way for that boundary to
+start audio, so the guard has to be added in the same change.
+
+**A cold load is not yet on air.** `loadVideoById` autoplays, so the recovery load must
+stay muted at volume 0 and be lifted only by `commit()`, at the moment the side actually
+takes over. Unmuting at load time makes the incoming segment audible *underneath* the
+outgoing one for the whole bounded wait. Put the `unMute()` in the shared `commit()`
+closure, which both the warm and cold paths run, rather than in either path's setup.
+
 **Both buffers prewarm, and startup waits for the active side's park.** Gating
 the prewarm on `side !== activeSide` left Track 0 — the first thing the audience
 hears — as the only buffer that ever entered cold, while a track needed seven
