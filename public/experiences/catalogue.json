@@ -123,13 +123,23 @@
           "artist": "Metallica",
           "artwork": "https://i.ytimg.com/vi/dtHuqY679io/hqdefault.jpg",
           "durationSeconds": 270
+        },
+        {
+          "id": "NQtUl7PfD28",
+          "kind": "youtube",
+          "youtubeId": "NQtUl7PfD28",
+          "chapter": "Harbringer: Requiem",
+          "title": "Alone",
+          "artist": "Exit Eden",
+          "artwork": "https://i.ytimg.com/vi/NQtUl7PfD28/hqdefault.jpg",
+          "durationSeconds": 218
         }
       ]
     },
     {
       "id": "PLbORkyQL0Pe8",
       "title": "The Forbidden Factory",
-      "subtitle": "[ Redacted ]",
+      "subtitle": "A factory lost to the ancients. An exiled madman. Can the Maintainer-Guardians get to it before Blue Universal?",
       "artwork": "experiences/PLbORkyQL0Pe8.jpg",
       "segments": [
         {
@@ -143,14 +153,44 @@
           "durationSeconds": 216
         },
         {
-          "id": "Sef7g0yESbA",
+          "id": "PE43-wJ6F84",
           "kind": "youtube",
-          "youtubeId": "Sef7g0yESbA",
+          "youtubeId": "PE43-wJ6F84",
           "chapter": "The Forbidden Factory",
-          "title": "Blur The Technicolor",
-          "artist": "White Zombie",
-          "artwork": "https://i.ytimg.com/vi/Sef7g0yESbA/hqdefault.jpg",
-          "durationSeconds": 250
+          "title": "Here We Go, Let's Rock & Roll",
+          "artist": "C&C Music Factory",
+          "artwork": "https://i.ytimg.com/vi/PE43-wJ6F84/hqdefault.jpg",
+          "durationSeconds": 341
+        },
+        {
+          "id": "WqaiHivKlsE",
+          "kind": "youtube",
+          "youtubeId": "WqaiHivKlsE",
+          "chapter": "The Forbidden Factory",
+          "title": "Deutschland (Instrumental)",
+          "artist": "RAMMSTEIN",
+          "artwork": "https://i.ytimg.com/vi/WqaiHivKlsE/hqdefault.jpg",
+          "durationSeconds": 315
+        },
+        {
+          "id": "BRM3MYxz-38",
+          "kind": "youtube",
+          "youtubeId": "BRM3MYxz-38",
+          "chapter": "The Forbidden Factory",
+          "title": "Hell March Trilogy",
+          "artist": "Smiechu",
+          "artwork": "https://i.ytimg.com/vi/BRM3MYxz-38/hqdefault.jpg",
+          "durationSeconds": 406
+        },
+        {
+          "id": "hLmjP6wDn3M",
+          "kind": "youtube",
+          "youtubeId": "hLmjP6wDn3M",
+          "chapter": "The Forbidden Factory",
+          "title": "Can't Play Dead",
+          "artist": "The Heavy",
+          "artwork": "https://i.ytimg.com/vi/hLmjP6wDn3M/hqdefault.jpg",
+          "durationSeconds": 261
         },
         {
           "id": "mlgdJjqFfjg",
@@ -163,14 +203,24 @@
           "durationSeconds": 258
         },
         {
-          "id": "rmenTtGe_6I",
+          "id": "TeJDIzPxd0M",
           "kind": "youtube",
-          "youtubeId": "rmenTtGe_6I",
+          "youtubeId": "TeJDIzPxd0M",
           "chapter": "The Forbidden Factory",
-          "title": "Jesus Built My Hotrod",
+          "title": "Just One Fix",
           "artist": "Ministry",
-          "artwork": "https://i.ytimg.com/vi/rmenTtGe_6I/hqdefault.jpg",
-          "durationSeconds": 292
+          "artwork": "https://i.ytimg.com/vi/TeJDIzPxd0M/hqdefault.jpg",
+          "durationSeconds": 311
+        },
+        {
+          "id": "Sef7g0yESbA",
+          "kind": "youtube",
+          "youtubeId": "Sef7g0yESbA",
+          "chapter": "The Forbidden Factory",
+          "title": "Blur The Technicolor",
+          "artist": "Release",
+          "artwork": "https://i.ytimg.com/vi/Sef7g0yESbA/hqdefault.jpg",
+          "durationSeconds": 250
         },
         {
           "id": "zVq7Ps9SaI4",
@@ -193,14 +243,14 @@
           "durationSeconds": 273
         },
         {
-          "id": "hLmjP6wDn3M",
+          "id": "EfGBeAGwokg",
           "kind": "youtube",
-          "youtubeId": "hLmjP6wDn3M",
+          "youtubeId": "EfGBeAGwokg",
           "chapter": "The Forbidden Factory",
-          "title": "Can't Play Dead",
-          "artist": "The Heavy",
-          "artwork": "https://i.ytimg.com/vi/hLmjP6wDn3M/hqdefault.jpg",
-          "durationSeconds": 261
+          "title": "Ich Will Instrumental",
+          "artist": "Rammstein",
+          "artwork": "https://i.ytimg.com/vi/EfGBeAGwokg/hqdefault.jpg",
+          "durationSeconds": 217
         }
       ]
     },
@@ -384,7 +434,7 @@
           "youtubeId": "yUCTlqExGyo",
           "chapter": "Bluefin finds Her Way",
           "title": "The Mark Has Been Made",
-          "artist": "Nine Inch Nails",
+          "artist": "Release",
           "artwork": "https://i.ytimg.com/vi/yUCTlqExGyo/hqdefault.jpg",
           "durationSeconds": 316
         },
@@ -404,7 +454,7 @@
           "youtubeId": "UZ0M09LQTI4",
           "chapter": "Bluefin finds Her Way",
           "title": "Song And Emotion",
-          "artist": "TESLA",
+          "artist": "Release",
           "artwork": "https://i.ytimg.com/vi/UZ0M09LQTI4/hqdefault.jpg",
           "durationSeconds": 509
         },
@@ -472,7 +522,7 @@
           "youtubeId": "b612uztK8io",
           "chapter": "Bluefin and Achillobator",
           "title": "The Mercenary",
-          "artist": "Iron Maiden",
+          "artist": "Release",
           "artwork": "https://i.ytimg.com/vi/b612uztK8io/hqdefault.jpg",
           "durationSeconds": 283
         },
@@ -776,7 +826,7 @@
           "youtubeId": "ZP657058PbQ",
           "chapter": "Bluefin and the Children of Jensen",
           "title": "Unsung",
-          "artist": "Helmet",
+          "artist": "Helmut",
           "artwork": "https://i.ytimg.com/vi/ZP657058PbQ/hqdefault.jpg",
           "durationSeconds": 237
         },
@@ -1032,7 +1082,7 @@
           "youtubeId": "4aZX-C8HKJc",
           "chapter": "Bluefin and the Syrens of Metal",
           "title": "School Revolution",
-          "artist": "VoB (Voice of Baceprot)",
+          "artist": "Voice of Baceprot",
           "artwork": "https://i.ytimg.com/vi/4aZX-C8HKJc/hqdefault.jpg",
           "durationSeconds": 350
         },
