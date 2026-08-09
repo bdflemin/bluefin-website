@@ -31,3 +31,9 @@ references only when the selected skill links to them.
 
 Reference files state current production facts. Skills define procedures. Keep
 those roles separate and update the canonical owner when source code changes.
+
+The Wolves runtime detail is split into companion references, all reached from
+`reference/wolves-runtime.md` and the router: `reference/wolves-transport-and-clocks.md`,
+`reference/wolves-intro-and-overlay.md`, `reference/wolves-lore-timing.md`,
+`reference/wolves-slide-scheduling.md`, and `reference/wolves-test-harnesses.md`.
+Also on file: `reference/locale-schema.md` for locale value formats.

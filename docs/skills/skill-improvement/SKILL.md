@@ -86,7 +86,8 @@ Never edit `ublue-os/*`. Ask the human to report upstream manually.
 
 Delete these on sight; they collect stale text instead of updating skills.
 
-- Changelog-style agent files: `IMPROVEMENTS.md`, `CHANGES.md`, `SESSION.md`.
+- Changelog-style agent files: `IMPROVEMENTS.md`, `CHANGELOG.md`, `CHANGES.md`,
+  `SESSION.md`.
 - Committed session logs: `NOTES.md`, `PLAN.md`, `TODO.md`, progress files.
 - Any doc instructing an agent to "append here" — route to `docs/skills/`
   instead.
@@ -113,7 +114,7 @@ Before reporting completion:
 - [ ] No banned artifact was added:
 
 ```bash
-git ls-files 'IMPROVEMENTS.md' 'CHANGES.md' 'SESSION.md' 'NOTES.md' 'PLAN.md' 'TODO.md'
+git ls-files 'IMPROVEMENTS.md' 'CHANGELOG.md' 'CHANGES.md' 'SESSION.md' 'NOTES.md' 'PLAN.md' 'TODO.md'
 ```
 
 The command must return no output.

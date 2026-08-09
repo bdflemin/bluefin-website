@@ -58,4 +58,4 @@ layout follows the Agent Skills convention.
 - `../../SKILL.md`
 - `../skill-improvement/SKILL.md`
 - `../../reference/`
-- `AGENTS.md`
+- `../../../AGENTS.md`

@@ -15,8 +15,11 @@ Gate engineering work on the frozen Wolves runtime.
 ## When to Use
 
 Use only when the user explicitly authorizes overlay, transport, fullscreen, or
-YouTube IFrame engineering. Do not use for routine content or unapproved visual
-work.
+YouTube IFrame engineering.
+
+## When NOT to Use
+
+Do not use for routine content or unapproved visual work.
 
 ## Core Process
 
@@ -68,8 +71,9 @@ an unidentified player request.
   IFrame API emits.
 - Buffer bookkeeping (a prewarm park's pause and seek) is published to the store
   as show transport state.
-- The playlist is indexed by `segmentIndex`/`trackIndex` instead of resolved by
-  `id`/`youtubeVideoId`.
+- Playlist metadata is indexed by `segmentIndex`/`trackIndex` instead of
+  resolved by `id`/`youtubeVideoId`. (`trackIndex` still drives ordering and
+  branching; the ban is on metadata lookup by position.)
 - A hand-maintained array that parallels `CINEMATIC_SEGMENTS` (durations, BPM,
   chat keys) is not asserted against it by id.
 - An authored sequence has a gap (`TRANSITION_FIVE` with no `TRANSITION_FOUR`,

@@ -9,6 +9,11 @@ measured beats in the music.
 Procedure and approval gate: [`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md).
 Show-wide production facts: [`wolves-runtime.md`](wolves-runtime.md).
 
+Numbering in this file: "Track 0" is the comic reader's `trackIndex` 0 —
+"7 Days to the Wolves", segment index 0. `wolves-runtime.md` uses show
+numbering, where Track 0 is the Destiny intro; see
+[`wolves-transport-and-clocks.md`](wolves-transport-and-clocks.md).
+
 ## Lore display model
 
 The Wolves lore column is a theater text display, not a document. One panel,

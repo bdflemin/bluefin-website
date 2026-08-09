@@ -9,6 +9,10 @@ here was learned from a defect that reached a theater build.
 Procedure and approval gate: [`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md).
 Show-wide production facts: [`wolves-runtime.md`](wolves-runtime.md).
 
+Numbering in this file: "Track 0" is playlist track 0 — segment index 0,
+"7 Days to the Wolves", the first music after the intro. `wolves-runtime.md`
+uses show numbering, where Track 0 is the Destiny intro.
+
 ## Transports and clocks
 
 Three invariants, each learned from a defect that reached the theater build.

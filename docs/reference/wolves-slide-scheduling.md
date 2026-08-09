@@ -125,12 +125,12 @@ presentation:
 
 - `timelineSlides` — the Wolves Track 0 schedule (`wolvesExperience` true).
 - `laterTrackPhotos` — Wolves tracks 1 and later.
-- `mixedPhotos` — the ten other albums in `public/experiences/catalogue.json`.
+- `mixedPhotos` — the eleven albums in `public/experiences/catalogue.json`.
 
 `mixedPhotosToUse` only swaps in `timelineSlides` when `wolvesExperience` is
 true, so `mixedPhotos` is live for every non-Wolves album. It reads as dead
 legacy code beside the newer Wolves path, and an audit flagged ~113 lines of it
-for deletion; deleting it would have broken ten experiences while leaving
+for deletion; deleting it would have broken eleven experiences while leaving
 `/wolves/` working, so a `/wolves/` smoke test would not have caught it. Check
 whether the non-Wolves experiences reach a symbol before removing it. Likewise
 `isExperimental` is a permanently-true flag, not a licence to delete its branch.

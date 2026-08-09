@@ -5,9 +5,19 @@ description: Use when configuring Cloudflare DNS, Workers, Pages, custom domains
 
 # Cloudflare operations
 
+## Overview
+
+Change live delivery resources only through documented Wrangler flows, and
+verify the result at the live hostname.
+
 ## When to Use
 
 Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
+
+## When NOT to Use
+
+Do not use for application code, content, or GitHub Pages build changes, and
+never deploy a Worker as a substitute for a DNS record.
 
 ## Core Process
 
@@ -18,7 +28,7 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
    wrangler whoami
    ```
 3. Identify whether the request is DNS/custom-domain configuration or an
-   application Worker. Do not deploy a Worker as a substitute for a DNS record.
+   application Worker.
 4. Use the documented Wrangler config/command for the requested resource. Keep
    the configuration in the repository when it is meant to be repeatable.
 5. Verify the live hostname with `curl -I` and a browser after propagation.
@@ -71,7 +81,7 @@ curl -I https://projectbluefin.io/img/wallpapers/wolves/people/kubecon-549274223
 wrangler pages project list
 ```
 
-## Sources
+## References
 
 - Cloudflare Workers SDK: `/cloudflare/workers-sdk`
 - Wrangler custom-domain route configuration: `routes[].custom_domain = true`

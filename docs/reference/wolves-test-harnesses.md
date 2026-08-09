@@ -10,6 +10,10 @@ instead of constants.
 Procedure and approval gate: [`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md).
 Show-wide production facts: [`wolves-runtime.md`](wolves-runtime.md).
 
+Numbering in this file: "Track 0" is the comic reader's `trackIndex` 0 —
+"7 Days to the Wolves", segment index 0 — the first music after the intro.
+`wolves-runtime.md` uses show numbering, where Track 0 is the Destiny intro.
+
 ## Driving Track 0 in a browser
 
 Reaching Track 0 in Chromium is not automatic. The standalone Playwright scripts

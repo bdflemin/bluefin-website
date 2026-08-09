@@ -58,9 +58,11 @@ npm run build
 
 `npm run test:run` is **not** a pass/fail signal in this repository. The vitest
 suite has carried failures for over a week (35 failing on 2026-07-29, 33 on
-2026-08-05 afternoon, 26 now). A bare run prints a large failure count whether or
-not you broke anything, so agents learned to ignore it — which is how a series of
-real regressions shipped unnoticed in a single afternoon.
+2026-08-05 afternoon, 23 on 2026-08-09). A bare run prints a large failure count
+whether or not you broke anything, so agents learned to ignore it — which is how
+a series of real regressions shipped unnoticed in a single afternoon. The
+current count is `tests/known-failures.txt`'s line count, not this paragraph;
+re-derive it instead of trusting any prose figure.
 
 Use the baseline gate instead:
 

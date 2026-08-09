@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
 export const TRANSITION_POST_RAMP_MS = 2400
 
 /**
- * Floor for the hold. The shortest authored crossfade is 1000ms; a hold derived
+ * Floor for the hold. The shortest authored crossfade is 800ms; a hold derived
  * from it alone would flash the terminal block past the back row. Nothing may
  * shorten a transition below one readable beat.
  */

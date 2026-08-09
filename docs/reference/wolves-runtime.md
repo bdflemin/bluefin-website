@@ -72,7 +72,8 @@ The defect-derived detail behind that gate lives in these companion references:
 Use exact user-supplied or recovered authored copy. Never invent lore, dialogue,
 quotes, names, scientific facts, pairings, or provenance.
 
-Track 1’s Reza Jelveh portrait is a locked 8.16-second hold. The top title
+The Reza Jelveh portrait in “7 Days to the Wolves” (show numbering Track 1,
+segment index 0) is a locked 8.16-second hold. The top title
 uses “HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026” for that
 entire same player-clock window.
 
@@ -155,8 +156,9 @@ derived from real failures on this route, not preferences.
 - A chat completion event may hold its active record on screen, but it is a
   display lifecycle gate, not a second clock: when it releases, resume from
   the latest player-clock record without replaying elapsed content.
-- Typewriter cadence must not compress to fit a short timeline slot; an active
-  chat holds until its normal cadence and final reading pause complete.
+- Reading cadence must not compress to fit a short timeline slot; a chat or
+  quote page holds for its full reading cost, and a slot never shows a page it
+  cannot hold.
 - Preserve locked narrative anchors exactly and allocate only unlocked intervals.
 - Use invariant tests for recomputed intervals: completeness, uniqueness, ordering, contiguity, anchor preservation, and readability minimums.
 - Do not call an abandoned experiment restored. State which source is active and what was actually changed.
