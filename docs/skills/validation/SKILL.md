@@ -54,17 +54,17 @@ npm run test:gate
 npm run build
 ```
 
-## The suite is red; use the gate
+## The baseline gate
 
-`npm run test:run` is **not** a pass/fail signal in this repository. The vitest
-suite has carried failures for over a week (35 failing on 2026-07-29, 33 on
-2026-08-05 afternoon, 23 on 2026-08-09). A bare run prints a large failure count
-whether or not you broke anything, so agents learned to ignore it — which is how
-a series of real regressions shipped unnoticed in a single afternoon. The
-current count is `tests/known-failures.txt`'s line count, not this paragraph;
-re-derive it instead of trusting any prose figure.
+`npm run test:run` is the pass/fail signal again: as of 2026-08-09 the vitest
+suite is fully green and `tests/known-failures.txt` is empty (issue #705). The
+suite was red for weeks before that (35 failing on 2026-07-29, 23 on 2026-08-09
+morning), and agents learned to ignore the bare run — which is how real
+regressions shipped unnoticed. If the baseline grows again, the current count
+is `tests/known-failures.txt`'s line count, not any prose figure; re-derive it
+instead of trusting documentation.
 
-Use the baseline gate instead:
+Keep the gate as the guard:
 
 ```bash
 npm run test:gate
@@ -96,7 +96,14 @@ shrink is: fix the test, delete exactly its line from
 baseline N)` with the count reduced. Prefer deriving repaired expectations
 from the owning source data (e.g. import `buildIntroVideoSequence` /
 `INTRO_SEQUENCE_DURATION`) over fresh hardcoded literals, so authored-timing
-changes don't re-stale the test. Issue #705 tracks the remaining baseline.
+changes don't re-stale the test. Issue #705 drained the baseline to zero; keep
+it there.
+
+When triaging a baseline failure, read the git history of both the test and the
+code under test before choosing a side: an authored commit that deliberately
+changed the behavior (its message usually says so) means the *test* is stale.
+On `/wolves/` the design gate makes that the strong default — correct the test
+to match the shipped show; escalate instead of editing show behavior.
 
 ## Red Flags
 

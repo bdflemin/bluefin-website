@@ -89,8 +89,42 @@ function activeTimelineImage(wrapper: ReturnType<typeof mount>) {
   return img?.exists() ? img.attributes('src') : undefined
 }
 
+/**
+ * Drive the transport clock forward. The component only swaps the visible
+ * slide once the incoming image has decoded (the decode gate), which is
+ * asynchronous — so flushing is part of advancing, not an optional extra.
+ */
+async function advanceTo(wrapper: ReturnType<typeof mount>, playlistCurrentTime: number) {
+  await wrapper.setProps({ playlistCurrentTime })
+  await flushPromises()
+}
+
 describe('wolvesComicReader', () => {
+  // jsdom never fires image.onload, so the component's decode gate would hold
+  // every slide swap forever and time-based assertions would observe nothing.
+  // Fire the load event automatically, the way a real browser does.
+  class AutoImage {
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    fetchPriority = 'auto'
+    private value = ''
+
+    set src(next: string) {
+      this.value = next
+      queueMicrotask(() => this.onload?.())
+    }
+
+    get src() {
+      return this.value
+    }
+
+    decode() {
+      return Promise.resolve()
+    }
+  }
+
   beforeEach(() => {
+    vi.stubGlobal('Image', AutoImage)
     mockGalleryData()
   })
 
@@ -118,6 +152,7 @@ describe('wolvesComicReader', () => {
 
     const firstSlide = activeTimelineImage(wrapper)
     await wrapper.setProps({ playlistCurrentTime: 128 })
+    await flushPromises()
 
     expect(activeTimelineImage(wrapper)).not.toBe(firstSlide)
   })
@@ -183,6 +218,7 @@ describe('wolvesComicReader', () => {
 
     // Set time to 351s, the active slide should correspond to bketelsen.webp
     await wrapper.setProps({ playlistCurrentTime: 351 }) // "We are Universal Blue." phase
+    await flushPromises()
 
     // Check that one of the buffered/visible layers contains bketelsen.webp
     const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
@@ -248,16 +284,16 @@ describe('wolvesComicReader', () => {
 
     expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
 
-    await wrapper.setProps({ playlistCurrentTime: 8.4 })
+    await advanceTo(wrapper, 8.4)
     expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
 
-    await wrapper.setProps({ playlistCurrentTime: 14.99 })
+    await advanceTo(wrapper, 14.99)
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
 
-    await wrapper.setProps({ playlistCurrentTime: 16.8 })
+    await advanceTo(wrapper, 16.8)
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
 
-    await wrapper.setProps({ playlistCurrentTime: 19.99 })
+    await advanceTo(wrapper, 19.99)
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
   })
 
@@ -278,53 +314,53 @@ describe('wolvesComicReader', () => {
 
     expect(activeTimelineImage(wrapper)).toContain(jonoPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 171.878 })
+    await advanceTo(wrapper, jonoBaconTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(jonoPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 171.879 })
+    await advanceTo(wrapper, marinaMooreTrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(marinaPath)
     expect(galleryCaption(wrapper)).toContain('Marina Moore')
 
-    await wrapper.setProps({ playlistCurrentTime: 175.958 })
+    await advanceTo(wrapper, marinaMooreTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(marinaPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 175.959 })
+    await advanceTo(wrapper, shermanM2CompositeTrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 180.038 })
+    await advanceTo(wrapper, 180.038)
     expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 180.039 })
+    await advanceTo(wrapper, 180.039)
     expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 184.118 })
+    await advanceTo(wrapper, shermanM2CompositeTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 184.119 })
+    await advanceTo(wrapper, kyleTrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(kylePath)
 
-    await wrapper.setProps({ playlistCurrentTime: 188.198 })
+    await advanceTo(wrapper, kyleTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(kylePath)
 
-    await wrapper.setProps({ playlistCurrentTime: 188.199 })
+    await advanceTo(wrapper, hikariTrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 190.238 })
+    await advanceTo(wrapper, hikariTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 190.239 })
+    await advanceTo(wrapper, hikari2TrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(hikari2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 192.278 })
+    await advanceTo(wrapper, hikari2TrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(hikari2Path)
 
-    await wrapper.setProps({ playlistCurrentTime: 192.279 })
+    await advanceTo(wrapper, jorgeBluefinTrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain(jorgePath)
 
-    await wrapper.setProps({ playlistCurrentTime: 196.358 })
+    await advanceTo(wrapper, jorgeBluefinTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain(jorgePath)
 
-    await wrapper.setProps({ playlistCurrentTime: 196.359 })
+    await advanceTo(wrapper, jorgeBluefinTrackZeroWindow.endTime)
     expect(activeTimelineImage(wrapper)).not.toContain(jorgePath)
   })
 
@@ -338,7 +374,7 @@ describe('wolvesComicReader', () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
-        playlistCurrentTime: 188.199,
+        playlistCurrentTime: hikariTrackZeroWindow.startTime,
       },
     })
     await flushPromises()
@@ -346,10 +382,10 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari.JPG')
     expect(galleryCrossfadeDuration(wrapper)).toBeCloseTo(612, 5)
 
-    await wrapper.setProps({ playlistCurrentTime: 190.238 })
+    await advanceTo(wrapper, hikariTrackZeroWindow.endTime - 0.001)
     expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari.JPG')
 
-    await wrapper.setProps({ playlistCurrentTime: 190.239 })
+    await advanceTo(wrapper, hikari2TrackZeroWindow.startTime)
     expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari2.JPG')
     expect(galleryCrossfadeDuration(wrapper)).toBeCloseTo(612, 5)
   })
@@ -365,7 +401,7 @@ describe('wolvesComicReader', () => {
     const beforeCut = activeTimelineImage(wrapper)
     expect(beforeCut).toBeTruthy()
 
-    await wrapper.setProps({ playlistCurrentTime: 247.596 })
+    await advanceTo(wrapper, 247.596)
 
     expect(activeTimelineImage(wrapper)).not.toBe(beforeCut)
   })
@@ -453,18 +489,19 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
     await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+    await flushPromises()
 
     const firstTrackStart = galleryCaption(wrapper)
-    expect(firstTrackStart).toContain('BLUEFIN SHOWCASE //')
+    expect(firstTrackStart).toContain('CNCF STREAM //')
 
-    await wrapper.setProps({ playlistCurrentTime: 10 })
+    await advanceTo(wrapper, 10)
     const secondTrackOnePhoto = galleryCaption(wrapper)
-    await wrapper.setProps({ playlistCurrentTime: 0 })
+    await advanceTo(wrapper, 0)
     expect(galleryCaption(wrapper)).toBe(firstTrackStart)
 
     await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 10 })
     await flushPromises()
-    await wrapper.setProps({ playlistCurrentTime: 0 })
+    await advanceTo(wrapper, 0)
     expect(galleryCaption(wrapper)).not.toBe(firstTrackStart)
     expect(galleryCaption(wrapper)).not.toBe(secondTrackOnePhoto)
   })
@@ -626,6 +663,9 @@ describe('wolvesComicReader', () => {
   })
 
   it('switches an active later track to Flickr when the cache finishes loading', async () => {
+    // The later-track gallery shuffles with Math.random; pin it so the
+    // per-track photo assertions below are deterministic.
+    vi.spyOn(Math, 'random').mockReturnValue(0.9999)
     const tracks = [
       coverTrack,
       {
@@ -662,13 +702,17 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    expect(wrapper.find('.flickr-caption').exists()).toBe(true)
+    // Authored Wolves tracks have no local fallback gallery: while the summit
+    // feed is still loading there is nothing to show.
+    expect(wrapper.find('.flickr-caption').exists()).toBe(false)
 
     resolveFlickr(new Response(JSON.stringify(galleryPhotos)))
     await flushPromises()
+    expect(wrapper.find('.flickr-caption').exists()).toBe(true)
     expect(((wrapper.vm as any).laterTrackPhotos as Array<{ id: string }>).some(photo => photo.id === 'photo-a')).toBe(true)
 
     await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+    await flushPromises()
     expect(((wrapper.vm as any).laterTrackPhotos as Array<{ id: string }>).some(photo => photo.id === 'photo-b')).toBe(true)
   })
 
@@ -693,9 +737,9 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(wrapper)
     expect(firstCaption).toContain('//')
-    await wrapper.setProps({ playlistCurrentTime: 9.99 })
+    await advanceTo(wrapper, 9.99)
     expect(galleryCaption(wrapper)).toBe(firstCaption)
-    await wrapper.setProps({ playlistCurrentTime: 10 })
+    await advanceTo(wrapper, 10)
     expect(galleryCaption(wrapper)).not.toBe(firstCaption)
   })
 
@@ -720,9 +764,9 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(slowWrapper)
     expect(firstCaption).toContain('//')
-    await slowWrapper.setProps({ playlistCurrentTime: 5.99 })
+    await advanceTo(slowWrapper, 5.99)
     expect(galleryCaption(slowWrapper)).toBe(firstCaption)
-    await slowWrapper.setProps({ playlistCurrentTime: 6 })
+    await advanceTo(slowWrapper, 6)
     expect(galleryCaption(slowWrapper)).not.toBe(firstCaption)
   })
 
@@ -746,9 +790,9 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(wrapper)
     expect(firstCaption).toContain('//')
-    await wrapper.setProps({ playlistCurrentTime: 7.19 })
+    await advanceTo(wrapper, 7.19)
     expect(galleryCaption(wrapper)).toBe(firstCaption)
-    await wrapper.setProps({ playlistCurrentTime: 7.2 })
+    await advanceTo(wrapper, 7.2)
     expect(galleryCaption(wrapper)).not.toBe(firstCaption)
   })
 
@@ -795,9 +839,9 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(wrapper)
     expect(firstCaption).toContain('//')
-    await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+    await advanceTo(wrapper, hold - 0.01)
     expect(galleryCaption(wrapper)).toBe(firstCaption)
-    await wrapper.setProps({ playlistCurrentTime: hold })
+    await advanceTo(wrapper, hold)
     expect(galleryCaption(wrapper)).not.toBe(firstCaption)
     const activeLayer = wrapper.findAll('.flickr-photo-layer')
       .find(layer => (layer.attributes('style') ?? '').includes('z-index: 2'))
@@ -831,9 +875,9 @@ describe('wolvesComicReader', () => {
 
     async function findFallbackHold(wrapper: ReturnType<typeof mount>, initialCaption: string) {
       for (const hold of [7, 8, 10]) {
-        await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+        await advanceTo(wrapper, hold - 0.01)
         const captionBeforeBoundary = galleryCaption(wrapper)
-        await wrapper.setProps({ playlistCurrentTime: hold })
+        await advanceTo(wrapper, hold)
 
         if (captionBeforeBoundary === initialCaption && galleryCaption(wrapper) !== initialCaption) {
           return hold
@@ -855,9 +899,9 @@ describe('wolvesComicReader', () => {
     expect(secondRunHold).toBe(firstRunHold)
 
     for (const slideNumber of [2, 3]) {
-      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber - 0.01 })
+      await advanceTo(firstRun, firstRunHold! * slideNumber - 0.01)
       const captionBeforeBoundary = galleryCaption(firstRun)
-      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber })
+      await advanceTo(firstRun, firstRunHold! * slideNumber)
       expect(galleryCaption(firstRun)).not.toBe(captionBeforeBoundary)
     }
   })
@@ -915,11 +959,11 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    await wrapper.setProps({ playlistCurrentTime: 167.8 })
+    await advanceTo(wrapper, 167.8)
     expect(wrapper.get('.wallpaper-theater-caption.is-title-only').findAll('.wallpaper-theater-caption-body')).toHaveLength(0)
     expect(wrapper.find('.flickr-caption').exists()).toBe(false)
 
-    await wrapper.setProps({ playlistCurrentTime: 171.879 })
+    await advanceTo(wrapper, marinaMooreTrackZeroWindow.startTime)
     expect(wrapper.find('.wallpaper-theater-caption').exists()).toBe(false)
     expect(wrapper.find('.flickr-caption').exists()).toBe(true)
   })
@@ -1000,7 +1044,10 @@ describe('wolvesComicReader', () => {
     expect(laterIds.size).toBeGreaterThan(0)
   })
 
-  it('carries Clyde into later tracks instead of forcing it into the pre-legend barrage', async () => {
+  it('keeps Clyde out of the pre-legend barrage and out of the summit-only later-track gallery', async () => {
+    // Later-track gallery policy (docs/reference/wolves-runtime.md): after the
+    // Track 2 Jorge hero opening, Tracks 3-6 show only the curated Flickr
+    // contributor-summit gallery — local people images never carry forward.
     mockGalleryData([coverTrack])
     const wrapper = mount(WolvesComicReader, {
       props: { trackIndex: 0, playlistCurrentTime: 0 },
@@ -1011,8 +1058,9 @@ describe('wolvesComicReader', () => {
       .find(slide => slide.id === 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')
     expect(clydeSlide).toBeUndefined()
     await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+    await flushPromises()
     expect(((wrapper.vm as any).laterTrackPhotos as Array<{ id: string }>)
-      .some(photo => photo.id === 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')).toBe(true)
+      .some(photo => photo.id === 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')).toBe(false)
   })
 })
 

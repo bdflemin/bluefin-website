@@ -37,34 +37,19 @@ describe('wolves Lore Parser', () => {
     expect(record?.body).toBe(artifact?.body)
   })
 
-  it('parses speaker-only knocks and linked project tabs on the authored deployment chat', () => {
-    const record = loreRecords.find(item => item.id === 'insertion-approved')
+  it('parses linked project tabs on the authored deployment chats', () => {
     const projectRecord = loreRecords.find(item => item.id === 'openssf-reinforcements')
     const kubestellerRecord = loreRecords.find(item => item.id === 'andy-krook-kubesteller')
 
-    expect(record?.kind).toBe('chatlog')
     expect(projectRecord?.kind).toBe('chatlog')
     expect(kubestellerRecord?.kind).toBe('chatlog')
-    if (!record || !projectRecord || !kubestellerRecord) {
+    if (!projectRecord || !kubestellerRecord) {
       throw new Error('Expected authored deployment chats')
     }
 
-    const insertion = getChatlogLore(record)
     const reinforcement = getChatlogLore(projectRecord)
     const kubesteller = getChatlogLore(kubestellerRecord)
 
-    expect(insertion.messages).toContainEqual({
-      speaker: 'sabot-6',
-      text: '',
-      timestamp: undefined,
-      isSfx: undefined,
-    })
-    expect(insertion.messages.filter(message => message.isSfx).map(message => message.text)).toEqual([
-      'knock the pod door',
-      'agent, use a knocking on metal bulkhead sound here dramatically',
-      'knock * * knock *',
-      'agent, use a knocking on metal bulkhead sound here dramatically but twice',
-    ])
     expect(kubesteller.projects).toBeUndefined()
     expect(reinforcement.projects?.map(project => project.id)).toEqual(['kubestellar', 'kubernetes'])
     expect(kubesteller.messages[1]?.text).toBe('I know it works you\'re complaining to the wrong guy. But man we gotta get moving. Projects team loves Kubesteller but there are over 240 of you —')

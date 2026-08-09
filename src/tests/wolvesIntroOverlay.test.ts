@@ -435,8 +435,8 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
-    players[0].getCurrentTime = vi.fn(() => 2)
     players[0].triggerReady()
+    players[0].setCurrentTime(2)
 
     await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
@@ -1177,7 +1177,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).not.toContain('wolves-guardian-plate-dinosaur-icon')
   })
 
-  it('locks Christoph Blecker\'s leader label to gold while the plate chrome stays blue', () => {
+  it('gilds Christoph Blecker\'s leader plate gold while the other plates keep their chrome', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
     const leaderRule = overlay.match(/\.wolves-guardian-plate\.wolves-guardian-plate-leader \{([\s\S]*?)\n\}/)?.[1]
     const leaderSelectors = [
@@ -1190,15 +1190,15 @@ describe('wolvesIntroOverlay guardian plate', () => {
       '.wolves-guardian-plate-title',
     ]
 
-    expect(leaderRule).toContain('border-color: rgb(56 189 248 / 55%)')
-    expect(leaderRule).toContain('box-shadow: 0 0 24px rgb(56 189 248 / 20%)')
+    expect(leaderRule).toContain('border-color: rgb(250 204 21 / 55%)')
+    expect(leaderRule).toContain('box-shadow: 0 0 24px rgb(250 204 21 / 20%)')
     for (const selector of leaderSelectors) {
       expect(overlay).toContain(`.wolves-guardian-plate-leader ${selector}`)
     }
-    expect(overlay).toContain('stroke: #38bdf8')
+    expect(overlay).toContain('stroke: #facc15')
     const leaderLabelRule = overlay.match(/\.wolves-guardian-plate-leader \.wolves-guardian-plate-label \{([\s\S]*?)\n\}/)?.[1]
     expect(leaderLabelRule).toContain('color: #facc15')
-    expect(overlay).toContain('color: #bae6fd')
+    expect(overlay).toContain('color: #93c5fd')
     expect(overlay).not.toContain('wolves-guardian-plate-name-gold')
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the

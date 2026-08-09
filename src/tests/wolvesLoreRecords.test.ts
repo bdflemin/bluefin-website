@@ -75,7 +75,7 @@ describe('wolves lore records', () => {
     const laura = records.find(record => record.id === 'laura-sherman-robert')
     const openssf = records.find(record => record.id === 'openssf-reinforcements')
 
-    expect(records).toHaveLength(57)
+    expect(records).toHaveLength(55)
     expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',

@@ -146,6 +146,35 @@ same way: the lore title is `.lore-dossier-title` (`LoreRecordHeader`), not
 the old `.conversation-title`, and the lore page viewport intentionally clips
 (`overflow: hidden` in `lore-dossier.scss`) — it is not a scroll surface.
 
+## The vitest comic-reader tests must drive the image decode gate
+
+jsdom never fires `image.onload`. `WolvesComicReader.vue` only swaps the
+visible slide once the incoming image has decoded (the decode gate that keeps
+the wallpaper from flashing through an empty buffer), so a unit test running
+on the stock global `Image` never advances: every "slide at time T" assertion
+observes the first slide forever, and the failure reads like a content drift
+when it is really a harness stall. This one gap put 17 entries into
+`tests/known-failures.txt` (issue #705).
+
+- Stub a self-completing image (`AutoImage` in
+  `src/tests/wolvesComicReader.test.ts`: fire `onload` in a microtask from the
+  `src` setter, `decode()` resolves) in the suite `beforeEach`.
+- Flush after every clock advance. `await wrapper.setProps(...)` alone does not
+  drain the preload promise chain, so the swap lands after the assertion. Use
+  the suite's `advanceTo()` helper (setProps + `flushPromises`).
+- The later-track gallery is remote-only for the Wolves experience
+  (`wolves-runtime.md`, "Later-track gallery policy"): while the Flickr feed is
+  pending or failed there is no local fallback and no caption. Tests mounting
+  later tracks must resolve the `flickr-photos.json` fetch before asserting
+  slides, and must not expect local people images to carry forward.
+- The later-track gallery shuffles with live `Math.random`. Pin it
+  (`vi.spyOn(Math, 'random')`) before asserting which photo lands on which
+  track, or the assertion flakes roughly one run in pool-size.
+- Assert Track 0 hero windows from the `wolves-track-zero-slides.ts` constants
+  (`hikariTrackZeroWindow.startTime`, …), never re-typed literals: the windows
+  were re-measured once already and every hardcoded boundary failed off by one
+  slide.
+
 ## A real player is the only way to see what a buffer is holding
 
 `tests/wolves-ghosts-boundary.mjs` drives the Part I → Part II seam against

@@ -127,19 +127,27 @@ describe('cinematic store', () => {
 
   it('computes canonical overall elapsed/progress from intro status and keeps the intro-to-cinematic handoff continuous', () => {
     const store = useCinematicStore()
+    const [titleCard, trailer] = buildIntroVideoSequence()
+    if (titleCard?.kind !== 'text' || trailer?.kind !== 'video') {
+      throw new Error('Expected the authored title card followed by the trailer')
+    }
+    const trailerStart = trailer.startOffset ?? 0
+    const trailerDuration = (trailer.maxDuration ?? 0) - trailerStart
+
     store.enterIntro()
     store.syncIntroStatus({
-      segmentIndex: 0,
+      segmentIndex: 1,
       segmentElapsed: 60,
-      segmentDuration: 119.5,
-      nativeTime: 62,
+      segmentDuration: trailerDuration,
+      nativeTime: trailerStart + 60,
     })
 
-    expect(store.sequenceElapsed).toBeCloseTo(60)
+    const introElapsed = titleCard.duration + 60
+    expect(store.sequenceElapsed).toBeCloseTo(introElapsed)
     expect(store.sequenceDuration).toBeCloseTo(INTRO_SEQUENCE_DURATION)
-    expect(store.overallElapsed).toBeCloseTo(60)
+    expect(store.overallElapsed).toBeCloseTo(introElapsed)
     expect(store.overallDuration).toBeCloseTo(OVERALL_DURATION)
-    expect(store.overallProgress).toBeCloseTo(60 / OVERALL_DURATION)
+    expect(store.overallProgress).toBeCloseTo(introElapsed / OVERALL_DURATION)
 
     store.enterCinematic()
     store.updateTime(0, AUTHORED_DURATIONS[0], 0)
@@ -154,9 +162,26 @@ describe('cinematic store', () => {
     expect(resolveOverallRatioTarget(0)).toEqual(expect.objectContaining({
       phase: 'intro',
       segmentIndex: 0,
+      segmentId: 'wolves-title-card',
       segmentElapsed: 0,
-      nativeTime: 2,
+      nativeTime: 0,
     }))
+
+    // Inside the trailer the native clock includes the authored startOffset.
+    const [titleCard, trailer] = buildIntroVideoSequence()
+    if (titleCard?.kind !== 'text' || trailer?.kind !== 'video') {
+      throw new Error('Expected the authored title card followed by the trailer')
+    }
+    const fiveSecondsIntoTrailer = resolveOverallRatioTarget(
+      (titleCard.duration + 5) / OVERALL_DURATION,
+    )
+    expect(fiveSecondsIntoTrailer).toEqual(expect.objectContaining({
+      phase: 'intro',
+      segmentIndex: 1,
+      segmentId: 'wolves-intro',
+    }))
+    expect(fiveSecondsIntoTrailer.segmentElapsed).toBeCloseTo(5)
+    expect(fiveSecondsIntoTrailer.nativeTime).toBeCloseTo((trailer.startOffset ?? 0) + 5)
 
     const startOfCinematic = resolveOverallRatioTarget(INTRO_SEQUENCE_DURATION / OVERALL_DURATION)
     expect(startOfCinematic.phase).toBe('cinematic')
