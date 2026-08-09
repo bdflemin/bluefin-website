@@ -63,14 +63,28 @@ Derive Director's Cut expectations from the store (`store.sequenceDuration`,
 `buildOpeningTitleCardSegment()` used to carry `windows = [14, 16, 12, 17]` — a
 59 s card for 34 s of prose. On a projected slide the audience finishes reading
 and then waits, which reads as the show having stalled. The windows are now
-`parts.map(text => Math.ceil(estimatePageSeconds(text)))`, the same reading model
-the lore column pages by, giving a 37 s card with every authored word intact.
+`estimatePageSeconds(text) * TITLE_CARD_PACE`, the same reading model the lore
+column pages by, with every authored word intact.
 
-Retime by changing the model, not the numbers, and make tests derive the same
-way: `wolvesIntroSequence.test.ts` asserted `card.duration === 59` and a literal
-`[[0, 14], …]` cue table, both of which broke on the first retime. They now
-recompute from `estimatePageSeconds`, checking the invariant — cues tile the
-segment, each window is its own paragraph's cost — rather than a snapshot.
+`TITLE_CARD_PACE` exists because the reading model is the wrong yardstick for
+this one surface. `estimatePageSeconds` prices text for an audience reading it
+off a projector **in silence**, and nobody reads this card in silence — it is
+the presenter's own welcome slide and he speaks these lines from the stage. Held
+at full silent-reading cost the speaker waits on his own slide. It is halved on
+owner instruction (2026-08-09), taking the card from 37 s to 19 s.
+
+This is the exception, not a licence. Every other Wolves text surface is read,
+not narrated, and the readability minimum there is not negotiable — do not
+"speed up" a lore record by borrowing this idea.
+
+Retime by changing the model, not the numbers: move `TITLE_CARD_PACE`, never an
+individual window, or the relative weighting the card was authored for is lost —
+the long CNCF beat has to stay the longest and the "Don't believe me?" punch the
+shortest. Make tests derive the same way: `wolvesIntroSequence.test.ts` asserted
+`card.duration === 59` and a literal `[[0, 14], …]` cue table, both of which
+broke on the first retime. They now recompute from `estimatePageSeconds` and the
+exported pace, checking the invariant — cues tile the segment, each window is its
+own paragraph's paced cost — rather than a snapshot.
 Shortening further means cutting a paragraph, which is a **content** change and
 needs the owner. Do not trim authored wording to hit a duration.
 

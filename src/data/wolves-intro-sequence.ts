@@ -446,6 +446,23 @@ const OPENING_TITLE_CARD_IMAGE = 'img/wallpapers/wolves/people/Yikes!.webp'
  * The quote is authored verbatim and must stay that way: it names a real device count and
  * two real foundations, so paraphrasing it would misstate fact from the stage.
  */
+/**
+ * How much of each paragraph's silent-reading cost the card actually holds for.
+ *
+ * The windows are still *derived* — hand-picked numbers are what this card had before
+ * and they rotted immediately — but the reading model is the wrong yardstick here, and
+ * this factor is the correction. `estimatePageSeconds` prices text for an audience
+ * reading it off a projector in silence. Nobody reads this card in silence: it is the
+ * presenter's own welcome slide and he is speaking these lines from the stage, so the
+ * room is listening, not reading. Holding every paragraph for its full silent-reading
+ * cost leaves the speaker waiting on his own slide.
+ *
+ * Halved on owner instruction (2026-08-09): 37s to 19s across the four paragraphs.
+ * Every authored word is kept — this is a pacing change, not a cut. If this ever needs
+ * to move again, move this factor, never the individual windows.
+ */
+export const TITLE_CARD_PACE = 0.5
+
 function buildOpeningTitleCardSegment(): IntroTextSegment {
   const parts = [
     'Welcome Linux gamers! As we celebrate 100k weekly Bazzite devices, let me explain who we are.',
@@ -453,17 +470,18 @@ function buildOpeningTitleCardSegment(): IntroTextSegment {
     'Modern Linux is unified. Don\'t believe me? Meet your new teammates.',
     'The people in these slides were once just like you. Ask them. The Linux you want exists ... suit up.',
   ]
-  // Each paragraph holds for exactly what it costs to read from the back row, using the same
-  // theater reading model every other Wolves text surface uses (`estimatePageSeconds`: a fixed
-  // beat for putting a page up and taking it down, plus its word count at theater pace). That
-  // keeps the weighting the card was authored for -- the long CNCF beat holds longest, the
-  // "Don't believe me?" punch holds shortest -- without hand-picking any of the numbers.
+  // Each paragraph holds for a fixed fraction of what it costs to read from the back row,
+  // using the same theater reading model every other Wolves text surface uses
+  // (`estimatePageSeconds`: a fixed beat for putting a page up and taking it down, plus its
+  // word count at theater pace), scaled by `TITLE_CARD_PACE`. That keeps the relative
+  // weighting the card was authored for -- the long CNCF beat still holds longest, the
+  // "Don't believe me?" punch still holds shortest -- without hand-picking any number.
   //
   // These windows used to be a hand-written [14, 16, 12, 17]. That ran 59 seconds against
   // 34 seconds of actual reading cost: roughly six seconds of dead air on every paragraph,
   // before a single frame of the show. A welcome slide that outstays its own content is the
   // one thing an audience is guaranteed to notice, because nothing has started yet.
-  const windows = parts.map(text => Math.ceil(estimatePageSeconds(text)))
+  const windows = parts.map(text => Math.max(1, Math.ceil(estimatePageSeconds(text) * TITLE_CARD_PACE)))
   const titlePlate = {
     name: 'Jorge Castro',
     subtitle: 'Project Bluefin // Universal Blue // Kubernetes',

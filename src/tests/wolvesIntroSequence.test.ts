@@ -15,6 +15,7 @@ import {
   parseDestinyCaptionFile,
   previousIntroSequence,
   skipIntroSequence,
+  TITLE_CARD_PACE,
 } from '../data/wolves-intro-sequence'
 
 describe('wolves intro overlay sequence', () => {
@@ -189,11 +190,16 @@ describe('wolves intro overlay sequence', () => {
 
     // The card holds for exactly what its paragraphs cost to read, so its duration is
     // derived here too rather than re-recorded as a literal that rots on the next edit.
-    const readingCost = card.overlays!.reduce(
-      (total, cue) => total + Math.ceil(estimatePageSeconds(cue.text)),
+    // The card holds a fixed fraction of its silent-reading cost, because the presenter
+    // narrates these lines rather than leaving the room to read them. Derive the pace from
+    // the module so a retime moves one constant instead of rotting a literal here.
+    const pacedCost = card.overlays!.reduce(
+      (total, cue) => total + Math.max(1, Math.ceil(estimatePageSeconds(cue.text) * TITLE_CARD_PACE)),
       0,
     )
-    expect(card.duration).toBe(readingCost)
+    expect(card.duration).toBe(pacedCost)
+    expect(TITLE_CARD_PACE).toBeGreaterThan(0)
+    expect(TITLE_CARD_PACE).toBeLessThanOrEqual(1)
 
     for (const cue of card.overlays!) {
       expect(cue.backgroundImage).toBe('img/wallpapers/wolves/people/Yikes!.webp')
@@ -211,7 +217,9 @@ describe('wolves intro overlay sequence', () => {
     let cursor = 0
     for (const cue of card.overlays!) {
       expect(cue.start).toBe(cursor)
-      expect(cue.end - cue.start).toBe(Math.ceil(estimatePageSeconds(cue.text)))
+      expect(cue.end - cue.start).toBe(
+        Math.max(1, Math.ceil(estimatePageSeconds(cue.text) * TITLE_CARD_PACE)),
+      )
       cursor = cue.end
     }
     expect(cursor).toBe(card.duration)
