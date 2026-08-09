@@ -38,12 +38,25 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
+      // Count every source file, not only files imported by tests, so that
+      // untested components cannot sit at 0% outside the report.
+      include: ['src/**'],
       reporter: ['text', 'lcov'],
       thresholds: {
-        statements: 50,
-        branches: 50,
-        functions: 50,
-        lines: 50,
+        // Global ratchet ~1pt below measured (77.8/67.3/79.5/77.6) so normal
+        // churn does not trip the gate while regressions still fail CI.
+        'statements': 77,
+        'branches': 66,
+        'functions': 78,
+        'lines': 76,
+        // Backstop for Vue components (measured 72.3/62.7/76.3): wider margin
+        // because a single added component moves the aggregate more.
+        'src/components/**': {
+          statements: 70,
+          branches: 60,
+          functions: 74,
+          lines: 70,
+        },
       },
     },
   },
