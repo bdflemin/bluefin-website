@@ -206,3 +206,113 @@ the attribute intact.
   static quote or source records; preserve explicitly approved cadence locks.
 - Derive Track 0's rotating HUD queue directly from the authored plan and keep
   duplicate status lines; deduping breaks the approved finale cadence.
+
+
+## The back catalogue draws one unweighted pool, not a curated-versus-CNCF mix
+
+The eleven album experiences in `public/experiences/catalogue.json` share a
+single slide pool, ordered by `src/data/back-catalogue-order.ts`:
+
+| Pool | Source | Approx. |
+|---|---|---|
+| CNCF stream | `public/flickr-photos.json` plus locally mirrored CNCF files | 667 |
+| Curated | `wolves/people/` portraits and lore | 77 |
+| Showcase | `wolves/showcase/` | 33 |
+| Mascot art | `wolves/wolves/` | 8 |
+| Hero shots | `public/characters/` via `wolves-comic-hero-shots.ts` | 23 |
+
+Three rules, applied as independent passes:
+
+1. **No category weighting.** Curated slides are placed into gaps between CNCF
+   slides, each gap equally likely. CNCF leads because it outnumbers everything
+   else, never because the ordering prefers it.
+2. **No two non-CNCF slides adjacent**, across the combined curated set. A
+   screenshot followed by a dinosaur reads from the back row as "the photos
+   stopped", so a per-category rule is not enough.
+3. **No two consecutive CNCF slides from the same event.**
+
+Two traps live here.
+
+**Never satisfy an ordering rule by re-drawing.** Re-shuffling until a predicate
+holds is rejection sampling: it biases the distribution and silently breaks rule
+1 while appearing to enforce rule 2. Place correctly by construction, then
+repair what remains in a single deterministic pass.
+
+**Concatenation order is a preference.** Gaps are filled in ascending order, so
+passing the pool as portraits-then-showcase-then-mascot-then-heroes put the
+first dinosaur at slide 745 of 808 — a category bias created by array order
+alone, invisible in every unit test that only checked membership. Shuffle the
+curated slides before placing them, and verify by asking where the first slide
+of the rarest category actually lands.
+
+
+## `wolves/people/` is hand-picked, and two thirds of it is CNCF photography
+
+`wolves/people/` is the owner's selection for the Wolves catalogue. It is **not**
+a CNCF mirror, and it is not all Bluefin work either: 136 of its 213 files came
+from CNCF albums and kept source-prefixed filenames (`flickr-`, `cncf-`,
+`kubecon-`) or `KC+CNC_...` export titles.
+
+So provenance cannot be inferred from the directory, and it cannot be inferred
+from whether the file is served locally. Both shortcuts credit someone else's
+conference photography to Bluefin. Use `classifyCuratedSlide()`, which checks
+the filename stem and the title, and key the on-screen credit on the resulting
+`kind`.
+
+
+## Gallery captions are derived, never invented, and may be withheld
+
+Both feeds ship filenames rather than captions: photographer exports
+(`KC+CNC_EU_240319_KCS_GroupPhoto_MN_001`), camera names (`0R0A9083`,
+`PXL_20240720_181225593`), and Flickr ids (`Cncf 54927603143`). All of it was
+rendered verbatim, at projection size.
+
+`src/data/gallery-captions.ts` reads back only what the filename literally
+encodes — event, region, session, date. Everything else is passed through
+untouched, because authored titles are already correct.
+
+When a title encodes nothing, **render no caption**. Do not guess, and do not
+fall back to a bare timestamp: "July 2024" alone describes no subject and is
+noise wearing a caption's clothes. Roughly 79 of 786 titles legitimately produce
+no caption.
+
+Verify against the real feeds, not fixtures. `public/flickr-photos.json` and
+`wallpapers-list.ts` between them contain grammars no fixture will suggest —
+a second photographer convention (`2024-06-06_OHSNAP_...`), wordplay that a
+naive camel-case split mangles (`KuberTENes` becoming `Kuber TENes`), and room
+codes (`BreakoutsB206`).
+
+
+## `shuffleWolvesGalleryPhotos` is a primitive, not a diversity mechanism
+
+It is a bare Fisher-Yates. The event-diversity logic lives in
+`src/data/wolves-gallery-cycle.ts`.
+
+This matters because it has already gone wrong once: `33a63532` shipped the
+event cycle, and `255f61fb` ("retime intro and shuffle galleries") deleted the
+module and pointed the call site at the shuffle. The commit subject reads like a
+refactor, nothing flagged the lost guarantee, and the catalogue quietly served
+long same-event runs from then on. `src/tests/wolvesGalleryCycle.test.ts` now
+pins the behaviour.
+
+The cycle spreads each event across its own stratum of the run rather than
+dealing round-robin. Round-robin only behaves when events are similar sizes; the
+live feed has hundreds of single-photo events, and dealing every bucket once per
+round put all of them in round one.
+
+
+## Wire every generated feed into the weekly refresh
+
+`update-content.yml` refreshed Flickr photos weekly while
+`update:back-catalogue` was wired into nothing, so album metadata sat at
+whatever a human last ran locally. A single regeneration then pulled six track
+changes and replaced a `[ Redacted ]` subtitle that had been resolved upstream
+long before.
+
+The catalogue generator shells out to `yt-dlp`, which is unreliable from CI, so
+the weekly job runs `--metadata-only`: album prose and cover art over plain
+`fetch`, no scraping. It exits non-zero when an upstream album is missing from
+the catalogue entirely, because that genuinely needs a human with `yt-dlp`.
+
+When adding a generated feed, check it is actually scheduled. "There is a script
+for it" is not the same as "it runs".

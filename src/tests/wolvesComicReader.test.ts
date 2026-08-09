@@ -662,6 +662,35 @@ describe('wolvesComicReader', () => {
     expect(wrapper.find('.flickr-caption').exists()).toBe(false)
   })
 
+  // The caption derivation withholds a caption for titles that encode nothing,
+  // and 25 photos in the Wolves later-track rotation carry camera-roll names.
+  // Applying it to the frozen show would take the CNCF credit off screen with
+  // them, so the derivation belongs to the back catalogue only.
+  it('keeps raw photo titles and the CNCF credit in the frozen Wolves show', async () => {
+    const cameraRollPhotos = [
+      { id: 'photo-a', server: '1', secret: 'a', title: 'A7V06139' },
+      { id: 'photo-b', server: '2', secret: 'b', title: 'CRJ07242' },
+    ]
+    mockGalleryData([coverTrack, {
+      id: 'later-track-one',
+      title: 'Later Track One',
+      artist: 'Artist 1',
+      artwork: 'wolves-artwork/later-track-one.jpg',
+      youtubeVideoId: '1',
+    }], new Response(JSON.stringify(cameraRollPhotos)))
+
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, trackId: '1', playlistCurrentTime: 1 },
+    })
+    await flushPromises()
+    await nextTick()
+
+    const caption = wrapper.find('.flickr-caption')
+    expect(caption.exists()).toBe(true)
+    expect(caption.text()).toContain('CNCF STREAM //')
+    expect(caption.text()).toMatch(/A7V06139|CRJ07242/)
+  })
+
   it('switches an active later track to Flickr when the cache finishes loading', async () => {
     // The later-track gallery shuffles with Math.random; pin it so the
     // per-track photo assertions below are deterministic.

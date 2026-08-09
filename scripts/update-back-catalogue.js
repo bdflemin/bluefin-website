@@ -27,12 +27,14 @@
 
 import { Buffer } from 'node:buffer'
 import { execFileSync } from 'node:child_process'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const METADATA_URL = 'https://docs.projectbluefin.io/data/playlist-metadata.json'
 const COVER_URL = id => `https://docs.projectbluefin.io/img/playlists/${id}.jpg`
+/** Longest plausible track. Guards against a malformed duration reaching the timeline. */
+const MAX_SEGMENT_SECONDS = 60 * 60
 const FEATURED_ALBUM_IDS = new Set(['PLA78oiE-RGAE'])
 const FEATURED_ALBUM_TITLES = new Set(['Seven Days to the Wolves'])
 const MODULE_PATH = import.meta.url.startsWith('file:')
@@ -104,6 +106,9 @@ const TRACK_METADATA_OVERRIDES = {
   '_HGZBLdn9_c': { artist: 'Ice Cube' },
   'Ma440BTErHw': { title: 'I Don\'t Like Mondays', artist: 'Tori Amos' },
   'Z6VpX-feA2M': { title: 'Quad Machine', artist: 'Sonic Mayhem' },
+  // The band's own channel name carries the expansion in parentheses; the
+  // nameplate has room for the performing name only.
+  '4aZX-C8HKJc': { artist: 'Voice of Baceprot' },
 }
 
 export function stripArtistPrefix(title, artist) {
@@ -221,8 +226,17 @@ export function auditExperience(album, entries, experience) {
     if (typeof segment.durationSeconds !== 'number' || segment.durationSeconds <= 0) {
       throw new Error(`Back catalogue audit failed for ${album.title}: bad duration for ${segment.id}`)
     }
+    if (!Number.isFinite(segment.durationSeconds) || segment.durationSeconds > MAX_SEGMENT_SECONDS) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: implausible duration ${segment.durationSeconds}s for ${segment.id}`)
+    }
     if (typeof segment.youtubeId !== 'string' || segment.youtubeId.trim().length === 0) {
       throw new Error(`Back catalogue audit failed for ${album.title}: bad youtubeId for ${segment.id}`)
+    }
+    if (typeof segment.title !== 'string' || segment.title.trim().length === 0) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: empty title for ${segment.id}`)
+    }
+    if (typeof segment.artist !== 'string' || segment.artist.trim().length === 0) {
+      throw new Error(`Back catalogue audit failed for ${album.title}: empty artist for ${segment.id}`)
     }
   }
 }
@@ -263,8 +277,80 @@ export async function main() {
   console.info(`Wrote ${experiences.length} experiences to public/experiences/catalogue.json`)
 }
 
+/**
+ * Weekly refresh that needs no `yt-dlp`.
+ *
+ * Reports missing albums rather than failing. A new album published upstream is
+ * routine, and this step runs before the cache save and the deploy trigger — so
+ * throwing here would discard that week's stream versions, Dakota versions,
+ * growth chart and Flickr refresh over a cosmetic gap in one grid. The caller
+ * escalates afterwards, via MISSING_ALBUMS_FILE, once the pipeline has run.
+ *
+ * Album prose (title, subtitle) and cover art change upstream far more often
+ * than tracklists do, and refreshing them is a plain `fetch`. Track ingestion
+ * scrapes YouTube, which is rate-limited and unreliable from CI, so it stays a
+ * deliberate manual step.
+ *
+ * An album published upstream but absent from the catalogue cannot be filled in
+ * without that scrape, so this exits non-zero and names the command to run. The
+ * caller's failure handler turns that into an issue rather than letting the
+ * grid quietly go stale — which is exactly what happened before this existed.
+ */
+export async function refreshMetadata() {
+  const albums = await (await fetch(METADATA_URL)).json()
+  if (!Array.isArray(albums)) {
+    throw new TypeError('Malformed playlist metadata: expected an array')
+  }
+
+  const cataloguePath = join(EXPERIENCES_DIR, 'catalogue.json')
+  const existing = JSON.parse(await readFile(cataloguePath, 'utf8'))
+  if (!Array.isArray(existing?.experiences)) {
+    throw new TypeError('Malformed catalogue.json: expected an experiences array')
+  }
+  const byId = new Map(existing.experiences.map(experience => [experience.id, experience]))
+  const missing = []
+  let updated = 0
+
+  for (const album of albums) {
+    if (!shouldIncludeAlbum(album)) {
+      continue
+    }
+    const experience = byId.get(album.id)
+    if (!experience) {
+      missing.push(album)
+      continue
+    }
+    if (experience.title !== album.title || experience.subtitle !== album.description) {
+      console.info(`Updating prose for ${album.title} (${album.id})`)
+      experience.title = album.title
+      experience.subtitle = album.description
+      updated++
+    }
+    await writeFile(join(EXPERIENCES_DIR, `${album.id}.jpg`), await download(COVER_URL(album.id)))
+  }
+
+  await writeFile(cataloguePath, `${JSON.stringify(existing, null, 2)}\n`)
+  console.info(`Refreshed ${byId.size} album covers; ${updated} prose updates.`)
+
+  if (missing.length > 0) {
+    for (const album of missing) {
+      console.warn(`Album not in the catalogue: ${album.title} (${album.id})`)
+    }
+    console.warn(`${missing.length} album(s) need a full ingest: run "npm run update:back-catalogue" locally with yt-dlp installed.`)
+    if (process.env.MISSING_ALBUMS_FILE) {
+      await writeFile(
+        process.env.MISSING_ALBUMS_FILE,
+        `${missing.map(album => `${album.title} (${album.id})`).join('\n')}\n`,
+      )
+    }
+  }
+
+  return { missing }
+}
+
 if (MODULE_PATH && process.argv[1] && MODULE_PATH === resolve(process.argv[1])) {
-  main().catch((error) => {
+  const run = process.argv.includes('--metadata-only') ? refreshMetadata : main
+  run().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error))
     process.exitCode = 1
   })
