@@ -51,6 +51,7 @@ defineExpose({
   seekToRatio: player.seekToRatio,
   skip: player.skip,
   destroy: player.destroy,
+  bufferSnapshot: player.bufferSnapshot,
 })
 </script>
 

@@ -145,3 +145,27 @@ window). Assert the DOM against those derived values. Selectors go stale the
 same way: the lore title is `.lore-dossier-title` (`LoreRecordHeader`), not
 the old `.conversation-title`, and the lore page viewport intentionally clips
 (`overflow: hidden` in `lore-dossier.scss`) — it is not a scroll surface.
+
+## A real player is the only way to see what a buffer is holding
+
+`tests/wolves-ghosts-boundary.mjs` drives the Part I → Part II seam against
+**real** YouTube players and asserts the invariant the audience experiences:
+whatever segment the store is naming on screen, the buffer on air is holding that
+segment or nothing — never a different one.
+
+No mocked harness can check this. The mock *is* the runtime's bookkeeping, so a
+buffer can never hold anything other than what it was asked to hold, which is
+exactly the drift that shipped as "Ghosts In The Mist is broken, the Avatar song
+comes up instead". The observability it needs is `__wolvesCinematic.buffers()`
+(`bufferSnapshot()` in `useDualBufferPlayer`), which reports each side's intended
+segment beside its real `getVideoData().video_id`.
+
+Two things about running it:
+
+- **Playwright's bundled Chromium has no proprietary codecs**, so YouTube commonly
+  answers with error 150 and no media attaches. That is an environment artifact,
+  not a broken show. The harness therefore tolerates an *empty* buffer and fails
+  only on a *wrong* one. Do not "fix" a local error-150 run by changing the runtime.
+- The seam is uncovered by design. Part I → Part II is the one boundary
+  `CinematicTransition.vue` deliberately runs without the overlay, so anything that
+  goes wrong there is seen by the whole room.

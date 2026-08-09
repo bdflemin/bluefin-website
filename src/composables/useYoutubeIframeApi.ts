@@ -30,6 +30,13 @@ export interface YoutubePlayer {
    * next video on an inactive side of a ping-pong player pair so switching is instant.
    */
   cueVideoById?: (video: string | { videoId: string, startSeconds?: number, endSeconds?: number }) => void
+  /**
+   * Ground truth about the media this player is actually holding. `cueVideoById` and
+   * `loadVideoById` are requests; this is the only way to observe whether one landed.
+   * Undocumented but long-stable on the IFrame API, so every call site treats it as
+   * optional and tolerates it throwing before the player has media.
+   */
+  getVideoData?: () => { video_id?: string, title?: string } | undefined
 }
 
 export interface YoutubePlayerState {

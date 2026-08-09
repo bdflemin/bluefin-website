@@ -38,6 +38,14 @@ class FakePlayer {
    * permanently deaf to the presenter's real transport events.
    */
   static emitPausedOnPause = true
+  /**
+   * Video ids the API refuses. A real player answers a cue for restricted or
+   * unavailable media with `onError` and then holds nothing — the request is
+   * recorded by the runtime, the media never arrives. Without this the double IS
+   * the runtime's own bookkeeping, so a buffer can never hold anything other than
+   * what it was asked to hold, and no test can see a buffer go to air dead.
+   */
+  static failingVideoIds = new Set<string>()
   events: FakeEvents
   currentTime = 0
   duration = 0
@@ -45,6 +53,9 @@ class FakePlayer {
   playing = false
   loadedId = ''
   cuedId = ''
+  /** The media actually attached to this player, as `getVideoData` reports it. */
+  videoId = ''
+  muted = false
   destroyed = false
   /** How many times playback was requested — the only evidence a prewarm happened. */
   playCount = 0
@@ -114,13 +125,32 @@ class FakePlayer {
   }
 
   loadVideoById(video: string | { videoId: string, startSeconds?: number }) {
-    this.loadedId = typeof video === 'string' ? video : video.videoId
+    const id = typeof video === 'string' ? video : video.videoId
+    this.loadedId = id
     this.currentTime = typeof video === 'string' ? 0 : video.startSeconds ?? 0
+    if (FakePlayer.failingVideoIds.has(id)) {
+      // Restricted media: the request is accepted, the media never attaches.
+      this.videoId = ''
+      this.events.onError?.({ data: 150 })
+      return
+    }
+    this.videoId = id
     this.playVideo()
   }
 
   cueVideoById(video: string | { videoId: string, startSeconds?: number }) {
-    this.cuedId = typeof video === 'string' ? video : video.videoId
+    const id = typeof video === 'string' ? video : video.videoId
+    this.cuedId = id
+    if (FakePlayer.failingVideoIds.has(id)) {
+      this.videoId = ''
+      this.events.onError?.({ data: 150 })
+      return
+    }
+    this.videoId = id
+  }
+
+  getVideoData() {
+    return { video_id: this.videoId }
   }
 
   getCurrentTime() {
@@ -139,8 +169,23 @@ class FakePlayer {
     this.volume = volume
   }
 
+  /**
+   * `mute()` is a latch independent of volume, and the real API keeps it across a
+   * video change — which is the whole reason a prewarm uses it. A double that folds
+   * it into `volume` cannot tell an audible show from a silent one, so a promotion
+   * path that forgets to unmute would ship green.
+   */
   mute() {
-    this.volume = 0
+    this.muted = true
+  }
+
+  unMute() {
+    this.muted = false
+  }
+
+  /** What the room actually hears. */
+  get audibleVolume() {
+    return this.muted ? 0 : this.volume
   }
 
   destroy() {
@@ -222,6 +267,7 @@ describe('useDualBufferPlayer', () => {
     FakePlayer.emitPlayingOnPlay = true
     FakePlayer.emitReadyOnConstruct = true
     FakePlayer.emitPausedOnPause = true
+    FakePlayer.failingVideoIds = new Set()
     installFakeYoutubeApi()
     vi.useFakeTimers({
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
@@ -1063,5 +1109,165 @@ describe('useDualBufferPlayer', () => {
     const player = await startPlayer()
     player.destroy()
     expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
+  })
+
+  /**
+   * Reported from a theater build as "Ghosts In The Mist is broken, the Avatar song
+   * comes up instead": the words and the slides said Part II while the room heard
+   * something else.
+   *
+   * The runtime promoted the prewarmed buffer on the strength of its own bookkeeping.
+   * `sides[side].segmentIndex` is set the moment `cueVideoById()` is *called*, and was
+   * never reconciled against the player, so a buffer whose media never attached still
+   * looked like a ready Part II. The store advanced regardless, which is what put Part
+   * II's title, chapter, and slides over the wrong audio.
+   */
+  describe('a boundary never promotes a buffer that is not holding its segment', () => {
+    it('recovers Part II by reloading it when the prewarmed cue was refused', async () => {
+      const store = useCinematicStore()
+      // Ghosts In The Mist is refused when it is cued, exactly as a restricted or
+      // transiently unavailable video is. Every other segment is fine.
+      FakePlayer.failingVideoIds = new Set([CINEMATIC_SEGMENTS[1].youtubeId])
+
+      const player = await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+
+      // The cue for Part II errored, so side B holds nothing at all — while its
+      // bookkeeping still says "Part II, ready to go".
+      expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+      expect(playerB.getVideoData().video_id).toBe('')
+
+      // The condition clears before the boundary, as a transient refusal does.
+      FakePlayer.failingVideoIds = new Set()
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      expect(store.crossfading).toBe(true)
+
+      // The boundary does not hand the show to a dead buffer: it reloads the authored
+      // target, and Part II reaches the audience.
+      expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+      expect(playerB.getVideoData().video_id).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+
+      vi.advanceTimersByTime(2000)
+      expect(store.segmentIndex).toBe(1)
+      expect(player.activeSide.value).toBe('b')
+    })
+
+    it('never runs Part II\'s identity over another segment\'s audio', async () => {
+      const store = useCinematicStore()
+      // Permanently unplayable: the cue is refused and so is the recovery load.
+      FakePlayer.failingVideoIds = new Set([CINEMATIC_SEGMENTS[1].youtubeId])
+
+      const player = await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      vi.advanceTimersByTime(COLD_SKIP_PLAYBACK_TIMEOUT_MS + 3000)
+
+      // The show cannot invent media it does not have, so silence under Part II's
+      // titles is the honest outcome. What must never happen is Part II's titles and
+      // slides over a DIFFERENT song — that is the reported defect.
+      const activePlayer = player.activeSide.value === 'a' ? playerA : playerB
+      const onAir = activePlayer.getVideoData().video_id
+      if (store.segmentIndex === 1 && onAir !== '') {
+        expect(onAir).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+      }
+      // And the buffer that is audible is never left playing a neighbouring segment.
+      expect(onAir).not.toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+    })
+
+    it('does not promote a buffer holding the previous segment as the next one', async () => {
+      const store = useCinematicStore()
+      await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+
+      // Bookkeeping says Part II, the media is still Part I — the exact drift the
+      // browser probe caught against real YouTube players.
+      playerB.videoId = CINEMATIC_SEGMENTS[0].youtubeId
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+
+      // Identity, not position, decides. The stale buffer is reloaded with Part II.
+      expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+      expect(store.segmentIndex).toBe(0)
+    })
+
+    it('records an error on the INACTIVE buffer instead of discarding it', async () => {
+      const store = useCinematicStore()
+      const player = await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+
+      // An error about the next segment arrives while Part I is still playing. It
+      // used to be dropped on the floor by a `side === activeSide` guard, so the
+      // boundary had no way to know Part II was already dead.
+      playerB.events.onError?.({ data: 150 })
+
+      // The show does not lurch: Part I keeps playing.
+      expect(store.segmentIndex).toBe(0)
+      expect(player.activeSide.value).toBe('a')
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+
+      // At the boundary the failure is acted on — the target is loaded fresh rather
+      // than promoted blind.
+      expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    })
+
+    it('keeps the prewarm of the next segment silent', async () => {
+      const store = useCinematicStore()
+      await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+      playerB.duration = 347
+
+      // Part II prewarms underneath Part I and must not be audible.
+      expect(playerB.audibleVolume).toBe(0)
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      vi.advanceTimersByTime(2000)
+      expect(store.segmentIndex).toBe(1)
+
+      // Side A is now prewarming Part III underneath Part II. A prewarm that is
+      // audible is the second half of the reported symptom: the next song heard
+      // over the current chapter's titles and slides.
+      expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+      expect(playerA.audibleVolume).toBe(0)
+    })
+
+    it('opens the show audible even though both buffers prewarm muted', async () => {
+      await startPlayer()
+      const [playerA] = FakePlayer.instances
+
+      // Both sides are muted while they prewarm. If the promotion path forgets to
+      // lift that latch the entire show plays to a silent room, which no volume
+      // assertion alone would catch.
+      expect(playerA.muted).toBe(false)
+      expect(playerA.audibleVolume).toBe(100)
+    })
+
+    it('lifts the prewarm mute on the segment it promotes at a boundary', async () => {
+      const store = useCinematicStore()
+      await startPlayer()
+      const [playerA, playerB] = FakePlayer.instances
+      playerA.duration = 424
+      playerB.duration = 347
+
+      playerA.currentTime = 424 - 1.7
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      vi.advanceTimersByTime(2000)
+
+      expect(store.segmentIndex).toBe(1)
+      expect(playerB.muted).toBe(false)
+      expect(playerB.audibleVolume).toBeGreaterThan(0)
+    })
   })
 })

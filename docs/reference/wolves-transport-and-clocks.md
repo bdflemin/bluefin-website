@@ -79,6 +79,48 @@ double whose `pauseVideo()` does not emit `PAUSED` cannot see it at all, and onl
 the standalone `tests/wolves-movie-flow.mjs` harness — which is not part of
 `npm run test:gate` — caught it in a browser.
 
+**A buffer is promoted on identity, never on bookkeeping.** `sides[side].segmentIndex`
+is set the instant `cueVideoById()` is *called*. Nothing reconciled it against the
+player afterwards, so a cue that errored, was refused for this origin, or simply never
+landed left the intent in place and the boundary put that buffer on air anyway. The
+store advanced regardless — so the show ran the next chapter's title, chapter number,
+lore column, and slides over the wrong song, or over silence. Reported from a build as
+"Ghosts In The Mist is broken, the Avatar song comes up instead": the words and slides
+said Part II while the room heard something else.
+
+Check `getVideoData().video_id` against the target segment's `youtubeId` before
+promoting (`bufferCanPlay()`), and on a mismatch hard-load the authored target while
+holding the outgoing side on air until the incoming reports `PLAYING` — the cold-skip
+guarantee, reused. Treat an *unknown* id as usable: the check exists to catch a buffer
+that is provably wrong, not to invent a new way for the show to refuse to advance.
+`getVideoData` is undocumented and throws before a player has media, so every call site
+tolerates it returning nothing.
+
+This is the same rule as "resolve a playlist track by identity, not by index" applied
+one layer down — to the buffer itself, which is the one place it had never been
+applied. Startup already did it (`start()` compared the parked side's segment against
+the store before promoting); the boundary did not.
+
+**Never discard an `onError` from the inactive side.** `createPlayer`'s handler only
+acted `if (side === activeSide.value)`, so an error about the *next* segment — the one
+prewarming right now — was dropped on the floor. A dead buffer then looked exactly like
+a ready one for the whole of the current segment, and the failure only became visible at
+the boundary, as silence under the next chapter's titles. Record the failure on
+whichever side reported it (`markSideFailed()`), clear its parked/prewarming flags, and
+let the boundary's identity check route it to a fresh load. A cold load that errors must
+also release the bounded wait it is holding, or the boundary sits on its timeout with the
+outgoing segment stranded on air.
+
+**A prewarm must be muted, not merely turned down.** `cueNext()` sets volume 0 before
+`playVideo()`, but `cueVideoById` is processed asynchronously: a volume pushed before the
+new media attaches can be reset when it lands, and the prewarm of the *next* segment
+becomes audible underneath the current one — the second half of that same report. Use
+`mute()`, a latch independent of volume that survives the video change, and lift it on
+every path that puts a side on air (`startIncoming()`, the cold load, and `start()`).
+Miss one and the whole show plays to a silent room. A test double that folds `mute()`
+into `volume` cannot tell those two states apart, so model the latch separately and
+assert an `audibleVolume`.
+
 **Both buffers prewarm, and startup waits for the active side's park.** Gating
 the prewarm on `side !== activeSide` left Track 0 — the first thing the audience
 hears — as the only buffer that ever entered cold, while a track needed seven

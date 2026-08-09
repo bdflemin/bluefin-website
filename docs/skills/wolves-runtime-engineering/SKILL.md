@@ -55,6 +55,12 @@ an unidentified player request.
   `affordablePageCount()` against the slot duration.
 - A prewarmed buffer is played and never parked, or is promoted without an
   explicit seek to its opening frame.
+- A buffer is promoted to air on `sides[side].segmentIndex` alone, without
+  checking `getVideoData().video_id` against the segment it is supposed to be.
+- An `onError` is handled only for the active side, so a failure on the buffer
+  holding the *next* segment is discarded.
+- A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
+  puts a side on air forgets to lift the mute.
 - Only the inactive buffer is prewarmed, so the first track enters cold.
 - A crossfade length is read from the outgoing segment.
 - A startup or readiness await has no timeout.

@@ -51,6 +51,12 @@ async function startCinematicStage() {
       seekTo: (s: number) => stage.value?.seekTo(s),
       introDuration: () => INTRO_SEQUENCE_DURATION,
       overallDuration: () => store.overallDuration,
+      // What each YouTube buffer is really holding versus what the runtime thinks
+      // it holds. The runtime promotes a buffer at every boundary on the strength
+      // of its own bookkeeping alone, so this is the only way a harness can catch
+      // a buffer that has drifted off its intended segment.
+      buffers: () => stage.value?.bufferSnapshot?.(),
+      skip: (delta: number) => stage.value?.skip(delta),
     }
   }
 }

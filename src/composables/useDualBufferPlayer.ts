@@ -34,6 +34,14 @@ interface SideState {
   /** This side has fetched media and is parked on its segment's opening frame. */
   parked: boolean
   /**
+   * The YouTube API reported an error for the media on this side. A buffer that has
+   * failed still carries a perfectly plausible `segmentIndex`, so without this flag a
+   * dead buffer is indistinguishable from a ready one and gets promoted at the next
+   * boundary — the show then displays that segment's title, chapter, and slides over
+   * silence. Cleared by any fresh cue or load.
+   */
+  failed: boolean
+  /**
    * A park is in flight on this side. Parking pauses and seeks the player, and
    * those events describe the *buffer*, not the show. Once the active side was
    * prewarmed too, its own park reported PAUSED to the store and the transport
@@ -91,8 +99,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false },
-    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false },
+    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false },
+    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -134,6 +142,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       state.prewarming = false
       state.parked = false
       state.parking = false
+      state.failed = false
     }
   }
 
@@ -224,6 +233,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const state = sides[side]
     state.parked = false
     state.parking = false
+    state.failed = false
     if (!state.player || segmentIndex >= store.segments.length) {
       state.segmentIndex = -1
       state.prewarming = false
@@ -248,7 +258,68 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // silence on a black overlay while YouTube fetched the opening song. `start()`
     // waits for this park before it raises the volume.
     state.prewarming = true
+    // Mute, do not merely zero the volume. A prewarm plays real media for real time,
+    // and `cueVideoById` is processed asynchronously: a volume pushed before the new
+    // video is attached can be reset when it lands, which makes the NEXT segment
+    // audible underneath the current one — the next song playing over the current
+    // chapter's titles and slides. `mute()` is a separate latch that survives the
+    // video change, and every path that puts a side on air lifts it.
+    state.player.mute?.()
     state.player.playVideo?.()
+    applyVolume(state.player, 0)
+  }
+
+  /**
+   * What this buffer is actually holding, or null when that cannot be determined.
+   * `getVideoData` is undocumented and throws before a player has media, so a null
+   * answer means "unknown", never "wrong".
+   */
+  function loadedVideoId(side: PlayerSide): string | null {
+    try {
+      return sides[side].player?.getVideoData?.()?.video_id ?? null
+    }
+    catch {
+      return null
+    }
+  }
+
+  /**
+   * Whether a buffer can be put on air for `segmentIndex` right now.
+   *
+   * `sides[side].segmentIndex` is only ever a record of what this composable *asked*
+   * for; it is set the instant `cueVideoById()` is called and is never reconciled
+   * against the player. A cue that errored, was rejected for this origin, or simply
+   * never landed leaves the intent in place, so promoting on intent alone puts a dead
+   * or stale buffer on air while the store advances anyway — the audience gets the
+   * next chapter's title and slides over the wrong audio, or over nothing at all.
+   *
+   * An unknown video id is treated as usable: the check exists to catch a buffer that
+   * is provably wrong, not to add a new way for the show to refuse to advance.
+   */
+  function bufferCanPlay(side: PlayerSide, segmentIndex: number): boolean {
+    const state = sides[side]
+    if (!state.player || state.failed || state.segmentIndex !== segmentIndex) {
+      return false
+    }
+    const expected = store.segments[segmentIndex]?.youtubeId
+    if (!expected) {
+      return false
+    }
+    const actual = loadedVideoId(side)
+    return actual === null || actual === expected
+  }
+
+  /**
+   * Record that the media on a side failed. This must happen for the INACTIVE side
+   * too: that buffer is the next segment, and an error nobody wrote down is a segment
+   * that goes to air silent while the show confidently relabels itself.
+   */
+  function markSideFailed(side: PlayerSide) {
+    const state = sides[side]
+    state.failed = true
+    state.parked = false
+    state.prewarming = false
+    state.parking = false
   }
 
   /** Park a buffer that has finished prewarming back on its authored opening frame. */
@@ -276,6 +347,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // its transport events are the show's again. This is also what releases a
     // side whose park `PAUSED` was dropped.
     state.parking = false
+    // Lift the prewarm's mute latch. Without this the segment reaches the screen
+    // and the crossfade ramps a volume nobody can hear.
+    state.player?.unMute?.()
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     state.player?.playVideo?.()
   }
@@ -338,8 +412,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const toSide = other(fromSide)
     const outgoing = sides[fromSide].player
     const incoming = sides[toSide].player
+    const targetIndex = store.segmentIndex + 1
 
-    if (!incoming || sides[toSide].segmentIndex < 0) {
+    if (!incoming || targetIndex >= store.segments.length) {
       // The last segment remains in the normal cinematic runtime so the transport
       // can still navigate backward instead of being replaced by a terminal plate.
       outgoing?.pauseVideo?.()
@@ -350,21 +425,71 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
     swapping = true
     swapOutgoingSide = fromSide
-    const targetIndex = store.segmentIndex + 1
     const crossfadeMs = boundaryCrossfadeMs(targetIndex)
     store.beginCrossfade(targetIndex)
-
+    sides[toSide].segmentIndex = targetIndex
     applyVolume(incoming, 0)
-    startIncoming(toSide)
-    activeSide.value = toSide // component CSS crossfades opacity on this change
 
-    rampVolumes(outgoing, incoming, crossfadeMs, () => {
-      outgoing?.pauseVideo?.()
-      store.advanceSegment()
-      swapOutgoingSide = null
-      cueNext(fromSide, store.segmentIndex + 1)
-      swapping = false
-    })
+    const commit = () => {
+      activeSide.value = toSide // component CSS crossfades opacity on this change
+      rampVolumes(outgoing, incoming, crossfadeMs, () => {
+        outgoing?.pauseVideo?.()
+        store.advanceSegment()
+        swapOutgoingSide = null
+        cueNext(fromSide, store.segmentIndex + 1)
+        swapping = false
+      })
+    }
+
+    // The prewarmed buffer is only promoted when it is really holding this segment.
+    // Promoting on bookkeeping alone is how a failed or stale buffer reached the
+    // screen: the store advances regardless, so the audience got the next chapter's
+    // title, chapter number, and slides over the wrong song or over silence.
+    if (bufferCanPlay(toSide, targetIndex)) {
+      startIncoming(toSide)
+      commit()
+      return
+    }
+
+    // Recover the boundary rather than surrender it. Hard-load the authored target and
+    // keep the outgoing segment on air and audible until the incoming really reports
+    // PLAYING — the same guarantee the cold-skip path gives the presenter, and bounded
+    // for the same reason: a show that stalls here has nobody in the booth.
+    loadColdInto(toSide, targetIndex, commit)
+  }
+
+  /**
+   * Hard-load `segmentIndex` into `side` and run `commit` once it is genuinely playing.
+   * Bounded: on expiry the swap commits anyway, because a stalled boundary in front of
+   * a live audience is worse than a rough one.
+   */
+  function loadColdInto(side: PlayerSide, segmentIndex: number, commit: () => void) {
+    const state = sides[side]
+    const player = state.player
+    const segment = store.segments[segmentIndex]
+    if (!player || !segment) {
+      commit()
+      return
+    }
+    state.segmentIndex = segmentIndex
+    state.prewarming = false
+    state.parked = false
+    state.parking = false
+    state.failed = false
+    player.unMute?.()
+    clearColdSkipWait()
+    coldSkipSide = side
+    commitColdSkip = commit
+    const deadline = setTimeout(() => {
+      pendingTimers.delete(deadline)
+      const commitOnTimeout = commitColdSkip
+      clearColdSkipWait()
+      player.playVideo?.()
+      commitOnTimeout?.()
+    }, COLD_SKIP_PLAYBACK_TIMEOUT_MS)
+    pendingTimers.add(deadline)
+    coldSkipTimeout = deadline
+    player.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
   }
 
   /**
@@ -389,8 +514,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     swapOutgoingSide = fromSide
     store.beginCrossfade(target)
 
-    const segment = store.segments[target]
-    const targetIsPreloaded = sides[toSide].segmentIndex === target
+    const targetIsPreloaded = bufferCanPlay(toSide, target)
     sides[toSide].segmentIndex = target
     applyVolume(incoming, 0)
 
@@ -408,35 +532,20 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // Forward skips normally target the already-prewarmed buffer, which is parked
     // on its opening frame; promoting it avoids the decoder restart (and audible
     // pop) that a redundant load would cause. This path is fast and stays fast:
-    // the buffer has media, so it goes to air immediately.
+    // the buffer has media, so it goes to air immediately. `bufferCanPlay` is what
+    // keeps it honest — a buffer whose cue failed is loaded cold instead.
     if (targetIsPreloaded) {
       startIncoming(toSide)
       commit()
       return
     }
 
-    // Cold path (backward or multi-segment jumps): the target has no media yet.
-    // Fading out a player that is working, toward one that has not loaded, is
-    // silence — and for the visible back-catalogue experiences, a black frame.
-    // Keep the outgoing side on air and audible until the incoming actually reports
-    // PLAYING. Bounded: on expiry the swap commits anyway, because leaving the
-    // presenter stranded mid-skip with `crossfading` latched is worse than a gap.
-    sides[toSide].prewarming = false
-    sides[toSide].parked = false
-    sides[toSide].parking = false
-    clearColdSkipWait()
-    coldSkipSide = toSide
-    commitColdSkip = commit
-    const deadline = setTimeout(() => {
-      pendingTimers.delete(deadline)
-      const commitOnTimeout = commitColdSkip
-      clearColdSkipWait()
-      incoming.playVideo?.()
-      commitOnTimeout?.()
-    }, COLD_SKIP_PLAYBACK_TIMEOUT_MS)
-    pendingTimers.add(deadline)
-    coldSkipTimeout = deadline
-    incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+    // Cold path (backward or multi-segment jumps, or a buffer that failed): the
+    // target has no usable media yet. Fading out a player that is working, toward
+    // one that has not loaded, is silence — and for the visible back-catalogue
+    // experiences, a black frame. Keep the outgoing side on air and audible until
+    // the incoming actually reports PLAYING.
+    loadColdInto(toSide, target, commit)
   }
 
   function pollActiveTime() {
@@ -569,6 +678,21 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
             if (rejectBeforeReady(new Error('YouTube player failed before readiness'))) {
               return
             }
+            // Write the failure down for EVERY side, not just the one on air. An
+            // error on the inactive buffer is an error about the NEXT segment, and
+            // it used to be discarded entirely: the boundary then promoted a dead
+            // player, the store advanced anyway, and the show ran that segment's
+            // title, chapter, and slides over silence.
+            markSideFailed(side)
+            // A cold load that failed is never going to report PLAYING, so release
+            // the wait it is holding instead of letting the boundary sit on its
+            // timeout with the outgoing segment stranded on air.
+            if (coldSkipSide === side) {
+              const commit = commitColdSkip
+              clearColdSkipWait()
+              commit?.()
+              return
+            }
             // Skip an unplayable segment instead of stalling the whole cinematic.
             if (side === activeSide.value) {
               resolveStart?.()
@@ -659,7 +783,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // for playback right now. Clearing `prewarming` here is also the guard that stops
     // a late park from pausing and muting the show after the volume goes up.
     const segment = store.segments[store.segmentIndex]
-    const promoteParked = state.parked && state.segmentIndex === store.segmentIndex && Boolean(segment)
+    // Identity, not position: a parked buffer is only promoted when it is really
+    // holding the segment the show is about to open on.
+    const promoteParked = bufferCanPlay(side, store.segmentIndex) && state.parked && Boolean(segment)
     state.prewarming = false
 
     const player = state.player
@@ -669,6 +795,10 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     started.value = true
+    // Both sides were muted while they prewarmed. The side going to air lifts that
+    // latch here, so every startup path — parked promotion, cold load, or a bare
+    // play — opens audible.
+    player.unMute?.()
     applyVolume(player, 100)
     // Album entry stays deterministic. Previously that meant an explicit
     // `loadVideoById`, because a bare cue-then-play could race YouTube's async cue
@@ -718,6 +848,71 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
   }
 
+  /**
+   * What each buffer is *actually* holding, versus what this composable believes it
+   * holds. `sides[side].segmentIndex` is bookkeeping intent recorded by `cueNext()`;
+   * `getVideoData().video_id` is the only ground truth about the media a player will
+   * emit when it is promoted. Nothing else in the runtime compares the two, which is
+   * why a buffer drifting off its intended segment is silent.
+   */
+  function bufferSnapshot() {
+    const describe = (side: PlayerSide) => {
+      const state = sides[side]
+      const intendedIndex = state.segmentIndex
+      const intended = store.segments[intendedIndex]?.youtubeId ?? null
+      let actual: string | null = null
+      try {
+        actual = state.player?.getVideoData?.()?.video_id ?? null
+      }
+      catch {
+        actual = null
+      }
+      return {
+        side,
+        intendedIndex,
+        intended,
+        actual,
+        matches: intended !== null && actual !== null ? intended === actual : null,
+        parked: state.parked,
+        prewarming: state.prewarming,
+        parking: state.parking,
+        active: activeSide.value === side,
+        volume: (() => {
+          try {
+            return state.player?.getVolume?.() ?? null
+          }
+          catch {
+            return null
+          }
+        })(),
+        time: (() => {
+          try {
+            return state.player?.getCurrentTime?.() ?? null
+          }
+          catch {
+            return null
+          }
+        })(),
+        duration: (() => {
+          try {
+            return state.player?.getDuration?.() ?? null
+          }
+          catch {
+            return null
+          }
+        })(),
+      }
+    }
+    return {
+      storeSegmentIndex: store.segmentIndex,
+      pendingSegmentIndex: store.pendingSegmentIndex,
+      activeSide: activeSide.value,
+      swapping,
+      a: describe('a'),
+      b: describe('b'),
+    }
+  }
+
   function seekTo(seconds: number) {
     activePlayer()?.seekTo?.(seconds, true)
   }
@@ -751,5 +946,5 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     swapOutgoingSide = null
   }
 
-  return { activeSide, prepared, started, prepare, start, togglePlay, seekTo, seekToRatio, skip, destroy }
+  return { activeSide, prepared, started, prepare, start, togglePlay, seekTo, seekToRatio, skip, destroy, bufferSnapshot }
 }
