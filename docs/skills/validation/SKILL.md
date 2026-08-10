@@ -328,7 +328,7 @@ Baseline them with a worktree before treating either as a regression.
 
 When the chrome-devtools MCP has no browser (no Chrome stable on the box), drive
 the repo's own `playwright` package from a script in `/var/tmp/website-agent/`
-instead — do not install a browser. The working pattern (learned 2026-10):
+instead — do not install a browser. The working pattern:
 
 - Copy the `window.YT.Player` mock `addInitScript` from
   `tests/wolves-movie-flow.mjs` (auto-advancing `getCurrentTime` via
@@ -342,6 +342,12 @@ instead — do not install a browser. The working pattern (learned 2026-10):
   from that layer, not from DOM order.
 - Authored-show slide windows live in `src/data/wolves-track-zero-slides.ts` —
   seek inside a named window rather than guessing timestamps.
+
+The mock depends on `page.addInitScript` running "after the document is created
+but before any of its scripts are run" (verified against Context7
+`/microsoft/playwright`), which is what lets it install `window.YT` and pin
+`Math.random` ahead of app boot. Injecting the same stub after `goto` is too
+late and the show never advances.
 
 Two facts that bite when asserting on rendered slides:
 
