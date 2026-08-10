@@ -246,6 +246,38 @@ curated slides before placing them, and verify by asking where the first slide
 of the rarest category actually lands.
 
 
+## The Bluefin monthly wallpaper numbering does not match upstream, and pair 11 exists nowhere
+
+`public/img/wallpapers/bluefin-{01..12}-{day,night}.webp` (added by `cb85d6c6`,
+registered in `src/data/artwork-wallpapers.ts`) are the Bluefin monthly set
+from `ublue-os/artwork` `wallpapers/bluefin/`, but the numbering has traps:
+
+- **Local 11 ≡ local 12, byte for byte.** Both are the December mammoth scene;
+  pair 11 was mis-encoded as a copy of 12 at import time. Register only
+  01–10 and 12 — importing 11 double-books December.
+- **Upstream, #11 is now "Collapse - November"** (`fix: replace 11-bluefin
+  with Collapse`, and `11-bluefin-day.svg` is byte-identical to
+  `wallpapers/collapse/collapse-day.svg`). So "bluefin-11" means the mammoths
+  on disk here but the dinosaur-and-asteroid Collapse artwork upstream. Verify
+  any claim about this set against the local files, not the upstream index.
+- **The Collapse artwork is not in the wallpaper pool at all.** It lives only
+  in `public/wolves-intro/bluefin-collapse-{day,night}.webp`, driven by
+  `wolves-intro-sequence.ts`. Nothing in `wallpapers-list.ts` references it.
+
+First-party artwork registries (`artwork-wallpapers.ts`) carry `kind`
+(`artwork`/`bazzite`), pinned source commits, and licence ids, and their
+`name` prefixes are what `classifyCuratedSlide()` branches on. Aurora artwork
+is excluded by the owner's permission decision, not by licence: the registries
+are an explicit allowlist, and `backCatalogueOrder.test.ts` asserts no record
+can reference an Aurora path or the four Aurora-origin `xe_*` duplicates.
+
+The Bazzite press kit forbids modifying artwork ("including spacing, color,
+elements, and scaling"). Format conversion at identical geometry (PNG -> WebP,
+3940x2160 unchanged) is the compliant reading the owner approved; CI's
+`calibreapp/image-actions` recompresses added images ~25% with no dimension
+loss, which is expected.
+
+
 ## `wolves/people/` is hand-picked, and two thirds of it is CNCF photography
 
 `wolves/people/` is the owner's selection for the Wolves catalogue. It is **not**
@@ -282,6 +314,38 @@ a second photographer convention (`2024-06-06_OHSNAP_...`), wordplay that a
 naive camel-case split mangles (`KuberTENes` becoming `Kuber TENes`), and room
 codes (`BreakoutsB206`).
 
+
+## Hero shot labels name the species, ids stay filenames
+
+`wolves-comic-hero-shots.ts` renders each `label` as the slide title in the
+back-catalogue reader (`WolvesComicReader.vue` maps `title: shot.label`) and as
+`alt` text in the intro overlay, so a pose-derived label like "Youre Holding It
+Wrong Post 1" projects a filename onto a theater screen. Labels are the
+depicted species' scientific name from `wolves-dinosaur-species.ts`, falling
+back to the genus alone when no epithet is recorded in the registry or the
+source filename (`Dakosaurus`, `Dromaeosaurus`). Duplicate labels across poses
+are expected — the label describes the animal, not the file.
+
+Do **not** rename the `id` fields to match: ids must stay unique for slide
+identity and dedupe, and ten of the 23 shots depict *Deinonychus antirrhopus*,
+so species-derived ids would collide. Ids are pinned by
+`src/tests/wolvesIntroOverlay.test.ts` (full set), `tests/wolves-intro-segments.mjs`
+(`youre-holding-it-wrong-post1`, `nest`), and `tests/wolves-movie-flow.mjs`.
+
+Identifying pose-named art (`angry`, `intrigued`, `leaping`, `nest`, `pride`,
+`roaring`, the "You're Holding It Wrong" bookends, the PivotRaptor commission):
+all of it is the Bluefin mascot. Git history says so (`331867c3` "Add
+black-outlined bluefin nest", `3e033b7b` "Resize bluefins" touching
+intrigued/leaping/roaring) and a visual check against `bluefin.webp` confirms
+the shared design. View the WebP directly; files that fail the viewer
+(>~300 KB) can be downscaled with `dwebp <file> -scale 512 512 -o out.png` into
+a scratch dir you delete afterwards.
+
+Relabeling exposes the authored order's same-species runs — slots 16–20 are
+five consecutive *D. antirrhopus*, slots 10–12 all contain *A. giganticus*, and
+22→23→(wrap)→1 is an all-*D. antirrhopus* run across the loop. The id-keyed
+adjacency test cannot see this. Reordering is a design decision: report it,
+never reshuffle the array to fix it.
 
 ## `shuffleWolvesGalleryPhotos` is a primitive, not a diversity mechanism
 
