@@ -92,8 +92,18 @@ approval; never guess past a gate. When in doubt, the gate applies.
   consumers depend on, or anything that could break another factory
   repository. Identify every affected consumer and list it before opening the
   PR.
-- **Merge** — always human. Agents never self-merge, never bypass branch
-  protection, and never force-push a protected branch.
+- **Merge** — never force-push a protected branch. Agents do not self-merge by
+  default. The exception is a merge authority the owner grants in the current
+  session, in that session's words: it is session-scoped, never assumed, never
+  inherited from a previous session, a handoff, or another agent's transcript,
+  and not implied by approval of the change itself. Absent a live grant, open
+  the PR and stop. When merging under a grant, name the grant in the report.
+
+A gate asks the owner for a decision. When the owner has already made that
+decision — by requesting the change in their own words — implement it and note
+the touched surface in the report instead of asking again. What the request did
+not cover is still gated: inferred scope, adjacent surfaces, and opportunistic
+refactors. See `## Granted authority` in `AGENTS.md`.
 
 Production claims are gated locally in the same way: a change is not live
 until the exact pushed commit's deployment workflow and affected route are

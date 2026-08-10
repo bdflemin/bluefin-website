@@ -104,6 +104,29 @@ git diff --check
 Use the smallest relevant check. See `docs/skills/validation/SKILL.md` before
 reporting completion.
 
+`test:gate` shells out to `yt-dlp` against YouTube and takes minutes. When
+several agents work in parallel, do not have each one run the full quartet:
+each agent runs the narrowest check covering its own change (usually
+`npx vitest run <file>`), and the coordinator runs `lint`, `typecheck`,
+`test:gate` and `build` once over the combined result before committing. The
+combined run is the signal that matters — a per-agent green on a worktree
+another agent is mid-write in proves less than it appears to.
+
+A test failure in a file you do not own, during parallel work, is a
+cross-agent write race until proven otherwise. Re-run before believing it.
+
+## Verifying pooled or randomised content
+
+The back-catalogue pool is ~800 slides in a randomised order. Seeking through
+the show clock hoping to see the slide you added is roulette, and a miss
+proves nothing. Assert membership directly instead — mount the component and
+inspect the pool — and use the browser for what only the browser can answer:
+that the asset actually serves, and that it looks right.
+
+Check the served bytes, not just the status code. A dev server answers `200`
+with the SPA HTML fallback for a missing asset, so a `200` alone is not proof
+the file exists; compare `content_type` and byte size against the file on disk.
+
 ## Temporary artifacts
 
 Use `/var/tmp/website-agent/` for logs, screenshots, browser fixtures, and
@@ -116,7 +139,11 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
   timeline, or generated-data references.
 - Stage explicit paths only.
 - Never use `git add .` or `git add -A`.
-- Do not use destructive reset or restore commands.
+- Do not use destructive reset or restore commands. To resync local `main`
+  after a squash merge — which always diverges, because the squash is not your
+  commits — use `git reset --keep upstream/main`. It aborts rather than
+  destroying uncommitted work, which matters because other agents and people
+  share this worktree. Never `git reset --hard` here.
 - Do not hand-edit generated files.
 - Do not claim production completion from a local build. Start the affected
   route and exercise it in Chromium; build success does not catch eager runtime
@@ -125,6 +152,11 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
   before saying the change is live.
 
 ## Commit attribution
+
+Commit subjects are enforced by a hook and must follow Conventional Commits:
+`type(scope): description`. Allowed types are `feat`, `fix`, `ci`, `chore`,
+`docs`, `refactor`, `test`, `build`, `perf`, `revert`. A non-conforming commit
+is rejected outright.
 
 Every AI-authored commit carries both trailers:
 
@@ -191,8 +223,8 @@ Stop at the four factory gates:
 - **Security** — credentials, secrets, tokens, signing, or the supply chain.
 - **Breakage** — anything that could break another factory repository or a
   downstream consumer.
-- **Merge** — agents never self-merge, never bypass branch protection, and
-  never force-push a protected branch.
+- **Merge** — never force-push a protected branch. Agents do not self-merge by
+  default; see `## Granted authority` for the one exception.
 
 Production claims are gated locally: never call a change live until the exact
 pushed commit's deployment and route are verified. Signal any gate by stopping
@@ -200,6 +232,35 @@ before the PR, describing the decision, labelling the related issue `hold`
 (hold for human review) and `needs-human/agent-ready`, and waiting for
 explicit approval. Procedure and PR evidence:
 `docs/skills/agent-workflow/SKILL.md`.
+
+## Granted authority
+
+A gate is a request for a decision, not a ritual. The owner can grant that
+decision in advance, and re-asking for something already granted is the
+slowest possible failure mode.
+
+**A direct request is the approval.** When the owner asks for a change in
+their own words, that request approves *that* change — including a design
+change. Do not stop and ask again for what was just asked for. Load the
+matching skill, follow its process, implement exactly what was requested, and
+say in the report that the design surface was touched under a direct request.
+The gate still applies to everything the request did not cover: scope you
+inferred, adjacent surfaces you noticed, and refactors you think would be
+nice. Widening scope beyond the request needs its own approval.
+
+**Merge authority is explicit, session-scoped, and never assumed.** Merge only
+when the owner grants it in the current session, in that session's words. It
+does not survive into the next session, is not implied by a previous grant, is
+not implied by approval of the change itself, and is never inferred from
+another agent's transcript or a handoff document. Absent a live grant, open
+the PR and stop. When merging under a grant, say so in the report and name the
+grant.
+
+Boundaries the owner states are permanent until the owner revokes them, and
+outrank a licence file or your own analysis. Where one can be expressed as a
+test, write the test — that is what makes it survive the next agent. Example:
+Aurora artwork may not be used, so the artwork registry is an allowlist and
+`backCatalogueOrder.test.ts` fails if an Aurora path ever appears.
 
 Cross-repo learning goes to an issue in `projectbluefin/common` with the
 learning, affected component, and evidence. Never edit `ublue-os/*`; ask a human
