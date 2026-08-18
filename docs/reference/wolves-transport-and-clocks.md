@@ -293,7 +293,7 @@ Rules:
 The most expensive Wolves defect so far was not a race or a clock: **the show
 was missing an entire song, and nobody noticed for a long time.**
 
-What happened. Commit `c427f048` built `/wolves/` as a seven-part cinematic.
+What happened. Commit `c427f048` built `/wolves/` as a seven-pillar cinematic.
 Commit `24cf26b5`, an AI-assisted change titled "remove the extra ending
 segment", deleted a **middle** segment — `end-of-you`, Poppy, then PART V —
 together with its authored `TRANSITION_FOUR` lore, its team-chat entry, and its
@@ -325,5 +325,5 @@ How to catch this class of loss:
   is never removed to make code tidier; if a change deletes authored prose,
   lore, or a track, it needs the owner's explicit word.
 
-Restoring the segment restored the seven-part show, `TRANSITION_FOUR`, the
+Restoring the segment restored the seven-pillar show, `TRANSITION_FOUR`, the
 PART I..PART VII chapter labels, and the 1:1 segment-to-track alignment.

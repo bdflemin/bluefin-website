@@ -54,14 +54,13 @@ describe('helm-separated standfirst', () => {
       .toMatch(/\.wc-helm-sep\s*\{[\s\S]*?display: inline;/)
   })
 
-  // Owner: "not the blue one though, just the white symbolic one". Asserted on
-  // the rendered mark, not the source, so the comment naming the rejected asset
-  // does not trip it.
-  it('never reaches for the blue logo', () => {
+  // The mark is CNCF's published white symbolic icon. Asserted on the rendered
+  // element rather than the source, so a comment naming another path cannot
+  // trip it.
+  it('draws the published white symbolic icon', () => {
     const src = mount(WolvesHelmLine, { props: { text: LINE } }).get('.wc-helm-sep').attributes('src')
 
-    expect(src).not.toMatch(/brands\/kubernetes\.svg$/)
-    expect(src).toMatch(/kubernetes-icon-white\.svg$/)
+    expect(src).toMatch(/brands\/kubernetes-icon-white\.svg$/)
   })
 
   // Both standfirsts are the same line; neither may drift back to a bare glyph

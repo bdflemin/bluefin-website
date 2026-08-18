@@ -10,9 +10,8 @@ import { computed } from 'vue'
  * "SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY" in source, and the separator it
  * already contains is replaced in the render.
  *
- * The mark is CNCF's published white icon, reproduced unmodified — the owner's
- * standing instruction is "not the blue one though, just the white symbolic
- * one", so `brands/kubernetes.svg` (the blue logo) is the wrong asset here.
+ * The mark is `brands/kubernetes-icon-white.svg`, CNCF's published white
+ * symbolic icon, reproduced unmodified.
  */
 const props = withDefaults(defineProps<{
   text: string
