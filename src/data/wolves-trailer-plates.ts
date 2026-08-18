@@ -256,6 +256,60 @@ export function trailerPlateOpacity(plate: TrailerPlate, timeSeconds: number): n
 }
 
 /**
+ * THE PAGE HEADING YIELDS TO THE PICTURE.
+ *
+ * The teaser page carries the film's name in an `h1` above the frame, and the
+ * cut carries the same four words in its own main-title card at 11.0 s. Both
+ * were on screen at once, so the title card revealed a title the audience had
+ * already been reading for eleven seconds — the reveal had nothing left to
+ * reveal, and the page read as if it were stuttering.
+ *
+ * A theater darkens before the title hits. The heading is therefore fully down
+ * BEFORE the card opens, rather than cross-fading with it: a dissolve would
+ * still put two copies of the title on screen together, which is the defect.
+ * It stays down for the rest of a running picture and returns once the picture
+ * is not playing.
+ *
+ * The heading keeps its box either way; this is an opacity, never a `display`,
+ * so the measured viewport budget that keeps the whole frame above the fold
+ * does not move when it goes.
+ */
+export const TRAILER_HEADING_YIELD_SECONDS = 1.2
+
+/**
+ * The page heading's opacity at a given trailer time. Derived from the
+ * main-title plate's own window, so re-porting the cut moves the heading with
+ * the card instead of stranding a hand-copied beat here.
+ *
+ * `playing` keeps the heading out of the running picture after the card has
+ * closed. Restoring it the instant the card ends would pop a full-width title
+ * back in over a film still in progress — the same class of stutter this fix
+ * exists to remove. It returns whenever the picture is not running (idle,
+ * paused, ended), where it is page furniture again rather than competition.
+ */
+export function trailerHeadingOpacity(
+  timeSeconds: number,
+  options: { playing?: boolean } = {},
+): number {
+  if (!Number.isFinite(timeSeconds) || timeSeconds <= 0) {
+    return 1
+  }
+  const maintitle = TRAILER_PLATES.find(plate => plate.id === 'maintitle')
+  if (!maintitle) {
+    return 1
+  }
+  const yieldStart = maintitle.start - TRAILER_HEADING_YIELD_SECONDS
+  if (timeSeconds <= yieldStart) {
+    return 1
+  }
+  if (timeSeconds >= maintitle.start) {
+    // Down for the card itself, and for the rest of a running picture.
+    return timeSeconds < maintitle.end || options.playing ? 0 : 1
+  }
+  return Math.max(0, 1 - (timeSeconds - yieldStart) / TRAILER_HEADING_YIELD_SECONDS)
+}
+
+/**
  * Split an authored string on its spaced pipes so the divider can be DRAWN as
  * a rule instead of set as a glyph. The copy is not edited: the same
  * characters are on screen, in the same order, and one of them is a rule.

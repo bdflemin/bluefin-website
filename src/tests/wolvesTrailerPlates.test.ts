@@ -9,11 +9,13 @@ import {
   TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
   TRAILER_ENDCARD_HOLD_SECONDS,
+  TRAILER_HEADING_YIELD_SECONDS,
   TRAILER_PICTURE_END_SECONDS,
   TRAILER_PLATES,
   TRAILER_TITLE_LABEL,
   TRAILER_VIDEO_ID,
   trailerBridgeState,
+  trailerHeadingOpacity,
   trailerPlateOpacity,
   trailerSegmentAt,
 } from '@/data/wolves-trailer-plates'
@@ -38,6 +40,53 @@ describe('wolves trailer plates', () => {
     expect(activeTrailerPlates(11).map(p => p.id)).toEqual(['maintitle'])
     expect(activeTrailerPlates(TRAILER_CREDIT_JOIN_SECONDS).map(p => p.id)).toEqual(['maintitle'])
     expect(activeTrailerPlates(22.6).map(p => p.id)).toEqual([])
+  })
+
+  // The page heading and the film's own title card say the same four words.
+  // Two surfaces spelling the title at once is what broke the reveal: the
+  // audience had already read the words for eleven seconds before the picture
+  // said them. The heading yields, and it is fully down before the card opens.
+  it('takes the page heading down before the film says its own name', () => {
+    const titleStart = TRAILER_PLATES.find(p => p.id === 'maintitle')!.start
+
+    expect(trailerHeadingOpacity(0)).toBe(1)
+    expect(trailerHeadingOpacity(titleStart - TRAILER_HEADING_YIELD_SECONDS)).toBe(1)
+    expect(trailerHeadingOpacity(titleStart)).toBe(0)
+  })
+
+  it('never lets the heading and the title card both carry the title', () => {
+    const maintitle = TRAILER_PLATES.find(p => p.id === 'maintitle')!
+
+    for (let t = 0; t <= TRAILER_DURATION_SECONDS; t += 0.1) {
+      const seconds = Number(t.toFixed(1))
+      const card = activeTrailerPlates(seconds).some(p => p.id === 'maintitle')
+        ? trailerPlateOpacity(maintitle, seconds)
+        : 0
+
+      for (const playing of [false, true]) {
+        const heading = trailerHeadingOpacity(seconds, { playing })
+        expect(Math.min(card, heading), `both titles legible at ${seconds}s (playing=${playing})`).toBe(0)
+      }
+    }
+  })
+
+  it('keeps the heading down for the card and for the running picture', () => {
+    expect(trailerHeadingOpacity(TRAILER_CREDIT_JOIN_SECONDS)).toBe(0)
+    expect(trailerHeadingOpacity(30, { playing: true })).toBe(0)
+    expect(trailerHeadingOpacity(TRAILER_ENDCARD_HOLD_SECONDS, { playing: true })).toBe(0)
+  })
+
+  // Returning it the instant the card closes would pop a full-width title back
+  // in over a film still running; it returns only when nothing is playing.
+  it('gives the heading back once the picture is not running', () => {
+    expect(trailerHeadingOpacity(30)).toBe(1)
+    expect(trailerHeadingOpacity(TRAILER_ENDCARD_HOLD_SECONDS)).toBe(1)
+  })
+
+  // An unstarted clock must leave the page titled; a NaN one must not blank it.
+  it('leaves the heading up when the trailer has not started', () => {
+    expect(trailerHeadingOpacity(Number.NaN)).toBe(1)
+    expect(trailerHeadingOpacity(-5)).toBe(1)
   })
 
   it('shows the four-line book box over the book shot', () => {

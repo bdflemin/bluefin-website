@@ -18,6 +18,7 @@ import {
   TRAILER_TITLE_LINE,
   TRAILER_VIDEO_ID,
   trailerBridgeState,
+  trailerHeadingOpacity,
   trailerPlateOpacity,
   trailerSegmentAt,
 } from '@/data/wolves-trailer-plates'
@@ -60,6 +61,11 @@ function opacityOf(id: string): number {
 }
 
 const creditVisible = computed(() => visualTime.value >= TRAILER_CREDIT_JOIN_SECONDS)
+
+// The page heading steps aside before the cut's own main title arrives, so the
+// film's name is only ever on screen once. See trailerHeadingOpacity().
+const headingOpacity = computed(() =>
+  trailerHeadingOpacity(visualTime.value, { playing: trailerPhase.value === 'playing' }))
 
 // The cut leaves the music video at 88.2 s and never returns to it: the day
 // cards and the end card play over the March Bluefin wallpaper at full frame.
@@ -236,9 +242,10 @@ onBeforeUnmount(() => {
 <template>
   <div class="wt-page" :style="{ '--wt-hero-background': `url('${heroBackground}')` }">
     <!-- Keep the film title above the trailer without restoring the old
-         full-height hero that pushed the video below the fold. -->
+         full-height hero that pushed the video below the fold. It yields
+         before the cut's own title card so the title lands once. -->
     <section ref="stageHost" class="wt-stage" aria-label="Official teaser trailer">
-      <h1 class="wt-heading">
+      <h1 class="wt-heading" :style="{ opacity: headingOpacity }">
         Seven Days to the Wolves
       </h1>
       <div class="wt-player wc-plate" data-wolves-trailer>
@@ -272,7 +279,6 @@ onBeforeUnmount(() => {
 
         <div v-if="posterVisible" class="wt-poster">
           <span class="wc-label wt-poster-kicker">TRAILER 1</span>
-          <span class="wt-poster-title">SEVEN DAYS TO THE WOLVES</span>
           <div v-if="trailerPhase === 'idle' || trailerPhase === 'paused'" class="wt-convenience-controls">
             <button class="wt-convenience-play wc-cta--primary" type="button" @click="toggleTrailer">
               <span aria-hidden="true">▶</span>
@@ -437,6 +443,11 @@ onBeforeUnmount(() => {
   line-height: 1.02;
   text-align: center;
   text-transform: uppercase;
+
+  // The yield is a dissolve, not a cut: the heading is already gone by the
+  // time the cut's title card opens. Opacity only — the box stays, so the
+  // frame does not jump up the page when the words leave.
+  transition: opacity 320ms ease;
 }
 
 .wt-player {
@@ -541,14 +552,6 @@ onBeforeUnmount(() => {
 .wt-poster-kicker {
   font-size: clamp(0.9rem, 1vw, 1.2rem);
   letter-spacing: 0.4em;
-}
-
-.wt-poster-title {
-  font-family: var(--wc-font-weyland);
-  font-size: clamp(1.6rem, 3vw, 3.2rem);
-  letter-spacing: 0.2em;
-  color: var(--wc-white);
-  text-align: center;
 }
 
 .wt-convenience-controls {
@@ -859,8 +862,7 @@ onBeforeUnmount(() => {
     letter-spacing: 0.2em;
   }
 
-  .wt-poster-kicker,
-  .wt-poster-title {
+  .wt-poster-kicker {
     display: none;
   }
 }

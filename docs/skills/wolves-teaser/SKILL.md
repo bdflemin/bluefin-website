@@ -198,6 +198,34 @@ resulting iframe through the wrapper's `:deep(iframe)` rule.
 YouTube rejects numeric loopback origins. Test at
 `http://projectbluefin.io.localhost:5173/wolves/`, not `localhost`.
 
+## The Title Lands Once
+
+The page and the cut both know the film's name, and for a while both said it.
+`.wt-heading` (page `h1`), `.wt-poster-title` (poster overlay) and the authored
+`maintitle` plate each spelled *Seven Days to the Wolves*, so two of them were
+legible together at every measured beat — the `h1` sat above the frame for the
+eleven seconds before the title card, and the card then "revealed" words the
+audience had already read. The page read as glitchy and the reveal did nothing.
+
+A theater darkens before the title hits. The rules that keep it that way:
+
+- **Exactly one surface may carry the film title at any instant.** The poster
+  is a kicker (`TRAILER 1`) and controls only; it does not name the film.
+- **The heading is fully down before the card opens**, never cross-faded with
+  it. A dissolve still puts two copies on screen at once, which is the defect.
+  `TRAILER_HEADING_YIELD_SECONDS` is the lead, and it ends *at* the card's start.
+- **The yield is opacity, never `display` or `v-if`.** The heading keeps its box
+  so the measured viewport budget that holds the whole frame above the fold does
+  not move when the words leave.
+- **The heading does not return mid-picture.** Restoring it when the card closes
+  pops a full-width title back in over a running film. It returns only when the
+  trailer is not playing, where it is page furniture again.
+
+`trailerHeadingOpacity()` owns this and derives its beat from the `maintitle`
+plate's own window, so re-porting the cut moves the heading with the card. The
+invariant is pinned in `wolvesTrailerPlates.test.ts`, which sweeps the whole
+110 s at 0.1 s and asserts the heading and the card are never both legible.
+
 ## Reuse the Wolves Media Widget
 
 `MediaWidget.vue` is store-backed by default and is also the teaser transport.
@@ -244,6 +272,7 @@ element can collapse below the available width and wrap unexpectedly.
 | "A dark scrim makes the words safer." | The owner explicitly removed it. Use the authored glyph halo. |
 | "The helm is just an image; default image CSS is fine." | Preflight makes it block-level and breaks the word. |
 | "The title looks centred." | Measure line count and bounds; visual inspection missed the three-line helm break. |
+| "The page needs its `h1`, so the duplicate title is unavoidable." | Keep the `h1` for page identity and yield it on a timer. Identity and the reveal are not in conflict. |
 
 ## Red Flags
 
@@ -259,6 +288,9 @@ element can collapse below the available width and wrap unexpectedly.
 - Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
 - Ended state shows the poster or a faded/empty end card instead of the URL.
 - The iframe accepts pointer events.
+- The page heading and the authored title card are legible at the same time, or
+  the poster names the film.
+- The heading is hidden with `display`/`v-if`, moving the frame up the page.
 - The event title's B/F is recoloured, or the CTA's b/f is blue.
 - Plate timings are adjusted locally rather than re-ported from destiny-vids.
 
@@ -266,6 +298,9 @@ element can collapse below the available width and wrap unexpectedly.
 
 - [ ] Compare the browser against `renders/trailer-1.mp4` at 16, 29, 91, and
       107 seconds through `window.__wolvesTeaser.seekTo()`.
+- [ ] Exactly one surface spells the film title at 0, 12, 18, 24, and 107
+      seconds, measured from folded opacity and bounds, not by eye.
+- [ ] The heading's box is unchanged across the yield at 1920×1080 and 390×844.
 - [ ] Main title occupies exactly one computed line-height.
 - [ ] Book box centre is 53.6% / 41% for `book-a`; transparent `book-b`
       produces no `.wt-book` element.
