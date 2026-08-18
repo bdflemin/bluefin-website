@@ -1985,3 +1985,50 @@ describe('showcase slide predicate', () => {
     expect(slideAspectFromNaturalSize(3000, 0)).toBeNull()
   })
 })
+
+// The day/night wallpapers carry their fade on a timeline: the night half's
+// opacity is (currentTime - slide.startTime) / slide.duration. Only Track 0
+// builds slides with `startTime` and `duration`. The back-catalogue pools are
+// plain photo records without them, and `backCatalogueCuratedPhotos` does not
+// filter day/night art out — so the same wallpaper that fades correctly in the
+// show reaches a catalogue album with `startTime === undefined`, and the fade
+// evaluates to NaN. An NaN opacity is an invalid style the browser drops,
+// which strands the night half at its stylesheet value instead of dissolving.
+describe('day/night wallpapers outside the authored timeline', () => {
+  it('never computes a NaN fade for a catalogue album slide', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 0,
+        experienceId: 'album-daynight',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const pool = vm.mixedPhotosToUse as Array<{ type?: string, startTime?: number }>
+    const daynight = pool.filter(slide => slide?.type === 'daynight')
+
+    expect(daynight.length, 'catalogue pool carries day/night wallpapers').toBeGreaterThan(0)
+    for (const slide of daynight) {
+      expect(slide.startTime, 'catalogue day/night slide has no authored startTime').toBeUndefined()
+    }
+
+    // Put one on the stage. The fade is only evaluated for the slide actually
+    // in a buffer, so walking the clock alone can miss every day/night record
+    // in an 800-slide pool and prove nothing.
+    vm.photoA = daynight[0]
+    await nextTick()
+
+    for (const time of [0, 7, 14, 21, 28, 35, 42, 60, 90, 128]) {
+      await wrapper.setProps({ playlistCurrentTime: time })
+      await flushPromises()
+
+      expect(
+        Number.isFinite(vm.daynightNightOpacityA),
+        `night-layer opacity is ${vm.daynightNightOpacityA} at ${time}s`,
+      ).toBe(true)
+    }
+  })
+})
