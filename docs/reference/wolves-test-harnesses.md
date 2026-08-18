@@ -357,22 +357,68 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 The harnesses above seek and screenshot. That is the right tool for *how it
 looks* and the wrong one for *what is scheduled*: a probe only sees the seconds
 it was told to visit, and a timestamp the owner reported can sit in the gap
-between two of them. That has happened — 263s, 266s and 320s were captured while
-the 281s cue under discussion never rendered at all.
+between two of them. Nearby screenshots are not evidence for the exact second.
 
 `scripts/wolves-cue-at.mjs` answers the scheduling question directly, with no
 browser and no seek:
 
 ```bash
-node scripts/wolves-cue-at.mjs 4:41        # defaults to the prologue
+node scripts/wolves-cue-at.mjs 1:50        # defaults to the prologue
 node scripts/wolves-cue-at.mjs prologue --all
 ```
 
 It loads the authored modules through Vite's `ssrLoadModule`, so aliases and
 TypeScript resolve exactly as the app resolves them and the answer cannot drift
 from the show. Use it to find the cue, then use a harness or Chromium to judge
-how that cue reads. Registration for further videos is the `VIDEOS` table in the
-script.
+how that cue reads. Registration for further videos is the `VIDEOS` table in
+`scripts/wolves-videos.mjs`, shared with the frame audit below so the two tools
+cannot disagree about what "video 1" means.
+
+## Auditing every shot of a video in a browser
+
+`scripts/wolves-frame-audit.mjs` is the other half: it walks *every* cue of a
+video in Chromium and checks the things a projected show fails on — the intended
+plate is the one on screen, the painting is full-bleed, the caption sits inside
+the frame with at least 24px of clearance, nothing errored and nothing 404ed.
+
+```bash
+npm run dev -- --port 5173 --strictPort
+node scripts/wolves-frame-audit.mjs                             # exits non-zero on any problem
+node scripts/wolves-frame-audit.mjs prologue --viewport 1280x720 --shots
+```
+
+Three things in it are load-bearing, and each is a bug this repository already
+shipped:
+
+- **It settles on two conditions**, the intended caption *and* the intended
+  decoded plate. Either alone samples a crossfade in progress, where the outgoing
+  shot's words sit over the incoming shot's picture. The same probe has reported a
+  collision that did not exist and hidden one that did, depending on which single
+  condition it used.
+- **It measures inside the settle predicate**, not in a second call after it. The
+  show clock keeps running against a live player, so anything measured after the
+  wait resolves is a *different frame* than the one that satisfied it. That drift
+  made a correct cut report the wrong plate on two shots. This works because
+  `page.waitForFunction` resolves to a **`JSHandle` of the truthy value** the
+  predicate returned, so the predicate can return its measurements and the caller
+  reads them with `.jsonValue()` — verified against current Playwright docs
+  (`source: /microsoft/playwright`), which use the same
+  `waitForFunction(...).then(h => h.jsonValue())` shape in their own suite.
+- **A wordless shot is not a shot with no text on screen.** A cue's words outlive
+  its shot by a fade, so the previous line is still clearing at the start of the
+  next one. Demanding an empty caption stalls past the end of a short window and
+  measures the following shot instead.
+- **Full-bleed means painted pixels, not the `<img>` rectangle.** `object-fit:
+  contain` leaves the element at 1280×720 while a 4:3 image paints only 960×720.
+  Derive the painted box from natural dimensions, fit, and object position; the
+  audit's `--self-test` pins both contain and cover geometry.
+- **Page exceptions are independent evidence.** Capture `pageerror` as well as
+  console errors and failed local requests; an uncaught application exception
+  can otherwise leave both network arrays empty and produce a false green.
+
+Only the app's own requests count toward the request check: the embedded player
+beats its telemetry endpoints constantly and they fail for reasons that have
+nothing to do with the show.
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
 buffers are prewarmed *during* the intro, so it watches them through that window
