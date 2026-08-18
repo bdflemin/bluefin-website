@@ -165,7 +165,7 @@ an opaque rectangle.
 
 ## A mark standing in for a glyph is still typography
 
-`SEVEN PARTS · ONE COMMUNITY · ONE DESTINY` sets its separators as the
+`SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY` sets its separators as the
 Kubernetes helm. It appears on two surfaces — the `/wolves/` standfirst and the
 projected lobby sub — and both route through `WolvesHelmLine.vue`. A second
 hand-rolled copy drifts from the first the moment either is touched.

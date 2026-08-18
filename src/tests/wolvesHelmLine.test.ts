@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import WolvesHelmLine from '../components/wolves/WolvesHelmLine.vue'
 
-const LINE = 'SEVEN PARTS · ONE COMMUNITY · ONE DESTINY'
+const LINE = 'SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY'
 
 function source(path: string): string {
   return readFileSync(resolve(process.cwd(), path), 'utf8')
@@ -28,7 +28,7 @@ describe('helm-separated standfirst', () => {
 
     expect(wrapper.text()).not.toContain('·')
     expect(wrapper.text().replace(/\s+/g, ' ').trim())
-      .toBe('SEVEN PARTS ONE COMMUNITY ONE DESTINY')
+      .toBe('SEVEN PILLARS ONE COMMUNITY ONE DESTINY')
   })
 
   // A separator is not content. Announcing a mark between phrases that are
@@ -72,7 +72,7 @@ describe('helm-separated standfirst', () => {
 
       expect(text, `${path} routes the line through the component`).toMatch(/<WolvesHelmLine/)
       expect(text, `${path} keeps the authored copy verbatim`).toContain(LINE)
-      expect(text.match(/SEVEN PARTS · ONE COMMUNITY · ONE DESTINY/g), `${path} states the line once`)
+      expect(text.match(/SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY/g), `${path} states the line once`)
         .toHaveLength(1)
     }
   })

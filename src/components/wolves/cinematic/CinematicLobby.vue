@@ -55,7 +55,7 @@ onBeforeUnmount(() => {
       </h1>
       <div class="wc-hairline" />
       <p class="wc-lobby-sub">
-        <WolvesHelmLine text="SEVEN PARTS · ONE COMMUNITY · ONE DESTINY" />
+        <WolvesHelmLine text="SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY" />
       </p>
 
       <p class="wc-lobby-status wc-label">

@@ -7,7 +7,7 @@ import { computed } from 'vue'
  * The copy is never edited here. This changes only how one glyph is PAINTED,
  * the same way `WolvesTrailerLine` draws the trailer's spaced pipe as a sear
  * and the `o` of WOLVES as the helm: the authored string still reads
- * "SEVEN PARTS · ONE COMMUNITY · ONE DESTINY" in source, and the separator it
+ * "SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY" in source, and the separator it
  * already contains is replaced in the render.
  *
  * The mark is CNCF's published white icon, reproduced unmodified — the owner's

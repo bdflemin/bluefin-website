@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
 
       <p class="wt-standfirst">
         <span class="wc-label">
-          <WolvesHelmLine text="SEVEN PARTS · ONE COMMUNITY · ONE DESTINY" />
+          <WolvesHelmLine text="SEVEN PILLARS · ONE COMMUNITY · ONE DESTINY" />
         </span>
         <span class="wc-label wt-standfirst-date">2 NOVEMBER 2026</span>
       </p>
