@@ -142,9 +142,10 @@ so never copy `rem` values across directly; convert through the px column.
 1. **Every B/b and F/f is blue** at `#4285f4`, the Bluefin wordmark blue.
    It is not `--wc-gold` (`#60a5fa`), which is a UI token. Do not apply this
    rule to the Linux Foundation event title or the CTA's b/f.
-2. **The O in WOLVES is the Kubernetes helm**, as is the O in *Extinction*.
-   Use `public/brands/kubernetes-icon-white.svg`. The existing
-   `public/brands/kubernetes.svg` is the blue logo the owner rejected.
+2. **The O in WOLVES is the Kubernetes helm**, as is the O in *Extinction*. The
+   mark is `public/brands/kubernetes-icon-white.svg` — CNCF's published white
+   symbolic icon, reproduced unmodified, so nothing here recolours anybody's
+   trademark.
 3. **A spaced ` | ` is drawn as a sear**, not set as a font glyph. The sear is
    blue heat: flare `rgb(196 226 255)`, mid `rgb(147 197 253)`, halo
    `rgb(37 99 235)`.
@@ -268,7 +269,6 @@ element can collapse below the available width and wrap unexpectedly.
 |---|---|
 | "The timing manifest is authoritative, so it is enough." | It has no plate design and no three-picture composition. Read the cards and builder. |
 | "The iframe should match the 1920:804 aperture." | Chrome then paints over the picture. Use a clipped aperture around a centred 16:9 iframe. |
-| "The existing Kubernetes SVG is already available." | It is the blue logo; the authored treatment requires the white symbolic icon. |
 | "A dark scrim makes the words safer." | The owner explicitly removed it. Use the authored glyph halo. |
 | "The helm is just an image; default image CSS is fine." | Preflight makes it block-level and breaks the word. |
 | "The title looks centred." | Measure line count and bounds; visual inspection missed the three-line helm break. |

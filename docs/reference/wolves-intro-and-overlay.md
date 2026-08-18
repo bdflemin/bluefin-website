@@ -76,7 +76,7 @@ into are a separate piece of module-level state (`activeSegments`, set by
 `loadExperience()`). `enterIntro()` used to publish the Director's Cut intro
 list correctly but never call `loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)`
 — so choosing the Director's Cut played its own, correctly-timed intro and then
-handed off into the full seven-part standard cinematic anyway. The manifest now
+handed off into the full seven-pillar standard cinematic anyway. The manifest now
 carries a `presentationProfile` (`'wolves-standard' | 'wolves-directors-cut' |
 'generic'`), and `enterIntro()` calls `store.loadExperience(directorsCut ?
 WOLVES_DIRECTORS_CUT_EXPERIENCE : WOLVES_EXPERIENCE)` before publishing the

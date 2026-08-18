@@ -178,9 +178,8 @@ The rules, which are the same ones the trailer's helm and sear already follow:
 - **Split on the separator alone, never the spaces around it.** The line's own
   word spacing and 0.34em tracking then set the air around the mark, so it sits
   in the gap the typography already made instead of one invented in CSS.
-- **The white symbolic icon, never the blue logo.** `kubernetes-icon-white.svg`
-  is CNCF's published mark reproduced unmodified. `kubernetes.svg` is the blue
-  logo the owner rejected.
+- **The mark is `brands/kubernetes-icon-white.svg`** — CNCF's published white
+  symbolic icon, reproduced unmodified.
 - **`display: inline`.** Tailwind's preflight sets `img { display: block }`; a
   block-level separator takes its own line and breaks the phrase in three.
 - **It carries the line's weight, not white's.** The type is `--wc-grey`

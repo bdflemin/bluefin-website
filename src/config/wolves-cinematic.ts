@@ -346,12 +346,12 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
 ]
 
 /**
- * The Europa intro, and the only segment that is not one of the seven parts.
+ * The Europa intro, and the only segment that is not one of the seven pillars.
  *
  * It is deliberately NOT in `CINEMATIC_SEGMENTS`: that list is the authored
- * seven-part soundtrack the standard show plays, and this piece belongs to the
+ * seven-pillar soundtrack the standard show plays, and this piece belongs to the
  * Director's Cut alone. It is referenced by name from the Director's Cut
- * manifest instead, so the standard show and every index into the seven parts
+ * manifest instead, so the standard show and every index into the seven pillars
  * are untouched.
  *
  * This one has to be a single upload rather than an embed of its sources.

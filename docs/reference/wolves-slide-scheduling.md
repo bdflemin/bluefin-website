@@ -9,7 +9,7 @@ boundaries, and the non-Wolves experiences the same component serves.
 Numbering in this file is the comic reader's `trackIndex`, which is a **segment**
 index: 0 is “7 Days to the Wolves”, 1 is “Ghosts In The Mist”, through 6, “Last
 Ride of the Day”. `wolves-runtime.md` uses show numbering, where Track 0 is the
-Destiny intro and every song is one higher. The show is seven parts and the
+Destiny intro and every song is one higher. The show is seven pillars and the
 segment list matches `public/wolves-playlist.json` 1:1; see
 [`wolves-transport-and-clocks.md`](wolves-transport-and-clocks.md).
 
@@ -257,7 +257,7 @@ The switch is `usesFastCrossfade` in `WolvesComicReader.vue`, pinned by tests in
 
 The month wallpaper dissolve underneath is a second, smaller contributor. It is
 pinned for the back catalogue only; on Wolves it carries authored meaning
-(progress across the seven parts) and is left running. If the hitch persists on
+(progress across the seven pillars) and is left running. If the hitch persists on
 the later tracks after the blur change, that is the next lever — not a silent
 one to pull.
 

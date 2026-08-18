@@ -119,9 +119,9 @@ const tokens = computed<TrailerToken[]>(() => tokenizeTrailerLine(props.text, {
 
 /* THE O IN WOLVES IS THE KUBERNETES HELM (and the O in "Extinction").
 
-   CNCF's published white icon, reproduced unmodified — already fill:#fff, so
-   nothing here recolours anybody's trademark. Owner: "not the blue one though,
-   just the white symbolic one".
+   `brands/kubernetes-icon-white.svg` — CNCF's published white symbolic icon,
+   reproduced unmodified — already fill:#fff, so nothing here recolours
+   anybody's trademark.
 
    Sized against the cap rather than the em so it sits on the same optical line
    as the O it stands in for. 0.62em was measured: matching the cap height made
