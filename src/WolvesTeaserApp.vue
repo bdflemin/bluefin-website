@@ -5,6 +5,7 @@ import type { TrailerPlate } from '@/data/wolves-trailer-plates'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
+import WolvesHelmLine from '@/components/wolves/WolvesHelmLine.vue'
 import WolvesTrailerLine from '@/components/wolves/WolvesTrailerLine.vue'
 import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import {
@@ -366,7 +367,9 @@ onBeforeUnmount(() => {
       </div>
 
       <p class="wt-standfirst">
-        <span class="wc-label">SEVEN PARTS · ONE COMMUNITY · ONE DESTINY</span>
+        <span class="wc-label">
+          <WolvesHelmLine text="SEVEN PARTS · ONE COMMUNITY · ONE DESTINY" />
+        </span>
         <span class="wc-label wt-standfirst-date">2 NOVEMBER 2026</span>
       </p>
 

@@ -162,3 +162,37 @@ an opaque rectangle.
   static quote or source records; preserve explicitly approved cadence locks.
 - Derive Track 0's rotating HUD queue directly from the authored plan and keep
   duplicate status lines; deduping breaks the approved finale cadence.
+
+## A mark standing in for a glyph is still typography
+
+`SEVEN PARTS · ONE COMMUNITY · ONE DESTINY` sets its separators as the
+Kubernetes helm. It appears on two surfaces — the `/wolves/` standfirst and the
+projected lobby sub — and both route through `WolvesHelmLine.vue`. A second
+hand-rolled copy drifts from the first the moment either is touched.
+
+The rules, which are the same ones the trailer's helm and sear already follow:
+
+- **The copy is not edited, only painted.** The authored string still reads with
+  its `·` in source; the component splits on that glyph and draws the mark in
+  its place. Never store a version of the line with the separator removed.
+- **Split on the separator alone, never the spaces around it.** The line's own
+  word spacing and 0.34em tracking then set the air around the mark, so it sits
+  in the gap the typography already made instead of one invented in CSS.
+- **The white symbolic icon, never the blue logo.** `kubernetes-icon-white.svg`
+  is CNCF's published mark reproduced unmodified. `kubernetes.svg` is the blue
+  logo the owner rejected.
+- **`display: inline`.** Tailwind's preflight sets `img { display: block }`; a
+  block-level separator takes its own line and breaks the phrase in three.
+- **It carries the line's weight, not white's.** The type is `--wc-grey`
+  (#8b8f96) on `--wc-bg` (#08090c). Matching that tone by alpha computes to
+  about 0.55, but a solid heptagon reads heavier than thin mono strokes at the
+  same measured tone, so the shipped value is optically compensated to 0.5. A
+  separator's job is to be felt, not looked at.
+- **Decorative to assistive technology.** `alt=""` and `aria-hidden="true"`;
+  the phrases are already separated in the accessible text.
+
+Measure it rather than judging it on a laptop: the mark is ~8px on the teaser
+standfirst and ~10px on the 1920 lobby, so check the rendered bounds and the
+optical centring against the caps, and confirm the wider mark did not introduce
+a wrap at 390px — compare the host's line-box height against the same line set
+with plain middots. `src/tests/wolvesHelmLine.test.ts` pins the rest.

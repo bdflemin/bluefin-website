@@ -3,6 +3,7 @@ import type { ExperienceManifest } from '@/config/experience-manifest'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
+import WolvesHelmLine from '@/components/wolves/WolvesHelmLine.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
 const emit = defineEmits<{ enter: [], enterDirectorsCut: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
@@ -54,7 +55,7 @@ onBeforeUnmount(() => {
       </h1>
       <div class="wc-hairline" />
       <p class="wc-lobby-sub">
-        SEVEN PARTS · ONE COMMUNITY · ONE DESTINY
+        <WolvesHelmLine text="SEVEN PARTS · ONE COMMUNITY · ONE DESTINY" />
       </p>
 
       <p class="wc-lobby-status wc-label">
