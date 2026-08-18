@@ -88,6 +88,9 @@ The real trailer is three concatenated segments, not one video with overlays:
 
 The last 21.8 seconds must cover the embed completely. Both day cards and the
 whole end card sit on the wallpaper at full-frame 16:9, with no letterbox.
+The bridge's black backing is opaque from the 88.2-second cut onward; fade the
+wallpaper images over that backing, never the whole backdrop. Fading the
+backdrop itself exposes post-cut YouTube frames during the black-to-day rise.
 
 The bridge's five authored legs are:
 

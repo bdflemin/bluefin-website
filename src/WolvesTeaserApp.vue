@@ -254,16 +254,20 @@ onBeforeUnmount(() => {
         <div
           v-if="segment !== 'picture'"
           class="wt-backdrop"
-          :style="{ opacity: segment === 'bridge' ? bridge.opacity : 1 }"
           aria-hidden="true"
         >
-          <img class="wt-backdrop-img" :src="dayWallpaper" alt="">
-          <img
-            class="wt-backdrop-img"
-            :src="nightWallpaper"
-            alt=""
-            :style="{ opacity: segment === 'bridge' ? bridge.nightMix : 1 }"
+          <div
+            class="wt-backdrop-images"
+            :style="{ opacity: segment === 'bridge' ? bridge.opacity : 1 }"
           >
+            <img class="wt-backdrop-img" :src="dayWallpaper" alt="">
+            <img
+              class="wt-backdrop-img"
+              :src="nightWallpaper"
+              alt=""
+              :style="{ opacity: segment === 'bridge' ? bridge.nightMix : 1 }"
+            >
+          </div>
         </div>
 
         <div v-if="posterVisible" class="wt-poster">
@@ -486,9 +490,13 @@ onBeforeUnmount(() => {
   background: #000;
 }
 
+.wt-backdrop-images,
 .wt-backdrop-img {
   position: absolute;
   inset: 0;
+}
+
+.wt-backdrop-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
