@@ -17,6 +17,11 @@ behavior for a content request.
   `src/WolvesTeaserApp.vue`. Trailer plate schedule:
   `src/data/wolves-trailer-plates.ts` (ported verbatim from destiny-vids
   `stories/trailer-1-plates.json`; re-port on a recut, never reword here).
+  Plate DESIGN comes from destiny-vids `cards/*.html`, not from that manifest,
+  and the cut is three pictures: the embed stops at 88.2s and the March
+  wallpaper carries the day cards and end card. Line treatments (blue B/F, the
+  seared `|`, the Kubernetes helm as an O) live in
+  `src/components/wolves/WolvesTrailerLine.vue`.
 - Experience entry: `wolves/experience/index.html`
 - Mount: `src/wolves-main.ts` and `src/WolvesApp.vue`
 - State: `src/stores/cinematic.ts`
@@ -36,5 +41,6 @@ When YouTube rejects a numeric loopback origin, open
 `http://projectbluefin.io.localhost:<port>/wolves/`. Run the relevant tests,
 typecheck, build, and browser flow before reporting completion.
 
-See `docs/reference/wolves-runtime.md` and
-`docs/skills/wolves-content/SKILL.md` for the canonical procedure.
+See `docs/skills/wolves-teaser/SKILL.md` for teaser and Trailer 1 work, and
+`docs/reference/wolves-runtime.md` plus `docs/skills/wolves-content/SKILL.md`
+for the full experience and its content.

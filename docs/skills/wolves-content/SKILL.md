@@ -413,6 +413,15 @@ Teaser album cards deep-link into the show:
 resolve the id, and launch that experience; an unknown id falls back to the
 lobby.
 
+### Match the trailer's authored composition, not only its copy
+
+The plate manifest carries timing and copy; the design and the three-picture
+composition live in destiny-vids' card templates and builder. Teaser work has
+its own procedure: load [`../wolves-teaser/SKILL.md`](../wolves-teaser/SKILL.md).
+It preserves the picture/bridge/end-card boundaries, frame-relative sizing,
+letter and mark treatments, iframe geometry, and the Tailwind inline-image
+trap without turning this content skill into a runtime-engineering manual.
+
 ## Wire every generated feed into the weekly refresh
 
 `update-content.yml` refreshed Flickr photos weekly while
