@@ -179,6 +179,50 @@ slide without repeating` is **flaky on `main` too**: it allows 250ms for a
 decode-gated crossfade of a large photo and fails roughly a third of the time on
 either branch. Measure over several runs before blaming a change for it.
 
+## The day/night fade needs a window the album actually has
+
+The night half of a `daynight` wallpaper dissolves over its own slide window:
+`(playlistCurrentTime - startTime) / duration`. Only the Track 0 timeline
+authors `startTime` and `duration`. `laterTrackPhotos` and `mixedPhotos` are
+plain photo records that carry neither, and `backCatalogueCuratedPhotos` does
+not filter day/night art out — it excludes `/people/` and `.gif`, and the
+wallpapers are showcase art. So the same wallpaper that fades correctly in the
+show reaches a catalogue album with `startTime === undefined`, the expression
+evaluates to `NaN`, and Vue emits `opacity: NaN`. That is an invalid
+declaration, so the browser drops it and the night half stays at its stylesheet
+value: the wallpaper stops changing instead of turning.
+
+A `NaN` here is silent in every way that normally catches a defect. It throws
+nothing, logs nothing, and passes any test that only walks the clock — the fade
+is evaluated for the slide **in a buffer**, so a walk across an ~800-slide pool
+can miss every day/night record and prove nothing. Put one on the stage
+(`vm.photoA = <daynight slide>`) and assert `Number.isFinite`.
+
+Outside the authored timeline a slide's window is the same hold the deck
+indexes on, so `daynightNightOpacity()` derives the fade from
+`standardSlideHold` and falls back to `slideIndex * hold`. `activeFlickrIndex`
+reads that same computed: if the deck and the fade disagree about the hold, the
+wallpaper dissolves against a window the deck is not using.
+
+## Albums borrow the Wolves manifest's tempo by index
+
+`currentTrack` resolves the Wolves show by **identity** (`trackId`), which is
+correct and load-bearing. Its fallback is `manifest.tracks[trackIndex]`, and
+that fallback is what every other album gets — so an unrelated album's track 3
+is paced by the BPM and `phraseBeats` of *Wolves* track 3, which is the only
+manifest ever loaded. It is clamped to 5.5–11.5 s by `laterTrackSlideHold`, so
+it degrades to a plausible-looking hold rather than an obvious break.
+
+Two consequences worth knowing before touching slide pacing:
+
+- Album slide pacing is not derived from the album. It is a foreign tempo.
+- `manifest` loads asynchronously, so `currentTrack` is null until it lands.
+  The hold therefore changes from the `[7, 8, 10]` fallback to the BPM-derived
+  value mid-track, and `activeFlickrIndex` is `floor(time / hold)` — a hold
+  that changes under a running clock moves the index discontinuously. That is a
+  one-time jump per run, not a steady drift, which is exactly the kind of
+  symptom that gets reported as "it skipped" and then fails to reproduce.
+
 ## WolvesComicReader serves more than Wolves
 
 `WolvesComicReader.vue` drives three different shows and only one is the

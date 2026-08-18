@@ -889,6 +889,13 @@ const laterTrackSlideHold = computed(() => {
   return [7, 8, 10][trackIndex % 3]
 })
 
+/**
+ * The hold every non-timeline slide runs on. `activeFlickrIndex` and the
+ * day/night fade must read the same value, or the wallpaper dissolves against
+ * a window the deck is not actually using.
+ */
+const standardSlideHold = computed(() => laterTrackSlideHold.value ?? 7)
+
 const currentSlideTransitionDuration = computed(() => {
   if ((props.trackIndex ?? 0) > 0) {
     const hold = laterTrackSlideHold.value ?? 7
@@ -903,27 +910,35 @@ const currentSlideTransitionDuration = computed(() => {
   return Math.min(crossfadeCap, slide.duration * 300)
 })
 
-const daynightNightOpacityA = computed(() => {
-  const slide = photoA.value
+/**
+ * The night half's dissolve across a day/night wallpaper's own window.
+ *
+ * Only the Track 0 timeline authors `startTime` and `duration`. The
+ * back-catalogue pools are plain photo records, and `backCatalogueCuratedPhotos`
+ * does not filter day/night art out — so the same wallpaper reaches an album
+ * with neither field, `curTime - undefined` is NaN, and the binding emitted an
+ * invalid `opacity: NaN` that the browser drops. The night half then stranded
+ * at its stylesheet value instead of dissolving, and the wallpaper stopped
+ * changing. Outside the authored timeline the slide's window is the same hold
+ * the deck indexes on, so the fade is derived from that.
+ */
+function daynightNightOpacity(slide: any, slideIndex: number): number {
   if (!slide || slide.type !== 'daynight') {
     return 0
   }
-  const curTime = props.playlistCurrentTime ?? 0
-  const elapsed = curTime - slide.startTime
-  const ratio = Math.min(1.0, Math.max(0.0, elapsed / slide.duration))
-  return ratio
-})
+  const duration = slide.duration ?? standardSlideHold.value
+  const startTime = slide.startTime ?? Math.max(0, slideIndex) * standardSlideHold.value
+  if (!(duration > 0)) {
+    return 0
+  }
+  const elapsed = (props.playlistCurrentTime ?? 0) - startTime
+  const ratio = elapsed / duration
+  return Number.isFinite(ratio) ? Math.min(1.0, Math.max(0.0, ratio)) : 0
+}
 
-const daynightNightOpacityB = computed(() => {
-  const slide = photoB.value
-  if (!slide || slide.type !== 'daynight') {
-    return 0
-  }
-  const curTime = props.playlistCurrentTime ?? 0
-  const elapsed = curTime - slide.startTime
-  const ratio = Math.min(1.0, Math.max(0.0, elapsed / slide.duration))
-  return ratio
-})
+const daynightNightOpacityA = computed(() => daynightNightOpacity(photoA.value, slideAIndex.value))
+
+const daynightNightOpacityB = computed(() => daynightNightOpacity(photoB.value, slideBIndex.value))
 
 const activeTimelineSlideIndex = computed(() => {
   if (trackZeroSlides.value.length === 0) {
@@ -986,7 +1001,7 @@ const activeFlickrIndex = computed(() => {
   if (props.playlistCurrentTime === undefined) {
     return 0
   }
-  const standardHold = laterTrackSlideHold.value ?? 7
+  const standardHold = standardSlideHold.value
   const hasFeaturedOpening = isWolvesExperience.value
     && props.trackIndex === ghostsInTheMistOpeningSlide.trackIndex
     && laterTrackPhotos.value[0]?.id === ghostsInTheMistOpeningSlide.photoId
