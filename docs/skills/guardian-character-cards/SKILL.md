@@ -88,6 +88,13 @@ the old name. Regenerate (`capture-scenes.mjs` then `generate.mjs <slug>`) —
 and note that capture needs a browser that can actually play the source video,
 which a codec-limited Chromium cannot.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I'll edit the card markup directly." | `public/wolves/characters/` is generated; the edit disappears on the next run. |
+| "A placeholder keeps the roster complete." | `videoId: "TODO"` stops both generator stages. An absent record beats one that breaks the build. |
+
 ## Red Flags
 
 - Hand-editing files in `public/wolves/characters/` — they are generated.

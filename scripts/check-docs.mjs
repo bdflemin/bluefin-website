@@ -66,6 +66,24 @@ for (const path of skillFiles) {
   if (source.split('\n').length > 500) {
     addError(`${relativePath}: exceeds 500 lines`)
   }
+
+  // The canonical skill spec (`/addyosmani/agent-skills`). `## Verification` is
+  // checked for every Markdown file below; these are the rest of it. Eight of
+  // twelve skills had drifted without `## Common Rationalizations`, which is
+  // the section that records the excuse that leads to each Red Flag — the part
+  // an agent actually argues with itself about.
+  const requiredSections = [
+    '## When to Use',
+    '## When NOT to Use',
+    '## Core Process',
+    '## Common Rationalizations',
+    '## Red Flags',
+  ]
+  for (const section of requiredSections) {
+    if (!source.includes(`\n${section}\n`)) {
+      addError(`${relativePath}: missing ${section} section`)
+    }
+  }
 }
 
 for (const path of markdown) {

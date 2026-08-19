@@ -55,6 +55,13 @@ never deploy a Worker as a substitute for a DNS record.
   documented Cloudflare flow; do not assume GitHub Pages and Cloudflare Pages
   are interchangeable.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "A Worker is the quickest way to make this hostname resolve." | A Worker is a service someone owns forever. Solve a DNS problem with DNS. |
+| "`wrangler deploy` succeeded, so the subdomain works." | Check DNS and the live HTTPS response. An existing redirect can still win. |
+
 ## Red Flags
 
 - Deploying a Worker just to make a hostname exist.

@@ -94,6 +94,14 @@ Delete these on sight; they collect stale text instead of updating skills.
 
 This does not ban product documentation or release notes owned by a human.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I'll write this up in a follow-up PR." | You will not, and the next agent pays for it. Same PR, or it does not exist. |
+| "This was obvious once I saw it." | You found it by trial and error, which is the definition of not obvious. |
+| "A new doc explains the correct behaviour." | Two docs that disagree are worse than one that is wrong. Correct the skill in place. |
+
 ## Red Flags
 
 - A session ends with a shipped change and no skill update.

@@ -10,6 +10,12 @@ description: Use at session start, before commits, before pushes, at factory gat
 Use for any session that edits code, deploys, changes DNS, touches a shared
 runtime, or hands work to another agent.
 
+## When NOT to Use
+
+Do not use for read-only questions, or for a documentation-only edit that ships
+no commit. Area work still loads its own skill: this one routes a session, it
+does not replace `validation`, `design-gate`, or the Wolves skills.
+
 ## Core Process
 
 1. **Identify the real target.**
@@ -182,6 +188,15 @@ wrangler docs <topic>
 
 If the session lacks DNS-edit permission, stop and request reauthentication with
 an API token scoped to the target zone. Do not compensate by deploying a Worker.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The change is obviously right, so it can skip the gate." | Design, Security, Breakage and Merge are decisions someone else owns, not formalities. Stop and get the decision. |
+| "There is a `common` checkout right here." | A fork or feature-branch checkout is not the sidecar. Fetch canonical `main`, or proceed without it and say so. |
+| "It works locally, so it shipped." | A change that exists only in a working tree has shipped nothing. Verify the pushed commit's own deployment. |
+| "That suite failure is unrelated to my change." | Report it anyway. An omitted failure is how a real regression gets attributed to the next person. |
 
 ## Red Flags
 
