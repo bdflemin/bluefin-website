@@ -29,6 +29,13 @@ prominence, or Wolves runtime engineering.
 Use `import.meta.env.BASE_URL` for public runtime asset paths. Never hand-edit a
 generated file.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The copy does not fit, so the component needs a small tweak." | Content work never changes design. Get approval, or change the copy. |
+| "It is faster to patch the generated file." | Generated output is overwritten on the next run. Fix the generator or its source data. |
+
 ## Red Flags
 
 - A content diff changes a component or stylesheet.

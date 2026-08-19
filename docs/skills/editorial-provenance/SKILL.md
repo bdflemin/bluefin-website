@@ -31,6 +31,14 @@ Do not use for purely functional data with no authored wording.
 Never invent connective prose, headings, summaries, chapter names, or
 translations presented as authored copy.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The wording is slightly off, I'll tidy it." | Authored copy is reproduced verbatim. Fix the source record and re-port from it. |
+| "Removing this segment simplifies the code." | Authored content is not yours to delete. A gap in a numbered sequence is the evidence that it happened. |
+| "I remember what the missing line said." | Reconstruction from memory is invention published under someone else's byline. |
+
 ## Red Flags
 
 - New prose has no authoritative source.

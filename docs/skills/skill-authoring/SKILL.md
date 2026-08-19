@@ -35,6 +35,13 @@ features, or one-off task instructions.
 Use standard GFM Markdown. MCP does not define a skill filesystem layout; this
 layout follows the Agent Skills convention.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "This rule matters here too, so I'll restate it." | Two owners of one rule drift apart. Link to the owner instead. |
+| "The entry file should explain the architecture." | The entry file routes. Detail belongs in a reference beside it. |
+
 ## Red Flags
 
 - A second skill owns the same rule.
