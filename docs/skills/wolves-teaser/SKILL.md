@@ -1,6 +1,6 @@
 ---
 name: wolves-teaser
-description: Use when changing the `/wolves/` teaser hero, Trailer 1 player, browser-rendered trailer plates, poster, bridge, end card, or trailer fidelity tests.
+description: Use when changing the `/wolves/` teaser hero, Trailer 1 player, the delivered-render embed, poster, ended URL card, or trailer fidelity tests.
 metadata:
   context7-sources:
     - /websites/tailwindcss
@@ -11,13 +11,17 @@ metadata:
 ## Overview
 
 Keep `/wolves/` faithful to the owner-authored Trailer 1 cut while preserving
-its role as a teaser website. The page owns a chromeless YouTube iframe, the
-browser-rendered plate treatment, the day-to-night wallpaper bridge, the end
-card, and links into `/wolves/experience/`.
+its role as a teaser website. The page owns a chromeless YouTube iframe that
+plays the owner's delivered render of the cut — every plate, the bridge, and
+the end card are burned into the video — plus three browser jobs around it:
+the page heading's yield, an opening black mask, and one browser-drawn URL
+card that covers YouTube's endscreen after the cut ends. Below the stage, the
+page links into `/wolves/experience/`.
 
 The trailer design is not derivable from one manifest. Its copy and timing,
 visual treatment, composition, and rendered result live in separate
-`destiny-vids` sources. Read all of them before changing the recreation.
+`destiny-vids` sources, and the playable picture is the owner's own YouTube
+upload. Read the sources before changing what the records describe.
 
 ## When to Use
 
@@ -27,8 +31,8 @@ Use this skill when changing:
 - `src/components/wolves/WolvesTrailerLine.vue`
 - `src/data/wolves-trailer-plates.ts`
 - `src/tests/wolvesTrailerPlates.test.ts`
-- the teaser poster, hero placement, player geometry, plate styling, bridge,
-  end card, or trailer-specific assets
+- the teaser poster, hero placement, player geometry, the ended URL card, or
+  trailer-specific assets
 
 ## When NOT to Use
 
@@ -43,17 +47,24 @@ Use this skill when changing:
 
 ## Core Process
 
-1. Read the authoritative `destiny-vids` sources listed below.
-2. Re-port copy and timing; never reword or nudge the owner's record locally.
-3. Reproduce card design from the card templates, not from the timing manifest.
-4. Preserve the three-picture composition and iframe/frame geometry.
-5. Pin timing, treatments, segments, and lossless tokenisation in
+1. Read the authoritative sources listed below.
+2. The embed is the owner's delivered render. Never redraw its plates in the
+   browser while it plays — a browser plate over the burned-in plate is a
+   double-draw and a defect.
+3. Keep `wolves-trailer-plates.ts` as the authored record; never reword or
+   nudge the owner's copy locally. The records drive the heading yield, the
+   opening black mask, and the ended URL card.
+4. Pin timing, treatments, segments, and lossless tokenisation in
    `wolvesTrailerPlates.test.ts`.
-6. Drive the dev-only `window.__wolvesTeaser` harness to the reference beats.
-7. Compare desktop and mobile bounds against the rendered cut.
-8. Run lint, typecheck, focused tests, `test:gate`, and build.
+5. Drive the dev-only `window.__wolvesTeaser` harness to the reference beats.
+6. Compare desktop and mobile against the render at the same timestamps.
+7. Run lint, typecheck, focused tests, `test:gate`, and build.
 
 ## Sources of Truth
+
+The playable picture is the owner's own upload: YouTube `iHXBTH_fwB0`,
+"Wolves Trailer Final" — the delivered 4K60 render of Trailer 1.1. Verify any
+swap beat by beat against the authored schedule before trusting it.
 
 All paths in this table are relative to `~/src/destiny-vids`.
 
@@ -71,71 +82,47 @@ The manifest carries windows and copy. It does **not** carry the design. A
 manifest-only implementation can be numerically correct and still look nothing
 like the film.
 
-## The Cut Is Three Pictures
+## The Cut Is the Delivered Render
 
-The real trailer is three concatenated segments, not one video with overlays:
+The render is full-frame 16:9 throughout, 114.998 s against an authored
+115.02 s, with music and every plate burned in. Its three segments:
 
 | Window | Picture |
 |---|---|
-| 0 → 88.2 | Nightwish video, letterboxed 2.39:1 into 16:9; black through 12.2 |
-| 88.2 → 102.2 | March Bluefin wallpaper, day fading to night |
-| 102.2 → 115.02 | March Bluefin night wallpaper, as the end-card poster |
+| 0 → 88.2 | the picture; black through 12.2 |
+| 88.2 → 102.2 | day falling into night |
+| 102.2 → 115.02 | the night scene as the end-card poster |
 
-`BRIDGE_MONTH = 3`; the local assets are:
+Because the render carries the cut, the browser draws nothing over the playing
+video. The three remaining browser jobs:
 
-- `public/img/wallpapers/bluefin-03-day.webp`
-- `public/img/wallpapers/bluefin-03-night.webp`
+- **Opening black mask.** Keep an opaque black gate over the player through
+  `BURST = 12.200`, cleared across exactly two 59.94 fps frames
+  (`2 * 1001 / 60000`). The render opens on the same black, so the mask hides
+  YouTube's startup chrome and is pixel-identical to the cut beneath it.
+- **Heading yield.** The page `h1` still steps aside before the render's own
+  title card (see "The Title Lands Once").
+- **Ended URL card.** When the cut ends, YouTube paints an endscreen over the
+  faded-to-black last frame. Cover it with the teaser's held URL card — the
+  March night wallpaper (`public/img/wallpapers/bluefin-03-night.webp`) under
+  the browser-drawn event rows and the `wolves.projectbluefin.io` CTA — in the
+  same treatment the cut's own end card uses. The end-card records' opacities
+  all resolve to 1 at `TRAILER_ENDCARD_HOLD_SECONDS` (113.82), so the ended
+  overlay is a fully arrived frame, never a mid-fade one.
 
-The raw Nightwish upload is not the authored opening. Keep an opaque black gate
-over the complete player through `BURST = 12.200`, then clear it across exactly
-two 59.94 fps frames (`2 * 1001 / 60000`). The explosion blooms out of black.
-
-The last 26.82 seconds must cover the embed completely. Both day cards and the
-whole end card sit on the wallpaper at full-frame 16:9, with no letterbox. The
-music ends at 110.02 seconds, then the URL card holds for five silent seconds.
-The raw player must pause only after the 1:47 howl and the music fade complete.
-A wall clock then advances the transport to the full 115.02-second picture end.
-The bridge's black backing is opaque from the 88.2-second cut onward; fade the
-wallpaper images over that backing, never the whole backdrop. Fading the
-backdrop itself exposes post-cut YouTube frames during the black-to-day rise.
-
-The bridge's five authored legs are:
-
-| Leg | Seconds |
-|---|---:|
-| black → day | 1.4 |
-| day hold | 1.0 |
-| day → night | 4.4 |
-| night hold | 1.4 |
-| night → black | 5.8 |
-
-They total 14.0 seconds and open and close on black.
+End detection is redundant on purpose: the `onStateChange` ENDED event **and**
+a clock tolerance (`getCurrentTime()` within 0.05 s of the 115.02 s duration),
+because the encode stops at 114.998 s and the event may never fire.
 
 ## Coordinate Mapping and Sizing
 
-Cards are authored at 1920×1080. The 1920×804 picture occupies y=138..942 in
-the letterboxed frame.
-
-- Wallpaper segments are full-frame; percentages map directly.
-- Main title is centred at y=540, so it remains 50%.
-- Day cards use `top: 58%` directly because they are on the full-frame
-  wallpaper, not the letterboxed picture.
-- Book anchor `[1030,443]` maps to `left: 53.6%; top: 41%` in the 16:9 frame.
-- The second book record keeps source anchor `[1000,470]` but its rendered PNG
-  has no alpha pixels; it is timing metadata, not a visible box.
-
-All plate type sizes key off **player width**. Every card clamp resolves to its
-maximum at 1920px. Put `container-type: inline-size` on the player and express
-plate sizes in `cqw`, where 1cqw is 1% of frame width.
+Only the ended URL card is browser-drawn. Its type sizes key off **player
+width**: every card clamp resolves to its maximum at 1920px, so the player
+carries `container-type: inline-size` and card sizes are expressed in `cqw`,
+where 1cqw is 1% of frame width.
 
 | Element | Card value | px at 1920 | cqw |
 |---|---|---:|---:|
-| title | `clamp(3.2rem,5.8vw,4.9rem)` | 78.4 | 4.0833 |
-| eyebrow | `clamp(1.8rem,3vw,2.6rem)` | 41.6 | 2.1667 |
-| subtitle | `clamp(1.5rem,2.4vw,2.1rem)` | 33.6 | 1.75 |
-| credits | `1.5rem` | 24 | 1.25 |
-| day-card line | `clamp(2.8rem,5vw,5.2rem)` | 83.2 | 4.3333 |
-| book line | `3.8rem` | 60.8 | 3.1667 |
 | poster CTA | `clamp(2.8rem,5vw,5.2rem)` | 83.2 | 4.3333 |
 | poster title | `clamp(1.7rem,2.5vw,2.45rem)` | 39.2 | 2.0417 |
 | poster subtitle | `clamp(1.1rem,1.7vw,1.5rem)` | 24 | 1.25 |
@@ -145,6 +132,9 @@ The card root is 16px. `wolves-cinematic.scss` sets the site's root near 10px,
 so never copy `rem` values across directly; convert through the px column.
 
 ## Authored Treatments
+
+These rules govern the ended URL card and any future browser-drawn plate; the
+render's own plates already carry them.
 
 1. **Every B/b and F/f is blue** at `#4285f4`, the Bluefin wordmark blue.
    It is not `--wc-gold` (`#60a5fa`), which is a UI token. Do not apply this
@@ -170,6 +160,10 @@ authored token unless the owner asks to reproduce the render host's fallback.
 
 ## Plate Schedule
 
+These windows are burned into the render; the records remain the authored
+description and drive the heading yield (`maintitle`) and the ended URL card
+(`endcard-*`). The book and day-card records no longer have browser elements.
+
 | ID | Window | Notes |
 |---|---|---|
 | `maintitle-a` | 11.0–15.4 | title only; credits hidden |
@@ -181,17 +175,16 @@ authored token unless the owner asks to reproduce the render host's fallback.
 | `endcard-event` | 102.2–115.02 | title, subtitle, hairline |
 | `endcard-cta` | 105.2–115.02 | CTA and tags over the event card |
 
-The book box is opaque `rgb(4 10 20)`, with a 4px `#60a5fa` left border,
-3px radius, `1.35rem 2rem` card-root padding, line-height 1.7, and max-width
-82%. It is not rotated and hard-cuts; it must hide the printed page beneath it.
-
 ## Iframe Geometry
 
-The player is the delivered 16:9 frame. Inside it, `.wt-player-frame` is the
-clipped 1920:804 picture aperture. Centre a **16:9 iframe** inside that aperture:
-its height is 134.328% of the aperture, so YouTube's own top and bottom
-letterbox bars fall outside the clipped area. That hides the title/share/logo
-chrome without masking or cropping the film itself.
+The player is the delivered 16:9 frame and the render fills it edge to edge:
+`.wt-player-frame` is `inset: 0` and the iframe is 100% × 100%. There is no
+aperture — an earlier recreation embedded a letterboxed 2.39:1 music video and
+clipped YouTube's chrome into a 1920:804 aperture, and that geometry went away
+with that source. Verify a new source's actual frame before reviving it: a 200
+from the dev server is not proof (the SPA fallback answers 200 for missing
+assets), and a container's 16:9 says nothing about baked bars — extract frames
+and look.
 
 Set `pointer-events: none` on the iframe. Playback belongs to the site's media
 widget; allowing pointer hover over the cross-origin iframe asks YouTube to
@@ -201,7 +194,7 @@ for pause or seek. Covering the player while its clock advances makes Play and
 Seek look broken, and replacing a paused frame with poster art hides the video.
 A transient YouTube centre glyph is less destructive than hiding the requested
 frame. This rule applies to the poster, not the authored black gate. The black
-gate still covers the raw upload until the 12.2-second explosion bloom.
+gate still covers the embed until the 12.2-second reveal.
 
 `new YT.Player(div, …)` replaces the host div with the iframe. Target the
 resulting iframe through the wrapper's `:deep(iframe)` rule.
@@ -268,12 +261,12 @@ The progress control must seek continuously during pointer drag. A click-only
 `touch-action: none` on the track so a touch drag seeks instead of scrolling
 the page.
 
-The transport has two clocks. YouTube supplies 0–110.02 seconds so the 1:47
-howl and final music fade play. Pause YouTube at 110.02, then use a wall clock
-for the five-second silent URL hold. The widget must reach `1:55 / 1:55` while
-the visual clock stays at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before
-the URL card's fade. Do not show the poster over the ended phase; it would
-replace the requested last screen.
+The transport clock is YouTube's own for the full 115.02-second runtime: the
+render carries the music, the howl, and the five-second URL hold itself, so
+there is no synthetic silent hold. The widget reaches `1:55 / 1:55` as the
+video ends, and the ended phase freezes the URL card at
+`TRAILER_ENDCARD_HOLD_SECONDS` over YouTube's endscreen. Do not show the poster
+over the ended phase; it would replace the requested last screen.
 
 ## Inline Mark Trap
 
@@ -293,7 +286,8 @@ element can collapse below the available width and wrap unexpectedly.
 | Rationalization | Reality |
 |---|---|
 | "The timing manifest is authoritative, so it is enough." | It has no plate design and no three-picture composition. Read the cards and builder. |
-| "The iframe should match the 1920:804 aperture." | Chrome then paints over the picture. Use a clipped aperture around a centred 16:9 iframe. |
+| "The browser should keep drawing its plates over the new video." | The render has every plate burned in; a browser copy is a double-draw. |
+| "The new video is 16:9, so the old aperture math still applies." | Container aspect says nothing about baked bars. Extract frames and measure. |
 | "A dark scrim makes the words safer." | The owner explicitly removed it. Use the authored glyph halo. |
 | "The helm is just an image; default image CSS is fine." | Preflight makes it block-level and breaks the word. |
 | "The title looks centred." | Measure line count and bounds; visual inspection missed the three-line helm break. |
@@ -301,23 +295,25 @@ element can collapse below the available width and wrap unexpectedly.
 
 ## Red Flags
 
-- The raw Nightwish upload is visible before the 12.2-second explosion bloom.
-- The embed remains visible after 88.2 seconds.
-- Day cards appear over the music video instead of the March wallpaper.
+- YouTube startup chrome is visible before the 12.2-second reveal.
+- A browser-drawn plate appears over the playing render (double-draw).
+- The video is swapped for a different upload without beat-by-beat frame
+  verification against the authored schedule.
 - Plate type uses Michroma.
 - A plate has a full-card translucent background.
 - An empty `book-b` record renders as a collapsed box.
 - The title or *Extinction* wraps only when the helm is present.
-- YouTube chrome occupies the frame's black bars or overlays the picture.
+- YouTube chrome or its endscreen overlays the picture; the ended phase must
+  cover it with the opaque URL card.
 - A second teaser-only transport copies `MediaWidget` markup or styles.
 - Play is available only in the fixed widget and is not obvious on initial load.
 - Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
-- The transport ends at 1:50 instead of advancing through the silent hold to 1:55.
+- The transport parks at 1:50 or ends early instead of reaching 1:55 / 1:55.
 - Ended state shows the poster or a faded/empty end card instead of the URL.
 - Play or Seek advances behind an opaque poster, or Pause replaces the current frame.
 - The progress control jumps on click but does not track mouse or touch drag.
 - The iframe accepts pointer events.
-- The page heading and the authored title card are legible at the same time, or
+- The page heading and the render's title card are legible at the same time, or
   the poster names the film.
 - The heading is hidden with `display`/`v-if`, moving the frame up the page.
 - The event title's B/F is recoloured, or the CTA's b/f is blue.
@@ -327,26 +323,22 @@ element can collapse below the available width and wrap unexpectedly.
 
 - [ ] After Play, the complete player is pixel-black at 0 and 12.19 seconds;
       black opacity is 0.5 halfway through the two-frame reveal and 0 afterward.
-- [ ] Compare the browser against `renders/trailer-1.mp4` at 16, 29, 91, and
-      107 seconds through `window.__wolvesTeaser.seekTo()`.
-- [ ] Exactly one surface spells the film title at 0, 12, 18, 24, and 107
-      seconds, measured from folded opacity and bounds, not by eye.
+- [ ] The browser adds nothing over the render at 13, 30, 95, 104, and 108
+      seconds, driven there with `window.__wolvesTeaser.seekTo()` — no lockup,
+      no backdrop, no day card.
+- [ ] Exactly one surface spells the film title at 0, 12, and 18 seconds,
+      measured from folded opacity and bounds, not by eye.
 - [ ] The heading's box is unchanged across the yield at 1920×1080 and 390×844.
-- [ ] Main title occupies exactly one computed line-height.
-- [ ] Book box centre is 53.6% / 41% for `book-a`; transparent `book-b`
-      produces no `.wt-book` element.
-- [ ] Both day cards report the same vertical centre; only one has a helm, so a
-      mismatch means the inline mark is wrapping.
 - [ ] Player is fully above the fold on desktop and mobile.
 - [ ] No horizontal scroll exists at 1920×1080 or 390×844.
-- [ ] A 16:9 iframe is centred at 134.328% height inside the clipped 1920:804
-      aperture and has `pointer-events: none`.
+- [ ] The iframe fills the 16:9 frame edge to edge and has
+      `pointer-events: none`.
 - [ ] Playback, pause, replay, click seek, keyboard seek, and pointer-drag seek
       work through the external media-widget mode without restoring the poster.
 - [ ] The idle Play and Fullscreen buttons are centered and keyboard accessible;
       fullscreen owns `.wt-stage` and exposes an Exit Fullscreen label.
-- [ ] The 1:47 howl plays before YouTube pauses at 1:50.02; the silent hold
-      advances to `1:55 / 1:55` with a fully opaque `wolves.projectbluefin.io`
-      card and no poster.
-- [ ] `src/tests/wolvesTrailerPlates.test.ts`, lint, typecheck, `test:gate`, and
-      build pass.
+- [ ] The transport reaches `1:55 / 1:55`; the ended phase shows a fully opaque
+      `wolves.projectbluefin.io` card over the night wallpaper, with no YouTube
+      endscreen and no poster.
+- [ ] `src/tests/wolvesTeaserApp.test.ts`, `src/tests/wolvesTrailerPlates.test.ts`,
+      lint, typecheck, `test:gate`, and build pass.

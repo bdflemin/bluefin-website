@@ -2,9 +2,9 @@ import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
+import { getYoutubePlayerState } from '@/composables/useYoutubeIframeApi'
 import {
   TRAILER_DURATION_SECONDS,
-  TRAILER_MUSIC_END_SECONDS,
   TRAILER_PICTURE_END_SECONDS,
   TRAILER_PICTURE_REVEAL_FADE_SECONDS,
   TRAILER_PICTURE_REVEAL_SECONDS,
@@ -13,6 +13,7 @@ import WolvesTeaserApp from '@/WolvesTeaserApp.vue'
 
 const youtube = vi.hoisted(() => {
   let onReady: ((event: { target: FakePlayer }) => void) | undefined
+  let onStateChange: ((event: { data: number }) => void) | undefined
 
   class FakePlayer {
     static latest: FakePlayer | undefined
@@ -24,9 +25,13 @@ const youtube = vi.hoisted(() => {
     playVideo = vi.fn()
     seekTo = vi.fn((seconds: number) => { this.currentTime = seconds })
 
-    constructor(_element: Element, options: { events?: { onReady?: typeof onReady } }) {
+    constructor(
+      _element: Element,
+      options: { events?: { onReady?: typeof onReady, onStateChange?: typeof onStateChange } },
+    ) {
       FakePlayer.latest = this
       onReady = options.events?.onReady
+      onStateChange = options.events?.onStateChange
     }
   }
 
@@ -35,9 +40,11 @@ const youtube = vi.hoisted(() => {
     load: vi.fn<() => Promise<void>>(),
     latest: () => FakePlayer.latest,
     ready: () => FakePlayer.latest && onReady?.({ target: FakePlayer.latest }),
+    stateChange: (data: number) => onStateChange?.({ data }),
     reset: () => {
       FakePlayer.latest = undefined
       onReady = undefined
+      onStateChange = undefined
     },
   }
 })
@@ -67,7 +74,7 @@ afterEach(() => {
 })
 
 describe('wolves teaser bridge', () => {
-  it('covers Nightwish with black until the authored explosion bloom', async () => {
+  it('holds black over the embed until the authored reveal', async () => {
     const wrapper = mount(WolvesTeaserApp, {
       global: {
         stubs: {
@@ -94,7 +101,8 @@ describe('wolves teaser bridge', () => {
     wrapper.unmount()
   })
 
-  it('keeps an opaque black backing over the YouTube picture while the wolf-day wallpaper rises', async () => {
+  it('draws no browser plates over the render, covering the endscreen only after the cut ends', async () => {
+    vi.useFakeTimers()
     const wrapper = mount(WolvesTeaserApp, {
       global: {
         stubs: {
@@ -105,40 +113,28 @@ describe('wolves teaser bridge', () => {
       },
     })
     await flushPromises()
+    youtube.ready()
 
     const harness = (window as typeof window & { __wolvesTeaser: TeaserHarness }).__wolvesTeaser
-    harness.seekTo(TRAILER_PICTURE_END_SECONDS - 0.01)
-    await nextTick()
-    expect(wrapper.find('.wt-backdrop').exists()).toBe(false)
+    await wrapper.get('.wt-convenience-play').trigger('click')
 
-    harness.seekTo(TRAILER_PICTURE_END_SECONDS)
+    // The render carries every plate itself: at no beat — title, book lines,
+    // day cards, or the baked end card — may the browser draw its own copy.
+    for (const t of [TRAILER_PICTURE_REVEAL_SECONDS + 1, 30, TRAILER_PICTURE_END_SECONDS, 95, 104, 108]) {
+      harness.seekTo(t)
+      await nextTick()
+      expect(wrapper.find('.wt-lockup').exists()).toBe(false)
+      expect(wrapper.find('.wt-backdrop').exists()).toBe(false)
+    }
+
+    youtube.latest()!.currentTime = TRAILER_DURATION_SECONDS - 0.02
+    await vi.advanceTimersByTimeAsync(100)
     await nextTick()
 
     const backdrop = wrapper.get<HTMLElement>('.wt-backdrop')
-    const wallpaperGroup = wrapper.get<HTMLElement>('.wt-backdrop-images')
-    const [day, night] = wrapper.findAll<HTMLElement>('.wt-backdrop-img')
     expect(backdrop.element.style.opacity).toBe('')
-    expect(wallpaperGroup.element.style.opacity).toBe('0')
-    expect(day.element.style.opacity).toBe('')
-    expect(night.element.style.opacity).toBe('0')
-
-    harness.seekTo(TRAILER_PICTURE_END_SECONDS + 0.6)
-    await nextTick()
-
-    expect(Number(wallpaperGroup.element.style.opacity)).toBeCloseTo(0.6 / 1.4, 5)
-    expect(night.element.style.opacity).toBe('0')
-
-    harness.seekTo(TRAILER_PICTURE_END_SECONDS + 4.6)
-    await nextTick()
-
-    expect(wallpaperGroup.element.style.opacity).toBe('1')
-    expect(Number(night.element.style.opacity)).toBeCloseTo(0.5, 5)
-
-    harness.seekTo(TRAILER_PICTURE_END_SECONDS + 11.1)
-    await nextTick()
-
-    expect(Number(wallpaperGroup.element.style.opacity)).toBeCloseTo(0.5, 5)
-    expect(night.element.style.opacity).toBe('1')
+    expect(wrapper.findAll<HTMLElement>('.wt-backdrop-img')).toHaveLength(1)
+    expect(wrapper.find('.wt-lockup--poster').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -181,21 +177,35 @@ describe('wolves teaser transport', () => {
     wrapper.unmount()
   })
 
-  it('plays through the howl, then advances a silent five-second URL hold', async () => {
+  it('plays the delivered render to its authored end, then holds the URL card', async () => {
     vi.useFakeTimers()
     const wrapper = shallowMount(WolvesTeaserApp)
     await flushPromises()
     youtube.ready()
     await wrapper.get('.wt-convenience-play').trigger('click')
 
-    youtube.latest()!.currentTime = TRAILER_MUSIC_END_SECONDS
+    // The encode ends a hair short of the authored duration; the clock closes
+    // out the cut without ever pausing the video for a synthetic hold.
+    youtube.latest()!.currentTime = TRAILER_DURATION_SECONDS - 0.02
     await vi.advanceTimersByTimeAsync(100)
-    expect(youtube.latest()!.pauseVideo).toHaveBeenCalled()
+    expect(youtube.latest()!.pauseVideo).not.toHaveBeenCalled()
     expect(wrapper.getComponent(MediaWidget).props('duration')).toBe(TRAILER_DURATION_SECONDS)
-    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBeCloseTo(TRAILER_MUSIC_END_SECONDS, 2)
+    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBe(TRAILER_DURATION_SECONDS)
+    expect(wrapper.getComponent(MediaWidget).props('playing')).toBe(false)
+    wrapper.unmount()
+  })
 
-    await vi.advanceTimersByTimeAsync(5000)
-    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBeCloseTo(TRAILER_DURATION_SECONDS, 2)
+  it('ends the cut when the player reports ENDED', async () => {
+    vi.useFakeTimers()
+    const wrapper = shallowMount(WolvesTeaserApp)
+    await flushPromises()
+    youtube.ready()
+    await wrapper.get('.wt-convenience-play').trigger('click')
+
+    youtube.stateChange(getYoutubePlayerState().ENDED)
+    await nextTick()
+
+    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBe(TRAILER_DURATION_SECONDS)
     expect(wrapper.getComponent(MediaWidget).props('playing')).toBe(false)
     wrapper.unmount()
   })
