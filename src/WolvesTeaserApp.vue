@@ -7,19 +7,13 @@ import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesHelmLine from '@/components/wolves/WolvesHelmLine.vue'
 import WolvesTrailerLine from '@/components/wolves/WolvesTrailerLine.vue'
-import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
+import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import {
   activeTrailerPlates,
   TRAILER_BRIDGE_MONTH,
-  TRAILER_CREDIT_JOIN_SECONDS,
-  TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
   TRAILER_ENDCARD_HOLD_SECONDS,
-  TRAILER_MUSIC_END_SECONDS,
-  TRAILER_TITLE_LABEL,
-  TRAILER_TITLE_LINE,
   TRAILER_VIDEO_ID,
-  trailerBridgeState,
   trailerHeadingOpacity,
   trailerOpeningBlackOpacity,
   trailerPlateOpacity,
@@ -28,7 +22,6 @@ import {
 
 const base = import.meta.env.BASE_URL
 const heroBackground = `${base}img/wallpapers/wolves/people/Always There.webp`
-const dayWallpaper = `${base}img/wallpapers/bluefin-${TRAILER_BRIDGE_MONTH}-day.webp`
 const nightWallpaper = `${base}img/wallpapers/bluefin-${TRAILER_BRIDGE_MONTH}-night.webp`
 
 const stageHost = ref<HTMLElement | null>(null)
@@ -37,13 +30,15 @@ const fullscreenActive = ref(false)
 let player: YoutubePlayer | null = null
 let playerReady = false
 let clockTimer: ReturnType<typeof setInterval> | null = null
-let silentHoldStartedAtMs: number | null = null
 
 type TrailerPhase = 'idle' | 'playing' | 'paused' | 'ended'
 const trailerPhase = ref<TrailerPhase>('idle')
 const now = ref(0)
 
-const visualTime = computed(() => now.value >= TRAILER_MUSIC_END_SECONDS
+// While the cut plays, the render itself carries every plate; the authored
+// records matter again only once it has ended and the URL card freezes over
+// YouTube's endscreen.
+const visualTime = computed(() => trailerPhase.value === 'ended'
   ? TRAILER_ENDCARD_HOLD_SECONDS
   : now.value)
 const openingBlackOpacity = computed(() => trailerOpeningBlackOpacity(visualTime.value))
@@ -60,28 +55,13 @@ function opacityOf(id: string): number {
   return found ? trailerPlateOpacity(found, visualTime.value) : 0
 }
 
-const creditVisible = computed(() => visualTime.value >= TRAILER_CREDIT_JOIN_SECONDS)
-
 // The page heading steps aside before the cut's own main title arrives, so the
 // film's name is only ever on screen once. See trailerHeadingOpacity().
 const headingOpacity = computed(() =>
   trailerHeadingOpacity(visualTime.value, { playing: trailerPhase.value === 'playing' }))
 
-// The cut leaves the music video at 88.2 s and never returns to it: the day
-// cards and the end card play over the March Bluefin wallpaper at full frame.
+// Exposed for the dev harness; the render carries the segments itself.
 const segment = computed(() => trailerSegmentAt(visualTime.value))
-const bridge = computed(() => trailerBridgeState(visualTime.value))
-
-// Both book plates are boxes on the same page; each carries its own anchor,
-// which the delivered cut walks with the camera.
-const bookPlates = computed(() => visiblePlates.value.filter(p => p.kind === 'bookline'))
-const dayCards = computed(() => visiblePlates.value.filter(p => p.kind === 'daycard'))
-
-/** Seat a plate by its anchor in the 1920x1080 authoring frame. */
-function anchorStyle(anchored: TrailerPlate) {
-  const [x, y] = anchored.anchor ?? [960, 540]
-  return { left: `${(x / 1920) * 100}%`, top: `${(y / 1080) * 100}%` }
-}
 
 function syncFullscreen() {
   fullscreenActive.value = document.fullscreenElement === stageHost.value
@@ -108,25 +88,13 @@ function stopClock() {
   }
 }
 
-function startSilentHold(from = now.value) {
-  player?.pauseVideo?.()
-  now.value = Math.min(Math.max(from, TRAILER_MUSIC_END_SECONDS), TRAILER_DURATION_SECONDS)
-  silentHoldStartedAtMs = Date.now() - (now.value - TRAILER_MUSIC_END_SECONDS) * 1000
+function endTrailer() {
+  now.value = TRAILER_DURATION_SECONDS
+  trailerPhase.value = 'ended'
+  stopClock()
 }
 
 function tick() {
-  if (silentHoldStartedAtMs !== null) {
-    now.value = Math.min(
-      TRAILER_MUSIC_END_SECONDS + (Date.now() - silentHoldStartedAtMs) / 1000,
-      TRAILER_DURATION_SECONDS,
-    )
-    if (now.value >= TRAILER_DURATION_SECONDS) {
-      silentHoldStartedAtMs = null
-      trailerPhase.value = 'ended'
-      stopClock()
-    }
-    return
-  }
   if (!playerReady) {
     return
   }
@@ -134,8 +102,11 @@ function tick() {
   if (typeof t !== 'number') {
     return
   }
-  if (t >= TRAILER_MUSIC_END_SECONDS) {
-    startSilentHold(TRAILER_MUSIC_END_SECONDS)
+  // The encode runs 114.998 s against an authored 115.02 s, so getCurrentTime
+  // caps just short of the duration and the ENDED event may never fire. The
+  // clock closes out the cut with a small tolerance.
+  if (t >= TRAILER_DURATION_SECONDS - 0.05) {
+    endTrailer()
     return
   }
   now.value = t
@@ -148,10 +119,7 @@ function startClock() {
 
 function playTrailer() {
   trailerPhase.value = 'playing'
-  if (now.value >= TRAILER_MUSIC_END_SECONDS) {
-    startSilentHold(now.value)
-  }
-  else if (playerReady) {
+  if (playerReady) {
     player?.playVideo?.()
   }
   startClock()
@@ -159,11 +127,7 @@ function playTrailer() {
 
 function toggleTrailer() {
   if (trailerPhase.value === 'playing') {
-    if (silentHoldStartedAtMs !== null) {
-      tick()
-      silentHoldStartedAtMs = null
-    }
-    else if (playerReady) {
+    if (playerReady) {
       player?.pauseVideo?.()
     }
     trailerPhase.value = 'paused'
@@ -183,24 +147,13 @@ function seekTrailer(ratio: number) {
   if (trailerPhase.value === 'idle' || trailerPhase.value === 'ended') {
     trailerPhase.value = 'paused'
   }
-  if (target >= TRAILER_MUSIC_END_SECONDS) {
-    player?.seekTo?.(TRAILER_MUSIC_END_SECONDS, true)
-    player?.pauseVideo?.()
-    silentHoldStartedAtMs = trailerPhase.value === 'playing'
-      ? Date.now() - (target - TRAILER_MUSIC_END_SECONDS) * 1000
-      : null
-  }
-  else {
-    silentHoldStartedAtMs = null
-    if (playerReady) {
-      player?.seekTo?.(target, true)
-    }
+  if (playerReady) {
+    player?.seekTo?.(target, true)
   }
 }
 
 function replayTrailer() {
   now.value = 0
-  silentHoldStartedAtMs = null
   trailerPhase.value = 'playing'
   if (playerReady) {
     player?.seekTo?.(0, true)
@@ -234,13 +187,15 @@ onMounted(async () => {
           }
           playerReady = true
           if (now.value > 0) {
-            target.seekTo?.(Math.min(now.value, TRAILER_MUSIC_END_SECONDS), true)
+            target.seekTo?.(now.value, true)
           }
-          if (trailerPhase.value === 'playing' && now.value >= TRAILER_MUSIC_END_SECONDS) {
-            startSilentHold(now.value)
-          }
-          else if (trailerPhase.value === 'playing') {
+          if (trailerPhase.value === 'playing') {
             target.playVideo?.()
+          }
+        },
+        onStateChange: ({ data }: { data: number }) => {
+          if (data === getYoutubePlayerState().ENDED && trailerPhase.value === 'playing') {
+            endTrailer()
           }
         },
       },
@@ -268,7 +223,6 @@ onBeforeUnmount(() => {
   player?.destroy?.()
   player = null
   playerReady = false
-  silentHoldStartedAtMs = null
 })
 </script>
 
@@ -282,15 +236,14 @@ onBeforeUnmount(() => {
         Seven Days to the Wolves
       </h1>
       <div class="wt-player wc-plate" data-wolves-trailer>
-        <!-- The delivered frame is 16:9 with the 2.39:1 picture letterboxed
-             inside it, so the embed is given a 16:9 box and YouTube pillars
-             the source itself. Every card coordinate then maps 1:1. -->
+        <!-- The delivered render is full-frame 16:9 with every plate burned
+             in, so the embed simply fills the frame. -->
         <div class="wt-player-frame">
           <div ref="playerHost" class="wt-player-host" />
         </div>
 
-        <!-- The raw Nightwish upload is not the authored opening. The delivered
-             cut holds black until the explosion blooms at 12.2 seconds. -->
+        <!-- The delivered cut holds black until 12.2 seconds; this mask keeps
+             YouTube's startup chrome out of the frame until the reveal. -->
         <div
           v-if="openingBlackOpacity > 0"
           class="wt-opening-black"
@@ -298,25 +251,15 @@ onBeforeUnmount(() => {
           aria-hidden="true"
         />
 
-        <!-- Segments two and three: the March wallpaper, day falling into
-             night, covering the picture for the last 21.8 s. -->
+        <!-- Once the cut has ended, cover YouTube's endscreen with the
+             authored final frame: the March night wallpaper under the URL
+             card. -->
         <div
-          v-if="segment !== 'picture'"
+          v-if="trailerPhase === 'ended'"
           class="wt-backdrop"
           aria-hidden="true"
         >
-          <div
-            class="wt-backdrop-images"
-            :style="{ opacity: segment === 'bridge' ? bridge.opacity : 1 }"
-          >
-            <img class="wt-backdrop-img" :src="dayWallpaper" alt="">
-            <img
-              class="wt-backdrop-img"
-              :src="nightWallpaper"
-              alt=""
-              :style="{ opacity: segment === 'bridge' ? bridge.nightMix : 1 }"
-            >
-          </div>
+          <img class="wt-backdrop-img" :src="nightWallpaper" alt="">
         </div>
 
         <div v-if="trailerPhase === 'idle'" class="wt-poster">
@@ -334,56 +277,10 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="wt-overlays" aria-hidden="true">
-          <!-- THE MAIN TITLE. One lockup across both authored beats: the
-               credit row always occupies its space, so the title cannot jump
-               when the credits arrive. -->
-          <div
-            v-if="plate('maintitle')"
-            class="wt-lockup"
-            :style="{ opacity: opacityOf('maintitle') }"
-          >
-            <span class="wt-eyebrow">
-              <WolvesTrailerLine :text="TRAILER_TITLE_LABEL" />
-            </span>
-            <span class="wt-title">
-              <WolvesTrailerLine :text="TRAILER_TITLE_LINE" mark-word="wolves" />
-            </span>
-            <div class="wt-rule" />
-            <div class="wt-credits" :class="{ 'is-shown': creditVisible }">
-              <WolvesTrailerLine :text="TRAILER_CREDIT_LINE" />
-            </div>
-          </div>
-
-          <!-- THE BOOK BOX. Opaque, never dissolved, and seated by its anchor
-               so it covers the book's printed words. -->
-          <div
-            v-for="book in bookPlates"
-            :key="book.id"
-            class="wt-book"
-            :style="anchorStyle(book)"
-          >
-            <p v-for="line in book.lines ?? []" :key="line" class="wt-book-line">
-              {{ line }}
-            </p>
-          </div>
-
-          <!-- THE DAY CARDS, on the wallpaper, low in the frame so the type
-               sits in the shadowed meadow rather than the bright horizon. -->
-          <div
-            v-for="card in dayCards"
-            :key="card.id"
-            class="wt-daycard"
-            :style="{ opacity: trailerPlateOpacity(card, visualTime) }"
-          >
-            <p class="wt-daycard-line">
-              <WolvesTrailerLine :text="card.title ?? ''" mark-word="Extinction" />
-            </p>
-          </div>
-
-          <!-- THE END CARD. One poster: the event rows arrive first and the
-               call to action joins them, seated where the full poster puts
-               it rather than jumping upward. -->
-          <div v-if="segment === 'endcard'" class="wt-lockup wt-lockup--poster">
+          <!-- THE END CARD. Drawn by the browser only after the cut has
+               ended, so YouTube's endscreen never replaces the authored URL
+               card. While the render plays it carries every plate itself. -->
+          <div v-if="trailerPhase === 'ended'" class="wt-lockup wt-lockup--poster">
             <template v-if="plate('endcard-event')">
               <span class="wt-poster-event" :style="{ opacity: opacityOf('endcard-event') }">
                 <!-- KubeCon and CloudNativeCon are Linux Foundation marks and
@@ -497,8 +394,7 @@ onBeforeUnmount(() => {
 .wt-player {
   position: relative;
 
-  // The delivered frame. The picture inside it is 2.39:1 and letterboxes
-  // itself, exactly as the render does.
+  // The delivered frame; the render fills it edge to edge.
   aspect-ratio: 16 / 9;
 
   // Height-capped so title, frame, and standfirst all clear the fold.
@@ -512,28 +408,19 @@ onBeforeUnmount(() => {
   container-type: inline-size;
 }
 
-/* The wrapper is the 2.39:1 PICTURE aperture. The iframe inside it is 16:9:
-   YouTube puts its title/share/logo chrome into that iframe's letterbox bars,
-   which fall outside this clipped aperture. Pointer events stay on our widget,
-   so hover can never ask YouTube to paint the chrome again. */
+/* The wrapper holds the embed. Pointer events stay on our widget, so hover
+   can never ask YouTube to paint its chrome. */
 .wt-player-frame {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
+  inset: 0;
   overflow: hidden;
-  transform: translateY(-50%);
-  aspect-ratio: 1920 / 804;
 
-  // YT.Player replaces the host div with the iframe in place. A 16:9 iframe is
-  // 134.328% as tall as this 1920:804 aperture; centring clips both bars.
+  // YT.Player replaces the host div with the iframe in place.
   :deep(iframe) {
     position: absolute;
-    top: 50%;
-    left: 0;
+    inset: 0;
     width: 100%;
-    height: 134.328%;
-    transform: translateY(-50%);
+    height: 100%;
     pointer-events: none;
   }
 }
@@ -546,13 +433,9 @@ onBeforeUnmount(() => {
   background: #000;
 }
 
-.wt-backdrop-images,
 .wt-backdrop-img {
   position: absolute;
   inset: 0;
-}
-
-.wt-backdrop-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -643,7 +526,10 @@ onBeforeUnmount(() => {
 }
 
 /* ---------------------------------------------------------------------------
-   THE LOCKUP.
+   THE END CARD POSTER.
+
+   The background does the darkening: the transparent card sits over the March
+   night wallpaper. There is no local panel under this text.
 
    Copied back from the card that copied it from this site: destiny-vids'
    cards/maintitle.html took .wolves-intro-overlay-text-slim and the
@@ -679,31 +565,6 @@ onBeforeUnmount(() => {
     0 0 60px rgb(0 0 0 / 55%);
 }
 
-.wt-eyebrow {
-  width: 100%;
-  font-size: 2.1667cqw;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: #cbd5e1;
-  text-transform: uppercase;
-  margin-bottom: 1.1667cqw;
-}
-
-/* The title is one authored line and must stay one: an inline image is a break
-   opportunity, so without this the helm throws "LVES" onto its own line. The
-   width is stated rather than left to fit-content, which collapses a flex item
-   containing a replaced element to less than the room available. */
-.wt-title {
-  width: 100%;
-  white-space: nowrap;
-  font-size: 4.0833cqw;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  line-height: 1.1;
-  color: #fff;
-  text-transform: uppercase;
-}
-
 .wt-rule {
   width: 34%;
   height: 1px;
@@ -711,96 +572,6 @@ onBeforeUnmount(() => {
   background: rgb(96 165 250 / 28%);
 }
 
-/* The credit slot always occupies its space, so the staged pair cannot shift
-   the title when the credits arrive. Visibility, never display. */
-.wt-credits {
-  width: 100%;
-  margin-top: 1.5cqw;
-  font-family: var(--wc-font-mono);
-  font-size: 1.25cqw;
-  letter-spacing: 0.24em;
-  color: #cbd5e1;
-  visibility: hidden;
-}
-
-.wt-credits.is-shown {
-  visibility: visible;
-}
-
-/* ---------------------------------------------------------------------------
-   THE BOOK BOX.
-
-   A card, not a fake piece of printed book type: quiet charcoal, one Bluefin
-   edge, and the existing type. Opaque and hard-cut — the book's printed lyric
-   stayed legible through a translucent panel, which is a second set of words
-   behind ours (destiny-vids #276, #277).
---------------------------------------------------------------------------- */
-.wt-book {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: max-content;
-  max-width: 82cqw;
-  padding: 1.125cqw 1.6667cqw;
-  background: rgb(4 10 20);
-  border-left: 0.2083cqw solid #60a5fa;
-  border-radius: 3px;
-  box-shadow:
-    0 0 4px rgb(0 0 0 / 92%),
-    0 0 24px rgb(0 0 0 / 72%);
-}
-
-.wt-book-line {
-  margin: 0;
-  font-family: var(--wc-font-display);
-  font-size: 3.1667cqw;
-  font-weight: 600;
-  line-height: 1.7;
-  letter-spacing: 0.05em;
-  color: #f4f6f8;
-  text-align: center;
-  text-shadow:
-    0 0 4px rgb(0 0 0 / 95%),
-    0 2px 10px rgb(0 0 0 / 90%),
-    0 0 28px rgb(0 0 0 / 75%),
-    0 0 60px rgb(0 0 0 / 55%);
-}
-
-/* ---------------------------------------------------------------------------
-   THE DAY CARDS.
-
-   `top: 58%` is measured, not nudged: it lands the type in the shadowed flower
-   meadow rather than across March's bright dawn horizon, and no lower, because
-   66% put the line across the foreground wolf's head.
---------------------------------------------------------------------------- */
-.wt-daycard {
-  position: absolute;
-  left: 10%;
-  top: 58%;
-  width: 80%;
-  color: #f4f6f8;
-  text-align: center;
-  font-family: var(--wc-font-display);
-  text-shadow:
-    0 0 4px rgb(0 0 0 / 95%),
-    0 2px 10px rgb(0 0 0 / 90%),
-    0 0 28px rgb(0 0 0 / 75%);
-}
-
-.wt-daycard-line {
-  margin: 0.4583cqw 0;
-  color: #fff;
-  font-size: 4.3333cqw;
-  font-weight: 900;
-  letter-spacing: 0.045em;
-  line-height: 1.05;
-}
-
-/* ---------------------------------------------------------------------------
-   THE END CARD POSTER.
-
-   The background does the darkening: the transparent card sits over the March
-   night wallpaper. There is no local panel under this text.
---------------------------------------------------------------------------- */
 .wt-lockup--poster {
   width: 92%;
 }

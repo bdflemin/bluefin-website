@@ -1,34 +1,38 @@
 /**
- * Trailer 1 — the teaser's recreation of the owner's cut.
+ * Trailer 1 — the owner's delivered cut, played directly.
  *
- * PROVENANCE: this is a web recreation of the owner's cut "Trailer 1.1"
+ * PROVENANCE: the teaser embeds the owner's own render of "Trailer 1.1"
  * (delivered 2026-08-18), whose authoritative record is the destiny-vids repo
  * at `stories/trailer-1-plates.json`, with the plate DESIGN authored in
  * `cards/maintitle.html`, `cards/bookline.html` and `cards/daycard.html` and
- * the composition in `scripts/build_trailer1.py`. Every string below is
- * owner-authored copy reproduced VERBATIM — do not reword, re-case, or "fix"
- * any of it here; change the source manifest and re-port instead.
+ * the composition in `scripts/build_trailer1.py`. The teaser used to recreate
+ * this cut in the browser over a third-party music-video upload; it now plays
+ * the delivered render, which has every plate, the bridge, and the end card
+ * burned in. The records below remain the authored description of the cut —
+ * they drive the heading yield, the opening black mask, and the URL card that
+ * covers YouTube's endscreen — and every string is owner-authored copy
+ * reproduced VERBATIM: do not reword, re-case, or "fix" any of it here;
+ * change the source manifest and re-port instead.
  *
- * THE CUT IS THREE SEGMENTS, NOT ONE VIDEO WITH OVERLAYS. This is the thing
- * the first recreation got wrong: it played the music video for the full
- * 1:50 and drew every plate on top of it. The delivered trailer leaves the
- * music video at 88.2 s and never returns to it.
+ * THE CUT IS THREE SEGMENTS, NOT ONE VIDEO WITH OVERLAYS. The delivered
+ * trailer leaves the picture at 88.2 s and never returns to it.
  *
- *   0      -> 88.2    the music video, letterboxed 2.39:1 into a 16:9 frame
- *   88.2   -> 102.2   the March Bluefin wallpaper, day falling into night
- *   102.2  -> 115.02  the March Bluefin night wallpaper, as a poster end card
+ *   0      -> 88.2    the picture
+ *   88.2   -> 102.2   day falling into night
+ *   102.2  -> 115.02  the night scene as a poster end card
  *
- * So both day cards and the whole end card sit on the wallpaper at FULL
- * frame, with no letterbox — which is also why they carry no scrim: the
- * owner had it removed ("remove the black translucent box around the words")
- * and the contrast is carried by a halo on the glyphs instead.
+ * Both day cards and the whole end card sit on the scene at FULL frame, with
+ * no letterbox — which is also why they carry no scrim: the owner had it
+ * removed ("remove the black translucent box around the words") and the
+ * contrast is carried by a halo on the glyphs instead.
  */
 
 /**
- * The picture the teaser embeds. NOT the destiny-vids ingest, and deliberately
+ * The picture the teaser embeds: the owner's delivered 4K60 render of the
+ * cut, "Wolves Trailer Final". NOT the destiny-vids ingest, and deliberately
  * left as it was found — the video is the owner's call, not this file's.
  */
-export const TRAILER_VIDEO_ID = 'O0lyFqLr3Cc'
+export const TRAILER_VIDEO_ID = 'iHXBTH_fwB0'
 
 /** The source music stops after the howl and its approved fade. */
 export const TRAILER_MUSIC_END_SECONDS = 110.02
