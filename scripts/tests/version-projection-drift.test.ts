@@ -71,5 +71,4 @@ describe('version projection and consumer drift gate', () => {
       ).toBe(true)
     }
   })
-
 })
