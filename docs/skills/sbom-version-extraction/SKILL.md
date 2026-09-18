@@ -141,8 +141,9 @@ compatibility. Do not normalise or strip raw values in the shared extractor.
 
 ### `checkedAt` in stream-versions.yml
 
-`stream-versions.yml` must include a top-level `checkedAt` ISO timestamp.
-`ImageChooser.vue` declares `checkedAt?: string` in `StreamVersions`.
+`stream-versions.yml` must include a top-level `checkedAt` ISO timestamp even
+though the main site no longer renders Bluefin stream cards. The unified updater
+still projects and promotes Bluefin and Dakota outputs atomically.
 
 ## Fixture structure
 
@@ -232,12 +233,12 @@ Task 4 adds a registry-wide orchestrator on top of the extractor.
   whether the record is awaiting initial SBOM publication.
 
 **Status vocabulary is audit-only.** `public/stream-versions.yml` and
-`public/dakota-versions.json` still use `verified` / `unavailable`, because
-`ImageChooser.vue` and `DakotaVersionCard.vue` gate rendering on
-`status === 'verified'`. Degradation is expressed by the *absence* of the
-unresolved field, plus the audit record and its issue. Do not emit `degraded`
-into a public file without changing those components first — that is a design
-change, not a content change.
+`public/dakota-versions.json` still use `verified` / `unavailable`.
+`DakotaVersionCard.vue` and the Dakota card in `SectionPicker.vue` render package
+rows only when Dakota's public projection is `verified`. Degradation is
+expressed by the *absence* of unresolved fields, plus the audit record and its
+issue. Do not emit `degraded` into a public file without changing those
+components first — that is a design change, not a content change.
 
 **`productStatus` logic:**
 - All verified → `ok`

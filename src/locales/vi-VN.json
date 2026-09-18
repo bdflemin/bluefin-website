@@ -33,15 +33,7 @@
     "Title": "Giới thiệu về Bluefin Linux"
   },
   "TryBluefin": {
-    "Title": "Dùng thử Bluefin",
-    "Gpu": {
-      "Question": "GPU chính của bạn là hãng nào? ",
-      "DefaultSelection": "Hãy chọn hãng GPU chính của bạn"
-    },
-    "Download": {
-      "Registry": "Xem chi tiết bản cài đặt trên GitHub Container Registry",
-      "Checksum": "Kiểm tra (SHA256)"
-    }
+    "Title": "Dùng thử Bluefin"
   },
   "Flock": {
     "Title": "Đội Ngũ Của Chúng Tôi",

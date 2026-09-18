@@ -46,16 +46,14 @@ describe('sectionPicker.vue', () => {
     vi.unstubAllGlobals()
   })
 
-  it('renders the Wolves contributor section with cards in order', async () => {
+  it('renders the three download cards with their release statuses', async () => {
     const wrapper = mountPicker()
     await vi.waitFor(() => {
       expect(wrapper.findAll('.wolves-download-grid .card-box')).toHaveLength(3)
     })
 
-    expect(wrapper.get('#wolves-downloads-title').text()).toBe('For the Wolves')
-    expect(wrapper.get('.wolves-download-header p').text()).toContain(
-      'No compromises.'
-    )
+    expect(wrapper.text()).not.toContain('For the Wolves')
+    expect(wrapper.find('.release-grid').exists()).toBe(false)
 
     const cards = wrapper.findAll('.wolves-download-grid .card-box')
     expect(cards.map(card => card.get('.card-title').text())).toEqual([
@@ -66,13 +64,26 @@ describe('sectionPicker.vue', () => {
     expect(cards.map(card => card.attributes('href'))).toEqual([
       '/dakota/',
       '/server/',
-      'https://devconf.us'
+      'https://github.com/projectbluefin/utah'
     ])
     expect(cards.map(card => card.get('.card-image').attributes('style'))).toEqual([
       expect.stringContaining('characters/dakota.webp'),
       expect.stringContaining('characters/alamosaurus.webp'),
       expect.stringContaining('characters/utah.webp')
     ])
+    expect(cards.map(card => card.get('.alpha-badge-title').text())).toEqual([
+      '⚠️ Alpha.',
+      '⚠️ Alpha.',
+      'Coming Soon'
+    ])
+
+    const legacyDownloads = wrapper.get('.legacy-download-note')
+    expect(legacyDownloads.text()).toBe(
+      'The older Fedora based versions are still available for download but are not recommended for new users.'
+    )
+    expect(legacyDownloads.get('a').attributes('href')).toBe(
+      'https://docs.projectbluefin.io/downloads/'
+    )
   })
 
   it('reuses the raptor card version rows and labels for Dakota', async () => {

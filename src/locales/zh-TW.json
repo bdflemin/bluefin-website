@@ -33,20 +33,7 @@
     "Title": "Bluefin 簡介"
   },
   "TryBluefin": {
-    "Title": "試用 Bluefin",
-    "Architecture": {
-      "Question": "請選擇系統架構（不支援舊 BIOS）",
-      "x86": "x86_64（大多數標準）",
-      "arm": "ARM64"
-    },
-    "Gpu": {
-      "Question": "請選擇顯卡（GPU）廠商（不支援舊 Nvidia 卡）",
-      "DefaultSelection": "選擇主要 GPU 廠商"
-    },
-    "Download": {
-      "Registry": "於 GitHub Container Registry 查看細節",
-      "Checksum": "核對（SHA256）"
-    }
+    "Title": "試用 Bluefin"
   },
   "Flock": {
     "Title": "我們的羣眾",

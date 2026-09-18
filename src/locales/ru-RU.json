@@ -33,15 +33,7 @@
     "Title": "Bluefin Linux презентация"
   },
   "TryBluefin": {
-    "Title": "Попробовать Bluefin",
-    "Gpu": {
-      "Question": "Какой производитель у вашего GPU? ",
-      "DefaultSelection": "Выбрать производителя GPU"
-    },
-    "Download": {
-      "Registry": "Посмотреть детали на GitHub",
-      "Checksum": "Верификация (SHA256)"
-    }
+    "Title": "Попробовать Bluefin"
   },
   "Flock": {
     "Title": "Наша команда",

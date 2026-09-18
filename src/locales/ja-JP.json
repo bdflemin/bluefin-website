@@ -33,15 +33,7 @@
     "Title": "Bluefin Linux 紹介"
   },
   "TryBluefin": {
-    "Title": "Bluefin を試す",
-    "Gpu": {
-      "Question": "主要 GPU のベンダーは誰ですか？",
-      "DefaultSelection": "主要 GPU ベンダーを選択"
-    },
-    "Download": {
-      "Registry": "GitHub Container Registry で詳細を表示",
-      "Checksum": "検証 (SHA256)"
-    }
+    "Title": "Bluefin を試す"
   },
   "Flock": {
     "Title": "私たちの群れ",

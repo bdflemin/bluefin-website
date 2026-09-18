@@ -40,10 +40,9 @@ Two moves keep that safe and meaningful:
 
 ### Components that fetch in `onMounted`
 
-For a component that calls global `fetch` directly (e.g. `RssFeed`,
-`ServerVersion`, `ImageChooser`), `vi.stubGlobal('fetch', ...)` plus
-`flushPromises()` covers the success, rejection, and non-ok paths. Two extra
-moves pin the states in between:
+For a component that calls global `fetch` directly (e.g. `RssFeed` or
+`ServerVersion`), `vi.stubGlobal('fetch', ...)` plus `flushPromises()` covers the
+success, rejection, and non-ok paths. Two extra moves pin the states in between:
 
 - A never-resolving promise (`vi.fn(() => new Promise(() => {}))`) asserts the
   loading state without racing the fetch.

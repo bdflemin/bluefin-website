@@ -33,15 +33,7 @@
     "Title": "Úvod do Bluefin Linux"
   },
   "TryBluefin": {
-    "Title": "Vyskúšať Bluefin",
-    "Gpu": {
-      "Question": "Kto je výrobcom tvojej hlavnej grafickej karty? ",
-      "DefaultSelection": "Zvol výrobcu grafickej karty"
-    },
-    "Download": {
-      "Registry": "Zobraziť podrobnosti na GitHub Container Registry",
-      "Checksum": "Overiť (SHA256)"
-    }
+    "Title": "Vyskúšať Bluefin"
   },
   "Flock": {
     "Title": "Náš tím",
