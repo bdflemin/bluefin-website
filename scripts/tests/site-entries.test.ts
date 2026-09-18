@@ -23,7 +23,6 @@ describe('siteEntries', () => {
 
     expect(Object.keys(input)).toEqual([
       'main',
-      'testing',
       'dakota',
       'server',
       'wolves',
@@ -46,7 +45,5 @@ describe('siteEntries', () => {
     // Root index.html must not be in directoryEntryPaths
     expect(dirPaths.has('')).toBe(false)
     expect(dirPaths.has('/')).toBe(false)
-    // Non-directory entry like testing.html must not be in directoryEntryPaths
-    expect(dirPaths.has('/public/testing')).toBe(false)
   })
 })
