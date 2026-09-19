@@ -260,14 +260,40 @@ describe('update-content.yml restores the previous live data', () => {
     // The committed catalogue is version-controlled and only a local yt-dlp
     // ingest can rebuild, so CI can never hold a fresher one than HEAD. The
     // cache restore above can therefore only make it staler, and a stale
-    // catalogue fails this run hard. The next runnable step must restore the
-    // committed catalogue over the cache before any refresh runs.
-    const reconcile = steps.slice(restoreIndex + 1).find(
+    // catalogue fails this run hard. The restore must land *before* the
+    // refresh step reads it: move the checkout below 'Refresh back catalogue
+    // metadata' and refreshMetadata would read the stale cached catalogue and
+    // re-report the album as missing, so this is an ordering assertion, not
+    // just presence.
+    const verifyIndex = steps.findIndex(
+      s => s.run?.includes('node scripts/update-back-catalogue.js --metadata-only'),
+    )
+    expect(restoreIndex, 'reconcile must come after the cache restore').toBeLessThan(verifyIndex)
+    const reconcileIndex = steps.findIndex(
       s => s.run?.includes('git checkout HEAD -- public/experiences/catalogue.json'),
     )
-    expect(
-      reconcile,
-      'a step must restore the committed catalogue.json over the cache restore',
-    ).toBeDefined()
+    expect(reconcileIndex, 'a step must restore the committed catalogue.json').toBeGreaterThanOrEqual(0)
+    expect(reconcileIndex, 'the catalogue restore must run before the refresh').toBeLessThan(verifyIndex)
+  })
+})
+
+// deploy.yml restores the same live-data cache (path includes public/experiences)
+// over the committed catalogue.json when it pushes to main, so without the same
+// reconcile it ships a site missing an album that was already ingested and
+// committed, until the next daily run saves a fresh cache.
+describe('deploy.yml restores the committed catalogue over cache', () => {
+  const DEPLOY_WORKFLOW_PATH = resolve(process.cwd(), '.github/workflows/deploy.yml')
+  const loadDeploy = () => load(readFileSync(DEPLOY_WORKFLOW_PATH, 'utf8')) as Workflow
+  const workflow = loadDeploy()
+
+  it('restores the committed catalogue.json over the cache restore', () => {
+    const steps = getAllSteps(workflow)
+    const restoreIndex = steps.findIndex(s => s.uses?.includes('actions/cache/restore'))
+    expect(restoreIndex, 'no cache restore step in deploy.yml').toBeGreaterThanOrEqual(0)
+    const reconcileIndex = steps.findIndex(
+      s => s.run?.includes('git checkout HEAD -- public/experiences/catalogue.json'),
+    )
+    expect(reconcileIndex, 'a step must restore the committed catalogue.json').toBeGreaterThanOrEqual(0)
+    expect(reconcileIndex, 'the catalogue restore must run after the cache restore').toBeGreaterThan(restoreIndex)
   })
 })
