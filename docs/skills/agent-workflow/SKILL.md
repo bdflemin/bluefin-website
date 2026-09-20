@@ -81,6 +81,18 @@ does not replace `validation`, `design-gate`, or the Wolves skills.
    manifest loading, open it in Chromium and assert there are no page errors
    or failed module requests; a successful Vite build is not sufficient.
 
+
+   **Merge queues and branch protection.** When a repository ruleset configures
+   a merge queue (`merge_queue` rule), `gh pr merge --merge` or `--squash` will
+   reject direct merge commits with `! The merge strategy for main is set by the
+   merge queue`. Use `gh pr merge --auto` to enqueue the PR, then verify the
+   queue entry and confirm the merge commit via the pulls API (`merged: true`)
+   after the queue drains.
+   Additionally, if rulesets enforce `require_extra_approval_for_unattributed_changes`,
+   commits lacking recognized git author/committer identities or factory attribution
+   trailers require additional approvals before becoming mergeable. Pushing new
+   commits to an approved PR with `dismiss_stale_reviews_on_push: true` drops
+   prior approvals back to `REVIEW_REQUIRED`.
 9. **Close the git session.** A squash merge does not make the feature branch
    an ancestor of `main`, so `git branch --merged` cannot identify completed
    PR branches reliably. After a merge, move any preserved edits to a fresh
