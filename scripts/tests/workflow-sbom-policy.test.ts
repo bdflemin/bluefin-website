@@ -302,5 +302,11 @@ describe('deploy.yml restores the committed catalogue over cache', () => {
     )
     expect(reconcileIndex, 'a step must restore the committed catalogue.json').toBeGreaterThanOrEqual(0)
     expect(reconcileIndex, 'the catalogue restore must run after the cache restore').toBeGreaterThan(restoreIndex)
+    // The step only does anything if it lands before the build reads
+    // catalogue.json. Moved below 'Build' it is inert while every other
+    // assertion here stays green, so bound it on both sides.
+    const buildIndex = steps.findIndex(s => s.run?.includes('npm run build'))
+    expect(buildIndex, 'no build step in deploy.yml').toBeGreaterThanOrEqual(0)
+    expect(reconcileIndex, 'the catalogue restore must run before the build').toBeLessThan(buildIndex)
   })
 })
