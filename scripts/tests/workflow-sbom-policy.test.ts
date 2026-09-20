@@ -257,22 +257,29 @@ describe('update-content.yml restores the previous live data', () => {
     const steps = getAllSteps(workflow)
     const restoreIndex = steps.findIndex(s => s.uses?.includes('actions/cache/restore'))
     expect(restoreIndex, 'no cache restore step').toBeGreaterThanOrEqual(0)
-    // The committed catalogue is version-controlled and only a local yt-dlp
-    // ingest can rebuild, so CI can never hold a fresher one than HEAD. The
-    // cache restore above can therefore only make it staler, and a stale
-    // catalogue fails this run hard. The restore must land *before* the
-    // refresh step reads it: move the checkout below 'Refresh back catalogue
-    // metadata' and refreshMetadata would read the stale cached catalogue and
-    // re-report the album as missing, so this is an ordering assertion, not
-    // just presence.
+    // Only a local yt-dlp ingest can rebuild the catalogue's *track segments*,
+    // so for those fields CI can never hold anything fresher than HEAD and the
+    // cache restore can only make them staler — and a stale catalogue fails
+    // this run hard. (Prose is the opposite: refreshMetadata rewrites album
+    // title/subtitle from upstream further down, which is why that step must
+    // run after this reconcile and why the saved cache ends up fresher than
+    // HEAD in those fields.)
+    //
+    // Three orderings all matter, so all three are asserted:
+    //   cache restore  ->  reconcile  ->  refresh
+    // Drop any one and the deadlock this PR fixes comes back.
     const verifyIndex = steps.findIndex(
       s => s.run?.includes('node scripts/update-back-catalogue.js --metadata-only'),
     )
-    expect(restoreIndex, 'reconcile must come after the cache restore').toBeLessThan(verifyIndex)
+    expect(restoreIndex, 'the cache restore must come before the refresh').toBeLessThan(verifyIndex)
     const reconcileIndex = steps.findIndex(
       s => s.run?.includes('git checkout HEAD -- public/experiences/catalogue.json'),
     )
     expect(reconcileIndex, 'a step must restore the committed catalogue.json').toBeGreaterThanOrEqual(0)
+    // Without this the checkout could sit above the cache restore, letting the
+    // cache clobber the committed catalogue again with every other assertion
+    // here still green.
+    expect(reconcileIndex, 'the reconcile must come after the cache restore').toBeGreaterThan(restoreIndex)
     expect(reconcileIndex, 'the catalogue restore must run before the refresh').toBeLessThan(verifyIndex)
   })
 })
