@@ -70,23 +70,25 @@ does not replace `validation`, `design-gate`, or the Wolves skills.
    PR readiness is proved by CI/preview for the feature-branch SHA. Production
    verification happens only after the queue has merged the PR.
 
-8. **Merge through the queue, never directly.** `main` is governed by a merge
-   queue (`merge_queue` rule), so `gh pr merge --merge` and `--squash` are both
-   rejected: `! The merge strategy for main is set by the merge queue`. Use
-   `gh pr merge --auto` to enqueue the PR, then verify the queue entry and
-   confirm the merge via the pulls API (`merged: true`) after the queue drains.
+8. **Merge through the queue, never directly.** When a ruleset requires a
+   merge queue, `gh pr merge` cannot merge directly; any strategy flag is
+   ignored with a warning (`! The merge strategy for main is set by the merge
+   queue`) and the PR is added to the queue anyway. Prefer `gh pr merge --auto`
+   to make that explicit, then confirm `merged: true` from the pulls API once the
+   queue drains.
    The queue's method is `MERGE`, not squash: it lands a merge commit whose
    second parent is the feature-branch head.
    ```bash
    gh api repos/<owner>/<repo>/rules/branches/main \
      --jq '.[] | select(.type=="merge_queue") | .parameters.merge_method'
    ```
-   Approvals gate entry to the queue. If rulesets enforce
-   `require_extra_approval_for_unattributed_changes`, commits lacking recognized
-   git author/committer identities or factory attribution trailers require
-   additional approvals before becoming mergeable. Pushing new commits to an
-   approved PR with `dismiss_stale_reviews_on_push: true` drops prior approvals
-   back to `REVIEW_REQUIRED`.
+   Approvals gate entry to the queue. If the ruleset enables
+   `require_extra_approval_for_unattributed_changes`, PRs opened by the Copilot
+   app under its own identity need one more approval than the configured count.
+   PRs opened by a person are unaffected; this rule is separate from the commit
+   attribution trailers below. Pushing new commits to an approved PR with
+   `dismiss_stale_reviews_on_push: true` drops prior approvals back to
+   `REVIEW_REQUIRED`.
 
 9. **Verify production, not just localhost.** After merge, fetch canonical
    `main`, query the deployment for that merged SHA, then check the deployed
