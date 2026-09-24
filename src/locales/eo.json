@@ -33,15 +33,7 @@
     "Title": "Enkonduko al Bluefin Linux"
   },
   "TryBluefin": {
-    "Title": "Provu Bluefin",
-    "Gpu": {
-      "Question": "Kiu estas la vendisto de via ĉefa GPU? ",
-      "DefaultSelection": "Elektu vian ĉefan GPU-vendiston"
-    },
-    "Download": {
-      "Registry": "Vidi detalojn en la GitHub Container Registry",
-      "Checksum": "Kontroli (SHA256)"
-    }
+    "Title": "Provu Bluefin"
   },
   "Flock": {
     "Title": "Nia Flocko",

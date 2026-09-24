@@ -33,15 +33,7 @@
     "Title": "Bluefin Linux introductie"
   },
   "TryBluefin": {
-    "Title": "Probeer Bluefin",
-    "Gpu": {
-      "Question": "Wie is de leverancier van je primaire GPU? ",
-      "DefaultSelection": "Selecteer je primaire GPU-leverancier"
-    },
-    "Download": {
-      "Registry": "Bekijk details op de GitHub Container Registry",
-      "Checksum": "Verifieer (SHA256)"
-    }
+    "Title": "Probeer Bluefin"
   },
   "Flock": {
     "Title": "Onze Flock",

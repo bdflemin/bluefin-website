@@ -81,7 +81,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         </div>
         <div class="alpha-badge-row">
           <div class="alpha-badge">
-            <strong>⚠️ Coming Soon.</strong> Take appropriate precautions.
+            <strong>⚠️ Alpha.</strong> Take appropriate precautions.
           </div>
         </div>
         <div>

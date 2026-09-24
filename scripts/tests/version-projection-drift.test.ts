@@ -71,35 +71,4 @@ describe('version projection and consumer drift gate', () => {
       ).toBe(true)
     }
   })
-
-  it('every VersionInfo field in ImageChooser.vue resolves to a bluefin registry field or synthesized projection key', () => {
-    const imageChooserSource = readFileSync(
-      join(rootDir, 'src/components/ImageChooser.vue'),
-      'utf8',
-    )
-    const versionInfoMatch = imageChooserSource.match(/interface\s+VersionInfo\s*\{([\s\S]*?)\}/)
-    expect(versionInfoMatch, 'Could not find VersionInfo in ImageChooser.vue').not.toBeNull()
-
-    const versionInfoKeys = versionInfoMatch![1]
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line && !line.startsWith('//'))
-      .map(line => line.replace(/[?:].*$/, '').trim())
-      .filter(Boolean)
-
-    expect(versionInfoKeys.length).toBeGreaterThan(0)
-
-    // Allowed fields on VersionInfo:
-    // - bluefin packages defined in IMAGE_SBOM_REGISTRY
-    // - status (projection status: 'verified' | 'unavailable')
-    // - hwe (synthesized from bluefin-lts-hwe in projectBluefinStreams)
-    const allowedBluefinKeys = new Set([...bluefinRegistryKeys, 'status', 'hwe'])
-
-    for (const key of versionInfoKeys) {
-      expect(
-        allowedBluefinKeys.has(key),
-        `VersionInfo key "${key}" in ImageChooser.vue must resolve to a bluefin package in IMAGE_SBOM_REGISTRY or synthesized key`,
-      ).toBe(true)
-    }
-  })
 })

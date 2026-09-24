@@ -84,14 +84,12 @@
   "TryBluefin": {
     "Tag": "Try",
     "Title": "Bluefin",
-    "Description": {
-      "Choice": "Choose your raptor for your hardware and use case. The team recommends [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter) to create installation media, Ventoy is unsupported. Check [the documentation](https://docs.projectbluefin.io) for more information.",
-      "Updates": "Bluefin receives timely security updates and is available in two different streams that reflect how aggressively it receives feature updates:"
-    },
+    "LegacyDownloads": "The older Fedora based versions are [still available for download](https://docs.projectbluefin.io/downloads/) but are not recommended for new users.",
     "Wolves": {
-      "Title": "For the Wolves",
-      "Description": "No compromises. This agentic factory uses [Hive](https://hive.kubestellar.io) to coordinate agent actions across the organization. It is designed to be a sovereign, local first, and fully automated platform for the user.\n\nThree components. A server, built with Buildstream and FSDK as a vendor neutral platform. A desktop, Dakota, designed to be a natural \"client\". And Utah is built on Fedora Hummingbird and is the Openshift to our Kubernetes. Every component is 100% open source and free to use.",
       "Cards": {
+        "AlphaBadge": "⚠️ Alpha.",
+        "AlphaBadgeSub": "Take appropriate precautions.",
+        "ComingSoonBadge": "Coming Soon",
         "Dakota": "Dakota",
         "DakotaDescription": "The Final Form. Bluefin Perfected.",
         "Utah": "Utah",
@@ -99,81 +97,6 @@
         "Server": "Bluefin Server",
         "ServerDescription": "The world's premier FSDK server operating system."
       }
-    },
-    "Label": {
-      "Base": "Base",
-      "Gnome": "GNOME",
-      "Kernel": "Kernel",
-      "HWEKernel": "HWE Kernel",
-      "Mesa": "MESA",
-      "Nvidia": "Nvidia",
-      "Recommended": "Recommended",
-      "Back": "Back",
-      "BackToReleases": "Back to releases"
-    },
-    "Lts": {
-      "Title": "Bluefin LTS",
-      "Subtitle": "For professionals and AI/ML engineers",
-      "Description": "A long term support experience on an enterprise-grade foundation."
-    },
-    "Stable": {
-      "Title": "Bluefin",
-      "Subtitle": "For Everyone",
-      "Description": "A modern desktop at the leading edge. Pick this if you're not sure."
-    },
-    "Architecture": {
-      "Question": "Which architecture will you install Bluefin on? Older BIOS-based systems are unsupported",
-      "x86": "x86_64 (Standard for most computers)",
-      "arm": "ARM64"
-    },
-    "Gpu": {
-      "Question": "Who is the vendor of your primary graphics card (GPU)? Older Nvidia cards are unsupported",
-      "DefaultSelection": "Select your primary GPU vendor",
-      "AMDIntel": "AMD or Intel",
-      "Nvidia": "Nvidia RTX or GTX 16xx+ Series"
-    },
-    "Kernel": {
-      "Question": "What is your priority? This choice balances system stability with support for the newest hardware. You can change this later:",
-      "Regular": "LTS Linux kernel: The most reliable option, perfect for most computers.",
-      "HWE": "Latest Linux kernel: Best for brand-new devices and getting the newest features."
-    },
-    "Selection": {
-      "Ready": "Ready to Download!",
-      "YourSelection": "Your Selection ...",
-      "Release": {
-        "Title": "Release",
-        "StableDesc": "For Everyone",
-        "GDXDesc": "For Developers"
-      },
-      "Architecture": {
-        "Title": "Architecture",
-        "X86Desc": "Standard for most computers (AMD and Intel)",
-        "ArmDesc": "For ARM-based systems (Apple Silicon, Raspberry Pi, etc)"
-      },
-      "Kernel": {
-        "Title": "Kernel",
-        "Regular": "Regular LTS",
-        "RegularDesc": "Stable kernel updates, locked to 6.12.0 with backports",
-        "HWE": "Hardware Enablement (HWE)",
-        "HWEDesc": "Regularly updated kernels for better hardware support"
-      },
-      "Gpu": {
-        "Title": "Graphics Card (GPU)",
-        "AMDIntelDesc": "Integrated AMD or Intel graphics",
-        "NvidiaDesc": "Nvidia RTX/GTX 16xx+ Series, GTX 10xx Series and below are unsupported"
-      }
-    },
-    "Download": {
-      "IsoDescription": "Installation ISO",
-      "IsoDownload": "Download the ISO",
-      "Checksum": "Verify (SHA256)",
-      "Registry": "View Registry",
-      "Documentation": {
-        "Intro": "Check out the [Bluefin Documentation](https://docs.projectbluefin.io/), it takes about 15 minutes and includes an installation runbook - set yourself up for success, you are headed into a new world.",
-        "Downloads": "Can't find what you're looking for? Check [the full list of downloads](https://docs.projectbluefin.io/downloads/).",
-        "SecureBoot": "If you choose [secure boot](https://docs.projectbluefin.io/installation#secure-boot) during installation, the password is \"universalblue\"."
-      },
-      "ChooseRelease": "Choose a different release"
     }
   },
   "Community": {

@@ -45,17 +45,24 @@ generated file.
 
 ## Front-page downloads
 
-The main-site download picker is owned by `src/components/sections/SectionPicker.vue`,
-while its user-facing copy belongs in `src/locales/en-US.json`. Adding a new
-download card changes the rendered component surface and therefore needs an
-explicitly approved design request; do not treat it as a locale-only edit.
+The three main-site download cards are owned by
+`src/components/sections/SectionPicker.vue`; their user-facing copy belongs in
+`src/locales/en-US.json`. The retired Fedora image chooser has no testing entry
+or runtime component. Adding another download card changes the rendered
+component surface and therefore needs an explicitly approved design request;
+do not treat it as a locale-only edit.
 
 Re-derive the owner and locale source with:
 
 ```bash
-rg -n "ImageChooser|TryBluefin.Wolves|wolves-download" \
+rg -n "TryBluefin.Wolves.Cards|wolves-download-grid" \
   src/components/sections/SectionPicker.vue src/locales/en-US.json
 ```
+
+The note immediately below the `Try Bluefin` heading is
+`TryBluefin.LegacyDownloads`; it points legacy Fedora-based users to the docs
+download archive. The Utah card links to `https://github.com/projectbluefin/utah`
+until a dedicated download route exists.
 
 Reuse `src/components/common/ProductVersionCard.vue` — the extracted "raptor
 card" — for any new product/download card. Do not author parallel markup or
@@ -66,6 +73,14 @@ A card's title and description must be classed `<span>`s, not `<p>`. The global
 `#scene-picker p` rule sets `text-align: center` and `max-width: 800px`, and its
 id specificity beats any scoped component class, so a bare `<p>` silently
 ignores the component's own alignment.
+
+### Product status badges
+
+`ProductVersionCard.vue` renders each card's status from `badgeTitle` and the
+optional `badgeSub`. Dakota and Bluefin Server use the locale-backed Alpha
+warning (`TryBluefin.Wolves.Cards.AlphaBadge` / `AlphaBadgeSub`); Utah uses the
+title-only `TryBluefin.Wolves.Cards.ComingSoonBadge`. Keep those statuses
+explicit per card rather than applying one shared status to the entire array.
 
 ## Verification
 
