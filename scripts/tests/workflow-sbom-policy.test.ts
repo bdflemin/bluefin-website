@@ -123,6 +123,13 @@ describe('update-content.yml workflow policy', () => {
     const paths = (cacheSave!.with!.path ?? '').trim().split('\n').map(l => l.trim())
     expect(paths).toContain('.cache/website-live-data/sbom-audit.json')
   })
+
+  it('installs dependencies with npm ci', () => {
+    const steps = getAllSteps(workflow)
+    const installStep = steps.find(s => s.name === 'Install dependencies')
+    expect(installStep, 'Install dependencies step not found').toBeDefined()
+    expect(installStep?.run).toBe('npm ci')
+  })
 })
 
 // ---------------------------------------------------------------------------
