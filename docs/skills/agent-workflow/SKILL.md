@@ -68,11 +68,31 @@ does not replace `validation`, `design-gate`, or the Wolves skills.
    git push -u upstream "$branch"
    ```
    PR readiness is proved by CI/preview for the feature-branch SHA. Production
-   verification happens only after the PR is squash-merged.
+   verification happens only after the queue has merged the PR.
 
-8. **Verify production, not just localhost.** After merge, fetch canonical
+8. **Merge through the queue, never directly.** When a ruleset requires a
+   merge queue, `gh pr merge` cannot merge directly; any strategy flag is
+   ignored with a warning (`! The merge strategy for main is set by the merge
+   queue`) and the PR is added to the queue anyway. Prefer `gh pr merge --auto`
+   to make that explicit, then confirm `merged: true` from the pulls API once the
+   queue drains.
+   The queue's method is `MERGE`, not squash: it lands a merge commit whose
+   second parent is the feature-branch head.
+   ```bash
+   gh api repos/<owner>/<repo>/rules/branches/main \
+     --jq '.[] | select(.type=="merge_queue") | .parameters.merge_method'
+   ```
+   Approvals gate entry to the queue. If the ruleset enables
+   `require_extra_approval_for_unattributed_changes`, PRs opened by the Copilot
+   app under its own identity need one more approval than the configured count.
+   PRs opened by a person are unaffected; this rule is separate from the commit
+   attribution trailers below. Pushing new commits to an approved PR with
+   `dismiss_stale_reviews_on_push: true` drops prior approvals back to
+   `REVIEW_REQUIRED`.
+
+9. **Verify production, not just localhost.** After merge, fetch canonical
    `main`, query the deployment for that merged SHA, then check the deployed
-   URL. The feature-branch SHA is not the squash-merge SHA.
+   URL. The feature-branch SHA is not the merge commit the queue created.
    ```bash
    git fetch upstream main
    sha=$(git rev-parse upstream/main)
@@ -81,20 +101,22 @@ does not replace `validation`, `design-gate`, or the Wolves skills.
    manifest loading, open it in Chromium and assert there are no page errors
    or failed module requests; a successful Vite build is not sufficient.
 
-9. **Close the git session.** A squash merge does not make the feature branch
-   an ancestor of `main`, so `git branch --merged` cannot identify completed
-   PR branches reliably. After a merge, move any preserved edits to a fresh
-   branch, remove the completed worktree and branch, and prune Git's metadata.
-   Before every handoff, run:
-   ```bash
-   git worktree prune
-   npm run check:git-hygiene
-   ```
-   The checker uses GitHub PR state as well as Git ancestry and inspects every
-   local branch, not only branches mounted in `git worktree list`. It fails on
-   merged/closed PR branches, clean worktrees with no open PR, unpublished
-   clean branches, detached worktrees, and prunable metadata. It never deletes
-   automatically because dirty state and unique commits require human review.
+10. **Close the git session.** Because the queue merges rather than squashes,
+    a merged feature branch *is* an ancestor of `main` and `git branch --merged`
+    does list it -- but ancestry alone still cannot close a session: it says
+    nothing about a branch whose PR was closed unmerged, or one that never had
+    a PR at all. After a merge, move any preserved edits to a fresh branch,
+    remove the completed worktree and branch, and prune Git's metadata.
+    Before every handoff, run:
+    ```bash
+    git worktree prune
+    npm run check:git-hygiene
+    ```
+    The checker uses GitHub PR state as well as Git ancestry and inspects every
+    local branch, not only branches mounted in `git worktree list`. It fails on
+    merged/closed PR branches, clean worktrees with no open PR, unpublished
+    clean branches, detached worktrees, and prunable metadata. It never deletes
+    automatically because dirty state and unique commits require human review.
 
 ## Commit attribution
 
