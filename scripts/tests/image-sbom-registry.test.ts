@@ -167,15 +167,34 @@ describe('registry selectors resolve known live ambiguities', () => {
     expect(result.values.mesa).toBe('1:26.1.4-4.fc44')
   })
 
-  it('resolves Bluefin kernel-core and systemd unambiguously', () => {
+  it('resolves Bluefin kernel-core unambiguously', () => {
     const { packages } = recordFor('bluefin-stable')
     const result = extractMappedVersions(bluefinCatalogers, {
       kernel: packages.kernel,
-      systemd: packages.systemd,
     })
     expect(result.ambiguous).toEqual([])
     expect(result.values.kernel).toBe('7.1.6-201.fc44')
-    expect(result.values.systemd).toBe('259.8-1.fc44')
+  })
+
+  it('pins Bluefin systemd to the installed RPM database package', () => {
+    const { packages } = recordFor('bluefin-stable')
+    expect(packages.systemd.required).toBe(false)
+    expect(packages.systemd).toMatchObject({
+      name: 'systemd',
+      type: 'rpm',
+      foundBy: 'rpm-db-cataloger',
+    })
+
+    const result = extractMappedVersions(bluefinCatalogers, { systemd: packages.systemd })
+    expect(result.ambiguous).toEqual([])
+    expect(result.values.systemd).toBe('259.9-1.fc44')
+  })
+
+  it('is ambiguous for Bluefin systemd without the cataloger pin', () => {
+    const result = extractMappedVersions(bluefinCatalogers, {
+      systemd: { name: 'systemd', required: false },
+    })
+    expect(result.ambiguous).toEqual(['systemd'])
   })
 })
 

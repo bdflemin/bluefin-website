@@ -117,7 +117,11 @@ export const IMAGE_SBOM_REGISTRY = Object.freeze([
       // of the installed Mesa source build regardless of which ELF version
       // is higher.
       mesa: { name: 'mesa-dri-drivers', type: 'rpm', foundBy: 'rpm-db-cataloger', required: false },
-      systemd: { name: 'systemd', required: false },
+      // Same OSTree-retained-object ambiguity as mesa above: the ELF
+      // cataloger reports systemd from both the live rootfs and older
+      // objects retained in the OSTree repository, at distinct versions.
+      // The RPM database is the authority on what is installed.
+      systemd: { name: 'systemd', type: 'rpm', foundBy: 'rpm-db-cataloger', required: false },
       // The RPM database is the shipped-package authority; the ELF binary
       // cataloger reports the same build without its epoch, which reads as an
       // ambiguity. The projection strips the epoch for display.
