@@ -24,6 +24,36 @@ function git(args, cwd = process.cwd()) {
   return run('git', ['-C', cwd, ...args])
 }
 
+/** Run git, returning null instead of throwing when the command fails. */
+function tryGit(args, cwd = process.cwd()) {
+  try {
+    return git(args, cwd)
+  }
+  catch {
+    return null
+  }
+}
+
+/**
+ * Abort with an actionable message rather than an unhandled exception.
+ *
+ * The checker shells out to git before it can validate its own preconditions,
+ * so a checkout without the production remote used to die with a raw Node
+ * stack trace over `fatal: Needed a single revision`.
+ *
+ * @param {string} message
+ */
+function abort(message) {
+  console.error(`Git hygiene: cannot run\n  ${message}`)
+  process.exit(2)
+}
+
+/** The remote half of `BASE_REF`, or null when the base ref is a local branch. */
+function baseRemote(baseRef) {
+  const [remote, ...rest] = baseRef.split('/')
+  return rest.length > 0 ? remote : null
+}
+
 export function classifyWorktree({ branch, dirty, ahead, prState, prNumber, prUrl, detached, isBase }) {
   // A fork PR can have a head branch named `main`; the local base branch wins
   // before any PR-state classification.
@@ -76,8 +106,18 @@ function parseWorktrees(text) {
   })
 }
 
-function repositorySlug(cwd) {
-  const url = git(['remote', 'get-url', 'upstream'], cwd)
+function repositorySlug(cwd, remote = 'upstream') {
+  const url = tryGit(['remote', 'get-url', remote], cwd)
+  if (url == null) {
+    const remotes = tryGit(['remote'], cwd) || '(none)'
+    abort([
+      `no git remote named "${remote}" in ${cwd}.`,
+      `This repository's production remote is "upstream"; add it with`,
+      `\`git remote add upstream https://github.com/projectbluefin/website\`,`,
+      `or point GIT_HYGIENE_BASE at a base ref on a remote you do have.`,
+      `Remotes present: ${remotes.split('\n').filter(Boolean).join(', ') || '(none)'}`,
+    ].join(' '))
+  }
   const match = url.match(/github\.com(?::|\/)([^/]+\/[^/]+?)(?:\.git)?$/)
   if (!match) {
     throw new Error(`cannot derive GitHub repository from upstream URL: ${url}`)
@@ -137,8 +177,21 @@ function main() {
   }
 
   const cwd = realpathSync(process.cwd())
-  git(['rev-parse', '--verify', BASE_REF], cwd)
-  const slug = repositorySlug(cwd)
+  if (tryGit(['rev-parse', '--git-dir'], cwd) == null) {
+    abort(`${cwd} is not a git repository.`)
+  }
+  if (tryGit(['rev-parse', '--verify', BASE_REF], cwd) == null) {
+    const remote = baseRemote(BASE_REF)
+    abort([
+      `base ref "${BASE_REF}" does not exist in ${cwd}.`,
+      remote
+        ? `Fetch it with \`git fetch ${remote} ${BASE_REF.slice(remote.length + 1)}\`,`
+        : `Create or check out that branch,`,
+      `or set GIT_HYGIENE_BASE to the ref this checkout compares against`,
+      `(for example \`GIT_HYGIENE_BASE=origin/main\`).`,
+    ].join(' '))
+  }
+  const slug = repositorySlug(cwd, baseRemote(BASE_REF) ?? 'upstream')
   const worktrees = parseWorktrees(git(['worktree', 'list', '--porcelain'], cwd))
   const prsByBranch = pullRequestsByBranch(slug, cwd)
   const failures = []

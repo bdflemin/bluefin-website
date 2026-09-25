@@ -289,7 +289,38 @@ describe('check-git-hygiene', () => {
       env: { ...gitEnv, GIT_HYGIENE_BASE: 'upstream/main', PATH: `${stubGh(root)}:${process.env.PATH}` },
     })
 
-    expect(result.status).not.toBe(0)
+    expect(result.status).toBe(2)
     expect(`${result.stdout}`).not.toContain('Git hygiene: pass')
+    // An unhandled `fatal: Needed a single revision` stack trace does not tell
+    // a contributor which ref is missing or how to supply it.
+    expect(`${result.stderr}`).toContain('base ref "upstream/main" does not exist')
+    expect(`${result.stderr}`).toContain('git fetch upstream main')
+    expect(`${result.stderr}`).toContain('GIT_HYGIENE_BASE')
+    expect(`${result.stderr}`).not.toContain('Needed a single revision')
+  })
+
+  it('names the missing remote when the base ref remote is not configured', () => {
+    const { root, repository } = createRepository()
+    git(repository, 'remote', 'remove', 'upstream')
+    const result = runChecker(repository, { bin: stubGh(root) })
+
+    expect(result.status).toBe(2)
+    expect(result.output).toContain('no git remote named "upstream"')
+    expect(result.output).toContain('Remotes present: (none)')
+  })
+
+  it('derives the repository from the remote named by the base ref', () => {
+    const { root, repository } = createRepository()
+    git(repository, 'remote', 'rename', 'upstream', 'origin')
+    // Create the remote-tracking ref directly; fetching would need the network.
+    git(repository, 'update-ref', 'refs/remotes/origin/main', 'HEAD')
+    const result = spawnSync(process.execPath, [script], {
+      cwd: repository,
+      encoding: 'utf8',
+      env: { ...gitEnv, GIT_HYGIENE_BASE: 'origin/main', PATH: `${stubGh(root)}:${process.env.PATH}` },
+    })
+
+    expect(`${result.stdout}${result.stderr}`).toContain('Git hygiene: pass')
+    expect(result.status).toBe(0)
   })
 })
