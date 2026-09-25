@@ -20,8 +20,8 @@ const FULL_VERSIONS: DakotaVersions = {
     { id: 'dakota', image: 'ghcr.io/projectbluefin/dakota:latest', imageDigest: 'sha256:aaa', sbomDigest: 'sha256:bbb' },
   ],
   isos: [
-    { label: 'Download ISO', filename: 'dakota-live-alpha4.iso' },
-    { label: 'Download DX', filename: 'dakota-dx-live-alpha4.iso' },
+    { label: 'Download ISO', filename: 'dakota-live-alpha6.iso' },
+    { label: 'Download DX', filename: 'dakota-dx-live-alpha6.iso' },
   ],
   packages: {
     'kernel': '6.19.11',
@@ -69,12 +69,12 @@ describe('dakotaVersionCard.vue', () => {
 
     const firstDl = entries[0].get('a.entry-dl')
     expect(firstDl.text()).toContain('Download ISO')
-    expect(firstDl.attributes('href')).toBe('https://projectbluefin.dev/dakota-live-alpha4.iso')
+    expect(firstDl.attributes('href')).toBe('https://projectbluefin.dev/dakota-live-alpha6.iso')
 
     const firstChecksum = entries[0].get('a.entry-checksum')
-    expect(firstChecksum.attributes('href')).toBe('https://projectbluefin.dev/dakota-live-alpha4.iso-CHECKSUM')
+    expect(firstChecksum.attributes('href')).toBe('https://projectbluefin.dev/dakota-live-alpha6.iso-CHECKSUM')
 
-    expect(entries[0].get('.entry-filename').text()).toBe('dakota-live-alpha4.iso')
+    expect(entries[0].get('.entry-filename').text()).toBe('dakota-live-alpha6.iso')
   })
 
   it('uses fallback ISOs when versions have no isos field', async () => {
@@ -113,6 +113,7 @@ describe('dakotaVersionCard.vue', () => {
     const entries = wrapper.findAll('.download-entry')
     expect(entries).toHaveLength(1)
     expect(entries[0].get('a.entry-dl').text()).toContain('Download ISO')
+    expect(entries[0].get('.entry-filename').text()).toBe('dakota-live-alpha6.iso')
   })
 
   it('renders the alpha badge', () => {

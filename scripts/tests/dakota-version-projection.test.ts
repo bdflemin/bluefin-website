@@ -35,7 +35,7 @@ const GAMING_VERIFIED = {
 }
 
 const METADATA = {
-  isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha4.iso' }],
+  isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha6.iso' }],
   baseline: 'x86-64-v3',
 }
 

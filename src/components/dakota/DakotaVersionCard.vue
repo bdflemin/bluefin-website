@@ -25,7 +25,7 @@ const cardImageStyle = computed(() => ({
 
 // ponytail: static fallback keeps downloads working if JSON fetch fails
 const FALLBACK_ISOS = [
-  { label: 'Download ISO', filename: 'dakota-live-alpha4.iso' },
+  { label: 'Download ISO', filename: 'dakota-live-alpha6.iso' },
 ]
 
 const entries = computed<DownloadEntry[]>(() => {
