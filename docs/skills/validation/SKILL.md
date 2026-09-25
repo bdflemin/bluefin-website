@@ -31,6 +31,9 @@ Do not run the full application suite for documentation-only changes.
 6. For a feature-branch push, verify PR CI/preview for the feature SHA. For a
    production claim after squash merge, verify the deployment for the merged
    `upstream/main` SHA and smoke-test the affected route in Chromium.
+7. For workflow edits, ensure dependency installation steps in credentialed workflows
+   (`deploy.yml`, `preview.yml`, `update-content.yml`) use `npm ci` rather than
+   `npm install` to guarantee byte-for-byte fidelity with `package-lock.json`.
 
 Documentation-only check:
 
@@ -112,6 +115,8 @@ npm run build
   added the failures.
 - Something is deleted as "dead code" without checking the non-Wolves
   experiences that share `WolvesComicReader.vue`.
+- Workflows with deploy or repository write credentials use `npm install` instead
+  of `npm ci`, risking unreviewed lockfile drift in credentialed jobs.
 
 ## Verification
 
