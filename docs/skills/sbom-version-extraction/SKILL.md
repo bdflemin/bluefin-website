@@ -133,6 +133,13 @@ Bluefin Mesa, use the installed `mesa-dri-drivers` record from
 `rpm-db-cataloger` as the authoritative representative of the Mesa source
 build; do not select between the ambiguous `mesa` ELF records.
 
+Bluefin `systemd` carries the identical failure mode: the ELF cataloger reports
+both the live rootfs binary and an older object retained in the OSTree
+repository under the same `systemd` name at distinct versions. Pin it with
+`{ name: 'systemd', type: 'rpm', foundBy: 'rpm-db-cataloger', required: false }`,
+the same selector shape as `podman`, rather than an `element` pin (Bluefin is
+not a BuildStream image, so no `.bst` element exists to pin).
+
 ### `versionInfo` takes precedence over `version`
 
 `extractMappedVersions` reads `pkg.versionInfo ?? pkg.version`. Syft SBOMs use
