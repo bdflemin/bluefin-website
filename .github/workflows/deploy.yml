@@ -51,6 +51,17 @@ jobs:
           restore-keys: |
             website-live-data-
           fail-on-cache-miss: false
+
+      # catalogue.json is version-controlled, and only a local `npm run
+      # update:back-catalogue` (yt-dlp) can build its track segments, so CI can
+      # never hold a fresher catalogue than the committed one. This job restores
+      # the same cache (path includes `public/experiences`) over the committed
+      # catalogue, so a cache from before an ingest ships a site missing the new
+      # album until the next daily run saves a fresh one. Restore the committed
+      # catalogue over the cache, exactly as in update-content.yml.
+      - name: Restore committed catalogue over cache
+        run: git checkout HEAD -- public/experiences/catalogue.json
+
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
